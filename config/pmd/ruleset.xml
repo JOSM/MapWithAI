@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<ruleset name="Ruleset for josm-rapid-plugin"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+  <description>
+    This ruleset checks some rules that you should normally follow for the JOSM-rapid plugin.
+  </description>
+  <rule ref="category/java/bestpractices.xml"/>
+  <rule ref="category/java/codestyle.xml">
+    <exclude name="AbstractNaming"/>
+    <exclude name="AvoidFinalLocalVariable"/>
+    <exclude name="CommentDefaultAccessModifier"/>
+    <exclude name="DefaultPackage"/>
+    <exclude name="LongVariable"/>
+    <exclude name="MethodArgumentCouldBeFinal"/><!-- way too many -->
+    <exclude name="ShortVariable"/>
+  </rule>
+  <rule ref="category/java/design.xml">
+    <exclude name="LawOfDemeter"/>
+    <exclude name="LoosePackageCoupling"/>
+  </rule>
+  <rule ref="category/java/errorprone.xml"/>
+  <rule ref="category/java/multithreading.xml/AvoidThreadGroup"/>
+  <rule ref="category/java/multithreading.xml/DontCallThreadRun"/>
+  <rule ref="category/java/multithreading.xml/NonThreadSafeSingleton" />
+</ruleset>

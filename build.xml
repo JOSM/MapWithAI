@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="rapid" default="dist" basedir=".">
+  <property name="plugin.src.dir" value="src/main/java"/>
+
+  <!-- edit the properties of this plugin in the file `gradle.properties` -->
+  <property file="${basedir}/gradle.properties"/>
+
+  <!-- ** include targets that all plugins have in common ** -->
+  <import file="../build-common.xml"/>
+
+  <!-- Override the `setup-dist-default` task from build-common.xml -->
+  <target name="setup-dist-default">
+    <copy todir="${plugin.build.dir}" failonerror="no" includeemptydirs="no">
+      <fileset dir="src/main/resources"/>
+    </copy>
+    <copy todir="${plugin.build.dir}">
+      <fileset dir=".">
+        <include name="README"/>
+        <include name="LICENSE*"/>
+        <include name="*GPL*"/>
+        <include name="*.md"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <property name="ivy.home" value="${user.home}/.ant"/>
+  <property name="ivy.jar.dir" value="${ivy.home}/lib"/>
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+
+  <target name="download-ivy">
+    <mkdir dir="${ivy.jar.dir}"/>
+    <get src="https://jcenter.bintray.com/org/apache/ivy/ivy/2.4.0/ivy-2.4.0.jar" dest="${ivy.jar.file}" usetimestamp="true" ignoreerrors="true"/>
+  </target>
+
+  <target name="init-ivy" depends="download-ivy">
+    <path id="ivy.lib.path">
+      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+    </path>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+  </target>
+
+  <target name="pre-compile" description="retrieve dependencies with Ivy" depends="init-ivy">
+    <ivy:retrieve/>
+  </target>
+</project>

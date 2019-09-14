@@ -1,0 +1,185 @@
+import com.github.spotbugs.SpotBugsTask
+import net.ltgt.gradle.errorprone.CheckSeverity
+import org.openstreetmap.josm.gradle.plugin.task.GeneratePluginList
+
+import java.nio.file.Files
+import java.nio.file.Paths
+
+plugins {
+  id "java"
+  id "eclipse"
+  id "jacoco"
+  id "maven-publish"
+  id "pmd"
+  id "com.github.ben-manes.versions" version "0.20.0"
+  id "com.github.spotbugs" version "2.0.0"
+  id "org.openstreetmap.josm" version "0.6.1"
+  id "net.ltgt.errorprone" version "0.7.1"
+}
+
+// Set up Errorprone
+tasks.withType(JavaCompile).configureEach {
+  options.errorprone {
+    check("DefaultCharset", CheckSeverity.ERROR)
+    check("StringEquality", CheckSeverity.ERROR)
+    check("ConstantField",  CheckSeverity.WARN)
+    check("FieldCanBeFinal", CheckSeverity.WARN)
+    check("LambdaFunctionalInterface", CheckSeverity.WARN)
+    check("MethodCanBeStatic", CheckSeverity.WARN)
+    check("MultiVariableDeclaration", CheckSeverity.WARN)
+    check("PrivateConstructorForUtilityClass", CheckSeverity.WARN)
+    check("UngroupedOverloads", CheckSeverity.WARN)
+    check("WildcardImport", CheckSeverity.WARN)
+  }
+}
+
+def versions = [
+  errorprone: "2.3.3",
+  jacoco: "0.8.2",
+  junit: "5.4.0",
+  pmd: "6.6.0",
+  spotbugs: "3.1.11",
+]
+
+repositories {
+  jcenter()
+}
+dependencies {
+  if (!JavaVersion.current().isJava9Compatible()) {
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+  }
+  errorprone("com.google.errorprone:error_prone_core:${versions.errorprone}")
+
+  testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
+  testImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
+  testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
+  testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
+  testImplementation("com.github.tomakehurst:wiremock:2.21.0")
+  testImplementation("org.awaitility:awaitility:3.1.6")
+}
+
+// Add dependencies from ivy.xml
+def ivyModule = new XmlParser().parse(new File("$projectDir/ivy.xml"))
+logger.info("Dependencies from ivy.xml (added to configuration `packIntoJar`):")
+ivyModule.dependencies.dependency.each {
+  logger.info("  * ${it.@org}:${it.@name}:${it.@rev}")
+  project.dependencies.packIntoJar("${it.@org}:${it.@name}:${it.@rev}")
+}
+
+test {
+  useJUnitPlatform()
+  testLogging.exceptionFormat = 'full'
+}
+
+sourceSets {
+  test {
+    java {
+      srcDirs = ["test/unit"]
+    }
+    resources {
+      srcDirs = ["test/data"]
+    }
+  }
+}
+tasks.processResources {
+  from("$projectDir/LICENSE")
+  from("$projectDir/README.md")
+}
+
+archivesBaseName = "rapid"
+josm {
+  i18n {
+    pathTransformer = getPathTransformer("gitlab.com/smocktaylor/rapid/blob")
+  }
+}
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs += [
+    "-Xlint:all",
+    "-Xlint:-serial",
+  ]
+}
+
+// Set up JaCoCo
+jacoco {
+  toolVersion = "${versions.jacoco}"
+}
+jacocoTestReport {
+  dependsOn test
+  reports {
+    xml.enabled = true
+    html.enabled = true
+  }
+}
+check.dependsOn jacocoTestReport
+
+// Set up PMD
+pmd {
+  toolVersion = versions.pmd
+  ignoreFailures true
+  ruleSets = []
+  ruleSetConfig = resources.text.fromFile("$projectDir/config/pmd/ruleset.xml")
+  sourceSets = [sourceSets.main]
+}
+
+// Set up SpotBugs
+spotbugs {
+  toolVersion = versions.spotbugs
+  ignoreFailures = true
+  sourceSets = [sourceSets.main]
+}
+tasks.withType(SpotBugsTask) {
+  reports {
+    xml.enabled = false
+    html.enabled = true
+  }
+}
+
+task generateSnapshotUpdateSite(type: GeneratePluginList) {
+  dependsOn(tasks.processResources)
+
+  outputFile = new File(project.buildDir, "snapshot-update-site")
+  versionSuffix = {a -> ""}
+  doFirst {
+    def pluginDownloadUrl = "https://smocktaylor.gitlab.io/$archivesBaseName/snapshot/master/${archivesBaseName}.jar"
+    it.iconBase64Provider = {
+      def file = new File(sourceSets.main.resources.srcDirs[0], it)
+      if (file.exists()) {
+        def contentType = file.name.endsWith(".svg") ? "svg+xml" : "png"
+        return "data:image/" + contentType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(Paths.get(file.toURI())));
+      }
+    }
+    it.addPlugin("$archivesBaseName-dev.jar", project.josm.manifest.createJosmPluginJarManifest(), new URL(pluginDownloadUrl))
+  }
+}
+
+project.afterEvaluate {
+  publishing {
+    publications {
+      plugin(MavenPublication) {
+        groupId = "org.openstreetmap.josm.plugins"
+        artifactId = archivesBaseName
+        version = project.version
+
+        from components.java
+      }
+    }
+  }
+}
+
+def ciJobToken = System.getenv("CI_JOB_TOKEN")
+def projectId = System.getenv("CI_PROJECT_ID")
+if (ciJobToken != null && projectId!= null) {
+  publishing.repositories.maven {
+    url = "https://gitlab.com/api/v4/projects/$projectId/packages/maven"
+    name = "gitlab"
+    credentials(HttpHeaderCredentials.class) {
+      name = "Job-Token"
+      value = ciJobToken
+    }
+    authentication {
+      create("auth", HttpHeaderAuthentication.class)
+    }
+  }
+}

@@ -1,0 +1,8 @@
+/.gradle/
+/.idea/
+/bin/
+/build/
+/javadoc/
+/out/
+/checkstyle-josm-rapid.xml
+/findbugs-josm-rapid.xml
