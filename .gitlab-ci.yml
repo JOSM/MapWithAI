@@ -64,15 +64,15 @@ assemble with java 13:
 # Test stage #
 ##############
 
-build:
-  stage: test
-  script:
-  - ./gradlew build generatePot --stacktrace
-  artifacts:
-    paths:
-    - build
-  dependencies:
-  - assemble
+#build:
+#  stage: test
+#  script:
+#  - ./gradlew build generatePot --stacktrace
+#  artifacts:
+#    paths:
+#    - build
+#  dependencies:
+#  - assemble
 
 compile against min JOSM:
   stage: test
