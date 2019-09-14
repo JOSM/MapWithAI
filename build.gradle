@@ -15,6 +15,7 @@ plugins {
   id "com.github.spotbugs" version "2.0.0"
   id "org.openstreetmap.josm" version "0.6.1"
   id "net.ltgt.errorprone" version "0.7.1"
+  id 'de.aaschmid.cpd' version '2.0'
 }
 
 // Set up Errorprone
@@ -57,6 +58,7 @@ dependencies {
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
   testImplementation("com.github.tomakehurst:wiremock:2.21.0")
   testImplementation("org.awaitility:awaitility:3.1.6")
+  compile 'org.apache.httpcomponents:httpclient:4.5.10'
 }
 
 // Add dependencies from ivy.xml

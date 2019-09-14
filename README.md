@@ -1,6 +1,7 @@
 # JOSM RapiD Plugin
 
 [![pipeline status](https://gitlab.com/smocktaylor/rapid/badges/master/pipeline.svg)](https://gitlab.com/smocktaylor/rapid/commits/master)
+[![code coverage](https://gitlab.com/smocktaylor/rapid/badges/master/coverage.svg)](https://codecov.io/github/smocktaylor/rapid?branch=master)
 [![license](https://img.shields.io/badge/license-GPLv2-blue.svg?style=flat-square)](./LICENSE)
 
 This plugin brings RapiD information into JOSM.
