@@ -11,8 +11,6 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="build/dist/rapid.jar"/>
-	<classpathentry kind="lib" path="build/localDist/rapid-dev.jar"/>
 	<classpathentry kind="lib" path="gradle/wrapper/gradle-wrapper.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.10.jar"/>
 	<classpathentry kind="lib" path="lib/commons-compress-1.16.1.jar"/>
