@@ -35,13 +35,12 @@ public final class RapiDDataUtils {
 
 	@SuppressWarnings("PMD.DataflowAnomalyAnalysis")
 	public static DataSet getData(BBox bbox) {
-		Logging.setLogLevel(Logging.LEVEL_DEBUG);
 		InputStream inputStream = null;
 		DataSet dataSet = new DataSet();
 		for (String urlString : API_LIST) {
 			try {
 				final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
-				Logging.error("{0}: Getting {1}", RapiDPlugin.NAME, url.toString());
+				Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, url.toString());
 
 				inputStream = url.openStream();
 				dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));

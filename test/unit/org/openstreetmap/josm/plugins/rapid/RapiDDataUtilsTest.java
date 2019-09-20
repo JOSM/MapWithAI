@@ -19,8 +19,8 @@ public class RapiDDataUtilsTest {
 	@Test
 	public void testGetData() {
 		BBox testBBox = new BBox();
-		testBBox.add(new LatLon(39.066058, -108.5683808));
-		testBBox.add(new LatLon(39.0667526, -108.5681757));
+		testBBox.add(new LatLon(39.0666521, -108.5707187));
+		testBBox.add(new LatLon(39.0664016, -108.5702225));
 		DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
 		Assert.assertEquals(1, ds.getWays().size());
 	}
