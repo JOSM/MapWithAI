@@ -1,22 +1,27 @@
 package org.openstreetmap.josm.plugins.rapid.backend;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-
+import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
+import org.openstreetmap.josm.tools.Shortcut;
 
-public class RapiDAction extends AbstractAction {
+public class RapiDAction extends JosmAction {
 	/** UID */
 	private static final long serialVersionUID = 8886705479253246588L;
 
 	public RapiDAction() {
-		super(RapiDPlugin.NAME);
+		super(RapiDPlugin.NAME, null, tr("Get data from RapiD"),
+				Shortcut.registerShortcut("data:rapid", tr("Data: {0}", tr("RapiD")), KeyEvent.VK_D, Shortcut.SHIFT),
+				true);
 	}
 
 	@Override

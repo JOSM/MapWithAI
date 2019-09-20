@@ -1,9 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.rapid;
 
-import javax.swing.AbstractAction;
+import javax.swing.JMenu;
 
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDAction;
@@ -16,12 +17,8 @@ public final class RapiDPlugin extends Plugin {
 	public RapiDPlugin(PluginInformation info) {
 		super(info);
 
-		RapiDAction action = new RapiDAction();
-		AbstractAction add = new RapiDMoveAction();
-
-		MainApplication.getMenu().dataMenu.add(action);
-		MainApplication.getMenu().dataMenu.add(add);
-		MainApplication.getMenu().fileMenu.add(action);
-		MainApplication.getMenu().fileMenu.add(add);
+		JMenu dataMenu = MainApplication.getMenu().dataMenu;
+		MainMenu.add(dataMenu, new RapiDAction(), false);
+		MainMenu.add(dataMenu, new RapiDMoveAction(), false);
 	}
 }
