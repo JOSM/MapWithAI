@@ -131,3 +131,11 @@ build with java 13:
   dependencies:
     - assemble with java 13
   allow_failure: true
+
+java:
+  stage: test
+  script:
+  - gradle test
+  artifacts:
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
