@@ -20,7 +20,7 @@ public class RapiDAction extends JosmAction {
 
 	public RapiDAction() {
 		super(RapiDPlugin.NAME, null, tr("Get data from RapiD"),
-				Shortcut.registerShortcut("data:rapid", tr("Data: {0}", tr("RapiD")), KeyEvent.VK_D, Shortcut.SHIFT),
+				Shortcut.registerShortcut("data:rapid", tr("Data: {0}", tr("RapiD")), KeyEvent.VK_R, Shortcut.SHIFT),
 				true);
 	}
 
