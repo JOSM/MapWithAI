@@ -117,7 +117,7 @@ public class RapiDAddCommand extends Command {
 	 *                  when calling.
 	 */
 	public static void addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
-		int index = Math.min(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
+		int index = Math.max(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
 		way.addNode(index, toAddNode);
 	}
 

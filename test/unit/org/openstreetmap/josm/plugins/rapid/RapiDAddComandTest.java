@@ -66,5 +66,6 @@ public class RapiDAddComandTest {
 		ds1.addPrimitive(way1);
 		RapiDAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode()));
 		Assert.assertEquals(3, way1.getNodesCount());
+		Assert.assertFalse(way1.isFirstLastNode(way2.firstNode()));
 	}
 }
