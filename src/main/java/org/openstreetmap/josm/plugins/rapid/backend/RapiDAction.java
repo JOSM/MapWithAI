@@ -61,6 +61,8 @@ public class RapiDAction extends JosmAction {
 		for (final Bounds bound : editSetBounds) {
 			if (!rapidBounds.contains(bound)) {
 				final DataSet newData = RapiDDataUtils.getData(bound.toBBox());
+				/* Microsoft buildings don't have a source, so we add one */
+				RapiDDataUtils.addSourceTags(newData, "building", "Microsoft");
 				synchronized (layer) {
 					layer.unlock();
 					layer.mergeFrom(newData);

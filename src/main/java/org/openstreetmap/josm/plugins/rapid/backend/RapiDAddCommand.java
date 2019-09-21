@@ -17,7 +17,6 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
-import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
@@ -54,11 +53,12 @@ public class RapiDAddCommand extends Command {
 			throw new IllegalArgumentException();
 		}
 		primitives = new HashSet<>(primitives);
-		addPrimitivesToCollection(/* collection= */ primitives, /* primitives= */ primitives);
+		RapiDDataUtils.addPrimitivesToCollection(/* collection= */ primitives, /* primitives= */ primitives);
 		synchronized (this) {
 			rapid.unlock();
 			Collection<OsmPrimitive> newPrimitives = new TreeSet<>(moveCollection(rapid, editable, primitives));
 			createConnections(editable, newPrimitives);
+			RapiDDataUtils.removePrimitivesFromDataSet(primitives);
 			rapid.lock();
 		}
 		return true;
@@ -67,6 +67,8 @@ public class RapiDAddCommand extends Command {
 	/**
 	 * Create connections based off of current RapiD syntax
 	 *
+	 * @param dataSet    The {@link DataSet} that should have the primitives we are
+	 *                   connecting to
 	 * @param collection The primitives with connection information (currently only
 	 *                   checks Nodes)
 	 */
@@ -75,7 +77,7 @@ public class RapiDAddCommand extends Command {
 		for (Node node : nodes) {
 			if (node.hasKey("conn")) {
 				// Currently w<way id>,n<node1>,n<node2>
-				String[] connections = node.get("conn").split(",");
+				String[] connections = node.get("conn").split(",", -1);
 				OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
 				for (int i = 0; i < connections.length; i++) {
 					String member = connections[i];
@@ -113,8 +115,6 @@ public class RapiDAddCommand extends Command {
 	 * @param first     The first node in a waysegment (the node is between this and
 	 *                  the second node)
 	 * @param second    The second node in a waysegemnt
-	 * @param recursion The recursion (how many times this has called itself). Use 0
-	 *                  when calling.
 	 */
 	public static void addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
 		int index = Math.max(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
@@ -144,24 +144,6 @@ public class RapiDAddCommand extends Command {
 		addPrimitivesCommand = new AddPrimitivesCommand(primitiveDataList, primitiveDataList, to);
 		addPrimitivesCommand.executeCommand();
 		return addPrimitivesCommand.getParticipatingPrimitives();
-	}
-
-	/**
-	 * Add primitives and their children to a collection
-	 *
-	 * @param collection A collection to add the primitives to
-	 * @param primitives The primitives to add to the collection
-	 */
-	public static void addPrimitivesToCollection(Collection<OsmPrimitive> collection,
-			Collection<OsmPrimitive> primitives) {
-		for (OsmPrimitive primitive : primitives) {
-			if (primitive instanceof Way) {
-				collection.addAll(((Way) primitive).getNodes());
-			} else if (primitive instanceof Relation) {
-				addPrimitivesToCollection(collection, ((Relation) primitive).getMemberPrimitives());
-			}
-			collection.add(primitive);
-		}
 	}
 
 	@Override

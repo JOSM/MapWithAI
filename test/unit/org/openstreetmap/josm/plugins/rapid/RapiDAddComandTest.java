@@ -1,9 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.rapid;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -12,7 +11,6 @@ import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDAddCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -22,7 +20,7 @@ public class RapiDAddComandTest {
 	public JOSMTestRules test = new JOSMTestRules();
 
 	@Test
-	public void testMoveCollection() {
+	public void testMoveCollectionSingleParent() {
 		DataSet ds1 = new DataSet();
 		DataSet ds2 = new DataSet();
 		Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
@@ -37,17 +35,33 @@ public class RapiDAddComandTest {
 		Assert.assertTrue(ds2.containsWay(way1));
 		Assert.assertTrue(ds2.containsNode(way1.firstNode()));
 		Assert.assertTrue(ds2.containsNode(way1.lastNode()));
-		// Assert.assertFalse(ds1.containsWay(way1)); // Only if we delete ways from
-		// rapid dataset
+		Assert.assertFalse(ds1.containsWay(way1));
 	}
 
 	@Test
-	public void testAddPrimitivesToCollection() {
+	public void testMoveCollectionMultipleParent() {
+
+		DataSet ds1 = new DataSet();
+		DataSet ds2 = new DataSet();
 		Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
-		Collection<OsmPrimitive> collection = new TreeSet<>();
-		Assert.assertEquals(0, collection.size());
-		RapiDAddCommand.addPrimitivesToCollection(collection, Collections.singletonList(way1));
-		Assert.assertEquals(3, collection.size());
+		Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.2)), way1.firstNode());
+		for (Node node : way1.getNodes()) {
+			ds1.addPrimitive(node);
+		}
+		for (Node node : way2.getNodes()) {
+			if (!ds1.containsNode(node)) {
+				ds1.addPrimitive(node);
+			}
+		}
+		ds1.addPrimitive(way1);
+		ds1.addPrimitive(way2);
+		ds1.lock();
+		RapiDAddCommand command = new RapiDAddCommand(ds1, ds2, Arrays.asList(way1, way2));
+		command.executeCommand();
+		Assert.assertTrue(ds2.containsWay(way1));
+		Assert.assertTrue(ds2.containsNode(way1.firstNode()));
+		Assert.assertTrue(ds2.containsNode(way1.lastNode()));
+		Assert.assertFalse(ds1.containsWay(way1));
 	}
 
 	@Test
