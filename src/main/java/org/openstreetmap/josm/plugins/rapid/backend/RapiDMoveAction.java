@@ -11,6 +11,7 @@ import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
 import org.openstreetmap.josm.tools.Shortcut;
@@ -42,5 +43,29 @@ public class RapiDMoveAction extends JosmAction {
 				UndoRedoHandler.getInstance().add(command);
 			}
 		}
+	}
+
+	@Override
+	protected void updateEnabledState() {
+		setEnabled(checkIfActionEnabled());
+	}
+
+	@Override
+	protected void updateEnabledState(Collection<? extends OsmPrimitive> selection) {
+		if (selection == null || selection.isEmpty()) {
+			setEnabled(false);
+		} else {
+			setEnabled(checkIfActionEnabled());
+		}
+	}
+
+	private boolean checkIfActionEnabled() {
+		Layer active = getLayerManager().getActiveLayer();
+		if (active instanceof RapiDLayer) {
+			RapiDLayer rapid = (RapiDLayer) active;
+			Collection<OsmPrimitive> selection = rapid.getDataSet().getAllSelected();
+			return (selection != null && !selection.isEmpty());
+		} else
+			return false;
 	}
 }
