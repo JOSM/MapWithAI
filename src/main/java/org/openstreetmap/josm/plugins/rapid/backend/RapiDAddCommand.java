@@ -19,6 +19,8 @@ import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
@@ -30,6 +32,17 @@ public class RapiDAddCommand extends Command {
 	AddPrimitivesCommand addPrimitivesCommand;
 	Collection<OsmPrimitive> modifiedPrimitives;
 
+	OsmDataLayer editLayer = null;
+
+	public RapiDAddCommand(RapiDLayer rapidLayer, OsmDataLayer editLayer, Collection<OsmPrimitive> selection) {
+		super(rapidLayer.getDataSet());
+		this.rapid = rapidLayer.getDataSet();
+		this.editable = editLayer.getDataSet();
+		this.primitives = selection;
+		this.editLayer = editLayer;
+		modifiedPrimitives = null;
+
+	}
 	/**
 	 * Add primitives from RapiD to the OSM data layer
 	 *
@@ -60,6 +73,11 @@ public class RapiDAddCommand extends Command {
 			createConnections(editable, newPrimitives);
 			RapiDDataUtils.removePrimitivesFromDataSet(primitives);
 			rapid.lock();
+		}
+		if (editLayer != null) {
+			MainApplication.getLayerManager().setActiveLayer(editLayer);
+			editable.setSelected(
+					editable.getSelected().stream().filter(OsmPrimitive::isTagged).collect(Collectors.toSet()));
 		}
 		return true;
 	}

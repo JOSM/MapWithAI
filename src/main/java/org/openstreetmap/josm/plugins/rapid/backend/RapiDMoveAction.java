@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.UndoRedoHandler;
-import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -27,20 +26,19 @@ public class RapiDMoveAction extends JosmAction {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		for (RapiDLayer layer : MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class)) {
+		for (RapiDLayer rapid : MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class)) {
 			List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
-			DataSet editData = null;
-			DataSet rapid = layer.getDataSet();
-			Collection<OsmPrimitive> selected = rapid.getSelected();
+			OsmDataLayer editLayer = null;
+			Collection<OsmPrimitive> selected = rapid.getDataSet().getSelected();
 			for (OsmDataLayer osmLayer : osmLayers) {
 				if (!osmLayer.isLocked() && osmLayer.isVisible() && osmLayer.isUploadable()
 						&& osmLayer.getClass().equals(OsmDataLayer.class)) {
-					editData = osmLayer.getDataSet();
+					editLayer = osmLayer;
 					break;
 				}
 			}
-			if (editData != null) {
-				RapiDAddCommand command = new RapiDAddCommand(rapid, editData, selected);
+			if (editLayer != null) {
+				RapiDAddCommand command = new RapiDAddCommand(rapid, editLayer, selected);
 				UndoRedoHandler.getInstance().add(command);
 			}
 		}
