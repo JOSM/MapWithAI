@@ -86,6 +86,7 @@ sourceSets {
 tasks.processResources {
   from("$projectDir/LICENSE")
   from("$projectDir/README.md")
+  from("$projectDir/src/resources")
 }
 
 archivesBaseName = "rapid"

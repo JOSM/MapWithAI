@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -15,6 +16,10 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.preferences.sources.ExtendedSourceEntry;
+import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
+import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
+import org.openstreetmap.josm.data.preferences.sources.SourceType;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
@@ -137,5 +142,16 @@ public final class RapiDDataUtils {
 			temporaryCollection.add(primitive);
 		}
 		collection.addAll(temporaryCollection);
+	}
+
+	public static void addRapiDPaintStyles() {
+		// TODO figure out how to use the one in the jar file
+		ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
+				"https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
+		List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
+		if (!paintStyles.contains(rapid)) {
+			paintStyles.add(rapid);
+		}
+		MapPaintPrefHelper.INSTANCE.put(paintStyles);
 	}
 }
