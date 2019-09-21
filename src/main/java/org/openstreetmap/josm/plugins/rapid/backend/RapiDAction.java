@@ -26,24 +26,38 @@ public class RapiDAction extends JosmAction {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		final RapiDLayer layer = getLayer();
+		final RapiDLayer layer = getLayer(true);
 		getRapiDData(layer);
 	}
 
-	public RapiDLayer getLayer() {
+	/**
+	 * Get the first {@link RapiDLayer} that we can find.
+	 *
+	 * @param create true if we want to create a new layer
+	 * @return A RapiDLayer, or a new RapiDLayer if none exist. May return
+	 *         {@code null} if {@code create} is {@code false}.
+	 */
+	public RapiDLayer getLayer(boolean create) {
 		final List<RapiDLayer> rapidLayers = MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class);
 		RapiDLayer layer;
 		synchronized (this) {
-			if (rapidLayers.isEmpty()) {
+			if (rapidLayers.isEmpty() && create) {
 				layer = new RapiDLayer(new DataSet(), RapiDPlugin.NAME, null);
 				MainApplication.getLayerManager().addLayer(layer);
-			} else {
+			} else if (!rapidLayers.isEmpty()) {
 				layer = rapidLayers.get(0);
+			} else {
+				layer = null;
 			}
 		}
 		return layer;
 	}
 
+	/**
+	 * Get data for a {@link RapiDLayer}
+	 *
+	 * @param layer The {@link RapiDLayer} to add data to
+	 */
 	public void getRapiDData(RapiDLayer layer) {
 		final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
 		for (final OsmDataLayer osmLayer : osmLayers) {
@@ -53,6 +67,12 @@ public class RapiDAction extends JosmAction {
 		}
 	}
 
+	/**
+	 * Get the data for RapiD
+	 *
+	 * @param layer    A pre-existing {@link RapiDLayer}
+	 * @param osmLayer The osm datalayer with a set of bounds
+	 */
 	public void getRapiDData(RapiDLayer layer, OsmDataLayer osmLayer) {
 		final DataSet editSet = osmLayer.getDataSet();
 		final List<Bounds> editSetBounds = editSet.getDataSourceBounds();
@@ -69,6 +89,15 @@ public class RapiDAction extends JosmAction {
 					layer.lock();
 				}
 			}
+		}
+	}
+
+	@Override
+	protected void updateEnabledState() {
+		if (getLayerManager().getEditDataSet() == null) {
+			setEnabled(false);
+		} else {
+			setEnabled(true);
 		}
 	}
 }
