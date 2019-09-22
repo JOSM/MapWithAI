@@ -74,5 +74,16 @@ public class RapiDAddComandTest {
 		RapiDAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode()));
 		Assert.assertEquals(3, way1.getNodesCount());
 		Assert.assertFalse(way1.isFirstLastNode(way2.firstNode()));
+
+		Way way3 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+				new Node(new LatLon(-0.1, -0.1)));
+		way3.firstNode().put("dupe", "n".concat(Long.toString(way1.firstNode().getUniqueId())));
+		way3.getNodes().forEach(node -> ds1.addPrimitive(node));
+		ds1.addPrimitive(way3);
+		Node way3Node1 = way3.firstNode();
+		RapiDAddCommand.createConnections(ds1, Collections.singletonList(way3.firstNode()));
+		Assert.assertNotEquals(way3Node1, way3.firstNode());
+		Assert.assertEquals(way1.firstNode(), way3.firstNode());
+		Assert.assertFalse(ds1.containsNode(way3Node1));
 	}
 }

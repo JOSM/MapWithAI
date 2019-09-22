@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.rapid.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,12 +18,15 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
+import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Utils;
 
 public class RapiDAddCommand extends Command {
@@ -95,20 +99,7 @@ public class RapiDAddCommand extends Command {
 		for (Node node : nodes) {
 			if (node.hasKey("conn")) {
 				// Currently w<way id>,n<node1>,n<node2>
-				String[] connections = node.get("conn").split(",", -1);
-				OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
-				for (int i = 0; i < connections.length; i++) {
-					String member = connections[i];
-					long id = Long.parseLong(member.substring(1));
-					char firstChar = member.charAt(0);
-					if (firstChar == 'w') {
-						primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.WAY);
-					} else if (firstChar == 'n') {
-						primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.NODE);
-					} else if (firstChar == 'r') {
-						primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.RELATION);
-					}
-				}
+				OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get("conn"));
 				for (int i = 0; i < primitiveConnections.length / 3; i++) {
 					if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
 							&& primitiveConnections[i + 2] instanceof Node) {
@@ -119,10 +110,43 @@ public class RapiDAddCommand extends Command {
 								primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
 					}
 				}
-				Logging.error("RapiD: Removing conn from {0} in {1}", node, dataSet.getName());
+				Logging.debug("RapiD: Removing conn from {0} in {1}", node, dataSet.getName());
 				node.remove("conn");
 			}
+			if (node.hasKey("dupe")) {
+				OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get("dupe"));
+				if (primitiveConnections.length != 1) {
+					Logging.error("RapiD: dupe connection connected to more than one node? (dupe={0})",
+							node.get("dupe"));
+				}
+				replaceNode(node, (Node) primitiveConnections[0]);
+			}
 		}
+	}
+
+	/**
+	 * Get the primitives from a dataset with specified ids
+	 *
+	 * @param dataSet The dataset holding the primitives (hopefully)
+	 * @param ids     The ids formated like n<NUMBER>,r<NUMBER>,w<NUMBER>
+	 * @return The primitives that the ids point to, if in the dataset.
+	 */
+	private static OsmPrimitive[] getPrimitives(DataSet dataSet, String ids) {
+		String[] connections = ids.split(",", -1);
+		OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
+		for (int i = 0; i < connections.length; i++) {
+			String member = connections[i];
+			long id = Long.parseLong(member.substring(1));
+			char firstChar = member.charAt(0);
+			if (firstChar == 'w') {
+				primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.WAY);
+			} else if (firstChar == 'n') {
+				primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.NODE);
+			} else if (firstChar == 'r') {
+				primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.RELATION);
+			}
+		}
+		return primitiveConnections;
 	}
 
 	/**
@@ -137,6 +161,42 @@ public class RapiDAddCommand extends Command {
 	public static void addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
 		int index = Math.max(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
 		way.addNode(index, toAddNode);
+	}
+
+	public static void replaceNode(Node original, Node newNode) {
+		for (OsmPrimitive primitive : original.getReferrers()) {
+			if (primitive instanceof Way) {
+				Way way = (Way) primitive;
+				List<Integer> indexes = new ArrayList<>();
+				List<Node> nodes = way.getNodes();
+				for (int i = 0; i < nodes.size(); i++) {
+					if (nodes.get(i).equals(original)) {
+						indexes.add(i);
+					}
+				}
+				while (way.getNodes().contains(original)) {
+					way.removeNode(original);
+				}
+				for (int index : indexes) {
+					way.addNode(index, newNode);
+				}
+			} else if (primitive instanceof Relation) {
+				List<Pair<Integer, RelationMember>> replaceMembers = new ArrayList<>();
+				Relation relation = (Relation) primitive;
+				List<RelationMember> relationMembers = relation.getMembers();
+				for (int i = 0; i < relationMembers.size(); i++) {
+					RelationMember member = relationMembers.get(i);
+					if (member.getMember().equals(original)) {
+						replaceMembers.add(new Pair<>(i, new RelationMember(member.getRole(), newNode)));
+					}
+				}
+				relation.removeMembersFor(original);
+				for (Pair<Integer, RelationMember> pair : replaceMembers) {
+					relation.addMember(pair.a, pair.b);
+				}
+			}
+		}
+		original.getDataSet().removePrimitive(original);
 	}
 
 	/**
