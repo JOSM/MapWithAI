@@ -149,9 +149,11 @@ public final class RapiDDataUtils {
 		ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
 				"https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
 		List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
-		if (!paintStyles.contains(rapid)) {
-			paintStyles.add(rapid);
+		for (SourceEntry paintStyle : paintStyles) {
+			if (rapid.url.equals(paintStyle.url))
+				return;
 		}
+		paintStyles.add(rapid);
 		MapPaintPrefHelper.INSTANCE.put(paintStyles);
 	}
 }

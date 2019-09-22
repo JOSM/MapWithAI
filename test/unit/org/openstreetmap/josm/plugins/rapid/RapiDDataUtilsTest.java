@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.rapid;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.TreeSet;
 
 import org.junit.Assert;
@@ -15,12 +16,14 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
+import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class RapiDDataUtilsTest {
 	@Rule
-	public JOSMTestRules test = new JOSMTestRules();
+	public JOSMTestRules test = new JOSMTestRules().preferences();
 
 	/**
 	 * This gets data from RapiD. This test may fail if someone adds the data to OSM.
@@ -76,5 +79,19 @@ public class RapiDDataUtilsTest {
 		Assert.assertEquals(3, ds1.allPrimitives().size());
 		RapiDDataUtils.removePrimitivesFromDataSet(Collections.singleton(way1));
 		Assert.assertEquals(0, ds1.allPrimitives().size());
+	}
+
+	@Test
+	public void testAddPaintStyle() {
+		List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
+		// There are two default paint styles
+		Assert.assertEquals(2, paintStyles.size());
+		RapiDDataUtils.addRapiDPaintStyles();
+		paintStyles = MapPaintPrefHelper.INSTANCE.get();
+		Assert.assertEquals(3, paintStyles.size());
+		RapiDDataUtils.addRapiDPaintStyles();
+		paintStyles = MapPaintPrefHelper.INSTANCE.get();
+		Assert.assertEquals(3, paintStyles.size());
+		RapiDDataUtils.addRapiDPaintStyles();
 	}
 }
