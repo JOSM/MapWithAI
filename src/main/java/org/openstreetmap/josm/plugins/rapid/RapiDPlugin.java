@@ -5,6 +5,7 @@ import javax.swing.JMenu;
 
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
+import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDAction;
@@ -14,6 +15,9 @@ import org.openstreetmap.josm.plugins.rapid.backend.RapiDMoveAction;
 public final class RapiDPlugin extends Plugin {
 	/** The name of the plugin */
 	public static final String NAME = "RapiD";
+	private static String versionInfo;
+
+	private final PreferenceSetting preferences = new RapiDPreferences();
 
 	public RapiDPlugin(PluginInformation info) {
 		super(info);
@@ -23,5 +27,16 @@ public final class RapiDPlugin extends Plugin {
 		MainMenu.add(dataMenu, new RapiDMoveAction(), false);
 
 		RapiDDataUtils.addRapiDPaintStyles();
+
+		versionInfo = info.localversion;
+	}
+
+	@Override
+	public PreferenceSetting getPreferenceSetting() {
+		return preferences;
+	}
+
+	public static String getVersionInfo() {
+		return versionInfo;
 	}
 }
