@@ -4,10 +4,10 @@ package org.openstreetmap.josm.plugins.rapid.backend;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
 import org.openstreetmap.josm.data.osm.BBox;
@@ -23,6 +23,7 @@ import org.openstreetmap.josm.data.preferences.sources.SourceType;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -30,16 +31,7 @@ import org.openstreetmap.josm.tools.Logging;
  *
  */
 public final class RapiDDataUtils {
-	private static final String RAPID_API_TOKEN = "ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C";
-	private static final Set<String> API_LIST = new HashSet<>();
-	static {
-		addRapidApi(new StringBuilder().append("https://www.facebook.com/maps/ml_roads?").append("conflate_with_osm=")
-				.append(true).append("&").append("theme=")
-				.append("ml_road_vector").append("&").append("collaborator=").append("fbid").append("&")
-				.append("token=").append(RAPID_API_TOKEN).append("&").append("hash=").append("ASYM8LPNy8k1XoJiI7A")
-				.append("&").append("result_type=").append("road_building_vector_xml")
-				.append("&").append("bbox={bbox}").toString());
-	}
+	public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=fbid&token=ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C&hash=ASYM8LPNy8k1XoJiI7A&result_type=road_building_vector_xml&bbox={bbox}";
 
 	private RapiDDataUtils() {
 		// Hide the constructor
@@ -54,22 +46,21 @@ public final class RapiDDataUtils {
 	public static DataSet getData(BBox bbox) {
 		InputStream inputStream = null;
 		DataSet dataSet = new DataSet();
-		for (String urlString : API_LIST) {
-			try {
-				final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
-				Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, url.toString());
+		String urlString = getRapiDURL();
+		try {
+			final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
+			Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, url.toString());
 
-				inputStream = url.openStream();
-				dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
-			} catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-				Logging.debug(e);
-			} finally {
-				if (inputStream != null) {
-					try {
-						inputStream.close();
-					} catch (IOException e) {
-						Logging.debug(e);
-					}
+			inputStream = url.openStream();
+			dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
+		} catch (UnsupportedOperationException | IllegalDataException | IOException e) {
+			Logging.debug(e);
+		} finally {
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					Logging.debug(e);
 				}
 			}
 		}
@@ -89,15 +80,6 @@ public final class RapiDDataUtils {
 			p.put("source", source);
 			p.save();
 		});
-	}
-
-	/**
-	 * Add a url to the the API_LIST
-	 *
-	 * @param url A url with a "{bbox}" inside it (this is what gets replaced in {@link RapiDDataUtils#getData})
-	 */
-	public static void addRapidApi(String url) {
-		API_LIST.add(url);
 	}
 
 	/**
@@ -142,6 +124,54 @@ public final class RapiDDataUtils {
 			temporaryCollection.add(primitive);
 		}
 		collection.addAll(temporaryCollection);
+	}
+
+	/**
+	 * Get the current RapiD url
+	 *
+	 * @return A RapiD url
+	 */
+	public static String getRapiDURL() {
+		List<String> urls = getRapiDURLs();
+		String url = Config.getPref().get(RapiDPlugin.NAME.concat(".current_api"), DEFAULT_RAPID_API);
+		if (!urls.contains(url)) {
+			url = DEFAULT_RAPID_API;
+			setRapiDUrl(DEFAULT_RAPID_API);
+		}
+		return url;
+	}
+
+	/**
+	 * Set the RapiD url
+	 *
+	 * @param url The url to set as the default
+	 */
+	public static void setRapiDUrl(String url) {
+		List<String> urls = getRapiDURLs();
+		if (!urls.contains(url)) {
+			urls.add(url);
+			setRapiDURLs(urls);
+		}
+		Config.getPref().put(RapiDPlugin.NAME.concat(".current_api"), url);
+	}
+
+	/**
+	 * Set the RapiD urls
+	 *
+	 * @param urls A list of URLs
+	 */
+	public static void setRapiDURLs(List<String> urls) {
+		Config.getPref().putList(RapiDPlugin.NAME.concat(".apis"), urls);
+	}
+
+	/**
+	 * Get the RapiD urls (or the default)
+	 *
+	 * @return The urls for RapiD endpoints
+	 */
+	public static List<String> getRapiDURLs() {
+		return Config.getPref().getList(RapiDPlugin.NAME.concat(".apis"),
+				new ArrayList<>(Arrays.asList(DEFAULT_RAPID_API)));
 	}
 
 	public static void addRapiDPaintStyles() {

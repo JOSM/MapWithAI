@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.rapid;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -93,5 +94,22 @@ public class RapiDDataUtilsTest {
 		paintStyles = MapPaintPrefHelper.INSTANCE.get();
 		Assert.assertEquals(3, paintStyles.size());
 		RapiDDataUtils.addRapiDPaintStyles();
+	}
+
+	@Test
+	public void testRapiDURLPreferences() {
+		String fakeUrl = "https://fake.url";
+		Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
+		RapiDDataUtils.setRapiDUrl(fakeUrl);
+		Assert.assertEquals(fakeUrl, RapiDDataUtils.getRapiDURL());
+		List<String> urls = new ArrayList<>(RapiDDataUtils.getRapiDURLs());
+		Assert.assertEquals(2, urls.size());
+		RapiDDataUtils.setRapiDUrl(RapiDDataUtils.DEFAULT_RAPID_API);
+		Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
+		RapiDDataUtils.setRapiDUrl(fakeUrl);
+		Assert.assertEquals(fakeUrl, RapiDDataUtils.getRapiDURL());
+		urls.remove(fakeUrl);
+		RapiDDataUtils.setRapiDURLs(urls);
+		Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
 	}
 }
