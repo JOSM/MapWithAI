@@ -31,6 +31,7 @@ public class RapiDPreferences implements SubPreferenceSetting {
 		}
 
 		possibleRapidApiUrl.setEditable(true);
+		possibleRapidApiUrl.setPrototypeDisplayValue("https://example.url/some/end/point");
 		possibleRapidApiUrl.setSelectedItem(RapiDDataUtils.getRapiDURL());
 
 		constraints.gridx = 0;

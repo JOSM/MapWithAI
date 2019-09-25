@@ -11,10 +11,10 @@ plugins {
   id "jacoco"
   id "maven-publish"
   id "pmd"
-  id "com.github.ben-manes.versions" version "0.20.0"
+  id "com.github.ben-manes.versions" version "0.25.0"
   id "com.github.spotbugs" version "2.0.0"
   id "org.openstreetmap.josm" version "0.6.1"
-  id "net.ltgt.errorprone" version "0.7.1"
+  id "net.ltgt.errorprone" version "0.8.1"
   id 'de.aaschmid.cpd' version '2.0'
 }
 
@@ -35,11 +35,13 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 def versions = [
+  awaitility: "4.0.1",
   errorprone: "2.3.3",
   jacoco: "0.8.2",
-  junit: "5.4.0",
+  junit: "5.5.2",
   pmd: "6.6.0",
-  spotbugs: "3.1.11",
+  spotbugs: "3.1.12",
+  wiremock: "2.24.1",
 ]
 
 repositories {
@@ -56,8 +58,8 @@ dependencies {
   testImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
   testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
-  testImplementation("com.github.tomakehurst:wiremock:2.21.0")
-  testImplementation("org.awaitility:awaitility:3.1.6")
+  testImplementation("com.github.tomakehurst:wiremock:${versions.wiremock}")
+  testImplementation("org.awaitility:awaitility:${versions.awaitility}")
 }
 
 // Add dependencies from ivy.xml
