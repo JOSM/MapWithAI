@@ -39,10 +39,10 @@ public class RapiDAction extends JosmAction {
      * @return A RapiDLayer, or a new RapiDLayer if none exist. May return
      *         {@code null} if {@code create} is {@code false}.
      */
-    public RapiDLayer getLayer(boolean create) {
+    public static RapiDLayer getLayer(boolean create) {
         final List<RapiDLayer> rapidLayers = MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class);
         RapiDLayer layer;
-        synchronized (this) {
+        synchronized (layerLock) {
             if (rapidLayers.isEmpty() && create) {
                 layer = new RapiDLayer(new DataSet(), RapiDPlugin.NAME, null);
                 MainApplication.getLayerManager().addLayer(layer);
@@ -60,7 +60,7 @@ public class RapiDAction extends JosmAction {
      *
      * @param layer The {@link RapiDLayer} to add data to
      */
-    public void getRapiDData(RapiDLayer layer) {
+    public static void getRapiDData(RapiDLayer layer) {
         final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
         for (final OsmDataLayer osmLayer : osmLayers) {
             if (!osmLayer.isLocked()) {
@@ -75,13 +75,18 @@ public class RapiDAction extends JosmAction {
      * @param layer    A pre-existing {@link RapiDLayer}
      * @param osmLayer The osm datalayer with a set of bounds
      */
-    public void getRapiDData(RapiDLayer layer, OsmDataLayer osmLayer) {
+    public static void getRapiDData(RapiDLayer layer, OsmDataLayer osmLayer) {
         final DataSet editSet = osmLayer.getDataSet();
         final List<Bounds> editSetBounds = editSet.getDataSourceBounds();
         final DataSet rapidSet = layer.getDataSet();
         final List<Bounds> rapidBounds = rapidSet.getDataSourceBounds();
         for (final Bounds bound : editSetBounds) {
-            if (!rapidBounds.contains(bound)) {
+            for (final Bounds rapidBound : rapidBounds) {
+                if (bound.equals(rapidBound)) {
+                    continue;
+                }
+            }
+            if (rapidBounds.parallelStream().filter(bound::equals).count() == 0) {
                 final DataSet newData = RapiDDataUtils.getData(bound.toBBox());
                 /* Microsoft buildings don't have a source, so we add one */
                 RapiDDataUtils.addSourceTags(newData, "building", "Microsoft");
@@ -96,10 +101,6 @@ public class RapiDAction extends JosmAction {
 
     @Override
     protected void updateEnabledState() {
-        if (getLayerManager().getEditDataSet() == null) {
-            setEnabled(false);
-        } else {
-            setEnabled(true);
-        }
+        setEnabled(getLayerManager().getEditDataSet() != null);
     }
 }

@@ -42,10 +42,12 @@ def versions = [
   pmd: "6.6.0",
   spotbugs: "3.1.12",
   wiremock: "2.24.1",
+  jmockit: "1.48",
 ]
 
 repositories {
   jcenter()
+  mavenCentral()
 }
 dependencies {
   if (!JavaVersion.current().isJava9Compatible()) {
@@ -56,10 +58,12 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
   testImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
+  testCompile("org.jmockit:jmockit:${versions.jmockit}")
   testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
   testImplementation("com.github.tomakehurst:wiremock:${versions.wiremock}")
   testImplementation("org.awaitility:awaitility:${versions.awaitility}")
+  testCompile("org.jmockit:jmockit:${versions.jmockit}")
 }
 
 // Add dependencies from ivy.xml
@@ -73,6 +77,12 @@ ivyModule.dependencies.dependency.each {
 test {
   useJUnitPlatform()
   testLogging.exceptionFormat = 'full'
+}
+
+tasks.getByName("test") {
+  project.afterEvaluate {
+    jvmArgs("-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}")
+  }
 }
 
 sourceSets {

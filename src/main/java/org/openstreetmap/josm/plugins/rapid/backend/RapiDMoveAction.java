@@ -6,9 +6,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.UndoRedoHandler;
+import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -41,6 +43,12 @@ public class RapiDMoveAction extends JosmAction {
             if (editLayer != null) {
                 RapiDAddCommand command = new RapiDAddCommand(rapid, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
+                if (RapiDDataUtils.getSwitchLayers()) {
+                    MainApplication.getLayerManager().setActiveLayer(editLayer);
+                    DataSet editable = editLayer.getDataSet();
+                    editable.setSelected(
+                            editable.getSelected().stream().filter(OsmPrimitive::isTagged).collect(Collectors.toSet()));
+                }
             }
         }
     }

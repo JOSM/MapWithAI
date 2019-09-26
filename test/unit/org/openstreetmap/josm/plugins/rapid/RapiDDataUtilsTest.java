@@ -38,24 +38,19 @@ public class RapiDDataUtilsTest {
 
     @Test
     public void testAddSourceTags() {
-        BBox testBBox = getTestBBox();
-        DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
-        Assert.assertEquals(1, ds.getWays().size());
-        Way way1 = (Way) ds.getWays().toArray()[0];
-        String originalSource = way1.get("source");
-        Assert.assertNotNull(originalSource);
+        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
+        DataSet ds = new DataSet(way1.firstNode(), way1.lastNode(), way1);
+        String source = "random source";
 
-        way1.remove("source");
         Assert.assertNull(way1.get("source"));
-
-        RapiDDataUtils.addSourceTags(ds, "highway", originalSource);
-        Assert.assertEquals(originalSource, way1.get("source"));
+        RapiDDataUtils.addSourceTags(ds, "highway", source);
+        Assert.assertEquals(source, way1.get("source"));
     }
 
-    private static BBox getTestBBox() {
+    public static BBox getTestBBox() {
         BBox testBBox = new BBox();
-        testBBox.add(new LatLon(39.0768984, -108.5462553));
-        testBBox.add(new LatLon(39.0776276, -108.5452918));
+        testBBox.add(new LatLon(39.076, -108.547));
+        testBBox.add(new LatLon(39.078, -108.545));
         return testBBox;
     }
 

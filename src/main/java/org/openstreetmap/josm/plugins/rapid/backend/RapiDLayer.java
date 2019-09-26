@@ -21,6 +21,7 @@ public class RapiDLayer extends OsmDataLayer {
     public RapiDLayer(DataSet data, String name, File associatedFile) {
         super(data, name, associatedFile);
         this.lock();
+        this.setUploadDiscouraged(true);
     }
 
 	// @Override only JOSM > 15323
