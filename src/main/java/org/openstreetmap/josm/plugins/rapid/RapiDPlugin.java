@@ -13,30 +13,30 @@ import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDMoveAction;
 
 public final class RapiDPlugin extends Plugin {
-	/** The name of the plugin */
-	public static final String NAME = "RapiD";
-	private static String versionInfo;
+    /** The name of the plugin */
+    public static final String NAME = "RapiD";
+    private static String versionInfo;
 
-	private final PreferenceSetting preferences = new RapiDPreferences();
+    private final PreferenceSetting preferences = new RapiDPreferences();
 
-	public RapiDPlugin(PluginInformation info) {
-		super(info);
+    public RapiDPlugin(PluginInformation info) {
+        super(info);
 
-		JMenu dataMenu = MainApplication.getMenu().dataMenu;
-		MainMenu.add(dataMenu, new RapiDAction(), false);
-		MainMenu.add(dataMenu, new RapiDMoveAction(), false);
+        JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        MainMenu.add(dataMenu, new RapiDAction(), false);
+        MainMenu.add(dataMenu, new RapiDMoveAction(), false);
 
-		RapiDDataUtils.addRapiDPaintStyles();
+        RapiDDataUtils.addRapiDPaintStyles();
 
-		versionInfo = info.localversion;
-	}
+        versionInfo = info.localversion;
+    }
 
-	@Override
-	public PreferenceSetting getPreferenceSetting() {
-		return preferences;
-	}
+    @Override
+    public PreferenceSetting getPreferenceSetting() {
+        return preferences;
+    }
 
-	public static String getVersionInfo() {
-		return versionInfo;
-	}
+    public static String getVersionInfo() {
+        return versionInfo;
+    }
 }

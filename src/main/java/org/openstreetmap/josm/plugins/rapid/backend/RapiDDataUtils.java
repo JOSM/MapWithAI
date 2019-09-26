@@ -35,187 +35,187 @@ import org.openstreetmap.josm.tools.Logging;
  *
  */
 public final class RapiDDataUtils {
-	public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=fbid&token=ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C&hash=ASYM8LPNy8k1XoJiI7A&result_type=road_building_vector_xml&bbox={bbox}";
+    public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=fbid&token=ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C&hash=ASYM8LPNy8k1XoJiI7A&result_type=road_building_vector_xml&bbox={bbox}";
 
-	private RapiDDataUtils() {
-		// Hide the constructor
-	}
+    private RapiDDataUtils() {
+        // Hide the constructor
+    }
 
-	/**
-	 * Get a dataset from the API servers using a bbox
-	 *
-	 * @param bbox The bbox from which to get data
-	 * @return A DataSet with data inside the bbox
-	 */
-	public static DataSet getData(BBox bbox) {
-		InputStream inputStream = null;
-		DataSet dataSet = new DataSet();
-		String urlString = getRapiDURL();
-		try {
-			final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
-			HttpClient client = HttpClient.create(url);
-			StringBuilder defaultUserAgent = new StringBuilder();
-			defaultUserAgent.append(client.getHeaders().get("User-Agent"));
-			if (defaultUserAgent.length() == 0) {
-				defaultUserAgent.append("JOSM");
-			}
-			defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
-			client.setHeader("User-Agent", defaultUserAgent.toString());
-			Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
-			Response response = client.connect();
-			inputStream = response.getContent();
-			dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
-			response.disconnect();
-		} catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-			Logging.debug(e);
-		} finally {
-			if (inputStream != null) {
-				try {
-					inputStream.close();
-				} catch (IOException e) {
-					Logging.debug(e);
-				}
-			}
-		}
-		return dataSet;
-	}
+    /**
+     * Get a dataset from the API servers using a bbox
+     *
+     * @param bbox The bbox from which to get data
+     * @return A DataSet with data inside the bbox
+     */
+    public static DataSet getData(BBox bbox) {
+        InputStream inputStream = null;
+        DataSet dataSet = new DataSet();
+        String urlString = getRapiDURL();
+        try {
+            final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
+            HttpClient client = HttpClient.create(url);
+            StringBuilder defaultUserAgent = new StringBuilder();
+            defaultUserAgent.append(client.getHeaders().get("User-Agent"));
+            if (defaultUserAgent.length() == 0) {
+                defaultUserAgent.append("JOSM");
+            }
+            defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
+            client.setHeader("User-Agent", defaultUserAgent.toString());
+            Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
+            Response response = client.connect();
+            inputStream = response.getContent();
+            dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
+            response.disconnect();
+        } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
+            Logging.debug(e);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Logging.debug(e);
+                }
+            }
+        }
+        return dataSet;
+    }
 
-	/**
-	 * Add specified source tags to objects without a source tag that also have a
-	 * specific key
-	 *
-	 * @param dataSet    The {#link DataSet} to look through
-	 * @param primaryKey The primary key that must be in the {@link OsmPrimitive}
-	 * @param source     The specified source value (not tag)
-	 */
-	public static void addSourceTags(DataSet dataSet, String primaryKey, String source) {
-		dataSet.allPrimitives().stream().filter(p -> p.hasKey(primaryKey) && !p.hasKey("source")).forEach(p -> {
-			p.put("source", source);
-			p.save();
-		});
-	}
+    /**
+     * Add specified source tags to objects without a source tag that also have a
+     * specific key
+     *
+     * @param dataSet    The {#link DataSet} to look through
+     * @param primaryKey The primary key that must be in the {@link OsmPrimitive}
+     * @param source     The specified source value (not tag)
+     */
+    public static void addSourceTags(DataSet dataSet, String primaryKey, String source) {
+        dataSet.allPrimitives().stream().filter(p -> p.hasKey(primaryKey) && !p.hasKey("source")).forEach(p -> {
+            p.put("source", source);
+            p.save();
+        });
+    }
 
-	/**
-	 * Remove primitives and their children from a dataset.
-	 *
-	 * @param primitives The primitives to remove
-	 */
-	public static void removePrimitivesFromDataSet(Collection<OsmPrimitive> primitives) {
-		for (OsmPrimitive primitive : primitives) {
-			if (primitive instanceof Relation) {
-				removePrimitivesFromDataSet(((Relation) primitive).getMemberPrimitives());
-			} else if (primitive instanceof Way) {
-				for (Node node : ((Way) primitive).getNodes()) {
-					DataSet ds = node.getDataSet();
-					if (ds != null) {
-						ds.removePrimitive(node);
-					}
-				}
-			}
-			DataSet ds = primitive.getDataSet();
-			if (ds != null) {
-				ds.removePrimitive(primitive);
-			}
-		}
-	}
+    /**
+     * Remove primitives and their children from a dataset.
+     *
+     * @param primitives The primitives to remove
+     */
+    public static void removePrimitivesFromDataSet(Collection<OsmPrimitive> primitives) {
+        for (OsmPrimitive primitive : primitives) {
+            if (primitive instanceof Relation) {
+                removePrimitivesFromDataSet(((Relation) primitive).getMemberPrimitives());
+            } else if (primitive instanceof Way) {
+                for (Node node : ((Way) primitive).getNodes()) {
+                    DataSet ds = node.getDataSet();
+                    if (ds != null) {
+                        ds.removePrimitive(node);
+                    }
+                }
+            }
+            DataSet ds = primitive.getDataSet();
+            if (ds != null) {
+                ds.removePrimitive(primitive);
+            }
+        }
+    }
 
-	/**
-	 * Add primitives and their children to a collection
-	 *
-	 * @param collection A collection to add the primitives to
-	 * @param primitives The primitives to add to the collection
-	 */
-	public static void addPrimitivesToCollection(Collection<OsmPrimitive> collection,
-			Collection<OsmPrimitive> primitives) {
-		Collection<OsmPrimitive> temporaryCollection = new TreeSet<>();
-		for (OsmPrimitive primitive : primitives) {
-			if (primitive instanceof Way) {
-				temporaryCollection.addAll(((Way) primitive).getNodes());
-			} else if (primitive instanceof Relation) {
-				addPrimitivesToCollection(temporaryCollection, ((Relation) primitive).getMemberPrimitives());
-			}
-			temporaryCollection.add(primitive);
-		}
-		collection.addAll(temporaryCollection);
-	}
+    /**
+     * Add primitives and their children to a collection
+     *
+     * @param collection A collection to add the primitives to
+     * @param primitives The primitives to add to the collection
+     */
+    public static void addPrimitivesToCollection(Collection<OsmPrimitive> collection,
+            Collection<OsmPrimitive> primitives) {
+        Collection<OsmPrimitive> temporaryCollection = new TreeSet<>();
+        for (OsmPrimitive primitive : primitives) {
+            if (primitive instanceof Way) {
+                temporaryCollection.addAll(((Way) primitive).getNodes());
+            } else if (primitive instanceof Relation) {
+                addPrimitivesToCollection(temporaryCollection, ((Relation) primitive).getMemberPrimitives());
+            }
+            temporaryCollection.add(primitive);
+        }
+        collection.addAll(temporaryCollection);
+    }
 
-	/**
-	 * Get the current RapiD url
-	 *
-	 * @return A RapiD url
-	 */
-	public static String getRapiDURL() {
-		List<String> urls = getRapiDURLs();
-		String url = Config.getPref().get(RapiDPlugin.NAME.concat(".current_api"), DEFAULT_RAPID_API);
-		if (!urls.contains(url)) {
-			url = DEFAULT_RAPID_API;
-			setRapiDUrl(DEFAULT_RAPID_API);
-		}
-		return url;
-	}
+    /**
+     * Get the current RapiD url
+     *
+     * @return A RapiD url
+     */
+    public static String getRapiDURL() {
+        List<String> urls = getRapiDURLs();
+        String url = Config.getPref().get(RapiDPlugin.NAME.concat(".current_api"), DEFAULT_RAPID_API);
+        if (!urls.contains(url)) {
+            url = DEFAULT_RAPID_API;
+            setRapiDUrl(DEFAULT_RAPID_API);
+        }
+        return url;
+    }
 
-	/**
-	 * Set the RapiD url
-	 *
-	 * @param url The url to set as the default
-	 */
-	public static void setRapiDUrl(String url) {
-		List<String> urls = getRapiDURLs();
-		if (!urls.contains(url)) {
-			urls.add(url);
-			setRapiDURLs(urls);
-		}
-		Config.getPref().put(RapiDPlugin.NAME.concat(".current_api"), url);
-	}
+    /**
+     * Set the RapiD url
+     *
+     * @param url The url to set as the default
+     */
+    public static void setRapiDUrl(String url) {
+        List<String> urls = getRapiDURLs();
+        if (!urls.contains(url)) {
+            urls.add(url);
+            setRapiDURLs(urls);
+        }
+        Config.getPref().put(RapiDPlugin.NAME.concat(".current_api"), url);
+    }
 
-	/**
-	 * Set the RapiD urls
-	 *
-	 * @param urls A list of URLs
-	 */
-	public static void setRapiDURLs(List<String> urls) {
-		Config.getPref().putList(RapiDPlugin.NAME.concat(".apis"), urls);
-	}
+    /**
+     * Set the RapiD urls
+     *
+     * @param urls A list of URLs
+     */
+    public static void setRapiDURLs(List<String> urls) {
+        Config.getPref().putList(RapiDPlugin.NAME.concat(".apis"), urls);
+    }
 
-	/**
-	 * Get the RapiD urls (or the default)
-	 *
-	 * @return The urls for RapiD endpoints
-	 */
-	public static List<String> getRapiDURLs() {
-		return Config.getPref().getList(RapiDPlugin.NAME.concat(".apis"),
-				new ArrayList<>(Arrays.asList(DEFAULT_RAPID_API)));
-	}
+    /**
+     * Get the RapiD urls (or the default)
+     *
+     * @return The urls for RapiD endpoints
+     */
+    public static List<String> getRapiDURLs() {
+        return Config.getPref().getList(RapiDPlugin.NAME.concat(".apis"),
+                new ArrayList<>(Arrays.asList(DEFAULT_RAPID_API)));
+    }
 
-	/**
-	 * Add a paintstyle from the jar (TODO)
-	 */
-	public static void addRapiDPaintStyles() {
-		// TODO figure out how to use the one in the jar file
-		ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
-				"https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
-		List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
-		for (SourceEntry paintStyle : paintStyles) {
-			if (rapid.url.equals(paintStyle.url))
-				return;
-		}
-		paintStyles.add(rapid);
-		MapPaintPrefHelper.INSTANCE.put(paintStyles);
-	}
+    /**
+     * Add a paintstyle from the jar (TODO)
+     */
+    public static void addRapiDPaintStyles() {
+        // TODO figure out how to use the one in the jar file
+        ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
+                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
+        List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
+        for (SourceEntry paintStyle : paintStyles) {
+            if (rapid.url.equals(paintStyle.url))
+                return;
+        }
+        paintStyles.add(rapid);
+        MapPaintPrefHelper.INSTANCE.put(paintStyles);
+    }
 
-	/**
-	 * Set whether or not a we switch from the RapiD layer to an OSM data layer
-	 *
-	 * @param selected true if we are going to switch layers
-	 */
-	public static void setSwitchLayers(boolean selected) {
-		Config.getPref().putBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), selected);
-	}
+    /**
+     * Set whether or not a we switch from the RapiD layer to an OSM data layer
+     *
+     * @param selected true if we are going to switch layers
+     */
+    public static void setSwitchLayers(boolean selected) {
+        Config.getPref().putBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), selected);
+    }
 
-	/**
-	 * @return {@code true} if we want to automatically switch layers
-	 */
-	public static boolean getSwitchLayers() {
-		return Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
-	}
+    /**
+     * @return {@code true} if we want to automatically switch layers
+     */
+    public static boolean getSwitchLayers() {
+        return Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
+    }
 }
