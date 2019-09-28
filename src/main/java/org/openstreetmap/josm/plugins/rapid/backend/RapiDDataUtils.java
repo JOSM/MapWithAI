@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.rapid.backend;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -24,6 +26,8 @@ import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.tools.HttpClient;
+import org.openstreetmap.josm.tools.HttpClient.Response;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -49,10 +53,19 @@ public final class RapiDDataUtils {
 		String urlString = getRapiDURL();
 		try {
 			final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
-			Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, url.toString());
-
-			inputStream = url.openStream();
+			HttpClient client = HttpClient.create(url);
+			StringBuilder defaultUserAgent = new StringBuilder();
+			defaultUserAgent.append(client.getHeaders().get("User-Agent"));
+			if (defaultUserAgent.length() == 0) {
+				defaultUserAgent.append("JOSM");
+			}
+			defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
+			client.setHeader("User-Agent", defaultUserAgent.toString());
+			Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
+			Response response = client.connect();
+			inputStream = response.getContent();
 			dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
+			response.disconnect();
 		} catch (UnsupportedOperationException | IllegalDataException | IOException e) {
 			Logging.debug(e);
 		} finally {
