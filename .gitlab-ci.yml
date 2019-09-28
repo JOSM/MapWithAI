@@ -13,11 +13,11 @@ cache:
 #############################
 include:
   - template: Code-Quality.gitlab-ci.yml
-  - template: SAST.gitlab-ci.yml
-  - template: Dependency-Scanning.gitlab-ci.yml
-  - template: Container-Scanning.gitlab-ci.yml
-  - template: DAST.gitlab-ci.yml
-  - template: License-Management.gitlab-ci.yml
+    #- template: SAST.gitlab-ci.yml
+    #- template: Dependency-Scanning.gitlab-ci.yml
+    #- template: Container-Scanning.gitlab-ci.yml
+    #- template: DAST.gitlab-ci.yml
+    #- template: License-Management.gitlab-ci.yml
 
 ###############
 # Build stage #
