@@ -78,7 +78,7 @@ public class RapiDAddCommand extends Command {
 			RapiDDataUtils.removePrimitivesFromDataSet(primitives);
 			rapid.lock();
 		}
-		if (editLayer != null) {
+		if (editLayer != null && RapiDDataUtils.getSwitchLayers()) {
 			MainApplication.getLayerManager().setActiveLayer(editLayer);
 			editable.setSelected(
 					editable.getSelected().stream().filter(OsmPrimitive::isTagged).collect(Collectors.toSet()));

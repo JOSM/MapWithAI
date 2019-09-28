@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -19,6 +20,9 @@ public class RapiDPreferences implements SubPreferenceSetting {
 
 	private final JLabel rapidApiUrl = new JLabel(tr("RapiD API URL"));
 	private final JComboBox<String> possibleRapidApiUrl = new JComboBox<>();
+
+	private final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
+	private final JCheckBox switchLayerCheckBox = new JCheckBox();
 
 	@Override
 	public void addGui(PreferenceTabbedPane gui) {
@@ -34,6 +38,8 @@ public class RapiDPreferences implements SubPreferenceSetting {
 		possibleRapidApiUrl.setPrototypeDisplayValue("https://example.url/some/end/point");
 		possibleRapidApiUrl.setSelectedItem(RapiDDataUtils.getRapiDURL());
 
+		switchLayerCheckBox.setSelected(RapiDDataUtils.getSwitchLayers());
+
 		constraints.gridx = 0;
 		constraints.gridy = 0;
 		constraints.weightx = .1;
@@ -46,7 +52,13 @@ public class RapiDPreferences implements SubPreferenceSetting {
 		constraints.gridx++;
 		constraints.weightx = 1;
 		container.add(possibleRapidApiUrl, constraints);
-		gui.getMaximumSize().getWidth();
+
+		constraints.gridx--;
+		constraints.gridy++;
+		container.add(switchLayer, constraints);
+
+		constraints.gridx++;
+		container.add(switchLayerCheckBox, constraints);
 
 		getTabPreferenceSetting(gui).addSubTab(this, "RapiD", container);
 	}
@@ -54,6 +66,7 @@ public class RapiDPreferences implements SubPreferenceSetting {
 	@Override
 	public boolean ok() {
 		RapiDDataUtils.setRapiDUrl((String) possibleRapidApiUrl.getSelectedItem());
+		RapiDDataUtils.setSwitchLayers(switchLayerCheckBox.isSelected());
 		return false;
 	}
 

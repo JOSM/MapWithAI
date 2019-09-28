@@ -174,6 +174,9 @@ public final class RapiDDataUtils {
 				new ArrayList<>(Arrays.asList(DEFAULT_RAPID_API)));
 	}
 
+	/**
+	 * Add a paintstyle from the jar (TODO)
+	 */
 	public static void addRapiDPaintStyles() {
 		// TODO figure out how to use the one in the jar file
 		ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
@@ -185,5 +188,21 @@ public final class RapiDDataUtils {
 		}
 		paintStyles.add(rapid);
 		MapPaintPrefHelper.INSTANCE.put(paintStyles);
+	}
+
+	/**
+	 * Set whether or not a we switch from the RapiD layer to an OSM data layer
+	 *
+	 * @param selected true if we are going to switch layers
+	 */
+	public static void setSwitchLayers(boolean selected) {
+		Config.getPref().putBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), selected);
+	}
+
+	/**
+	 * @return {@code true} if we want to automatically switch layers
+	 */
+	public static boolean getSwitchLayers() {
+		return Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
 	}
 }
