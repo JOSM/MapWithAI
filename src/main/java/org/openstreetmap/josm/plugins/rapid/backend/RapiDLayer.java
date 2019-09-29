@@ -23,4 +23,8 @@ public class RapiDLayer extends OsmDataLayer {
 		this.lock();
 	}
 
+	// @Override only JOSM > 15323
+	public String getChangesetSourceTag() {
+		return "MapWithAI";
+	}
 }
