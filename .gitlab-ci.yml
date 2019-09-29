@@ -64,15 +64,15 @@ assemble with java 13:
 # Test stage #
 ##############
 
-#build:
-#  stage: test
-#  script:
-#  - ./gradlew build generatePot --stacktrace
-#  artifacts:
-#    paths:
-#    - build
-#  dependencies:
-#  - assemble
+build:
+  stage: test
+  script:
+  - ./gradlew build generatePot generateSnapshotUpdateSite --stacktrace
+  artifacts:
+    paths:
+    - build
+  dependencies:
+  - assemble
 
 compile against min JOSM:
   stage: test
@@ -122,3 +122,87 @@ junit tests:
   artifacts:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
+
+################
+# Deploy stage #
+################
+
+#upload to transifex:
+#  image: python:3.6-stretch
+#  stage: deploy
+#  environment:
+#    name: transifex
+#    url: https://www.transifex.com/josm/josm/josm-plugin_rapid/
+#  before_script:
+#  - apt-get update && apt-get install -yq gettext git
+#  - pip install git+https://github.com/transifex/transifex-client.git
+#  script:
+#  - TX_TOKEN="$TRANSIFEX_TOKEN" tx push -s --no-interactive
+#  dependencies:
+#  - build
+#  only:
+#  - master@smocktaylor/rapid
+
+release:
+  stage: deploy
+  environment:
+    name: pages branch / dist directory
+    url: https://gitlab.com/smocktaylor/rapid/tree/pages/dist
+  script:
+  - &clone_pages_branch |
+    echo "$SSH_PRIVATE_DEPLOY_KEY" > ~/.ssh/id_rsa
+    chmod 600 ~/.ssh/id_rsa
+    git clone --depth 1 --branch pages git@gitlab.com:smocktaylor/rapid.git pages
+  - |
+    version=`git describe --always --dirty`
+    longVersion=`git describe --always --long --dirty`
+    commitMessage="Release version $longVersion"
+  - |
+    mkdir -pv "pages/dist/$version"
+    cp -v build/dist/* build/tmp/jar/MANIFEST.MF "pages/dist/$version"
+    rm -fv "pages/dist/latest"
+    ln -s "./$version" "pages/dist/latest"
+  - &push_pages_branch |
+    cd pages/
+    git config user.name "Deploy with GitLab CI"
+    git config user.email "smocktaylor/rapid@gitlab.com"
+    git stage .
+    git commit -a -m "$commitMessage"
+    git push origin pages
+  dependencies:
+  - build
+  only:
+  - tags@smocktaylor/rapid
+
+publish master update site:
+  stage: deploy
+  environment:
+    name: pages branch / snapshot update site
+    url: https://gitlab.com/smocktaylor/rapid/tree/pages
+  script:
+  - *clone_pages_branch
+  - |
+    commitHash=`git rev-parse HEAD`
+    commitMessage="Make latest commit from master available via JOSM update site ($commitHash)"
+  - |
+    rm -vrf pages/snapshot/master
+    mkdir -pv pages/snapshot/master
+    cp -v build/snapshot-update-site pages/snapshot/master/update-site
+    cp -v build/dist/* pages/snapshot/master
+  - *push_pages_branch
+  dependencies:
+  - build
+  only:
+  - master@smocktaylor/rapid
+
+publish to / GitLab.com packages:
+  stage: deploy
+  environment:
+    name: GitLab.com / JOSM-rapid packages
+    url: https://gitlab.com/smocktaylor/rapid/-/packages
+  script:
+  - ./gradlew publishPluginPublicationToGitlabRepository
+  dependencies:
+  - build
+  only:
+  - tags@smocktaylor/rapid
