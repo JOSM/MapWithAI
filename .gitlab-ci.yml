@@ -122,7 +122,7 @@ build with java 13:
 junit tests:
   stage: test
   script:
-  - ./gradlew test
+  - ./gradlew check test jacocoTestReport
   artifacts:
     reports:
       junit: build/test-results/test/TEST-*.xml
