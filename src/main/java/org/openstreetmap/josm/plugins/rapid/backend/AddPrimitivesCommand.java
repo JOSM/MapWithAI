@@ -71,7 +71,7 @@ public class AddPrimitivesCommand extends Command {
 
     private static Collection<OsmPrimitive> addNodes(DataSet ds, Collection<Node> nodes) {
         Collection<OsmPrimitive> toAdd = nodes.stream().filter(node -> node.getDataSet() == null)
-                .collect(Collectors.toList());
+                .distinct().collect(Collectors.toList());
         toAdd.stream().forEach(ds::addPrimitive);
         return toAdd;
     }
@@ -79,7 +79,7 @@ public class AddPrimitivesCommand extends Command {
     private static Collection<OsmPrimitive> addWays(DataSet ds, Collection<Way> ways) {
         Collection<OsmPrimitive> toAdd = new ArrayList<>();
         ways.stream().map(Way::getNodes).forEach(list -> toAdd.addAll(addNodes(ds, list)));
-        ways.stream()
+        ways.stream().distinct()
         .filter(way -> way.getDataSet() == null
         && way.getNodes().stream().filter(node -> node.getDataSet() != ds).count() == 0)
         .forEach(way -> {
@@ -91,7 +91,7 @@ public class AddPrimitivesCommand extends Command {
 
     // This might break with relations. TODO (not needed right now)
     private static Collection<OsmPrimitive> addRelations(DataSet ds, Collection<Relation> relations) {
-        Collection<OsmPrimitive> toAdd = relations.stream().filter(relation -> relation.getDataSet() != null)
+        Collection<OsmPrimitive> toAdd = relations.stream().distinct().filter(relation -> relation.getDataSet() != null)
                 .collect(Collectors.toList());
         toAdd.forEach(ds::addPrimitive);
         return toAdd;

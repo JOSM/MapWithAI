@@ -32,7 +32,13 @@ public class RapiDMoveAction extends JosmAction {
         for (RapiDLayer rapid : MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class)) {
             List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
             OsmDataLayer editLayer = null;
-            Collection<OsmPrimitive> selected = rapid.getDataSet().getSelected();
+            int maxAddition = RapiDDataUtils.getMaximumAddition();
+            Collection<OsmPrimitive> selected;
+            if (maxAddition > 0) {
+                selected = rapid.getDataSet().getSelected().stream().limit(maxAddition).collect(Collectors.toList());
+            } else {
+                selected = rapid.getDataSet().getSelected();
+            }
             for (OsmDataLayer osmLayer : osmLayers) {
                 if (!osmLayer.isLocked() && osmLayer.isVisible() && osmLayer.isUploadable()
                         && osmLayer.getClass().equals(OsmDataLayer.class)) {

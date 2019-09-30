@@ -218,4 +218,23 @@ public final class RapiDDataUtils {
     public static boolean getSwitchLayers() {
         return Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
     }
+
+    /**
+     * Get the maximum number of objects that can be added at one time
+     *
+     * @return The maximum selection. If 0, allow any number.
+     */
+    public static int getMaximumAddition() {
+        return Config.getPref().getInt(RapiDPlugin.NAME.concat(".maximumselection"), 50);
+    }
+
+    /**
+     * Set the maximum number of objects that can be added at one time.
+     *
+     * @param max The maximum number of objects to select (0 allows any number to be
+     *            selected).
+     */
+    public static void setMaximumAddition(int max) {
+        Config.getPref().putInt(RapiDPlugin.NAME.concat(".maximumselection"), max);
+    }
 }
