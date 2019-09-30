@@ -42,7 +42,7 @@ def versions = [
   pmd: "6.6.0",
   spotbugs: "3.1.12",
   wiremock: "2.24.1",
-  jmockit: "1.48",
+  jmockit: "1.46",
 ]
 
 repositories {
@@ -75,14 +75,11 @@ ivyModule.dependencies.dependency.each {
 }
 
 test {
-  useJUnitPlatform()
-  testLogging.exceptionFormat = 'full'
-}
-
-tasks.getByName("test") {
   project.afterEvaluate {
     jvmArgs("-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}")
   }
+  useJUnitPlatform()
+  testLogging.exceptionFormat = 'full'
 }
 
 sourceSets {
