@@ -13,7 +13,6 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.plugins.rapid.RapiDDataUtilsTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class RapiDMoveActionTest {

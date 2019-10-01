@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -36,6 +37,7 @@ import org.openstreetmap.josm.tools.Logging;
  */
 public final class RapiDDataUtils {
     public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=fbid&token=ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C&hash=ASYM8LPNy8k1XoJiI7A&result_type=road_building_vector_xml&bbox={bbox}&crop_bbox={bbox}";
+    public static final int MAXIMUM_SIDE_DIMENSIONS = 10000; // 10 km
 
     private RapiDDataUtils() {
         // Hide the constructor
@@ -48,6 +50,16 @@ public final class RapiDDataUtils {
      * @return A DataSet with data inside the bbox
      */
     public static DataSet getData(BBox bbox) {
+        DataSet dataSet = new DataSet();
+        if (!bbox.isValid())
+            return dataSet;
+        for (BBox tbbox : reduceBBoxSize(bbox)) {
+            dataSet.mergeFrom(getDataReal(tbbox));
+        }
+        return dataSet;
+    }
+
+    private static DataSet getDataReal(BBox bbox) {
         InputStream inputStream = null;
         DataSet dataSet = new DataSet();
         String urlString = getRapiDURL();
@@ -236,5 +248,53 @@ public final class RapiDDataUtils {
      */
     public static void setMaximumAddition(int max) {
         Config.getPref().putInt(RapiDPlugin.NAME.concat(".maximumselection"), max);
+    }
+
+    public static List<BBox> reduceBBoxSize(BBox bbox) {
+        List<BBox> returnBounds = new ArrayList<>();
+        double width = getWidth(bbox);
+        double height = getHeight(bbox);
+        Double widthDivisions = width / MAXIMUM_SIDE_DIMENSIONS;
+        Double heightDivisions = height / MAXIMUM_SIDE_DIMENSIONS;
+        int widthSplits = widthDivisions.intValue() + (widthDivisions - widthDivisions.intValue() > 0 ? 1 : 0);
+        int heightSplits = heightDivisions.intValue() + (heightDivisions - heightDivisions.intValue() > 0 ? 1 : 0);
+
+        double newMinWidths = (bbox.getTopLeftLon() - bbox.getBottomRightLon()) / widthSplits;
+        double newMinHeights = (bbox.getBottomRightLat() - bbox.getTopLeftLat()) / heightSplits;
+
+        double minx = bbox.getTopLeftLon();
+        double miny = bbox.getBottomRightLat();
+        for (int x = 1; x <= widthSplits; x++) {
+            for (int y = 1; y <= heightSplits; y++) {
+                LatLon lowerLeft = new LatLon(miny + newMinHeights * (y - 1), minx + newMinWidths * (x - 1));
+                LatLon upperRight = new LatLon(miny + newMinHeights * y, minx + newMinWidths * x);
+                returnBounds.add(new BBox(lowerLeft, upperRight));
+            }
+        }
+        return returnBounds;
+    }
+
+    public static double getWidth(BBox bbox) {
+        // Lat is y, Lon is x
+        LatLon bottomRight = bbox.getBottomRight();
+        LatLon topLeft = bbox.getTopLeft();
+        double maxx = bottomRight.getX();
+        double minx = topLeft.getX();
+        double miny = bottomRight.getY();
+        double maxy = topLeft.getY();
+        LatLon bottomLeft = new LatLon(miny, minx);
+        LatLon topRight = new LatLon(maxy, maxx);
+        // TODO handle meridian
+        return Math.max(bottomRight.greatCircleDistance(bottomLeft), topRight.greatCircleDistance(topLeft));
+    }
+
+    public static double getHeight(BBox bbox) {
+        LatLon bottomRight = bbox.getBottomRight();
+        LatLon topLeft = bbox.getTopLeft();
+        double minx = topLeft.getX();
+        double miny = bottomRight.getY();
+        LatLon bottomLeft = new LatLon(miny, minx);
+        // TODO handle poles
+        return topLeft.greatCircleDistance(bottomLeft);
     }
 }

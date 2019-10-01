@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.rapid;
+package org.openstreetmap.josm.plugins.rapid.backend;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +19,6 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
 import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
-import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class RapiDDataUtilsTest {
@@ -106,5 +105,28 @@ public class RapiDDataUtilsTest {
         urls.remove(fakeUrl);
         RapiDDataUtils.setRapiDURLs(urls);
         Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
+    }
+
+    @Test
+    public void testSplitBounds() {
+        BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
+        List<BBox> bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
+        Assert.assertEquals(1, bboxes.size());
+
+        bbox.add(0.001, 0.001);
+        bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
+        Assert.assertEquals(1, bboxes.size());
+
+        bbox.add(0.01, 0.01);
+        bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
+        Assert.assertEquals(1, bboxes.size());
+
+        bbox.add(0.1, 0.1);
+        bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
+        Assert.assertEquals(4, bboxes.size());
+
+        bbox.add(1, 1);
+        bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
+        Assert.assertEquals(144, bboxes.size());
     }
 }
