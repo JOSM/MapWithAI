@@ -16,6 +16,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
+import org.openstreetmap.josm.plugins.rapid.commands.RapiDAddCommand;
 import org.openstreetmap.josm.tools.Shortcut;
 
 public class RapiDMoveAction extends JosmAction {

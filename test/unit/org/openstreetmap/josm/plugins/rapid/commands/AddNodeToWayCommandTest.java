@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.rapid.backend;
+package org.openstreetmap.josm.plugins.rapid.commands;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +14,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.plugins.rapid.commands.AddNodeToWayCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;;
 
 public class AddNodeToWayCommandTest {
