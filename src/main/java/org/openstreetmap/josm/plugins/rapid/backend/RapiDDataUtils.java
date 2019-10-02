@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
@@ -23,6 +24,7 @@ import org.openstreetmap.josm.data.preferences.sources.ExtendedSourceEntry;
 import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
 import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
 import org.openstreetmap.josm.data.preferences.sources.SourceType;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
@@ -53,10 +55,42 @@ public final class RapiDDataUtils {
         DataSet dataSet = new DataSet();
         if (!bbox.isValid())
             return dataSet;
+        List<Future<?>> futures = new ArrayList<>();
         for (BBox tbbox : reduceBBoxSize(bbox)) {
-            dataSet.mergeFrom(getDataReal(tbbox));
+            futures.add(MainApplication.worker.submit(new GetDataRunnable(tbbox, dataSet)));
+        }
+        for (Future<?> future : futures) {
+            synchronized (future) {
+                try {
+                    while (!future.isDone() && !future.isCancelled()) {
+                        future.wait(100);
+                    }
+                } catch (InterruptedException e) {
+                    Logging.debug(e);
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
         return dataSet;
+    }
+
+    private static class GetDataRunnable implements Runnable {
+        private final BBox bbox;
+        private DataSet dataSet = null;
+
+        public GetDataRunnable(BBox bbox, DataSet dataSet) {
+            this.bbox = bbox;
+            this.dataSet = dataSet;
+        }
+
+        @Override
+        public void run() {
+            DataSet temporaryDataSet = getDataReal(bbox);
+            synchronized (RapiDDataUtils.GetDataRunnable.class) {
+                dataSet.mergeFrom(temporaryDataSet);
+            }
+        }
+
     }
 
     private static DataSet getDataReal(BBox bbox) {
@@ -68,7 +102,7 @@ public final class RapiDDataUtils {
             HttpClient client = HttpClient.create(url);
             StringBuilder defaultUserAgent = new StringBuilder();
             defaultUserAgent.append(client.getHeaders().get("User-Agent"));
-            if (defaultUserAgent.length() == 0) {
+            if (defaultUserAgent.toString().trim().length() == 0) {
                 defaultUserAgent.append("JOSM");
             }
             defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
