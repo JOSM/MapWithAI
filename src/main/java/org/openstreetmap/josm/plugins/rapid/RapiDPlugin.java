@@ -28,7 +28,7 @@ public final class RapiDPlugin extends Plugin {
 
         RapiDDataUtils.addRapiDPaintStyles();
 
-        versionInfo = info.localversion;
+        setVersionInfo(info.localversion);
     }
 
     @Override
@@ -36,7 +36,14 @@ public final class RapiDPlugin extends Plugin {
         return preferences;
     }
 
+    /**
+     * @return The version information of the plugin
+     */
     public static String getVersionInfo() {
         return versionInfo;
+    }
+
+    private static void setVersionInfo(String newVersionInfo) {
+        versionInfo = newVersionInfo;
     }
 }

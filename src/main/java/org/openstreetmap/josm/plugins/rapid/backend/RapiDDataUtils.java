@@ -38,7 +38,8 @@ import org.openstreetmap.josm.tools.Logging;
  *
  */
 public final class RapiDDataUtils {
-    public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=fbid&token=ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C&hash=ASYM8LPNy8k1XoJiI7A&result_type=road_building_vector_xml&bbox={bbox}&crop_bbox={bbox}";
+    public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=fbid&token=ASZUVdYpCkd3M6ZrzjXdQzHulqRMnxdlkeBJWEKOeTUoY_Gwm9fuEd2YObLrClgDB_xfavizBsh0oDfTWTF7Zb4C&hash=ASYM8LPNy8k1XoJiI7A&result_type=road_building_vector_xml&bbox={bbox}";
+    // TODO add &crop_bbox={bbox} if there are bounds from a HOT Tasking Manager
     public static final int MAXIMUM_SIDE_DIMENSIONS = 10000; // 10 km
 
     private RapiDDataUtils() {
@@ -62,8 +63,10 @@ public final class RapiDDataUtils {
         for (Future<?> future : futures) {
             synchronized (future) {
                 try {
-                    while (!future.isDone() && !future.isCancelled()) {
+                    int count = 0;
+                    while (!future.isDone() && !future.isCancelled() && count < 100) {
                         future.wait(100);
+                        count++;
                     }
                 } catch (InterruptedException e) {
                     Logging.debug(e);

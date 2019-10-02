@@ -81,11 +81,7 @@ public class RapiDAction extends JosmAction {
         final DataSet rapidSet = layer.getDataSet();
         final List<Bounds> rapidBounds = rapidSet.getDataSourceBounds();
         for (final Bounds bound : editSetBounds) {
-            for (final Bounds rapidBound : rapidBounds) {
-                if (bound.equals(rapidBound)) {
-                    continue;
-                }
-            }
+            // TODO remove bounds that are already downloaded
             if (rapidBounds.parallelStream().filter(bound::equals).count() == 0) {
                 final DataSet newData = RapiDDataUtils.getData(bound.toBBox());
                 /* Microsoft buildings don't have a source, so we add one */

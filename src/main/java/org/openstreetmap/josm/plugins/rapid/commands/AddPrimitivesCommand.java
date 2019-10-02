@@ -3,9 +3,12 @@ package org.openstreetmap.josm.plugins.rapid.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -13,6 +16,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 public class AddPrimitivesCommand extends Command {
@@ -41,7 +45,14 @@ public class AddPrimitivesCommand extends Command {
             Collection<OsmPrimitive> realSelection = selection.stream()
                     .filter(primitive -> getAffectedDataSet().allPrimitives().contains(primitive))
                     .collect(Collectors.toList());
-            getAffectedDataSet().setSelected(realSelection);
+            try {
+                SwingUtilities.invokeAndWait(() -> getAffectedDataSet().setSelected(realSelection));
+            } catch (InvocationTargetException e) {
+                Logging.error(e);
+            } catch (InterruptedException e) {
+                Logging.error(e);
+                Thread.currentThread().interrupt();
+            }
         }
         return true;
     }

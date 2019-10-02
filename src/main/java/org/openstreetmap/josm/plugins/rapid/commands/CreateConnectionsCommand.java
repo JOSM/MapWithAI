@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
@@ -16,16 +21,23 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
+import org.openstreetmap.josm.data.osm.PrimitiveId;
+import org.openstreetmap.josm.data.osm.SimplePrimitiveId;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.io.DownloadPrimitivesTask;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Utils;
 
 public class CreateConnectionsCommand extends Command {
     private final Collection<OsmPrimitive> primitives;
-    public final static String DUPE_KEY = "dupe";
-    public final static String CONN_KEY = "conn";
+    public static final String DUPE_KEY = "dupe";
+    public static final String CONN_KEY = "conn";
     private Command command = null;
 
     public CreateConnectionsCommand(DataSet data, Collection<OsmPrimitive> primitives) {
@@ -114,21 +126,54 @@ public class CreateConnectionsCommand extends Command {
      * @return The primitives that the ids point to, if in the dataset.
      */
     private static OsmPrimitive[] getPrimitives(DataSet dataSet, String ids) {
+        Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives = new TreeMap<>();
         String[] connections = ids.split(",", -1);
         OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
         for (int i = 0; i < connections.length; i++) {
             String member = connections[i];
             long id = Long.parseLong(member.substring(1));
             char firstChar = member.charAt(0);
+            OsmPrimitiveType type = null;
             if (firstChar == 'w') {
-                primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.WAY);
+                type = OsmPrimitiveType.WAY;
             } else if (firstChar == 'n') {
-                primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.NODE);
+                type = OsmPrimitiveType.NODE;
             } else if (firstChar == 'r') {
-                primitiveConnections[i] = dataSet.getPrimitiveById(id, OsmPrimitiveType.RELATION);
+                type = OsmPrimitiveType.RELATION;
+            } else
+                throw new IllegalArgumentException(
+                        tr("{0}: We don't know how to handle {1} types", RapiDPlugin.NAME, firstChar));
+            primitiveConnections[i] = dataSet.getPrimitiveById(id, type);
+            if (primitiveConnections[i] == null) {
+                missingPrimitives.put(i, new Pair<Long, OsmPrimitiveType>(id, type));
             }
         }
+        getMissingPrimitives(dataSet, primitiveConnections, missingPrimitives);
         return primitiveConnections;
+    }
+
+    private static void getMissingPrimitives(DataSet dataSet, OsmPrimitive[] primitiveConnections,
+            Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives) {
+        Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors.toMap(
+                entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));
+        List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
+        Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
+                .parallelStream().filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
+        OsmDataLayer layer;
+        if (optionalLayer.isPresent()) {
+            layer = optionalLayer.get();
+        } else {
+            layer = new OsmDataLayer(dataSet, "generated layer", null);
+        }
+        PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(tr("Downloading additional OsmPrimitives"));
+        DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true,
+                monitor);
+        downloadPrimitivesTask.run();
+        for (Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
+            int index = entry.getValue().intValue();
+            OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
+            primitiveConnections[index] = primitive;
+        }
     }
 
     /**

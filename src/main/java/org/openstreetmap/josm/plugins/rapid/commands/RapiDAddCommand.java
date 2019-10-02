@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.rapid.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.EventQueue;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -16,7 +17,7 @@ import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDLayer;
 import org.openstreetmap.josm.tools.Logging;
 
-public class RapiDAddCommand extends Command {
+public class RapiDAddCommand extends Command implements Runnable {
     DataSet editable;
     DataSet rapid;
     Collection<OsmPrimitive> primitives;
@@ -51,6 +52,16 @@ public class RapiDAddCommand extends Command {
 
     @Override
     public boolean executeCommand() {
+        if (EventQueue.isDispatchThread()) {
+            new Thread((Runnable) this::run, getClass().getName()).start();
+        } else {
+            run();
+        }
+        return true;
+    }
+
+    @Override
+    public void run() {
         if (rapid.equals(editable)) {
             Logging.error("{0}: DataSet rapid ({1}) should not be the same as DataSet editable ({2})", RapiDPlugin.NAME,
                     rapid, editable);
@@ -72,7 +83,6 @@ public class RapiDAddCommand extends Command {
                 rapid.lock();
             }
         }
-        return true;
     }
 
     /**

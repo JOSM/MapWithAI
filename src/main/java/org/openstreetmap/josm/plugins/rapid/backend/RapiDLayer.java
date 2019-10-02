@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.rapid.backend;
 import java.io.File;
 
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 
 /**
@@ -21,11 +22,11 @@ public class RapiDLayer extends OsmDataLayer {
     public RapiDLayer(DataSet data, String name, File associatedFile) {
         super(data, name, associatedFile);
         this.lock();
-        this.setUploadDiscouraged(true);
+        data.setUploadPolicy(UploadPolicy.BLOCKED);
     }
 
-	// @Override only JOSM > 15323
-	public String getChangesetSourceTag() {
-		return "MapWithAI";
-	}
+    // @Override only JOSM > 15323
+    public String getChangesetSourceTag() {
+        return "MapWithAI";
+    }
 }
