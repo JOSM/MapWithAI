@@ -1,8 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.rapid.commands;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -13,7 +15,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.rapid.commands.AddPrimitivesCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class AddPrimitivesCommandTest {
@@ -35,22 +36,34 @@ public class AddPrimitivesCommandTest {
     @Test
     public void testUndoRedo() {
         DataSet dataSet = new DataSet();
+        List<OsmPrimitive> added = new ArrayList<>();
+        List<OsmPrimitive> modified = new ArrayList<>();
+        List<OsmPrimitive> deleted = new ArrayList<>();
         Way way1 = TestUtils.newWay("highway=secondary", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, -0.1)));
         AddPrimitivesCommand command = new AddPrimitivesCommand(dataSet, Collections.singleton(way1), null);
         Collection<OsmPrimitive> selection = dataSet.getAllSelected();
         Assert.assertNull(way1.getDataSet());
 
         command.executeCommand();
+        command.fillModifiedData(modified, deleted, added);
         Assert.assertSame(dataSet, way1.getDataSet());
         Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertTrue(deleted.isEmpty());
+        Assert.assertTrue(modified.isEmpty());
+        Assert.assertEquals(3, added.size());
 
         command.undoCommand();
         Assert.assertNull(way1.getDataSet());
         Assert.assertEquals(selection, dataSet.getAllSelected());
 
+        added.clear();
         command.executeCommand();
         Assert.assertSame(dataSet, way1.getDataSet());
         Assert.assertEquals(selection, dataSet.getAllSelected());
+        command.fillModifiedData(modified, deleted, added);
+        Assert.assertTrue(deleted.isEmpty());
+        Assert.assertTrue(modified.isEmpty());
+        Assert.assertEquals(3, added.size());
 
         command.undoCommand();
 
@@ -63,5 +76,38 @@ public class AddPrimitivesCommandTest {
         command.undoCommand();
         Assert.assertNull(way1.getDataSet());
         Assert.assertEquals(selection, dataSet.getAllSelected());
+
+        dataSet.addPrimitive(way1.firstNode());
+        command.executeCommand();
+        Assert.assertSame(dataSet, way1.getDataSet());
+        Assert.assertNotEquals(selection, dataSet.getAllSelected());
+
+        command.undoCommand();
+        Assert.assertNull(way1.getDataSet());
+        Assert.assertEquals(selection, dataSet.getAllSelected());
+
+        dataSet.addPrimitive(way1.lastNode());
+        dataSet.addPrimitive(way1);
+        command.executeCommand();
+        Assert.assertSame(dataSet, way1.getDataSet());
+        Assert.assertNotEquals(selection, dataSet.getAllSelected());
+
+        command.undoCommand();
+        Assert.assertSame(dataSet, way1.getDataSet());
+
+        dataSet.removePrimitive(way1);
+        dataSet.removePrimitive(way1.lastNode());
+        new DataSet().addPrimitive(way1.lastNode());
+        command.executeCommand();
+        Assert.assertNull(way1.getDataSet());
+        Assert.assertEquals(selection, dataSet.getAllSelected());
+
+        command.undoCommand();
+        Assert.assertNull(way1.getDataSet());
+    }
+
+    @Test
+    public void testDescription() {
+        Assert.assertNotNull(new AddPrimitivesCommand(new DataSet(), null, null).getDescriptionText());
     }
 }

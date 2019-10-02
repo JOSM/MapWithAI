@@ -38,7 +38,10 @@ public class AddPrimitivesCommand extends Command {
     public boolean executeCommand() {
         actuallyAdded.addAll(addPrimitives(getAffectedDataSet(), add));
         if (selection != null) {
-            getAffectedDataSet().setSelected(selection);
+            Collection<OsmPrimitive> realSelection = selection.stream()
+                    .filter(primitive -> getAffectedDataSet().allPrimitives().contains(primitive))
+                    .collect(Collectors.toList());
+            getAffectedDataSet().setSelected(realSelection);
         }
         return true;
     }
@@ -52,6 +55,7 @@ public class AddPrimitivesCommand extends Command {
         .forEach(ds::removePrimitive);
         Utils.filteredCollection(actuallyAdded, Node.class).stream().filter(ds::containsNode)
         .forEach(ds::removePrimitive);
+        actuallyAdded.clear();
     }
 
     /**
