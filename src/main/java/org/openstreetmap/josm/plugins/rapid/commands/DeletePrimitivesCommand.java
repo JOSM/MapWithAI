@@ -96,6 +96,9 @@ public class DeletePrimitivesCommand extends Command {
     @Override
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
+        for (Command command : commands) {
+            command.fillModifiedData(modified, deleted, added);
+        }
         deleted.addAll(removed);
     }
 

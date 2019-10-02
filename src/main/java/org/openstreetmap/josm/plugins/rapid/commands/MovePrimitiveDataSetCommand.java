@@ -26,7 +26,6 @@ public class MovePrimitiveDataSetCommand extends Command {
     private final DataSet from;
     private final Collection<OsmPrimitive> primitives;
     private SequenceCommand command;
-    List<Command> commands;
 
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives) {
         super(to);
@@ -34,15 +33,14 @@ public class MovePrimitiveDataSetCommand extends Command {
         this.from = from;
         this.primitives = primitives;
         command = null;
-        commands = new ArrayList<>();
     }
 
     @Override
     public boolean executeCommand() {
-        if (to.equals(from))
-            return false;
         command = moveCollection(from, to, primitives);
-        command.executeCommand();
+        if (command != null) {
+            command.executeCommand();
+        }
         return true;
     }
     /**
@@ -53,10 +51,12 @@ public class MovePrimitiveDataSetCommand extends Command {
      * @param selection The primitives to move
      */
     public SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
-        if (from == null || to.isLocked() || from.isLocked()) {
+        if (from == null || to.isLocked() || from.isLocked() || to.equals(from)) {
             Logging.error("{0}: Cannot move primitives from {1} to {2}", RapiDPlugin.NAME, from, to);
             return null;
         }
+
+        List<Command> commands = new ArrayList<>();
 
         Collection<OsmPrimitive> allNeededPrimitives = new ArrayList<>();
         RapiDDataUtils.addPrimitivesToCollection(allNeededPrimitives, selection);
@@ -71,7 +71,9 @@ public class MovePrimitiveDataSetCommand extends Command {
 
     @Override
     public void undoCommand() {
-        command.undoCommand();
+        if (command != null) {
+            command.undoCommand();
+        }
     }
 
     @Override
@@ -82,6 +84,6 @@ public class MovePrimitiveDataSetCommand extends Command {
     @Override
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
-        modified.addAll(primitives);
+        command.fillModifiedData(modified, deleted, added);
     }
 }

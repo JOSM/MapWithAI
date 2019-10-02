@@ -1,6 +1,9 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.rapid.commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import org.junit.Assert;
@@ -10,8 +13,8 @@ import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.rapid.commands.MovePrimitiveDataSetCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class MovePrimitiveDataSetCommandTest {
@@ -20,6 +23,9 @@ public class MovePrimitiveDataSetCommandTest {
 
     @Test
     public void testMovePrimitives() {
+        Collection<OsmPrimitive> added = new ArrayList<>();
+        Collection<OsmPrimitive> modified = new ArrayList<>();
+        Collection<OsmPrimitive> deleted = new ArrayList<>();
         DataSet to = new DataSet();
         DataSet from = new DataSet();
         Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
@@ -32,6 +38,10 @@ public class MovePrimitiveDataSetCommandTest {
         Assert.assertEquals(4, from.allPrimitives().size());
 
         move.executeCommand();
+        move.fillModifiedData(modified, deleted, added);
+        Assert.assertEquals(3, deleted.size());
+        Assert.assertEquals(3, added.size());
+        Assert.assertEquals(0, modified.size());
         Assert.assertEquals(1, from.allPrimitives().size());
         Assert.assertEquals(3, to.allPrimitives().size());
         Assert.assertEquals(to, way1.getDataSet());
@@ -43,7 +53,14 @@ public class MovePrimitiveDataSetCommandTest {
 
         way1.firstNode().put("highway", "stop");
 
+        modified.clear();
+        added.clear();
+        deleted.clear();
         move.executeCommand();
+        move.fillModifiedData(modified, deleted, added);
+        Assert.assertEquals(3, deleted.size());
+        Assert.assertEquals(3, added.size());
+        Assert.assertEquals(0, modified.size());
         Assert.assertEquals(1, from.allPrimitives().size());
         Assert.assertEquals(3, to.allPrimitives().size());
         Assert.assertEquals(to, way1.getDataSet());
@@ -52,5 +69,35 @@ public class MovePrimitiveDataSetCommandTest {
         Assert.assertEquals(0, to.allPrimitives().size());
         Assert.assertEquals(4, from.allPrimitives().size());
         Assert.assertEquals(from, way1.getDataSet());
+
+        for (DataSet ds : Arrays.asList(from, to)) {
+            ds.lock();
+            move.executeCommand();
+            Assert.assertEquals(0, to.allPrimitives().size());
+            Assert.assertEquals(4, from.allPrimitives().size());
+            Assert.assertEquals(from, way1.getDataSet());
+            move.undoCommand();
+            ds.unlock();
+        }
+
+        move = new MovePrimitiveDataSetCommand(to, null, Collections.singleton(way1));
+        move.executeCommand();
+        Assert.assertEquals(0, to.allPrimitives().size());
+        Assert.assertEquals(4, from.allPrimitives().size());
+        Assert.assertEquals(from, way1.getDataSet());
+        move.undoCommand();
+
+        move = new MovePrimitiveDataSetCommand(to, to, Collections.singleton(way1));
+        move.executeCommand();
+        Assert.assertEquals(0, to.allPrimitives().size());
+        Assert.assertEquals(4, from.allPrimitives().size());
+        Assert.assertEquals(from, way1.getDataSet());
+        move.undoCommand();
+    }
+
+    @Test
+    public void testDescription() {
+        Assert.assertNotNull(new MovePrimitiveDataSetCommand(new DataSet(), new DataSet(), Collections.emptyList())
+                .getDescriptionText());
     }
 }
