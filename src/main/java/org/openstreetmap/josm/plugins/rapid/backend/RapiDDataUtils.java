@@ -259,8 +259,8 @@ public final class RapiDDataUtils {
         int widthSplits = widthDivisions.intValue() + (widthDivisions - widthDivisions.intValue() > 0 ? 1 : 0);
         int heightSplits = heightDivisions.intValue() + (heightDivisions - heightDivisions.intValue() > 0 ? 1 : 0);
 
-        double newMinWidths = (bbox.getTopLeftLon() - bbox.getBottomRightLon()) / widthSplits;
-        double newMinHeights = (bbox.getBottomRightLat() - bbox.getTopLeftLat()) / heightSplits;
+        double newMinWidths = Math.abs((bbox.getTopLeftLon() - bbox.getBottomRightLon())) / widthSplits;
+        double newMinHeights = Math.abs((bbox.getBottomRightLat() - bbox.getTopLeftLat())) / heightSplits;
 
         double minx = bbox.getTopLeftLon();
         double miny = bbox.getBottomRightLat();

@@ -112,21 +112,32 @@ public class RapiDDataUtilsTest {
         BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
         List<BBox> bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(1, bboxes.size());
+        checkInBBox(bbox, bboxes);
 
         bbox.add(0.001, 0.001);
         bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(1, bboxes.size());
+        checkInBBox(bbox, bboxes);
 
         bbox.add(0.01, 0.01);
         bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(1, bboxes.size());
+        checkInBBox(bbox, bboxes);
 
         bbox.add(0.1, 0.1);
         bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(4, bboxes.size());
+        checkInBBox(bbox, bboxes);
 
         bbox.add(1, 1);
         bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(144, bboxes.size());
+        checkInBBox(bbox, bboxes);
+    }
+
+    private void checkInBBox(BBox bbox, Collection<BBox> bboxes) {
+        for (BBox tBBox : bboxes) {
+            Assert.assertTrue(bbox.bounds(tBBox));
+        }
     }
 }
