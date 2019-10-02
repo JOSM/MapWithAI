@@ -18,6 +18,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
+import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -67,8 +68,11 @@ public class CreateConnectionsCommand extends Command {
                 for (int i = 0; i < primitiveConnections.length / 3; i++) {
                     if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
                             && primitiveConnections[i + 2] instanceof Node) {
-                        changedKeyList.add(addNodesToWay(node, (Way) primitiveConnections[i],
-                                (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]));
+                        Command addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
+                                (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]);
+                        if (addNodesToWayCommand != null) {
+                            changedKeyList.add(addNodesToWayCommand);
+                        }
                     } else {
                         Logging.error("{0}: {1}, {2}: {3}, {4}: {5}", i, primitiveConnections[i].getClass(), i + 1,
                                 primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
@@ -83,7 +87,10 @@ public class CreateConnectionsCommand extends Command {
                     Logging.error("RapiD: dupe connection connected to more than one node? (dupe={0})",
                             node.get(DUPE_KEY));
                 }
-                changedKeyList.add(replaceNode(node, (Node) primitiveConnections[0]));
+                Command replaceCommand = replaceNode(node, (Node) primitiveConnections[0]);
+                if (replaceCommand != null) {
+                    changedKeyList.add(replaceCommand);
+                }
             }
         }
         if (!changedKeyList.isEmpty())
@@ -126,11 +133,31 @@ public class CreateConnectionsCommand extends Command {
      * @param second    The second node in a waysegemnt
      */
     public static Command addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
-        return new AddNodeToWayCommand(toAddNode, way, first, second);
+        Command tCommand = null;
+        Way tWay = new Way();
+        tWay.addNode(first);
+        tWay.addNode(second);
+        double distance = Geometry.getDistanceWayNode(tWay, toAddNode);
+        if (distance < 5) {
+            tCommand = new AddNodeToWayCommand(toAddNode, way, first, second);
+        }
+        return tCommand;
     }
 
+    /**
+     * Replace nodes that are in the same location
+     *
+     * @param original The original node (the one to replace)
+     * @param newNode  The node that is replacing the original node
+     * @return A command that replaces the node, or null if they are not at the same
+     *         location.
+     */
     public static Command replaceNode(Node original, Node newNode) {
-        return MergeNodesAction.mergeNodes(Arrays.asList(original), newNode, newNode);
+        Command tCommand = null;
+        if (original.getCoor().equalsEpsilon(newNode.getCoor())) {
+            tCommand = MergeNodesAction.mergeNodes(Arrays.asList(original), newNode, newNode);
+        }
+        return tCommand;
     }
 
     @Override
@@ -141,7 +168,6 @@ public class CreateConnectionsCommand extends Command {
     @Override
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
-        // Don't touch the collectioins, since we haven't modified anything -- the
-        // subcommands should do that.
+        command.fillModifiedData(modified, deleted, added);
     }
 }
