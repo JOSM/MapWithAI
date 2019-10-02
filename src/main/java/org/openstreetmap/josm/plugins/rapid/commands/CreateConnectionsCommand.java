@@ -63,31 +63,10 @@ public class CreateConnectionsCommand extends Command {
         List<Command> changedKeyList = new ArrayList<>();
         for (Node node : nodes) {
             if (node.hasKey(CONN_KEY)) {
-                // Currently w<way id>,n<node1>,n<node2>
-                OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(CONN_KEY));
-                for (int i = 0; i < primitiveConnections.length / 3; i++) {
-                    if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
-                            && primitiveConnections[i + 2] instanceof Node) {
-                        Command addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
-                                (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]);
-                        if (addNodesToWayCommand != null) {
-                            changedKeyList.add(addNodesToWayCommand);
-                        }
-                    } else {
-                        Logging.error("{0}: {1}, {2}: {3}, {4}: {5}", i, primitiveConnections[i].getClass(), i + 1,
-                                primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
-                    }
-                }
-                Logging.debug("RapiD: Removing conn from {0} in {1}", node, dataSet.getName());
-                changedKeyList.add(new ChangePropertyCommand(node, CONN_KEY, null));
+                changedKeyList.addAll(connectedCommand(dataSet, node));
             }
             if (node.hasKey(DUPE_KEY)) {
-                OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(DUPE_KEY));
-                if (primitiveConnections.length != 1) {
-                    Logging.error("RapiD: dupe connection connected to more than one node? (dupe={0})",
-                            node.get(DUPE_KEY));
-                }
-                Command replaceCommand = replaceNode(node, (Node) primitiveConnections[0]);
+                Command replaceCommand = duplicateNode(dataSet, node);
                 if (replaceCommand != null) {
                     changedKeyList.add(replaceCommand);
                 }
@@ -96,6 +75,35 @@ public class CreateConnectionsCommand extends Command {
         if (!changedKeyList.isEmpty())
             return new SequenceCommand(getDescriptionText(), changedKeyList);
         return null;
+    }
+
+    private List<Command> connectedCommand(DataSet dataSet, Node node) {
+        List<Command> commands = new ArrayList<>();
+        OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(CONN_KEY));
+        for (int i = 0; i < primitiveConnections.length / 3; i++) {
+            if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
+                    && primitiveConnections[i + 2] instanceof Node) {
+                Command addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
+                        (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]);
+                if (addNodesToWayCommand != null) {
+                    commands.add(addNodesToWayCommand);
+                }
+            } else {
+                Logging.error("{0}: {1}, {2}: {3}, {4}: {5}", i, primitiveConnections[i].getClass(), i + 1,
+                        primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
+            }
+        }
+        Logging.debug("RapiD: Removing conn from {0} in {1}", node, dataSet.getName());
+        commands.add(new ChangePropertyCommand(node, CONN_KEY, null));
+        return commands;
+    }
+
+    private Command duplicateNode(DataSet dataSet, Node node) {
+        OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(DUPE_KEY));
+        if (primitiveConnections.length != 1) {
+            Logging.error("RapiD: dupe connection connected to more than one node? (dupe={0})", node.get(DUPE_KEY));
+        }
+        return replaceNode(node, (Node) primitiveConnections[0]);
     }
 
     /**
