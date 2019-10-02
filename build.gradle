@@ -38,11 +38,11 @@ def versions = [
   awaitility: "4.0.1",
   errorprone: "2.3.3",
   jacoco: "0.8.2",
+  jmockit: "1.46",
   junit: "5.5.2",
   pmd: "6.6.0",
   spotbugs: "3.1.12",
   wiremock: "2.24.1",
-  jmockit: "1.46",
 ]
 
 repositories {
@@ -63,7 +63,6 @@ dependencies {
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
   testImplementation("com.github.tomakehurst:wiremock:${versions.wiremock}")
   testImplementation("org.awaitility:awaitility:${versions.awaitility}")
-  testCompile("org.jmockit:jmockit:${versions.jmockit}")
 }
 
 // Add dependencies from ivy.xml
@@ -129,6 +128,7 @@ check.dependsOn jacocoTestReport
 pmd {
   toolVersion = versions.pmd
   ignoreFailures true
+  incrementalAnalysis = true
   ruleSets = []
   ruleSetConfig = resources.text.fromFile("$projectDir/config/pmd/ruleset.xml")
   sourceSets = [sourceSets.main]

@@ -119,13 +119,15 @@ build with java 13:
     - assemble with java 13
   allow_failure: true
 
-junit tests:
+tests:
   stage: test
   script:
   - ./gradlew check test jacocoTestReport
   artifacts:
     reports:
       junit: build/test-results/test/TEST-*.xml
+      codequality: build/reports/pmd/main.xml
+      sast: build/reports/spotbugs/main.html
   allow_failure: true
 
 ################
