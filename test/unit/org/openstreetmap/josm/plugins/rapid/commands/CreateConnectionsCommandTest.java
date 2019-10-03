@@ -14,7 +14,10 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 /**
@@ -128,6 +131,41 @@ public class CreateConnectionsCommandTest {
 
         node2.setCoor(new LatLon(0.1, 0.1));
         Assert.assertNull(CreateConnectionsCommand.replaceNode(node1, node2));
+    }
+
+    /**
+     * Test if we get missing primitives
+     */
+    @Test
+    public void testGetMissingPrimitives() {
+        final Node node1 = new Node(new LatLon(39.0674124, -108.5592645));
+        final DataSet dataSet = new DataSet(node1);
+        node1.put(CreateConnectionsCommand.DUPE_KEY, "n6146500887");
+        Command replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet,
+                Collections.singleton(node1));
+
+        replaceNodeCommand.executeCommand();
+        Assert.assertEquals(1, dataSet.allNonDeletedPrimitives().size());
+        Assert.assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE));
+
+        replaceNodeCommand.undoCommand();
+        Assert.assertEquals(2, dataSet.allNonDeletedPrimitives().size()); // We don't roll back downloaded data
+        Assert.assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE));
+
+        node1.setCoor(new LatLon(39.067399, -108.5608433));
+        node1.put(CreateConnectionsCommand.DUPE_KEY, "n6151680832");
+        OsmDataLayer layer = new OsmDataLayer(dataSet, "temp layer", null);
+        MainApplication.getLayerManager().addLayer(layer);
+
+        replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1));
+        replaceNodeCommand.executeCommand();
+        Assert.assertEquals(2, dataSet.allNonDeletedPrimitives().size());
+        Assert.assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE));
+
+        replaceNodeCommand.undoCommand();
+        Assert.assertEquals(3, dataSet.allNonDeletedPrimitives().size()); // We don't roll back downloaded data
+        Assert.assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE));
+
     }
 
     /**

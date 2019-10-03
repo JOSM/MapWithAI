@@ -68,9 +68,9 @@ public class CreateConnectionsCommand extends Command {
      *                   connecting to
      * @param collection The primitives with connection information (currently only
      *                   checks Nodes)
-     * @return
+     * @return A {@link SequenceCommand} to create connections with
      */
-    public SequenceCommand createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
+    public static SequenceCommand createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
         final Collection<Node> nodes = Utils.filteredCollection(collection, Node.class);
         final List<Command> changedKeyList = new ArrayList<>();
         for (final Node node : nodes) {
@@ -85,7 +85,7 @@ public class CreateConnectionsCommand extends Command {
             }
         }
         if (!changedKeyList.isEmpty()) {
-            return new SequenceCommand(getDescriptionText(), changedKeyList);
+            return new SequenceCommand(getRealDescriptionText(), changedKeyList);
         }
         return null;
     }
@@ -162,12 +162,15 @@ public class CreateConnectionsCommand extends Command {
         final Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager()
                 .getLayersOfType(OsmDataLayer.class).parallelStream()
                 .filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
+
         OsmDataLayer layer;
+        final String generatedLayerName = "EvKlVarShAiAllsM generated layer";
         if (optionalLayer.isPresent()) {
             layer = optionalLayer.get();
         } else {
-            layer = new OsmDataLayer(dataSet, "generated layer", null);
+            layer = new OsmDataLayer(dataSet, generatedLayerName, null);
         }
+
         final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(
                 tr("Downloading additional OsmPrimitives"));
         final DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true, monitor);
@@ -176,6 +179,10 @@ public class CreateConnectionsCommand extends Command {
             final int index = entry.getValue().intValue();
             final OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
             primitiveConnections[index] = primitive;
+        }
+
+        if (generatedLayerName.equals(layer.getName())) {
+            layer.destroy();
         }
     }
 
@@ -218,6 +225,10 @@ public class CreateConnectionsCommand extends Command {
 
     @Override
     public String getDescriptionText() {
+        return getRealDescriptionText();
+    }
+
+    private static String getRealDescriptionText() {
         return tr("Create connections from {0} data", RapiDPlugin.NAME);
     }
 
