@@ -21,15 +21,15 @@ import org.openstreetmap.josm.gui.preferences.TabPreferenceSetting;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 
 public class RapiDPreferences implements SubPreferenceSetting {
-    private final JLabel rapidApiUrl = new JLabel(tr("RapiD API URL"));
-    private final JComboBox<String> possibleRapidApiUrl = new JComboBox<>();
+    protected final JLabel rapidApiUrl = new JLabel(tr("RapiD API URL"));
+    protected final JComboBox<String> possibleRapidApiUrl = new JComboBox<>();
 
-    private final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
-    private final JCheckBox switchLayerCheckBox = new JCheckBox();
+    protected final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
+    protected final JCheckBox switchLayerCheckBox = new JCheckBox();
 
-    private final JLabel maximumAddition = new JLabel(
+    protected final JLabel maximumAddition = new JLabel(
             tr("Maximum features (add)"));
-    private final JSpinner maximumAdditionSpinner = new JSpinner(
+    protected final JSpinner maximumAdditionSpinner = new JSpinner(
             new SpinnerNumberModel(RapiDDataUtils.getMaximumAddition(), 0, 100, 1));
 
     @Override
@@ -85,8 +85,8 @@ public class RapiDPreferences implements SubPreferenceSetting {
         RapiDDataUtils.setRapiDUrl((String) possibleRapidApiUrl.getSelectedItem());
         RapiDDataUtils.setSwitchLayers(switchLayerCheckBox.isSelected());
         Object value = maximumAdditionSpinner.getValue();
-        if (value instanceof Integer) {
-            RapiDDataUtils.setMaximumAddition((Integer) value);
+        if (value instanceof Number) {
+            RapiDDataUtils.setMaximumAddition(((Number) value).intValue());
         }
         return false;
     }
