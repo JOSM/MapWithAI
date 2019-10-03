@@ -26,20 +26,22 @@ public class RapiDDataUtilsTest {
     public JOSMTestRules test = new JOSMTestRules().preferences();
 
     /**
-     * This gets data from RapiD. This test may fail if someone adds the data to OSM.
+     * This gets data from RapiD. This test may fail if someone adds the data to
+     * OSM.
      */
     @Test
     public void testGetData() {
-        BBox testBBox = getTestBBox();
-        DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
+        final BBox testBBox = getTestBBox();
+        final DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
         Assert.assertEquals(1, ds.getWays().size());
     }
 
     @Test
     public void testAddSourceTags() {
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
-        DataSet ds = new DataSet(way1.firstNode(), way1.lastNode(), way1);
-        String source = "random source";
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
+        final DataSet ds = new DataSet(way1.firstNode(), way1.lastNode(), way1);
+        final String source = "random source";
 
         Assert.assertNull(way1.get("source"));
         RapiDDataUtils.addSourceTags(ds, "highway", source);
@@ -47,7 +49,7 @@ public class RapiDDataUtilsTest {
     }
 
     public static BBox getTestBBox() {
-        BBox testBBox = new BBox();
+        final BBox testBBox = new BBox();
         testBBox.add(new LatLon(39.076, -108.547));
         testBBox.add(new LatLon(39.078, -108.545));
         return testBBox;
@@ -55,8 +57,9 @@ public class RapiDDataUtilsTest {
 
     @Test
     public void testAddPrimitivesToCollection() {
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
-        Collection<OsmPrimitive> collection = new TreeSet<>();
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0, 0.1)));
+        final Collection<OsmPrimitive> collection = new TreeSet<>();
         Assert.assertEquals(0, collection.size());
         RapiDDataUtils.addPrimitivesToCollection(collection, Collections.singletonList(way1));
         Assert.assertEquals(3, collection.size());
@@ -64,9 +67,10 @@ public class RapiDDataUtilsTest {
 
     @Test
     public void testRemovePrimitivesFromDataSet() {
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
-        DataSet ds1 = new DataSet();
-        for (Node node : way1.getNodes()) {
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0, 0.1)));
+        final DataSet ds1 = new DataSet();
+        for (final Node node : way1.getNodes()) {
             ds1.addPrimitive(node);
         }
         ds1.addPrimitive(way1);
@@ -92,11 +96,11 @@ public class RapiDDataUtilsTest {
 
     @Test
     public void testRapiDURLPreferences() {
-        String fakeUrl = "https://fake.url";
+        final String fakeUrl = "https://fake.url";
         Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
         RapiDDataUtils.setRapiDUrl(fakeUrl);
         Assert.assertEquals(fakeUrl, RapiDDataUtils.getRapiDURL());
-        List<String> urls = new ArrayList<>(RapiDDataUtils.getRapiDURLs());
+        final List<String> urls = new ArrayList<>(RapiDDataUtils.getRapiDURLs());
         Assert.assertEquals(2, urls.size());
         RapiDDataUtils.setRapiDUrl(RapiDDataUtils.DEFAULT_RAPID_API);
         Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
@@ -109,7 +113,7 @@ public class RapiDDataUtilsTest {
 
     @Test
     public void testSplitBounds() {
-        BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
+        final BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
         List<BBox> bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(1, bboxes.size());
         checkInBBox(bbox, bboxes);
@@ -135,8 +139,8 @@ public class RapiDDataUtilsTest {
         checkInBBox(bbox, bboxes);
     }
 
-    private void checkInBBox(BBox bbox, Collection<BBox> bboxes) {
-        for (BBox tBBox : bboxes) {
+    private static void checkInBBox(BBox bbox, Collection<BBox> bboxes) {
+        for (final BBox tBBox : bboxes) {
             Assert.assertTrue(bbox.bounds(tBBox));
         }
     }

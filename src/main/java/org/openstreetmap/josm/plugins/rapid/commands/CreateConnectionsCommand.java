@@ -71,31 +71,32 @@ public class CreateConnectionsCommand extends Command {
      * @return
      */
     public SequenceCommand createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
-        Collection<Node> nodes = Utils.filteredCollection(collection, Node.class);
-        List<Command> changedKeyList = new ArrayList<>();
-        for (Node node : nodes) {
+        final Collection<Node> nodes = Utils.filteredCollection(collection, Node.class);
+        final List<Command> changedKeyList = new ArrayList<>();
+        for (final Node node : nodes) {
             if (node.hasKey(CONN_KEY)) {
                 changedKeyList.addAll(connectedCommand(dataSet, node));
             }
             if (node.hasKey(DUPE_KEY)) {
-                Command replaceCommand = duplicateNode(dataSet, node);
+                final Command replaceCommand = duplicateNode(dataSet, node);
                 if (replaceCommand != null) {
                     changedKeyList.add(replaceCommand);
                 }
             }
         }
-        if (!changedKeyList.isEmpty())
+        if (!changedKeyList.isEmpty()) {
             return new SequenceCommand(getDescriptionText(), changedKeyList);
+        }
         return null;
     }
 
-    private List<Command> connectedCommand(DataSet dataSet, Node node) {
-        List<Command> commands = new ArrayList<>();
-        OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(CONN_KEY));
+    private static List<Command> connectedCommand(DataSet dataSet, Node node) {
+        final List<Command> commands = new ArrayList<>();
+        final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(CONN_KEY));
         for (int i = 0; i < primitiveConnections.length / 3; i++) {
             if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
                     && primitiveConnections[i + 2] instanceof Node) {
-                Command addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
+                final Command addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
                         (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]);
                 if (addNodesToWayCommand != null) {
                     commands.add(addNodesToWayCommand);
@@ -110,8 +111,8 @@ public class CreateConnectionsCommand extends Command {
         return commands;
     }
 
-    private Command duplicateNode(DataSet dataSet, Node node) {
-        OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(DUPE_KEY));
+    private static Command duplicateNode(DataSet dataSet, Node node) {
+        final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(DUPE_KEY));
         if (primitiveConnections.length != 1) {
             Logging.error("RapiD: dupe connection connected to more than one node? (dupe={0})", node.get(DUPE_KEY));
         }
@@ -126,13 +127,13 @@ public class CreateConnectionsCommand extends Command {
      * @return The primitives that the ids point to, if in the dataset.
      */
     private static OsmPrimitive[] getPrimitives(DataSet dataSet, String ids) {
-        Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives = new TreeMap<>();
-        String[] connections = ids.split(",", -1);
-        OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
+        final Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives = new TreeMap<>();
+        final String[] connections = ids.split(",", -1);
+        final OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
         for (int i = 0; i < connections.length; i++) {
-            String member = connections[i];
-            long id = Long.parseLong(member.substring(1));
-            char firstChar = member.charAt(0);
+            final String member = connections[i];
+            final long id = Long.parseLong(member.substring(1));
+            final char firstChar = member.charAt(0);
             OsmPrimitiveType type = null;
             if (firstChar == 'w') {
                 type = OsmPrimitiveType.WAY;
@@ -140,12 +141,13 @@ public class CreateConnectionsCommand extends Command {
                 type = OsmPrimitiveType.NODE;
             } else if (firstChar == 'r') {
                 type = OsmPrimitiveType.RELATION;
-            } else
+            } else {
                 throw new IllegalArgumentException(
                         tr("{0}: We don't know how to handle {1} types", RapiDPlugin.NAME, firstChar));
+            }
             primitiveConnections[i] = dataSet.getPrimitiveById(id, type);
             if (primitiveConnections[i] == null) {
-                missingPrimitives.put(i, new Pair<Long, OsmPrimitiveType>(id, type));
+                missingPrimitives.put(i, new Pair<>(id, type));
             }
         }
         getMissingPrimitives(dataSet, primitiveConnections, missingPrimitives);
@@ -154,24 +156,25 @@ public class CreateConnectionsCommand extends Command {
 
     private static void getMissingPrimitives(DataSet dataSet, OsmPrimitive[] primitiveConnections,
             Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives) {
-        Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors.toMap(
-                entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));
-        List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
-        Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
-                .parallelStream().filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
+        final Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors
+                .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));
+        final List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
+        final Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager()
+                .getLayersOfType(OsmDataLayer.class).parallelStream()
+                .filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
         OsmDataLayer layer;
         if (optionalLayer.isPresent()) {
             layer = optionalLayer.get();
         } else {
             layer = new OsmDataLayer(dataSet, "generated layer", null);
         }
-        PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(tr("Downloading additional OsmPrimitives"));
-        DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true,
-                monitor);
+        final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(
+                tr("Downloading additional OsmPrimitives"));
+        final DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true, monitor);
         downloadPrimitivesTask.run();
-        for (Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
-            int index = entry.getValue().intValue();
-            OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
+        for (final Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
+            final int index = entry.getValue().intValue();
+            final OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
             primitiveConnections[index] = primitive;
         }
     }
@@ -187,10 +190,10 @@ public class CreateConnectionsCommand extends Command {
      */
     public static Command addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
         Command tCommand = null;
-        Way tWay = new Way();
+        final Way tWay = new Way();
         tWay.addNode(first);
         tWay.addNode(second);
-        double distance = Geometry.getDistanceWayNode(tWay, toAddNode);
+        final double distance = Geometry.getDistanceWayNode(tWay, toAddNode);
         if (distance < 5) {
             tCommand = new AddNodeToWayCommand(toAddNode, way, first, second);
         }

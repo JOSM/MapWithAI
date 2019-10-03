@@ -32,15 +32,15 @@ public class CreateConnectionsCommandTest {
      */
     @Test
     public void testCreateConnections() {
-        Node node1 = new Node(new LatLon(0, 0));
-        Node node2 = new Node(new LatLon(1, 0));
-        Node node3 = new Node(new LatLon(0.5, 0));
-        Node dupe = new Node(new LatLon(0, 0));
-        Way way = TestUtils.newWay("highway=residential", node1, node2);
-        Collection<OsmPrimitive> added = new ArrayList<>();
-        Collection<OsmPrimitive> modified = new ArrayList<>();
-        Collection<OsmPrimitive> deleted = new ArrayList<>();
-        DataSet dataSet = new DataSet(node1, node2, node3, dupe, way);
+        final Node node1 = new Node(new LatLon(0, 0));
+        final Node node2 = new Node(new LatLon(1, 0));
+        final Node node3 = new Node(new LatLon(0.5, 0));
+        final Node dupe = new Node(new LatLon(0, 0));
+        final Way way = TestUtils.newWay("highway=residential", node1, node2);
+        final Collection<OsmPrimitive> added = new ArrayList<>();
+        final Collection<OsmPrimitive> modified = new ArrayList<>();
+        final Collection<OsmPrimitive> deleted = new ArrayList<>();
+        final DataSet dataSet = new DataSet(node1, node2, node3, dupe, way);
 
         Command createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(node3));
         createConnections.executeCommand();
@@ -84,10 +84,10 @@ public class CreateConnectionsCommandTest {
      */
     @Test
     public void testAddNodesToWay() {
-        Node node1 = new Node(new LatLon(0, 0));
-        Node node2 = new Node(new LatLon(1, 0));
-        Node node3 = new Node(new LatLon(0.5, 0));
-        Way way = TestUtils.newWay("highway=residential", node1, node2);
+        final Node node1 = new Node(new LatLon(0, 0));
+        final Node node2 = new Node(new LatLon(1, 0));
+        final Node node3 = new Node(new LatLon(0.5, 0));
+        final Way way = TestUtils.newWay("highway=residential", node1, node2);
         new DataSet(node1, node2, node3, way);
         Command addNodeToWayCommand = CreateConnectionsCommand.addNodesToWay(node3, way, node1, node2);
         Assert.assertEquals(2, way.getNodesCount());
@@ -117,10 +117,10 @@ public class CreateConnectionsCommandTest {
      */
     @Test
     public void testReplaceNode() {
-        Node node1 = new Node(new LatLon(0, 0));
-        Node node2 = new Node(new LatLon(0, 0));
+        final Node node1 = new Node(new LatLon(0, 0));
+        final Node node2 = new Node(new LatLon(0, 0));
         new DataSet(node1, node2);
-        Command replaceNodeCommand = CreateConnectionsCommand.replaceNode(node1, node2);
+        final Command replaceNodeCommand = CreateConnectionsCommand.replaceNode(node1, node2);
         replaceNodeCommand.executeCommand();
         Assert.assertTrue(node1.isDeleted());
         replaceNodeCommand.undoCommand();
@@ -135,7 +135,7 @@ public class CreateConnectionsCommandTest {
      */
     @Test
     public void testGetDescriptionText() {
-        String text = new CreateConnectionsCommand(new DataSet(), null).getDescriptionText();
+        final String text = new CreateConnectionsCommand(new DataSet(), null).getDescriptionText();
         Assert.assertNotNull(text);
         Assert.assertFalse(text.isEmpty());
     }

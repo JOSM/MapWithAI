@@ -23,12 +23,13 @@ public class MovePrimitiveDataSetCommandTest {
 
     @Test
     public void testMovePrimitives() {
-        Collection<OsmPrimitive> added = new ArrayList<>();
-        Collection<OsmPrimitive> modified = new ArrayList<>();
-        Collection<OsmPrimitive> deleted = new ArrayList<>();
-        DataSet to = new DataSet();
-        DataSet from = new DataSet();
-        Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
+        final Collection<OsmPrimitive> added = new ArrayList<>();
+        final Collection<OsmPrimitive> modified = new ArrayList<>();
+        final Collection<OsmPrimitive> deleted = new ArrayList<>();
+        final DataSet to = new DataSet();
+        final DataSet from = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
         way1.getNodes().stream().forEach(node -> from.addPrimitive(node));
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
@@ -70,7 +71,7 @@ public class MovePrimitiveDataSetCommandTest {
         Assert.assertEquals(4, from.allPrimitives().size());
         Assert.assertEquals(from, way1.getDataSet());
 
-        for (DataSet ds : Arrays.asList(from, to)) {
+        for (final DataSet ds : Arrays.asList(from, to)) {
             ds.lock();
             move.executeCommand();
             Assert.assertEquals(0, to.allPrimitives().size());

@@ -13,7 +13,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.rapid.commands.RapiDAddCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class RapiDAddComandTest {
@@ -22,13 +21,15 @@ public class RapiDAddComandTest {
 
     @Test
     public void testMoveCollection() {
-        DataSet ds1 = new DataSet();
-        DataSet ds2 = new DataSet();
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
-        Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.2)), way1.firstNode());
-        Way way3 = TestUtils.newWay("highway=residential", new Node(new LatLon(65, 65)), new Node(new LatLon(66, 66)));
-        for (Way way : Arrays.asList(way1, way2, way3)) {
-            for (Node node : way.getNodes()) {
+        final DataSet ds1 = new DataSet();
+        final DataSet ds2 = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0, 0.1)));
+        final Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.2)), way1.firstNode());
+        final Way way3 = TestUtils.newWay("highway=residential", new Node(new LatLon(65, 65)),
+                new Node(new LatLon(66, 66)));
+        for (final Way way : Arrays.asList(way1, way2, way3)) {
+            for (final Node node : way.getNodes()) {
                 if (!ds1.containsNode(node)) {
                     ds1.addPrimitive(node);
                 }
@@ -66,14 +67,15 @@ public class RapiDAddComandTest {
 
     @Test
     public void testCreateConnections() {
-        DataSet ds1 = new DataSet();
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.15)));
-        Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0.05)),
+        final DataSet ds1 = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0, 0.15)));
+        final Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0.05)),
                 new Node(new LatLon(0.05, 0.2)));
         way2.firstNode().put("conn",
                 "w".concat(Long.toString(way1.getUniqueId())).concat(",n")
-                .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
-                .concat(Long.toString(way1.lastNode().getUniqueId())));
+                        .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
+                        .concat(Long.toString(way1.lastNode().getUniqueId())));
         way1.getNodes().forEach(node -> ds1.addPrimitive(node));
         way2.getNodes().forEach(node -> ds1.addPrimitive(node));
         ds1.addPrimitive(way2);
@@ -82,12 +84,12 @@ public class RapiDAddComandTest {
         Assert.assertEquals(3, way1.getNodesCount());
         Assert.assertFalse(way1.isFirstLastNode(way2.firstNode()));
 
-        Way way3 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+        final Way way3 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(-0.1, -0.1)));
         way3.firstNode().put("dupe", "n".concat(Long.toString(way1.firstNode().getUniqueId())));
         way3.getNodes().forEach(node -> ds1.addPrimitive(node));
         ds1.addPrimitive(way3);
-        Node way3Node1 = way3.firstNode();
+        final Node way3Node1 = way3.firstNode();
         RapiDAddCommand.createConnections(ds1, Collections.singletonList(way3.firstNode())).executeCommand();
         Assert.assertNotEquals(way3Node1, way3.firstNode());
         Assert.assertEquals(way1.firstNode(), way3.firstNode());
@@ -96,10 +98,11 @@ public class RapiDAddComandTest {
 
     @Test
     public void testCreateConnectionsUndo() {
-        DataSet osmData = new DataSet();
-        DataSet rapidData = new DataSet();
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
-        Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.1)),
+        final DataSet osmData = new DataSet();
+        final DataSet rapidData = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
+        final Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.1)),
                 new Node(new LatLon(0.1, 0.1)));
         way1.getNodes().forEach(node -> rapidData.addPrimitive(node));
         way2.getNodes().forEach(node -> osmData.addPrimitive(node));
@@ -110,7 +113,7 @@ public class RapiDAddComandTest {
         Assert.assertEquals(3, osmData.allPrimitives().size());
         Assert.assertEquals(3, rapidData.allPrimitives().size());
 
-        RapiDAddCommand command = new RapiDAddCommand(rapidData, osmData, rapidData.getSelected());
+        final RapiDAddCommand command = new RapiDAddCommand(rapidData, osmData, rapidData.getSelected());
         command.executeCommand();
         Assert.assertEquals(6, osmData.allPrimitives().size());
         Assert.assertTrue(rapidData.allPrimitives().isEmpty());
@@ -119,7 +122,7 @@ public class RapiDAddComandTest {
         Assert.assertEquals(3, osmData.allPrimitives().size());
         Assert.assertEquals(3, rapidData.allPrimitives().size());
 
-        Tag dupe = new Tag("dupe", "n".concat(Long.toString(way2.lastNode().getUniqueId())));
+        final Tag dupe = new Tag("dupe", "n".concat(Long.toString(way2.lastNode().getUniqueId())));
         way1.lastNode().put(dupe);
         command.executeCommand();
         Assert.assertEquals(6, osmData.allPrimitives().size());

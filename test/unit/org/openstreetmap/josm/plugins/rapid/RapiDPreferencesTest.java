@@ -34,38 +34,40 @@ public class RapiDPreferencesTest {
      */
     @Test
     public void testAddGui() {
-        PreferenceTabbedPane pane = new PreferenceTabbedPane();
+        final PreferenceTabbedPane pane = new PreferenceTabbedPane();
         pane.buildGui();
-        int tabs = pane.getPluginPreference().getTabPane().getTabCount();
+        final int tabs = pane.getPluginPreference().getTabPane().getTabCount();
 
         preferences.addGui(pane);
 
         Assert.assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount());
         Assert.assertEquals(pane.getPluginPreference(), preferences.getTabPreferenceSetting(pane));
 
-        boolean switchLayers = RapiDDataUtils.getSwitchLayers();
+        final boolean switchLayers = RapiDDataUtils.getSwitchLayers();
 
-        Assert.assertEquals(switchLayers, preferences.switchLayerCheckBox.isSelected());
+        Assert.assertEquals(switchLayers, preferences.getSwitchLayerCheckBox().isSelected());
         preferences.ok();
         Assert.assertEquals(switchLayers, RapiDDataUtils.getSwitchLayers());
 
-        preferences.switchLayerCheckBox.setSelected(!switchLayers);
+        preferences.getSwitchLayerCheckBox().setSelected(!switchLayers);
         Assert.assertNotEquals(!switchLayers, RapiDDataUtils.getSwitchLayers());
         preferences.ok();
         Assert.assertEquals(!switchLayers, RapiDDataUtils.getSwitchLayers());
 
-        Object tmp = preferences.maximumAdditionSpinner.getModel();
+        final Object tmp = preferences.getMaximumAdditionSpinner().getModel();
         SpinnerNumberModel spinnerModel = null;
         if (tmp instanceof SpinnerNumberModel) {
             spinnerModel = (SpinnerNumberModel) tmp;
         }
         Assert.assertNotNull(spinnerModel);
-        Number currentNumber = RapiDDataUtils.getMaximumAddition();
+        final Number currentNumber = RapiDDataUtils.getMaximumAddition();
         Assert.assertEquals(currentNumber.intValue(), spinnerModel.getNumber().intValue());
         spinnerModel.setValue(currentNumber.intValue() + 3);
         Assert.assertNotEquals(spinnerModel.getNumber().intValue(), RapiDDataUtils.getMaximumAddition());
         preferences.ok();
         Assert.assertEquals(spinnerModel.getNumber().intValue(), RapiDDataUtils.getMaximumAddition());
+
+        Assert.assertNotNull(preferences.getPossibleRapidApiUrl().getSelectedItem());
     }
 
     /**

@@ -35,7 +35,7 @@ public class AddNodeToWayCommand extends Command {
 
     @Override
     public boolean executeCommand() {
-        int index = Math.max(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
+        final int index = Math.max(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
         way.addNode(index, toAddNode);
         return true;
     }

@@ -23,11 +23,12 @@ public class AddPrimitivesCommandTest {
 
     @Test
     public void testAddPrimitives() {
-        DataSet dataSet = new DataSet();
-        Way way1 = TestUtils.newWay("highway=secondary", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
+        final DataSet dataSet = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=secondary", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
         Assert.assertNull(way1.getDataSet());
 
-        Collection<OsmPrimitive> added = AddPrimitivesCommand.addPrimitives(dataSet, Collections.singleton(way1));
+        final Collection<OsmPrimitive> added = AddPrimitivesCommand.addPrimitives(dataSet, Collections.singleton(way1));
         Assert.assertEquals(3, added.size());
         Assert.assertSame(dataSet, way1.getDataSet());
     }
@@ -35,13 +36,14 @@ public class AddPrimitivesCommandTest {
     @SuppressWarnings("UndefinedEquals")
     @Test
     public void testUndoRedo() {
-        DataSet dataSet = new DataSet();
-        List<OsmPrimitive> added = new ArrayList<>();
-        List<OsmPrimitive> modified = new ArrayList<>();
-        List<OsmPrimitive> deleted = new ArrayList<>();
-        Way way1 = TestUtils.newWay("highway=secondary", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, -0.1)));
+        final DataSet dataSet = new DataSet();
+        final List<OsmPrimitive> added = new ArrayList<>();
+        final List<OsmPrimitive> modified = new ArrayList<>();
+        final List<OsmPrimitive> deleted = new ArrayList<>();
+        final Way way1 = TestUtils.newWay("highway=secondary", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, -0.1)));
         AddPrimitivesCommand command = new AddPrimitivesCommand(dataSet, Collections.singleton(way1), null);
-        Collection<OsmPrimitive> selection = dataSet.getAllSelected();
+        final Collection<OsmPrimitive> selection = dataSet.getAllSelected();
         Assert.assertNull(way1.getDataSet());
 
         command.executeCommand();

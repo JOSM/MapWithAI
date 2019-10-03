@@ -18,7 +18,7 @@ public class RapiDAction extends JosmAction {
     /** UID */
     private static final long serialVersionUID = 8886705479253246588L;
 
-    private static final Object layerLock = new Object();
+    private static final Object LAYER_LOCK = new Object();
 
     public RapiDAction() {
         super(RapiDPlugin.NAME, null, tr("Get data from RapiD"),
@@ -41,15 +41,13 @@ public class RapiDAction extends JosmAction {
      */
     public static RapiDLayer getLayer(boolean create) {
         final List<RapiDLayer> rapidLayers = MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class);
-        RapiDLayer layer;
-        synchronized (layerLock) {
+        RapiDLayer layer = null;
+        synchronized (LAYER_LOCK) {
             if (rapidLayers.isEmpty() && create) {
                 layer = new RapiDLayer(new DataSet(), RapiDPlugin.NAME, null);
                 MainApplication.getLayerManager().addLayer(layer);
             } else if (!rapidLayers.isEmpty()) {
                 layer = rapidLayers.get(0);
-            } else {
-                layer = null;
             }
         }
         return layer;
@@ -86,7 +84,7 @@ public class RapiDAction extends JosmAction {
                 final DataSet newData = RapiDDataUtils.getData(bound.toBBox());
                 /* Microsoft buildings don't have a source, so we add one */
                 RapiDDataUtils.addSourceTags(newData, "building", "Microsoft");
-                synchronized (layerLock) {
+                synchronized (LAYER_LOCK) {
                     layer.unlock();
                     layer.mergeFrom(newData);
                     layer.lock();

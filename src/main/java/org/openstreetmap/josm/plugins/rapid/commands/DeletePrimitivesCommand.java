@@ -2,16 +2,20 @@ package org.openstreetmap.josm.plugins.rapid.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.tools.Logging;
 
 public class DeletePrimitivesCommand extends Command {
     private final Collection<OsmPrimitive> selection;
@@ -48,18 +52,25 @@ public class DeletePrimitivesCommand extends Command {
 
     @Override
     public boolean executeCommand() {
-        for (OsmPrimitive primitive : selection) {
-            DataSet dataSet = primitive.getDataSet();
+        for (final OsmPrimitive primitive : selection) {
+            final DataSet dataSet = primitive.getDataSet();
 
             if (from.equals(dataSet)) {
-                dataSet.removePrimitive(primitive);
+                try {
+                    SwingUtilities.invokeAndWait(() -> dataSet.removePrimitive(primitive));
+                } catch (final InvocationTargetException e) {
+                    Logging.debug(e);
+                } catch (final InterruptedException e) {
+                    Logging.debug(e);
+                    Thread.currentThread().interrupt();
+                }
                 removed.add(primitive);
             }
             if (primitive instanceof Way) {
-                List<OsmPrimitive> nodes = ((Way) primitive).getNodes().stream()
+                final List<OsmPrimitive> nodes = ((Way) primitive).getNodes().stream()
                         .filter(node -> (!node.hasKeys() || deleteChildren) && !selection.contains(node))
                         .collect(Collectors.toList());
-                DeletePrimitivesCommand delNodes = new DeletePrimitivesCommand(from, nodes);
+                final DeletePrimitivesCommand delNodes = new DeletePrimitivesCommand(from, nodes);
                 delNodes.executeCommand();
                 commands.add(delNodes);
             }
@@ -69,16 +80,16 @@ public class DeletePrimitivesCommand extends Command {
 
     @Override
     public void undoCommand() {
-        for (Command command : commands) {
+        for (final Command command : commands) {
             command.undoCommand();
         }
-        for (OsmPrimitive primitive : removed) {
-            DataSet removedPrimitiveDataSet = primitive.getDataSet();
+        for (final OsmPrimitive primitive : removed) {
+            final DataSet removedPrimitiveDataSet = primitive.getDataSet();
             if (removedPrimitiveDataSet != null) {
                 removedPrimitiveDataSet.removePrimitive(primitive);
             }
             if (primitive instanceof Way) {
-                for (Node node : ((Way) primitive).getNodes()) {
+                for (final Node node : ((Way) primitive).getNodes()) {
                     if (node.getDataSet() == null) {
                         from.addPrimitive(node);
                     }
@@ -96,7 +107,7 @@ public class DeletePrimitivesCommand extends Command {
     @Override
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
-        for (Command command : commands) {
+        for (final Command command : commands) {
             command.fillModifiedData(modified, deleted, added);
         }
         deleted.addAll(removed);

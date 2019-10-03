@@ -15,8 +15,9 @@ public class RapiDLayer extends OsmDataLayer {
 
     /**
      * Create a new RapiD layer
-     * @param data OSM data from rapid
-     * @param name Layer name
+     * 
+     * @param data           OSM data from rapid
+     * @param name           Layer name
      * @param associatedFile an associated file (can be null)
      */
     public RapiDLayer(DataSet data, String name, File associatedFile) {

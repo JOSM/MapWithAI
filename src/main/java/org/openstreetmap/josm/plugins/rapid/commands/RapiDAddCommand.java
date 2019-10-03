@@ -21,20 +21,20 @@ public class RapiDAddCommand extends Command implements Runnable {
     DataSet editable;
     DataSet rapid;
     Collection<OsmPrimitive> primitives;
-    Collection<OsmPrimitive> modifiedPrimitives;
     Command command = null;
 
-    OsmDataLayer editLayer = null;
-
+    /**
+     * Add primitives from RapiD to the OSM data layer
+     *
+     * @param rapidLayer    The rapid layer
+     * @param editableLayer The OSM layer
+     * @param selection     The primitives to add from RapiD
+     */
     public RapiDAddCommand(RapiDLayer rapidLayer, OsmDataLayer editLayer, Collection<OsmPrimitive> selection) {
-        super(rapidLayer.getDataSet());
-        this.rapid = rapidLayer.getDataSet();
-        this.editable = editLayer.getDataSet();
-        this.primitives = selection;
-        this.editLayer = editLayer;
-        modifiedPrimitives = null;
+        this(rapidLayer.getDataSet(), editLayer.getDataSet(), selection);
 
     }
+
     /**
      * Add primitives from RapiD to the OSM data layer
      *
@@ -47,7 +47,6 @@ public class RapiDAddCommand extends Command implements Runnable {
         this.rapid = rapid;
         this.editable = editable;
         this.primitives = selection;
-        modifiedPrimitives = null;
     }
 
     @Override
@@ -70,12 +69,12 @@ public class RapiDAddCommand extends Command implements Runnable {
         primitives = new HashSet<>(primitives);
         RapiDDataUtils.addPrimitivesToCollection(/* collection= */ primitives, /* primitives= */ primitives);
         synchronized (this) {
-            boolean locked = rapid.isLocked();
+            final boolean locked = rapid.isLocked();
             if (locked) {
                 rapid.unlock();
             }
-            Command tCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
-            Command createConnectionsCommand = createConnections(editable, primitives);
+            final Command tCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
+            final Command createConnectionsCommand = createConnections(editable, primitives);
             command = new SequenceCommand(getDescriptionText(), tCommand, createConnectionsCommand);
             command.executeCommand();
 
@@ -99,12 +98,14 @@ public class RapiDAddCommand extends Command implements Runnable {
 
     @Override
     public void undoCommand() {
-        boolean locked = rapid.isLocked();
+        final boolean locked = rapid.isLocked();
         if (locked) {
             rapid.unlock();
         }
-        if (command != null) {
-            command.undoCommand();
+        synchronized (this) {
+            if (command != null) {
+                command.undoCommand();
+            }
         }
         if (locked) {
             rapid.lock();

@@ -53,22 +53,20 @@ public final class RapiDDataUtils {
      * @return A DataSet with data inside the bbox
      */
     public static DataSet getData(BBox bbox) {
-        DataSet dataSet = new DataSet();
-        if (!bbox.isValid())
-            return dataSet;
-        List<Future<?>> futures = new ArrayList<>();
-        for (BBox tbbox : reduceBBoxSize(bbox)) {
-            futures.add(MainApplication.worker.submit(new GetDataRunnable(tbbox, dataSet)));
-        }
-        for (Future<?> future : futures) {
-            synchronized (future) {
+        final DataSet dataSet = new DataSet();
+        if (bbox.isValid()) {
+            final List<Future<?>> futures = new ArrayList<>();
+            for (final BBox tbbox : reduceBBoxSize(bbox)) {
+                futures.add(MainApplication.worker.submit(new GetDataRunnable(tbbox, dataSet)));
+            }
+            for (final Future<?> future : futures) {
                 try {
                     int count = 0;
                     while (!future.isDone() && !future.isCancelled() && count < 100) {
-                        future.wait(100);
+                        Thread.sleep(100);
                         count++;
                     }
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     Logging.debug(e);
                     Thread.currentThread().interrupt();
                 }
@@ -79,7 +77,7 @@ public final class RapiDDataUtils {
 
     private static class GetDataRunnable implements Runnable {
         private final BBox bbox;
-        private DataSet dataSet = null;
+        private final DataSet dataSet;
 
         public GetDataRunnable(BBox bbox, DataSet dataSet) {
             this.bbox = bbox;
@@ -88,7 +86,7 @@ public final class RapiDDataUtils {
 
         @Override
         public void run() {
-            DataSet temporaryDataSet = getDataReal(bbox);
+            final DataSet temporaryDataSet = getDataReal(bbox);
             synchronized (RapiDDataUtils.GetDataRunnable.class) {
                 dataSet.mergeFrom(temporaryDataSet);
             }
@@ -98,12 +96,12 @@ public final class RapiDDataUtils {
 
     private static DataSet getDataReal(BBox bbox) {
         InputStream inputStream = null;
-        DataSet dataSet = new DataSet();
-        String urlString = getRapiDURL();
+        final DataSet dataSet = new DataSet();
+        final String urlString = getRapiDURL();
         try {
             final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
-            HttpClient client = HttpClient.create(url);
-            StringBuilder defaultUserAgent = new StringBuilder();
+            final HttpClient client = HttpClient.create(url);
+            final StringBuilder defaultUserAgent = new StringBuilder();
             defaultUserAgent.append(client.getHeaders().get("User-Agent"));
             if (defaultUserAgent.toString().trim().length() == 0) {
                 defaultUserAgent.append("JOSM");
@@ -111,7 +109,7 @@ public final class RapiDDataUtils {
             defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
             client.setHeader("User-Agent", defaultUserAgent.toString());
             Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
-            Response response = client.connect();
+            final Response response = client.connect();
             inputStream = response.getContent();
             dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
             response.disconnect();
@@ -121,7 +119,7 @@ public final class RapiDDataUtils {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     Logging.debug(e);
                 }
             }
@@ -150,18 +148,18 @@ public final class RapiDDataUtils {
      * @param primitives The primitives to remove
      */
     public static void removePrimitivesFromDataSet(Collection<OsmPrimitive> primitives) {
-        for (OsmPrimitive primitive : primitives) {
+        for (final OsmPrimitive primitive : primitives) {
             if (primitive instanceof Relation) {
                 removePrimitivesFromDataSet(((Relation) primitive).getMemberPrimitives());
             } else if (primitive instanceof Way) {
-                for (Node node : ((Way) primitive).getNodes()) {
-                    DataSet ds = node.getDataSet();
+                for (final Node node : ((Way) primitive).getNodes()) {
+                    final DataSet ds = node.getDataSet();
                     if (ds != null) {
                         ds.removePrimitive(node);
                     }
                 }
             }
-            DataSet ds = primitive.getDataSet();
+            final DataSet ds = primitive.getDataSet();
             if (ds != null) {
                 ds.removePrimitive(primitive);
             }
@@ -176,8 +174,8 @@ public final class RapiDDataUtils {
      */
     public static void addPrimitivesToCollection(Collection<OsmPrimitive> collection,
             Collection<OsmPrimitive> primitives) {
-        Collection<OsmPrimitive> temporaryCollection = new TreeSet<>();
-        for (OsmPrimitive primitive : primitives) {
+        final Collection<OsmPrimitive> temporaryCollection = new TreeSet<>();
+        for (final OsmPrimitive primitive : primitives) {
             if (primitive instanceof Way) {
                 temporaryCollection.addAll(((Way) primitive).getNodes());
             } else if (primitive instanceof Relation) {
@@ -194,7 +192,7 @@ public final class RapiDDataUtils {
      * @return A RapiD url
      */
     public static String getRapiDURL() {
-        List<String> urls = getRapiDURLs();
+        final List<String> urls = getRapiDURLs();
         String url = Config.getPref().get(RapiDPlugin.NAME.concat(".current_api"), DEFAULT_RAPID_API);
         if (!urls.contains(url)) {
             url = DEFAULT_RAPID_API;
@@ -209,7 +207,7 @@ public final class RapiDDataUtils {
      * @param url The url to set as the default
      */
     public static void setRapiDUrl(String url) {
-        List<String> urls = getRapiDURLs();
+        final List<String> urls = getRapiDURLs();
         if (!urls.contains(url)) {
             urls.add(url);
             setRapiDURLs(urls);
@@ -241,12 +239,13 @@ public final class RapiDDataUtils {
      */
     public static void addRapiDPaintStyles() {
         // TODO figure out how to use the one in the jar file
-        ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
+        final ExtendedSourceEntry rapid = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
                 "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
-        List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
-        for (SourceEntry paintStyle : paintStyles) {
-            if (rapid.url.equals(paintStyle.url))
+        final List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
+        for (final SourceEntry paintStyle : paintStyles) {
+            if (rapid.url.equals(paintStyle.url)) {
                 return;
+            }
         }
         paintStyles.add(rapid);
         MapPaintPrefHelper.INSTANCE.put(paintStyles);
@@ -288,23 +287,24 @@ public final class RapiDDataUtils {
     }
 
     public static List<BBox> reduceBBoxSize(BBox bbox) {
-        List<BBox> returnBounds = new ArrayList<>();
-        double width = getWidth(bbox);
-        double height = getHeight(bbox);
-        Double widthDivisions = width / MAXIMUM_SIDE_DIMENSIONS;
-        Double heightDivisions = height / MAXIMUM_SIDE_DIMENSIONS;
-        int widthSplits = widthDivisions.intValue() + (widthDivisions - widthDivisions.intValue() > 0 ? 1 : 0);
-        int heightSplits = heightDivisions.intValue() + (heightDivisions - heightDivisions.intValue() > 0 ? 1 : 0);
+        final List<BBox> returnBounds = new ArrayList<>();
+        final double width = getWidth(bbox);
+        final double height = getHeight(bbox);
+        final Double widthDivisions = width / MAXIMUM_SIDE_DIMENSIONS;
+        final Double heightDivisions = height / MAXIMUM_SIDE_DIMENSIONS;
+        final int widthSplits = widthDivisions.intValue() + (widthDivisions - widthDivisions.intValue() > 0 ? 1 : 0);
+        final int heightSplits = heightDivisions.intValue()
+                + (heightDivisions - heightDivisions.intValue() > 0 ? 1 : 0);
 
-        double newMinWidths = Math.abs((bbox.getTopLeftLon() - bbox.getBottomRightLon())) / widthSplits;
-        double newMinHeights = Math.abs((bbox.getBottomRightLat() - bbox.getTopLeftLat())) / heightSplits;
+        final double newMinWidths = Math.abs(bbox.getTopLeftLon() - bbox.getBottomRightLon()) / widthSplits;
+        final double newMinHeights = Math.abs(bbox.getBottomRightLat() - bbox.getTopLeftLat()) / heightSplits;
 
-        double minx = bbox.getTopLeftLon();
-        double miny = bbox.getBottomRightLat();
+        final double minx = bbox.getTopLeftLon();
+        final double miny = bbox.getBottomRightLat();
         for (int x = 1; x <= widthSplits; x++) {
             for (int y = 1; y <= heightSplits; y++) {
-                LatLon lowerLeft = new LatLon(miny + newMinHeights * (y - 1), minx + newMinWidths * (x - 1));
-                LatLon upperRight = new LatLon(miny + newMinHeights * y, minx + newMinWidths * x);
+                final LatLon lowerLeft = new LatLon(miny + newMinHeights * (y - 1), minx + newMinWidths * (x - 1));
+                final LatLon upperRight = new LatLon(miny + newMinHeights * y, minx + newMinWidths * x);
                 returnBounds.add(new BBox(lowerLeft, upperRight));
             }
         }
@@ -313,24 +313,24 @@ public final class RapiDDataUtils {
 
     public static double getWidth(BBox bbox) {
         // Lat is y, Lon is x
-        LatLon bottomRight = bbox.getBottomRight();
-        LatLon topLeft = bbox.getTopLeft();
-        double maxx = bottomRight.getX();
-        double minx = topLeft.getX();
-        double miny = bottomRight.getY();
-        double maxy = topLeft.getY();
-        LatLon bottomLeft = new LatLon(miny, minx);
-        LatLon topRight = new LatLon(maxy, maxx);
+        final LatLon bottomRight = bbox.getBottomRight();
+        final LatLon topLeft = bbox.getTopLeft();
+        final double maxx = bottomRight.getX();
+        final double minx = topLeft.getX();
+        final double miny = bottomRight.getY();
+        final double maxy = topLeft.getY();
+        final LatLon bottomLeft = new LatLon(miny, minx);
+        final LatLon topRight = new LatLon(maxy, maxx);
         // TODO handle meridian
         return Math.max(bottomRight.greatCircleDistance(bottomLeft), topRight.greatCircleDistance(topLeft));
     }
 
     public static double getHeight(BBox bbox) {
-        LatLon bottomRight = bbox.getBottomRight();
-        LatLon topLeft = bbox.getTopLeft();
-        double minx = topLeft.getX();
-        double miny = bottomRight.getY();
-        LatLon bottomLeft = new LatLon(miny, minx);
+        final LatLon bottomRight = bbox.getBottomRight();
+        final LatLon topLeft = bbox.getTopLeft();
+        final double minx = topLeft.getX();
+        final double miny = bottomRight.getY();
+        final LatLon bottomLeft = new LatLon(miny, minx);
         // TODO handle poles
         return topLeft.greatCircleDistance(bottomLeft);
     }

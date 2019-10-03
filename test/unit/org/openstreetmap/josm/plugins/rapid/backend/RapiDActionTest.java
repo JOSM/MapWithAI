@@ -33,8 +33,8 @@ public class RapiDActionTest {
 
     @Test
     public void testGetData() {
-        RapiDLayer rapid = RapiDAction.getLayer(true);
-        OsmDataLayer osm = new OsmDataLayer(new DataSet(), "test", null);
+        final RapiDLayer rapid = RapiDAction.getLayer(true);
+        final OsmDataLayer osm = new OsmDataLayer(new DataSet(), "test", null);
         MainApplication.getLayerManager().addLayer(osm);
         RapiDAction.getRapiDData(rapid, osm);
 

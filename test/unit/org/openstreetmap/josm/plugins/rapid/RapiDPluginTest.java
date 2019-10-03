@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.rapid;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.swing.JMenu;
 
@@ -25,14 +26,14 @@ public class RapiDPluginTest {
     public PluginInformation info;
     public RapiDPlugin plugin;
 
-    private static String VERSION = "no-such-version";
+    private static final String VERSION = "no-such-version";
 
     /**
      * @throws java.lang.Exception
      */
     @Before
     public void setUp() throws Exception {
-        InputStream in = new ByteArrayInputStream("".getBytes());
+        final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
         info = new PluginInformation(in, "Rapid", null);
         info.localversion = VERSION;
     }
@@ -51,9 +52,9 @@ public class RapiDPluginTest {
      */
     @Test
     public void testRapiDPlugin() {
-        JMenu dataMenu = MainApplication.getMenu().dataMenu;
-        int originalPaintStyles = MapPaintPrefHelper.INSTANCE.get().size();
-        int dataMenuSize = dataMenu.getMenuComponentCount();
+        final JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        final int originalPaintStyles = MapPaintPrefHelper.INSTANCE.get().size();
+        final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new RapiDPlugin(info);
         Assert.assertEquals(dataMenuSize + 2, dataMenu.getMenuComponentCount());
         Assert.assertEquals(originalPaintStyles + 1, MapPaintPrefHelper.INSTANCE.get().size());

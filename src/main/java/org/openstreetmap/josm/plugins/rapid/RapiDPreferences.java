@@ -21,31 +21,34 @@ import org.openstreetmap.josm.gui.preferences.TabPreferenceSetting;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 
 public class RapiDPreferences implements SubPreferenceSetting {
-    protected final JLabel rapidApiUrl = new JLabel(tr("RapiD API URL"));
-    protected final JComboBox<String> possibleRapidApiUrl = new JComboBox<>();
+    private final JComboBox<String> possibleRapidApiUrl;
 
-    protected final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
-    protected final JCheckBox switchLayerCheckBox = new JCheckBox();
+    private final JCheckBox switchLayerCheckBox;
 
-    protected final JLabel maximumAddition = new JLabel(
-            tr("Maximum features (add)"));
-    protected final JSpinner maximumAdditionSpinner = new JSpinner(
-            new SpinnerNumberModel(RapiDDataUtils.getMaximumAddition(), 0, 100, 1));
+    private final JSpinner maximumAdditionSpinner;
+
+    public RapiDPreferences() {
+        possibleRapidApiUrl = new JComboBox<>();
+        switchLayerCheckBox = new JCheckBox();
+        maximumAdditionSpinner = new JSpinner(new SpinnerNumberModel(RapiDDataUtils.getMaximumAddition(), 0, 100, 1));
+    }
 
     @Override
     public void addGui(PreferenceTabbedPane gui) {
+        final JLabel rapidApiUrl = new JLabel(tr("RapiD API URL"));
+        final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
+        final JLabel maximumAddition = new JLabel(tr("Maximum features (add)"));
         final JPanel container = new JPanel(new GridBagLayout());
         container.setAlignmentY(JPanel.TOP_ALIGNMENT);
         final GridBagConstraints constraints = new GridBagConstraints();
 
-
         possibleRapidApiUrl.setEditable(true);
         possibleRapidApiUrl.setPrototypeDisplayValue("https://example.url/some/end/point");
-        Component textField = possibleRapidApiUrl.getEditor().getEditorComponent();
+        final Component textField = possibleRapidApiUrl.getEditor().getEditorComponent();
         if (textField instanceof JTextField) {
             ((JTextField) textField).setColumns(36);
         }
-        for (String url : RapiDDataUtils.getRapiDURLs()) {
+        for (final String url : RapiDDataUtils.getRapiDURLs()) {
             possibleRapidApiUrl.addItem(url);
         }
         possibleRapidApiUrl.setSelectedItem(RapiDDataUtils.getRapiDURL());
@@ -84,7 +87,7 @@ public class RapiDPreferences implements SubPreferenceSetting {
     public boolean ok() {
         RapiDDataUtils.setRapiDUrl((String) possibleRapidApiUrl.getSelectedItem());
         RapiDDataUtils.setSwitchLayers(switchLayerCheckBox.isSelected());
-        Object value = maximumAdditionSpinner.getValue();
+        final Object value = maximumAdditionSpinner.getValue();
         if (value instanceof Number) {
             RapiDDataUtils.setMaximumAddition(((Number) value).intValue());
         }
@@ -99,5 +102,26 @@ public class RapiDPreferences implements SubPreferenceSetting {
     @Override
     public TabPreferenceSetting getTabPreferenceSetting(PreferenceTabbedPane gui) {
         return gui.getPluginPreference();
+    }
+
+    /**
+     * @return {@code JComboBox} with possible rapid api urls
+     */
+    public JComboBox<String> getPossibleRapidApiUrl() {
+        return possibleRapidApiUrl;
+    }
+
+    /**
+     * @return The {@code JCheckBox} for whether or not we are switching layers.
+     */
+    public JCheckBox getSwitchLayerCheckBox() {
+        return switchLayerCheckBox;
+    }
+
+    /**
+     * @return {@code JSpinner} for the maximum additions
+     */
+    public JSpinner getMaximumAdditionSpinner() {
+        return maximumAdditionSpinner;
     }
 }

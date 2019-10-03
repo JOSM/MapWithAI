@@ -17,12 +17,14 @@ public final class RapiDPlugin extends Plugin {
     public static final String NAME = "RapiD";
     private static String versionInfo;
 
-    private final PreferenceSetting preferences = new RapiDPreferences();
+    private final PreferenceSetting preferenceSetting;
 
     public RapiDPlugin(PluginInformation info) {
         super(info);
 
-        JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        preferenceSetting = new RapiDPreferences();
+
+        final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         MainMenu.add(dataMenu, new RapiDAction(), false);
         MainMenu.add(dataMenu, new RapiDMoveAction(), false);
 
@@ -33,7 +35,7 @@ public final class RapiDPlugin extends Plugin {
 
     @Override
     public PreferenceSetting getPreferenceSetting() {
-        return preferences;
+        return preferenceSetting;
     }
 
     /**

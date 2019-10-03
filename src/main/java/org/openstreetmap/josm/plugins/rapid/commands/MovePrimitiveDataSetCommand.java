@@ -43,6 +43,7 @@ public class MovePrimitiveDataSetCommand extends Command {
         }
         return true;
     }
+
     /**
      * Move primitives from one dataset to another
      *
@@ -56,13 +57,13 @@ public class MovePrimitiveDataSetCommand extends Command {
             return null;
         }
 
-        List<Command> commands = new ArrayList<>();
+        final List<Command> commands = new ArrayList<>();
 
-        Collection<OsmPrimitive> allNeededPrimitives = new ArrayList<>();
+        final Collection<OsmPrimitive> allNeededPrimitives = new ArrayList<>();
         RapiDDataUtils.addPrimitivesToCollection(allNeededPrimitives, selection);
 
         commands.add(new DeletePrimitivesCommand(from, selection, true));
-        AddPrimitivesCommand addPrimitivesCommand = new AddPrimitivesCommand(to, allNeededPrimitives, selection);
+        final AddPrimitivesCommand addPrimitivesCommand = new AddPrimitivesCommand(to, allNeededPrimitives, selection);
         commands.add(addPrimitivesCommand);
 
         return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",

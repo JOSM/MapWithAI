@@ -11,7 +11,6 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.rapid.commands.DeletePrimitivesCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class DeletePrimitivesCommandTest {
@@ -20,8 +19,9 @@ public class DeletePrimitivesCommandTest {
 
     @Test
     public void testDeletePrimitives() {
-        DataSet ds = new DataSet();
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(-0.1, 0.1)));
+        final DataSet ds = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(-0.1, 0.1)));
         way1.getNodes().forEach(node -> ds.addPrimitive(node));
         ds.addPrimitive(way1);
 
@@ -37,7 +37,7 @@ public class DeletePrimitivesCommandTest {
         Assert.assertTrue(ds.containsWay(way1));
         Assert.assertEquals(3, ds.allPrimitives().size());
 
-        Node tNode = new Node(new LatLon(0.1, 0.1));
+        final Node tNode = new Node(new LatLon(0.1, 0.1));
         ds.addPrimitive(tNode);
         Assert.assertEquals(4, ds.allPrimitives().size());
 

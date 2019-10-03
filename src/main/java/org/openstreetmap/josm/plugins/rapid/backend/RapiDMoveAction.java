@@ -30,17 +30,17 @@ public class RapiDMoveAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        for (RapiDLayer rapid : MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class)) {
-            List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
+        for (final RapiDLayer rapid : MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class)) {
+            final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
             OsmDataLayer editLayer = null;
-            int maxAddition = RapiDDataUtils.getMaximumAddition();
+            final int maxAddition = RapiDDataUtils.getMaximumAddition();
             Collection<OsmPrimitive> selected;
             if (maxAddition > 0) {
                 selected = rapid.getDataSet().getSelected().stream().limit(maxAddition).collect(Collectors.toList());
             } else {
                 selected = rapid.getDataSet().getSelected();
             }
-            for (OsmDataLayer osmLayer : osmLayers) {
+            for (final OsmDataLayer osmLayer : osmLayers) {
                 if (!osmLayer.isLocked() && osmLayer.isVisible() && osmLayer.isUploadable()
                         && osmLayer.getClass().equals(OsmDataLayer.class)) {
                     editLayer = osmLayer;
@@ -48,11 +48,11 @@ public class RapiDMoveAction extends JosmAction {
                 }
             }
             if (editLayer != null) {
-                RapiDAddCommand command = new RapiDAddCommand(rapid, editLayer, selected);
+                final RapiDAddCommand command = new RapiDAddCommand(rapid, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
                 if (RapiDDataUtils.getSwitchLayers()) {
                     MainApplication.getLayerManager().setActiveLayer(editLayer);
-                    DataSet editable = editLayer.getDataSet();
+                    final DataSet editable = editLayer.getDataSet();
                     editable.setSelected(
                             editable.getSelected().stream().filter(OsmPrimitive::isTagged).collect(Collectors.toSet()));
                 }
@@ -75,12 +75,13 @@ public class RapiDMoveAction extends JosmAction {
     }
 
     private boolean checkIfActionEnabled() {
-        Layer active = getLayerManager().getActiveLayer();
+        boolean returnValue = false;
+        final Layer active = getLayerManager().getActiveLayer();
         if (active instanceof RapiDLayer) {
-            RapiDLayer rapid = (RapiDLayer) active;
-            Collection<OsmPrimitive> selection = rapid.getDataSet().getAllSelected();
-            return (selection != null && !selection.isEmpty());
-        } else
-            return false;
+            final RapiDLayer rapid = (RapiDLayer) active;
+            final Collection<OsmPrimitive> selection = rapid.getDataSet().getAllSelected();
+            returnValue = selection != null && !selection.isEmpty();
+        }
+        return returnValue;
     }
 }

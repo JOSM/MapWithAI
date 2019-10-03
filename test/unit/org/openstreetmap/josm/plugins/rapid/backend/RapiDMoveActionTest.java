@@ -28,18 +28,20 @@ public class RapiDMoveActionTest {
 
     @Test
     public void testMoveAction() {
-        DataSet osmData = new DataSet();
-        DataSet rapidData = new DataSet();
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
-        Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.1)),
+        final DataSet osmData = new DataSet();
+        final DataSet rapidData = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
+        final Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.1)),
                 new Node(new LatLon(0.1, 0.1)));
         way1.getNodes().forEach(node -> rapidData.addPrimitive(node));
         way2.getNodes().forEach(node -> osmData.addPrimitive(node));
         osmData.addPrimitive(way2);
         rapidData.addPrimitive(way1);
 
-        OsmDataLayer osmLayer = new OsmDataLayer(osmData, "osm", null);
-        RapiDLayer rapidLayer = new RapiDLayer(RapiDDataUtils.getData(RapiDDataUtilsTest.getTestBBox()), "rapid", null);
+        final OsmDataLayer osmLayer = new OsmDataLayer(osmData, "osm", null);
+        final RapiDLayer rapidLayer = new RapiDLayer(RapiDDataUtils.getData(RapiDDataUtilsTest.getTestBBox()), "rapid",
+                null);
         MainApplication.getLayerManager().addLayer(osmLayer);
         MainApplication.getLayerManager().addLayer(rapidLayer);
         MainApplication.getLayerManager().setActiveLayer(rapidLayer);

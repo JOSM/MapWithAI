@@ -14,7 +14,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.rapid.commands.AddNodeToWayCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;;
 
 public class AddNodeToWayCommandTest {
@@ -56,9 +55,9 @@ public class AddNodeToWayCommandTest {
 
     @Test
     public void testModifiedAddedDeleted() {
-        List<OsmPrimitive> added = new ArrayList<>();
-        List<OsmPrimitive> modified = new ArrayList<>();
-        List<OsmPrimitive> deleted = new ArrayList<>();
+        final List<OsmPrimitive> added = new ArrayList<>();
+        final List<OsmPrimitive> modified = new ArrayList<>();
+        final List<OsmPrimitive> deleted = new ArrayList<>();
         command.fillModifiedData(modified, deleted, added);
         Assert.assertTrue(deleted.isEmpty());
         Assert.assertTrue(added.isEmpty());
