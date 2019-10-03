@@ -48,9 +48,10 @@ public class RapiDArbitraryAction extends JosmAction {
     private final JCheckBox checkbox = new JCheckBox();
 
     public RapiDArbitraryAction() {
-        super(RapiDPlugin.NAME, null, tr("Get arbitrary data from RapiD"), Shortcut.registerShortcut("data:rapid",
-                tr("Data: Arbitrary {0} Data", tr("Get arbitrary data from RapiD")), KeyEvent.VK_R,
-                Shortcut.ALT_CTRL_SHIFT), true);
+        super(tr("{0}: Download arbitrary data", RapiDPlugin.NAME), null, tr("Get arbitrary data from RapiD"),
+                Shortcut.registerShortcut("data:arbitraryrapid",
+                        tr("Data: Arbitrary {0} Data", tr("Get arbitrary data from RapiD")), KeyEvent.VK_R,
+                        Shortcut.ALT_CTRL_SHIFT), true);
     }
 
     @Override
@@ -123,10 +124,8 @@ public class RapiDArbitraryAction extends JosmAction {
         }
 
         if (checkbox.isSelected()) {
-            final GpxData data = new GpxData();
-            data.addWaypoint(new WayPoint(bbox.getBottomRight()));
-            data.addWaypoint(new WayPoint(bbox.getTopLeft()));
-            MainApplication.getLayerManager().addLayer(new GpxLayer(data, tr("{0}: Crop Area", RapiDPlugin.NAME)));
+            MainApplication.getLayerManager().addLayer(new GpxLayer(
+                    DetectTaskingManager.createTaskingManagerGpxData(bbox), DetectTaskingManager.RAPID_CROP_AREA));
         }
 
         final DataSet data = RapiDDataUtils.getData(bbox);

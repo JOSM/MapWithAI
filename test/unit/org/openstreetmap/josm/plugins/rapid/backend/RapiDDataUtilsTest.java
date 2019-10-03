@@ -48,13 +48,16 @@ public class RapiDDataUtilsTest {
     public void testGetDataCropped() {
         final BBox testBBox = getTestBBox();
         GpxData gpxData = new GpxData();
-        gpxData.addWaypoint(new WayPoint(new LatLon(39.0738798, -108.5709922)));
-        gpxData.addWaypoint(new WayPoint(new LatLon(39.0732914, -108.5707436)));
-        GpxLayer gpx = new GpxLayer(gpxData);
+        gpxData.addWaypoint(new WayPoint(new LatLon(39.0735205, -108.5711561)));
+        gpxData.addWaypoint(new WayPoint(new LatLon(39.0736682, -108.5708568)));
+        GpxLayer gpx = new GpxLayer(gpxData, DetectTaskingManager.RAPID_CROP_AREA);
+        final DataSet originalData = RapiDDataUtils.getData(testBBox);
         MainApplication.getLayerManager().addLayer(gpx);
-        final DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
+        final DataSet ds = RapiDDataUtils.getData(testBBox);
         Assert.assertEquals(1, ds.getWays().size());
-        Assert.assertEquals(2, ds.getNodes().size());
+        Assert.assertEquals(3, ds.getNodes().size());
+        Assert.assertEquals(1, originalData.getWays().size());
+        Assert.assertEquals(4, originalData.getNodes().size());
     }
 
     @Test
@@ -146,23 +149,59 @@ public class RapiDDataUtilsTest {
 
         bbox.add(0.01, 0.01);
         bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(1, bboxes.size());
+        Assert.assertEquals(4, bboxes.size());
         checkInBBox(bbox, bboxes);
+        checkBBoxesConnect(bbox, bboxes);
 
         bbox.add(0.1, 0.1);
         bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(4, bboxes.size());
-        checkInBBox(bbox, bboxes);
-
-        bbox.add(1, 1);
-        bboxes = RapiDDataUtils.reduceBBoxSize(bbox);
         Assert.assertEquals(144, bboxes.size());
         checkInBBox(bbox, bboxes);
+        checkBBoxesConnect(bbox, bboxes);
     }
 
     private static void checkInBBox(BBox bbox, Collection<BBox> bboxes) {
         for (final BBox tBBox : bboxes) {
             Assert.assertTrue(bbox.bounds(tBBox));
         }
+    }
+
+    private static void checkBBoxesConnect(BBox originalBBox, Collection<BBox> bboxes) {
+        for (BBox bbox1 : bboxes) {
+            boolean bboxFoundConnections = false;
+            for (BBox bbox2 : bboxes) {
+                if (!bbox1.equals(bbox2)) {
+                    bboxFoundConnections = bboxCheckConnections(bbox1, bbox2);
+                    if (bboxFoundConnections) {
+                        break;
+                    }
+                }
+            }
+            if (!bboxFoundConnections) {
+                bboxFoundConnections = bboxCheckConnections(bbox1, originalBBox);
+            }
+            Assert.assertTrue(bboxFoundConnections);
+        }
+    }
+
+    private static boolean bboxCheckConnections(BBox bbox1, BBox bbox2) {
+        int shared = 0;
+        for (LatLon bbox1Corner : getBBoxCorners(bbox1)) {
+            for (LatLon bbox2Corner : getBBoxCorners(bbox2)) {
+                if (bbox1Corner.equalsEpsilon(bbox2Corner)) {
+                    shared++;
+                }
+            }
+        }
+        return shared >= 2;
+    }
+
+    private static LatLon[] getBBoxCorners(BBox bbox) {
+        LatLon[] returnLatLons = new LatLon[4];
+        returnLatLons[0] = bbox.getTopLeft();
+        returnLatLons[1] = new LatLon(bbox.getTopLeftLat(), bbox.getBottomRightLon());
+        returnLatLons[2] = bbox.getBottomRight();
+        returnLatLons[3] = new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon());
+        return returnLatLons;
     }
 }

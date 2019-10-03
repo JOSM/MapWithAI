@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.UndoRedoHandler;
-import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -24,7 +23,8 @@ public class RapiDMoveAction extends JosmAction {
     private static final long serialVersionUID = 319374598;
 
     public RapiDMoveAction() {
-        super(tr("Add from ".concat(RapiDPlugin.NAME)), null, tr("Add data from RapiD"), Shortcut.registerShortcut(
+        super(tr("{0}: Add selected data", RapiDPlugin.NAME), null, tr("Add data from RapiD"),
+                Shortcut.registerShortcut(
                 "data:rapidadd", tr("Rapid: {0}", tr("Add selected data")), KeyEvent.VK_A, Shortcut.SHIFT), true);
     }
 
@@ -52,9 +52,6 @@ public class RapiDMoveAction extends JosmAction {
                 UndoRedoHandler.getInstance().add(command);
                 if (RapiDDataUtils.isSwitchLayers()) {
                     MainApplication.getLayerManager().setActiveLayer(editLayer);
-                    final DataSet editable = editLayer.getDataSet();
-                    editable.setSelected(
-                            editable.getSelected().stream().filter(OsmPrimitive::isTagged).collect(Collectors.toSet()));
                 }
             }
         }

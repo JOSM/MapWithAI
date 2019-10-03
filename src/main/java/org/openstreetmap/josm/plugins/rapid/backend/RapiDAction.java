@@ -22,7 +22,7 @@ public class RapiDAction extends JosmAction {
     private static final Object LAYER_LOCK = new Object();
 
     public RapiDAction() {
-        super(RapiDPlugin.NAME, null, tr("Get data from RapiD"),
+        super(tr("{0}: Download data", RapiDPlugin.NAME), null, tr("Get data from RapiD"),
                 Shortcut.registerShortcut("data:rapid", tr("Data: {0}", tr("RapiD")), KeyEvent.VK_R, Shortcut.SHIFT),
                 true);
     }

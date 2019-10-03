@@ -109,6 +109,21 @@ public class AddPrimitivesCommandTest {
     }
 
     @Test
+    public void testSelection() {
+        final DataSet dataSet = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=secondary", new Node(new LatLon(0.1, 0)),
+                new Node(new LatLon(0.1, -0.1)));
+        AddPrimitivesCommand command = new AddPrimitivesCommand(dataSet, Collections.singleton(way1),
+                Collections.singleton(way1));
+        final Collection<OsmPrimitive> selection = dataSet.getAllSelected();
+        Assert.assertNull(way1.getDataSet());
+
+        command.executeCommand();
+        Assert.assertNotEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
+        Assert.assertEquals(new TreeSet<>(Collections.singleton(way1)), dataSet.getAllSelected());
+    }
+
+    @Test
     public void testDescription() {
         Assert.assertNotNull(new AddPrimitivesCommand(new DataSet(), null, null).getDescriptionText());
     }

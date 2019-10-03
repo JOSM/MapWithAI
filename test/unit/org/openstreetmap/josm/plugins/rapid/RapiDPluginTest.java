@@ -56,7 +56,7 @@ public class RapiDPluginTest {
         final int originalPaintStyles = MapPaintPrefHelper.INSTANCE.get().size();
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new RapiDPlugin(info);
-        Assert.assertEquals(dataMenuSize + 2, dataMenu.getMenuComponentCount());
+        Assert.assertEquals(dataMenuSize + 3, dataMenu.getMenuComponentCount());
         Assert.assertEquals(originalPaintStyles + 1, MapPaintPrefHelper.INSTANCE.get().size());
     }
 

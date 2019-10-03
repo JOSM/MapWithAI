@@ -5,7 +5,6 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.EventQueue;
 import java.util.Collection;
-import java.util.HashSet;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -13,7 +12,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
-import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDLayer;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -66,8 +64,6 @@ public class RapiDAddCommand extends Command implements Runnable {
                     rapid, editable);
             throw new IllegalArgumentException();
         }
-        primitives = new HashSet<>(primitives);
-        RapiDDataUtils.addPrimitivesToCollection(/* collection= */ primitives, /* primitives= */ primitives);
         synchronized (this) {
             final boolean locked = rapid.isLocked();
             if (locked) {
