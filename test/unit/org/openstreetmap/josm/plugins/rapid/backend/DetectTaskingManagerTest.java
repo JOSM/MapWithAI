@@ -52,7 +52,7 @@ public class DetectTaskingManagerTest {
         layer.data.addWaypoint(new WayPoint(new LatLon(1, 1)));
         BBox bbox = DetectTaskingManager.getTaskingManagerBBox();
         Assert.assertTrue(bbox.isInWorld());
-        Assert.assertTrue(bbox.getBottomRight().equalsEpsilon(new LatLon(1, 0)));
+        Assert.assertTrue(bbox.getBottomRight().equalsEpsilon(new LatLon(0, 1)));
         Assert.assertTrue(bbox.getTopLeft().equalsEpsilon(new LatLon(1, 0)));
     }
 }

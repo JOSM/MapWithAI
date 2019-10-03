@@ -61,8 +61,8 @@ public class DetectTaskingManager {
         Layer layer = getTaskingManagerLayer();
         if (layer instanceof GpxLayer) {
             GpxLayer gpxLayer = (GpxLayer) layer;
-            List<Bounds> bounds = gpxLayer.data.getDataSourceBounds();
-            bounds.forEach(bound -> returnBBox.add(bound.toBBox()));
+            Bounds realBounds = gpxLayer.data.recalculateBounds();
+            returnBBox.add(realBounds.toBBox());
         }
         return returnBBox;
     }
