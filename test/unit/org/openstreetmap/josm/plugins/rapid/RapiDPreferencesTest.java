@@ -43,16 +43,16 @@ public class RapiDPreferencesTest {
         Assert.assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount());
         Assert.assertEquals(pane.getPluginPreference(), preferences.getTabPreferenceSetting(pane));
 
-        final boolean switchLayers = RapiDDataUtils.getSwitchLayers();
+        final boolean switchLayers = RapiDDataUtils.isSwitchLayers();
 
         Assert.assertEquals(switchLayers, preferences.getSwitchLayerCheckBox().isSelected());
         preferences.ok();
-        Assert.assertEquals(switchLayers, RapiDDataUtils.getSwitchLayers());
+        Assert.assertEquals(switchLayers, RapiDDataUtils.isSwitchLayers());
 
         preferences.getSwitchLayerCheckBox().setSelected(!switchLayers);
-        Assert.assertNotEquals(!switchLayers, RapiDDataUtils.getSwitchLayers());
+        Assert.assertNotEquals(!switchLayers, RapiDDataUtils.isSwitchLayers());
         preferences.ok();
-        Assert.assertEquals(!switchLayers, RapiDDataUtils.getSwitchLayers());
+        Assert.assertEquals(!switchLayers, RapiDDataUtils.isSwitchLayers());
 
         final Object tmp = preferences.getMaximumAdditionSpinner().getModel();
         SpinnerNumberModel spinnerModel = null;

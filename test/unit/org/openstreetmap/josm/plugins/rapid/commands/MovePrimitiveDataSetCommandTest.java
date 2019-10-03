@@ -34,7 +34,7 @@ public class MovePrimitiveDataSetCommandTest {
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 
-        MovePrimitiveDataSetCommand move = new MovePrimitiveDataSetCommand(to, from, Collections.singleton(way1));
+        final MovePrimitiveDataSetCommand move = new MovePrimitiveDataSetCommand(to, from, Collections.singleton(way1));
         Assert.assertEquals(0, to.allPrimitives().size());
         Assert.assertEquals(4, from.allPrimitives().size());
 
@@ -51,6 +51,22 @@ public class MovePrimitiveDataSetCommandTest {
         Assert.assertEquals(0, to.allPrimitives().size());
         Assert.assertEquals(4, from.allPrimitives().size());
         Assert.assertEquals(from, way1.getDataSet());
+    }
+
+    @Test
+    public void testMovePrimitivesAdditionalData() {
+        final Collection<OsmPrimitive> added = new ArrayList<>();
+        final Collection<OsmPrimitive> modified = new ArrayList<>();
+        final Collection<OsmPrimitive> deleted = new ArrayList<>();
+        final DataSet to = new DataSet();
+        final DataSet from = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
+        way1.getNodes().stream().forEach(node -> from.addPrimitive(node));
+        from.addPrimitive(way1);
+        from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
+
+        MovePrimitiveDataSetCommand move = new MovePrimitiveDataSetCommand(to, from, Collections.singleton(way1));
 
         way1.firstNode().put("highway", "stop");
 

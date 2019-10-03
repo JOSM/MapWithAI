@@ -150,11 +150,11 @@ public class CreateConnectionsCommand extends Command {
                 missingPrimitives.put(i, new Pair<>(id, type));
             }
         }
-        getMissingPrimitives(dataSet, primitiveConnections, missingPrimitives);
+        obtainMissingPrimitives(dataSet, primitiveConnections, missingPrimitives);
         return primitiveConnections;
     }
 
-    private static void getMissingPrimitives(DataSet dataSet, OsmPrimitive[] primitiveConnections,
+    private static void obtainMissingPrimitives(DataSet dataSet, OsmPrimitive[] primitiveConnections,
             Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives) {
         final Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors
                 .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));

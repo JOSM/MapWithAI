@@ -86,45 +86,58 @@ public final class RapiDDataUtils {
 
         @Override
         public void run() {
-            final DataSet temporaryDataSet = getDataReal(bbox);
+            final DataSet temporaryDataSet = getDataReal(getBbox());
             synchronized (RapiDDataUtils.GetDataRunnable.class) {
-                dataSet.mergeFrom(temporaryDataSet);
+                getDataSet().mergeFrom(temporaryDataSet);
             }
         }
 
-    }
+        /**
+         * @return The {@code BBox} associated with this object
+         */
+        public BBox getBbox() {
+            return bbox;
+        }
 
-    private static DataSet getDataReal(BBox bbox) {
-        InputStream inputStream = null;
-        final DataSet dataSet = new DataSet();
-        final String urlString = getRapiDURL();
-        try {
-            final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
-            final HttpClient client = HttpClient.create(url);
-            final StringBuilder defaultUserAgent = new StringBuilder();
-            defaultUserAgent.append(client.getHeaders().get("User-Agent"));
-            if (defaultUserAgent.toString().trim().length() == 0) {
-                defaultUserAgent.append("JOSM");
-            }
-            defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
-            client.setHeader("User-Agent", defaultUserAgent.toString());
-            Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
-            final Response response = client.connect();
-            inputStream = response.getContent();
-            dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
-            response.disconnect();
-        } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-            Logging.debug(e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (final IOException e) {
-                    Logging.debug(e);
+        /**
+         * @return The {@code DataSet} associated with this object
+         */
+        public DataSet getDataSet() {
+            return dataSet;
+        }
+
+        private static DataSet getDataReal(BBox bbox) {
+            InputStream inputStream = null;
+            final DataSet dataSet = new DataSet();
+            final String urlString = getRapiDURL();
+            try {
+                final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
+                final HttpClient client = HttpClient.create(url);
+                final StringBuilder defaultUserAgent = new StringBuilder();
+                defaultUserAgent.append(client.getHeaders().get("User-Agent"));
+                if (defaultUserAgent.toString().trim().length() == 0) {
+                    defaultUserAgent.append("JOSM");
+                }
+                defaultUserAgent.append(tr("/ {0} {1}", RapiDPlugin.NAME, RapiDPlugin.getVersionInfo()));
+                client.setHeader("User-Agent", defaultUserAgent.toString());
+                Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
+                final Response response = client.connect();
+                inputStream = response.getContent();
+                dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
+                response.disconnect();
+            } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
+                Logging.debug(e);
+            } finally {
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (final IOException e) {
+                        Logging.debug(e);
+                    }
                 }
             }
+            return dataSet;
         }
-        return dataSet;
     }
 
     /**
@@ -263,7 +276,7 @@ public final class RapiDDataUtils {
     /**
      * @return {@code true} if we want to automatically switch layers
      */
-    public static boolean getSwitchLayers() {
+    public static boolean isSwitchLayers() {
         return Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
     }
 

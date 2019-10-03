@@ -14,35 +14,36 @@ import org.openstreetmap.josm.data.osm.Way;
 public class AddNodeToWayCommand extends Command {
     private final Node toAddNode;
     private final Way way;
-    private final Node first;
-    private final Node second;
+    private final Node firstNode;
+    private final Node secondNode;
 
     /**
      * Add a node to a way in an undoable manner
      *
-     * @param toAddNode The node to add
-     * @param way       The way to add the node to
-     * @param first     The node that comes before the node to add
-     * @param second    The node that comes after the node to add
+     * @param toAddNode  The node to add
+     * @param way        The way to add the node to
+     * @param firstNode  The node that comes before the node to add
+     * @param secondNode The node that comes after the node to add
      */
     public AddNodeToWayCommand(Node toAddNode, Way way, Node first, Node second) {
         super(way.getDataSet());
         this.toAddNode = toAddNode;
         this.way = way;
-        this.first = first;
-        this.second = second;
+        this.firstNode = first;
+        this.secondNode = second;
     }
 
     @Override
     public boolean executeCommand() {
-        final int index = Math.max(way.getNodes().indexOf(first), way.getNodes().indexOf(second));
-        way.addNode(index, toAddNode);
+        final int index = Math.max(getWay().getNodes().indexOf(getFirstNode()),
+                getWay().getNodes().indexOf(getSecondNode()));
+        getWay().addNode(index, getToAddNode());
         return true;
     }
 
     @Override
     public void undoCommand() {
-        way.removeNode(toAddNode);
+        getWay().removeNode(getToAddNode());
     }
 
     @Override
@@ -53,6 +54,34 @@ public class AddNodeToWayCommand extends Command {
     @Override
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
-        modified.addAll(Arrays.asList(toAddNode, way));
+        modified.addAll(Arrays.asList(getToAddNode(), getWay()));
+    }
+
+    /**
+     * @return {@link Node} to add to {@link Way}
+     */
+    public Node getToAddNode() {
+        return toAddNode;
+    }
+
+    /**
+     * @return {@link Way} that we are adding a {@link Node} to
+     */
+    public Way getWay() {
+        return way;
+    }
+
+    /**
+     * @return {@link Node} that we are adding another {@link Node} after.
+     */
+    public Node getFirstNode() {
+        return firstNode;
+    }
+
+    /**
+     * @return {@link Node} that we are adding another {@link Node} before.
+     */
+    public Node getSecondNode() {
+        return secondNode;
     }
 }

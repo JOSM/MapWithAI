@@ -39,7 +39,7 @@ public class RapiDPreferences implements SubPreferenceSetting {
         final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
         final JLabel maximumAddition = new JLabel(tr("Maximum features (add)"));
         final JPanel container = new JPanel(new GridBagLayout());
-        container.setAlignmentY(JPanel.TOP_ALIGNMENT);
+        container.setAlignmentY(Component.TOP_ALIGNMENT);
         final GridBagConstraints constraints = new GridBagConstraints();
 
         possibleRapidApiUrl.setEditable(true);
@@ -53,7 +53,7 @@ public class RapiDPreferences implements SubPreferenceSetting {
         }
         possibleRapidApiUrl.setSelectedItem(RapiDDataUtils.getRapiDURL());
 
-        switchLayerCheckBox.setSelected(RapiDDataUtils.getSwitchLayers());
+        switchLayerCheckBox.setSelected(RapiDDataUtils.isSwitchLayers());
 
         constraints.gridx = 0;
         constraints.gridy = 0;

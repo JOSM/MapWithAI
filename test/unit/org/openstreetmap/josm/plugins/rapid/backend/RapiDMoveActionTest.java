@@ -22,7 +22,7 @@ public class RapiDMoveActionTest {
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
     @Before
-    public void setup() {
+    public void setUp() {
         moveAction = new RapiDMoveAction();
     }
 

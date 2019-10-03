@@ -25,14 +25,13 @@ public class MovePrimitiveDataSetCommand extends Command {
     private final DataSet to;
     private final DataSet from;
     private final Collection<OsmPrimitive> primitives;
-    private SequenceCommand command;
+    private SequenceCommand command = null;
 
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives) {
         super(to);
         this.to = to;
         this.from = from;
         this.primitives = primitives;
-        command = null;
     }
 
     @Override
@@ -52,22 +51,23 @@ public class MovePrimitiveDataSetCommand extends Command {
      * @param selection The primitives to move
      */
     public SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
+        SequenceCommand returnCommand = null;
         if (from == null || to.isLocked() || from.isLocked() || to.equals(from)) {
             Logging.error("{0}: Cannot move primitives from {1} to {2}", RapiDPlugin.NAME, from, to);
-            return null;
+        } else {
+            final List<Command> commands = new ArrayList<>();
+
+            final Collection<OsmPrimitive> allNeededPrimitives = new ArrayList<>();
+            RapiDDataUtils.addPrimitivesToCollection(allNeededPrimitives, selection);
+
+            commands.add(new DeletePrimitivesCommand(from, selection, true));
+            final AddPrimitivesCommand addPrimitivesCommand = new AddPrimitivesCommand(to, allNeededPrimitives, selection);
+            commands.add(addPrimitivesCommand);
+
+            returnCommand = new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
+                    "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
         }
-
-        final List<Command> commands = new ArrayList<>();
-
-        final Collection<OsmPrimitive> allNeededPrimitives = new ArrayList<>();
-        RapiDDataUtils.addPrimitivesToCollection(allNeededPrimitives, selection);
-
-        commands.add(new DeletePrimitivesCommand(from, selection, true));
-        final AddPrimitivesCommand addPrimitivesCommand = new AddPrimitivesCommand(to, allNeededPrimitives, selection);
-        commands.add(addPrimitivesCommand);
-
-        return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
-                "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
+        return returnCommand;
     }
 
     @Override

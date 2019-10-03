@@ -50,7 +50,7 @@ public class RapiDMoveAction extends JosmAction {
             if (editLayer != null) {
                 final RapiDAddCommand command = new RapiDAddCommand(rapid, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
-                if (RapiDDataUtils.getSwitchLayers()) {
+                if (RapiDDataUtils.isSwitchLayers()) {
                     MainApplication.getLayerManager().setActiveLayer(editLayer);
                     final DataSet editable = editLayer.getDataSet();
                     editable.setSelected(
