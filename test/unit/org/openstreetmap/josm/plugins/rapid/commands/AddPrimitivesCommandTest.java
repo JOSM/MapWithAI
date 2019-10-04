@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -33,7 +34,6 @@ public class AddPrimitivesCommandTest {
         Assert.assertSame(dataSet, way1.getDataSet());
     }
 
-    @SuppressWarnings("UndefinedEquals")
     @Test
     public void testUndoRedo() {
         final DataSet dataSet = new DataSet();
@@ -49,19 +49,19 @@ public class AddPrimitivesCommandTest {
         command.executeCommand();
         command.fillModifiedData(modified, deleted, added);
         Assert.assertSame(dataSet, way1.getDataSet());
-        Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
         Assert.assertTrue(deleted.isEmpty());
         Assert.assertTrue(modified.isEmpty());
         Assert.assertEquals(3, added.size());
 
         command.undoCommand();
         Assert.assertNull(way1.getDataSet());
-        Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         added.clear();
         command.executeCommand();
         Assert.assertSame(dataSet, way1.getDataSet());
-        Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
         command.fillModifiedData(modified, deleted, added);
         Assert.assertTrue(deleted.isEmpty());
         Assert.assertTrue(modified.isEmpty());
@@ -73,26 +73,26 @@ public class AddPrimitivesCommandTest {
 
         command.executeCommand();
         Assert.assertSame(dataSet, way1.getDataSet());
-        Assert.assertNotEquals(selection, dataSet.getAllSelected());
+        Assert.assertNotEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         command.undoCommand();
         Assert.assertNull(way1.getDataSet());
-        Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         dataSet.addPrimitive(way1.firstNode());
         command.executeCommand();
         Assert.assertSame(dataSet, way1.getDataSet());
-        Assert.assertNotEquals(selection, dataSet.getAllSelected());
+        Assert.assertNotEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         command.undoCommand();
         Assert.assertNull(way1.getDataSet());
-        Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         dataSet.addPrimitive(way1.lastNode());
         dataSet.addPrimitive(way1);
         command.executeCommand();
         Assert.assertSame(dataSet, way1.getDataSet());
-        Assert.assertNotEquals(selection, dataSet.getAllSelected());
+        Assert.assertNotEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         command.undoCommand();
         Assert.assertSame(dataSet, way1.getDataSet());
@@ -102,7 +102,7 @@ public class AddPrimitivesCommandTest {
         new DataSet().addPrimitive(way1.lastNode());
         command.executeCommand();
         Assert.assertNull(way1.getDataSet());
-        Assert.assertEquals(selection, dataSet.getAllSelected());
+        Assert.assertEquals(new TreeSet<>(selection), new TreeSet<>(dataSet.getAllSelected()));
 
         command.undoCommand();
         Assert.assertNull(way1.getDataSet());
