@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -19,6 +20,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.preferences.sources.ExtendedSourceEntry;
 import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
@@ -61,14 +63,12 @@ public final class RapiDDataUtils {
             }
             for (final Future<?> future : futures) {
                 try {
-                    int count = 0;
-                    while (!future.isDone() && !future.isCancelled() && count < 100) {
-                        Thread.sleep(100);
-                        count++;
-                    }
+                    future.get();
                 } catch (final InterruptedException e) {
                     Logging.debug(e);
                     Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    Logging.debug(e);
                 }
             }
         }
@@ -109,9 +109,16 @@ public final class RapiDDataUtils {
         private static DataSet getDataReal(BBox bbox) {
             InputStream inputStream = null;
             final DataSet dataSet = new DataSet();
-            final String urlString = getRapiDURL();
+            String urlString = getRapiDURL();
+            if (DetectTaskingManager.hasTaskingManagerLayer()) {
+                urlString += "&crop_bbox={crop_bbox}";
+            }
+
+            dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
+
             try {
-                final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")));
+                final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
+                        DetectTaskingManager.getTaskingManagerBBox().toStringCSV(",")));
                 final HttpClient client = HttpClient.create(url);
                 final StringBuilder defaultUserAgent = new StringBuilder();
                 defaultUserAgent.append(client.getHeaders().get("User-Agent"));
@@ -123,7 +130,8 @@ public final class RapiDDataUtils {
                 Logging.debug("{0}: Getting {1}", RapiDPlugin.NAME, client.getURL().toString());
                 final Response response = client.connect();
                 inputStream = response.getContent();
-                dataSet.mergeFrom(OsmReader.parseDataSet(inputStream, null));
+                final DataSet mergeData = OsmReader.parseDataSet(inputStream, null);
+                dataSet.mergeFrom(mergeData);
                 response.disconnect();
             } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
                 Logging.debug(e);
@@ -135,6 +143,7 @@ public final class RapiDDataUtils {
                         Logging.debug(e);
                     }
                 }
+                dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
             }
             return dataSet;
         }

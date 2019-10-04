@@ -9,6 +9,7 @@ import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDAction;
+import org.openstreetmap.josm.plugins.rapid.backend.RapiDArbitraryAction;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDMoveAction;
 
@@ -27,6 +28,7 @@ public final class RapiDPlugin extends Plugin {
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         MainMenu.add(dataMenu, new RapiDAction(), false);
         MainMenu.add(dataMenu, new RapiDMoveAction(), false);
+        MainMenu.add(dataMenu, new RapiDArbitraryAction(), true);
 
         RapiDDataUtils.addRapiDPaintStyles();
 

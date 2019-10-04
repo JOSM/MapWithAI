@@ -12,6 +12,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.gpx.GpxData;
+import org.openstreetmap.josm.data.gpx.WayPoint;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -19,11 +21,13 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
 import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class RapiDDataUtilsTest {
     @Rule
-    public JOSMTestRules test = new JOSMTestRules().preferences();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
     /**
      * This gets data from RapiD. This test may fail if someone adds the data to
@@ -34,6 +38,23 @@ public class RapiDDataUtilsTest {
         final BBox testBBox = getTestBBox();
         final DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
         Assert.assertEquals(1, ds.getWays().size());
+    }
+
+    /**
+     * This gets data from RapiD. This test may fail if someone adds the data to
+     * OSM.
+     */
+    @Test
+    public void testGetDataCropped() {
+        final BBox testBBox = getTestBBox();
+        GpxData gpxData = new GpxData();
+        gpxData.addWaypoint(new WayPoint(new LatLon(39.0738798, -108.5709922)));
+        gpxData.addWaypoint(new WayPoint(new LatLon(39.0732914, -108.5707436)));
+        GpxLayer gpx = new GpxLayer(gpxData);
+        MainApplication.getLayerManager().addLayer(gpx);
+        final DataSet ds = new DataSet(RapiDDataUtils.getData(testBBox));
+        Assert.assertEquals(1, ds.getWays().size());
+        Assert.assertEquals(2, ds.getNodes().size());
     }
 
     @Test
@@ -50,8 +71,8 @@ public class RapiDDataUtilsTest {
 
     public static BBox getTestBBox() {
         final BBox testBBox = new BBox();
-        testBBox.add(new LatLon(39.076, -108.547));
-        testBBox.add(new LatLon(39.078, -108.545));
+        testBBox.add(new LatLon(39.0734162, -108.5707107));
+        testBBox.add(new LatLon(39.0738791, -108.5715723));
         return testBBox;
     }
 
