@@ -1,14 +1,9 @@
-image: alpine:3.8
+image: alpine:latest
 
 pages:
   stage: deploy
-  environment:
-    name: pages site
-    url: "https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}"
   script:
-  - mkdir .public
-  - cp -r * .public
-  - mv .public public
+  - echo 'Nothing to do...'
   artifacts:
     paths:
     - public
