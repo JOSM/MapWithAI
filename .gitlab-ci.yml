@@ -7,5 +7,5 @@ pages:
   artifacts:
     paths:
     - public
-  only:
-  - pages@smocktaylor/RapiD
+      #only:
+          #- pages@smocktaylor/RapiD
