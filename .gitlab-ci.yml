@@ -165,10 +165,10 @@ release:
     longVersion=`git describe --always --long --dirty`
     commitMessage="Release version $longVersion"
   - |
-    mkdir -pv "pages/dist/$version"
-    cp -v build/dist/* build/tmp/jar/MANIFEST.MF "pages/dist/$version"
+    mkdir -pv "pages/public/dist/$version"
+    cp -v build/dist/* build/tmp/jar/MANIFEST.MF "pages/public/dist/$version"
     rm -fv "pages/dist/latest"
-    ln -s "./$version" "pages/dist/latest"
+    ln -s "./$version" "pages/public/dist/latest"
   - &push_pages_branch |
     cd pages/
     git config user.name "Deploy with GitLab CI"
@@ -194,8 +194,8 @@ publish master update site:
   - |
     rm -vrf pages/snapshot/master
     mkdir -pv pages/snapshot/master
-    cp -v build/snapshot-update-site pages/snapshot/master/update-site
-    cp -v build/dist/* pages/snapshot/master
+    cp -v build/snapshot-update-site pages/public/snapshot/master/update-site
+    cp -v build/dist/* pages/public/snapshot/master
   - *push_pages_branch
   dependencies:
   - build
