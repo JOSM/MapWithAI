@@ -154,7 +154,7 @@ release:
   stage: deploy
   environment:
     name: pages branch / dist directory
-    url: https://gitlab.com/smocktaylor/rapid/tree/pages/dist
+    url: https://gitlab.com/smocktaylor/rapid/tree/pages/public/dist
   script:
   - &clone_pages_branch |
     echo "$SSH_PRIVATE_DEPLOY_KEY" > ~/.ssh/id_rsa
