@@ -170,33 +170,35 @@ public class CreateConnectionsCommand extends Command {
 
     private static void obtainMissingPrimitives(DataSet dataSet, OsmPrimitive[] primitiveConnections,
             Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives) {
-        final Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors
-                .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));
-        final List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
-        final Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager()
-                .getLayersOfType(OsmDataLayer.class).parallelStream()
-                .filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
+        if (!missingPrimitives.isEmpty()) {
+            final Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors
+                    .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));
+            final List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
+            final Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager()
+                    .getLayersOfType(OsmDataLayer.class).parallelStream()
+                    .filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
 
-        OsmDataLayer layer;
-        final String generatedLayerName = "EvKlVarShAiAllsM generated layer";
-        if (optionalLayer.isPresent()) {
-            layer = optionalLayer.get();
-        } else {
-            layer = new OsmDataLayer(dataSet, generatedLayerName, null);
-        }
+            OsmDataLayer layer;
+            final String generatedLayerName = "EvKlVarShAiAllsM generated layer";
+            if (optionalLayer.isPresent()) {
+                layer = optionalLayer.get();
+            } else {
+                layer = new OsmDataLayer(dataSet, generatedLayerName, null);
+            }
 
-        final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(
-                tr("Downloading additional OsmPrimitives"));
-        final DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true, monitor);
-        downloadPrimitivesTask.run();
-        for (final Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
-            final int index = entry.getValue().intValue();
-            final OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
-            primitiveConnections[index] = primitive;
-        }
+            final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(
+                    tr("Downloading additional OsmPrimitives"));
+            final DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true, monitor);
+            downloadPrimitivesTask.run();
+            for (final Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
+                final int index = entry.getValue().intValue();
+                final OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
+                primitiveConnections[index] = primitive;
+            }
 
-        if (generatedLayerName.equals(layer.getName())) {
-            layer.destroy();
+            if (generatedLayerName.equals(layer.getName())) {
+                layer.destroy();
+            }
         }
     }
 
