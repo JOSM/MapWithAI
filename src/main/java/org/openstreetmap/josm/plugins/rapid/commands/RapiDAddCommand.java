@@ -4,7 +4,9 @@ package org.openstreetmap.josm.plugins.rapid.commands;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.EventQueue;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -12,6 +14,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
+import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.plugins.rapid.backend.RapiDLayer;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -70,7 +73,9 @@ public class RapiDAddCommand extends Command implements Runnable {
                 rapid.unlock();
             }
             final Command tCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
-            final Command createConnectionsCommand = createConnections(editable, primitives);
+            List<OsmPrimitive> allPrimitives = new ArrayList<>();
+            RapiDDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
+            final Command createConnectionsCommand = createConnections(editable, allPrimitives);
             command = new SequenceCommand(getDescriptionText(), tCommand, createConnectionsCommand);
             command.executeCommand();
 

@@ -78,10 +78,7 @@ public class CreateConnectionsCommand extends Command {
                 changedKeyList.addAll(connectedCommand(dataSet, node));
             }
             if (node.hasKey(DUPE_KEY)) {
-                final Command replaceCommand = duplicateNode(dataSet, node);
-                if (replaceCommand != null) {
-                    changedKeyList.add(replaceCommand);
-                }
+                changedKeyList.addAll(duplicateNode(dataSet, node));
             }
         }
         if (!changedKeyList.isEmpty()) {
@@ -106,17 +103,34 @@ public class CreateConnectionsCommand extends Command {
                         primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
             }
         }
-        Logging.debug("RapiD: Removing conn from {0} in {1}", node, dataSet.getName());
         commands.add(new ChangePropertyCommand(node, CONN_KEY, null));
         return commands;
     }
 
-    private static Command duplicateNode(DataSet dataSet, Node node) {
+    private static List<Command> duplicateNode(DataSet dataSet, Node node) {
         final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(DUPE_KEY));
         if (primitiveConnections.length != 1) {
-            Logging.error("RapiD: dupe connection connected to more than one node? (dupe={0})", node.get(DUPE_KEY));
+            Logging.error("{0}: {3} connection connected to more than one node? ({3}={1})", RapiDPlugin.NAME,
+                    node.get(DUPE_KEY), DUPE_KEY);
         }
-        return replaceNode(node, (Node) primitiveConnections[0]);
+
+        List<Command> commands = new ArrayList<>();
+        if (primitiveConnections[0] instanceof Node) {
+            Node replaceNode = (Node) primitiveConnections[0];
+            Command tCommand = replaceNode(node, replaceNode);
+            if (tCommand != null) {
+                commands.add(tCommand);
+                if (replaceNode.hasKey(DUPE_KEY)) {
+                    String key = replaceNode.get(DUPE_KEY);
+                    commands.add(new ChangePropertyCommand(replaceNode, DUPE_KEY, key));
+                } else {
+                    replaceNode.put(DUPE_KEY, "empty_value"); // This is needed to actually have a command.
+                    commands.add(new ChangePropertyCommand(replaceNode, DUPE_KEY, null));
+                    replaceNode.remove(DUPE_KEY);
+                }
+            }
+        }
+        return commands;
     }
 
     /**

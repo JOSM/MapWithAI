@@ -45,7 +45,8 @@ public class CreateConnectionsCommandTest {
         final Collection<OsmPrimitive> deleted = new ArrayList<>();
         final DataSet dataSet = new DataSet(node1, node2, node3, dupe, way);
 
-        Command createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(node3));
+        CreateConnectionsCommand createConnections = new CreateConnectionsCommand(dataSet,
+                Collections.singleton(node3));
         createConnections.executeCommand();
 
         Assert.assertFalse(dataSet.isModified());
@@ -58,6 +59,7 @@ public class CreateConnectionsCommandTest {
         createConnections.executeCommand();
         Assert.assertTrue(dataSet.isModified());
         Assert.assertEquals(3, way.getNodesCount());
+        Assert.assertFalse(node3.hasKey(CreateConnectionsCommand.CONN_KEY));
         createConnections.fillModifiedData(modified, deleted, added);
         Assert.assertEquals(3, modified.size()); // 3 since we remove the key from the node
         Assert.assertTrue(deleted.isEmpty());
@@ -65,18 +67,22 @@ public class CreateConnectionsCommandTest {
         createConnections.undoCommand();
         Assert.assertFalse(dataSet.isModified());
         Assert.assertEquals(2, way.getNodesCount());
+        Assert.assertTrue(node3.hasKey(CreateConnectionsCommand.CONN_KEY));
 
         dupe.put(CreateConnectionsCommand.DUPE_KEY, "n" + node1.getUniqueId());
         createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(dupe));
         createConnections.executeCommand();
         Assert.assertTrue(dataSet.isModified());
         Assert.assertEquals(2, way.getNodesCount());
+        Assert.assertFalse(node1.hasKey(CreateConnectionsCommand.DUPE_KEY));
         modified.clear();
         createConnections.fillModifiedData(modified, deleted, added);
-        Assert.assertEquals(1, modified.size());
+        Assert.assertEquals(2, modified.size());
         Assert.assertTrue(deleted.isEmpty());
         Assert.assertTrue(added.isEmpty());
         createConnections.undoCommand();
+        Assert.assertFalse(node1.hasKey(CreateConnectionsCommand.DUPE_KEY));
+        Assert.assertTrue(dupe.hasKey(CreateConnectionsCommand.DUPE_KEY));
         Assert.assertFalse(dataSet.isModified());
         Assert.assertEquals(2, way.getNodesCount());
     }

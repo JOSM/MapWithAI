@@ -83,8 +83,6 @@ public class RapiDAction extends JosmAction {
             // TODO remove bounds that are already downloaded
             if (rapidBounds.parallelStream().filter(bound::equals).count() == 0) {
                 final DataSet newData = RapiDDataUtils.getData(bound.toBBox());
-                /* Microsoft buildings don't have a source, so we add one */
-                RapiDDataUtils.addSourceTags(newData, "building", "Microsoft");
                 synchronized (LAYER_LOCK) {
                     layer.unlock();
                     layer.mergeFrom(newData);
