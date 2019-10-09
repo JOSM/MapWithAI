@@ -20,6 +20,8 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Tests for {@link CreateConnections}
  *
@@ -27,6 +29,7 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
  */
 public class CreateConnectionsCommandTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().projection();
 
     /**
@@ -160,7 +163,7 @@ public class CreateConnectionsCommandTest {
 
         node1.setCoor(new LatLon(39.067399, -108.5608433));
         node1.put(CreateConnectionsCommand.DUPE_KEY, "n6151680832");
-        OsmDataLayer layer = new OsmDataLayer(dataSet, "temp layer", null);
+        final OsmDataLayer layer = new OsmDataLayer(dataSet, "temp layer", null);
         MainApplication.getLayerManager().addLayer(layer);
 
         replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1));
@@ -179,7 +182,7 @@ public class CreateConnectionsCommandTest {
      */
     @Test
     public void testGetDescriptionText() {
-        final String text = new CreateConnectionsCommand(new DataSet(), null).getDescriptionText();
+        final String text = new CreateConnectionsCommand(new DataSet(), Collections.emptyList()).getDescriptionText();
         Assert.assertNotNull(text);
         Assert.assertFalse(text.isEmpty());
     }

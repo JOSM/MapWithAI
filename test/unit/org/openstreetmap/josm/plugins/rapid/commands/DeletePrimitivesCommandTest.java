@@ -13,8 +13,11 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class DeletePrimitivesCommandTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules();
 
     @Test
@@ -29,30 +32,30 @@ public class DeletePrimitivesCommandTest {
 
         DeletePrimitivesCommand delete = new DeletePrimitivesCommand(ds, Collections.singleton(way1));
         delete.executeCommand();
-        Assert.assertFalse(ds.containsWay(way1));
-        Assert.assertEquals(0, ds.allPrimitives().size());
+        Assert.assertTrue(way1.isDeleted());
+        Assert.assertEquals(0, ds.allNonDeletedPrimitives().size());
 
         delete.undoCommand();
 
         Assert.assertTrue(ds.containsWay(way1));
-        Assert.assertEquals(3, ds.allPrimitives().size());
+        Assert.assertEquals(3, ds.allNonDeletedPrimitives().size());
 
         final Node tNode = new Node(new LatLon(0.1, 0.1));
         ds.addPrimitive(tNode);
-        Assert.assertEquals(4, ds.allPrimitives().size());
+        Assert.assertEquals(4, ds.allNonDeletedPrimitives().size());
 
         delete.executeCommand();
-        Assert.assertFalse(ds.containsWay(way1));
-        Assert.assertEquals(1, ds.allPrimitives().size());
+        Assert.assertTrue(way1.isDeleted());
+        Assert.assertEquals(1, ds.allNonDeletedPrimitives().size());
 
         delete.undoCommand();
-        Assert.assertEquals(4, ds.allPrimitives().size());
+        Assert.assertEquals(4, ds.allNonDeletedPrimitives().size());
 
         way1.firstNode().put("highway", "stop");
 
         delete.executeCommand();
-        Assert.assertFalse(ds.containsWay(way1));
-        Assert.assertEquals(2, ds.allPrimitives().size());
+        Assert.assertTrue(way1.isDeleted());
+        Assert.assertEquals(2, ds.allNonDeletedPrimitives().size());
 
         delete.undoCommand();
         Assert.assertTrue(way1.firstNode().hasKey("highway"));
@@ -60,11 +63,11 @@ public class DeletePrimitivesCommandTest {
         delete = new DeletePrimitivesCommand(ds, Collections.singleton(way1), true);
 
         delete.executeCommand();
-        Assert.assertFalse(ds.containsWay(way1));
-        Assert.assertEquals(1, ds.allPrimitives().size());
+        Assert.assertTrue(way1.isDeleted());
+        Assert.assertEquals(1, ds.allNonDeletedPrimitives().size());
 
         delete.undoCommand();
-        Assert.assertEquals(4, ds.allPrimitives().size());
+        Assert.assertEquals(4, ds.allNonDeletedPrimitives().size());
 
         Assert.assertTrue(way1.firstNode().hasKey("highway"));
     }

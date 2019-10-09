@@ -23,15 +23,15 @@ import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
  * @author Taylor Smock
  *
  */
-public class DetectTaskingManager {
+public final class DetectTaskingManagerUtils {
     public static final String RAPID_CROP_AREA = tr("{0}: Crop Area", RapiDPlugin.NAME);
-    public static final List<Pattern> patterns = new ArrayList<>();
+    private static final List<Pattern> PATTERNS = new ArrayList<>();
     static {
-        patterns.add(Pattern.compile("^Task Boundaries.*$"));
-        patterns.add(Pattern.compile("^" + RAPID_CROP_AREA + "$"));
+        PATTERNS.add(Pattern.compile("^Task Boundaries.*$"));
+        PATTERNS.add(Pattern.compile("^" + RAPID_CROP_AREA + "$"));
     }
 
-    private DetectTaskingManager() {
+    private DetectTaskingManagerUtils() {
         // Hide since this is going to be a static class
     }
 
@@ -44,13 +44,13 @@ public class DetectTaskingManager {
 
     /**
      * @return A {@link Layer} that matches a pattern defined in
-     *         {@link DetectTaskingManager#patterns} or {@code null}.
+     *         {@link DetectTaskingManagerUtils#PATTERNS} or {@code null}.
      */
     public static Layer getTaskingManagerLayer() {
         Layer returnLayer = null;
-        List<Layer> layers = MainApplication.getLayerManager().getLayers();
-        for (Pattern pattern : patterns) {
-            Optional<Layer> layer = layers.parallelStream()
+        final List<Layer> layers = MainApplication.getLayerManager().getLayers();
+        for (final Pattern pattern : PATTERNS) {
+            final Optional<Layer> layer = layers.parallelStream()
                     .filter(tlayer -> pattern.matcher(tlayer.getName()).matches())
                     .findFirst();
             if (layer.isPresent()) {
@@ -66,19 +66,23 @@ public class DetectTaskingManager {
      *         valid.
      */
     public static BBox getTaskingManagerBBox() {
-        BBox returnBBox = new BBox();
-        Layer layer = getTaskingManagerLayer();
+        final BBox returnBBox = new BBox();
+        final Layer layer = getTaskingManagerLayer();
         if (layer instanceof GpxLayer) {
-            GpxLayer gpxLayer = (GpxLayer) layer;
-            Bounds realBounds = gpxLayer.data.recalculateBounds();
+            final GpxLayer gpxLayer = (GpxLayer) layer;
+            final Bounds realBounds = gpxLayer.data.recalculateBounds();
             returnBBox.add(realBounds.toBBox());
         }
         return returnBBox;
     }
 
+    /**
+     * @param bbox A bbox to crop data to
+     * @return A gpx layer that can be used to crop data from MapWithAI
+     */
     public static GpxData createTaskingManagerGpxData(BBox bbox) {
         final GpxData data = new GpxData();
-        GpxRoute route = new GpxRoute();
+        final GpxRoute route = new GpxRoute();
         route.routePoints.add(new WayPoint(bbox.getBottomRight()));
         route.routePoints.add(new WayPoint(new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon())));
         route.routePoints.add(new WayPoint(bbox.getTopLeft()));

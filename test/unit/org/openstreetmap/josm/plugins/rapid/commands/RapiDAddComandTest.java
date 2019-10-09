@@ -8,6 +8,8 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.command.MoveCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -15,11 +17,14 @@ import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class RapiDAddComandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
 
     @Rule
-    public JOSMTestRules test = new JOSMTestRules();
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
+    public JOSMTestRules test = new JOSMTestRules().projection();
 
     @Test
     public void testMoveCollection() {
@@ -43,28 +48,28 @@ public class RapiDAddComandTest {
         ds1.lock();
         RapiDAddCommand command = new RapiDAddCommand(ds1, ds2, Arrays.asList(way1, way2));
         command.executeCommand();
-        Assert.assertTrue(ds2.containsWay(way1));
-        Assert.assertTrue(ds2.containsNode(way1.firstNode()));
-        Assert.assertTrue(ds2.containsNode(way1.lastNode()));
-        Assert.assertFalse(ds1.containsWay(way1));
-        Assert.assertTrue(ds2.containsWay(way2));
-        Assert.assertTrue(ds2.containsNode(way2.firstNode()));
-        Assert.assertTrue(ds2.containsNode(way2.lastNode()));
-        Assert.assertFalse(ds1.containsWay(way2));
+        Assert.assertNotNull(ds2.getPrimitiveById(way1));
+        Assert.assertNotNull(ds2.getPrimitiveById(way1.firstNode()));
+        Assert.assertNotNull(ds2.getPrimitiveById(way1.lastNode()));
+        Assert.assertTrue(way1.isDeleted());
+        Assert.assertNotNull(ds2.getPrimitiveById(way2));
+        Assert.assertNotNull(ds2.getPrimitiveById(way2.firstNode()));
+        Assert.assertNotNull(ds2.getPrimitiveById(way2.lastNode()));
+        Assert.assertTrue(way2.isDeleted());
 
-        Assert.assertFalse(ds2.containsWay(way3));
+        Assert.assertNull(ds2.getPrimitiveById(way3));
         command = new RapiDAddCommand(ds1, ds2, Arrays.asList(way3));
         command.executeCommand();
-        Assert.assertTrue(ds2.containsWay(way3));
-        Assert.assertTrue(ds2.containsNode(way3.firstNode()));
-        Assert.assertTrue(ds2.containsNode(way3.lastNode()));
-        Assert.assertFalse(ds1.containsWay(way3));
+        Assert.assertNotNull(ds2.getPrimitiveById(way3));
+        Assert.assertNotNull(ds2.getPrimitiveById(way3.firstNode()));
+        Assert.assertNotNull(ds2.getPrimitiveById(way3.lastNode()));
+        Assert.assertTrue(way3.isDeleted());
 
         command.undoCommand();
-        Assert.assertFalse(ds2.containsWay(way3));
-        Assert.assertFalse(ds2.containsNode(way3.firstNode()));
-        Assert.assertFalse(ds2.containsNode(way3.lastNode()));
-        Assert.assertTrue(ds1.containsWay(way3));
+        Assert.assertNull(ds2.getPrimitiveById(way3));
+        Assert.assertNull(ds2.getPrimitiveById(way3.firstNode()));
+        Assert.assertNull(ds2.getPrimitiveById(way3.lastNode()));
+        Assert.assertFalse(ds1.getPrimitiveById(way3).isDeleted());
     }
 
     @Test
@@ -112,26 +117,58 @@ public class RapiDAddComandTest {
         rapidData.addPrimitive(way1);
         rapidData.setSelected(way1);
 
-        Assert.assertEquals(3, osmData.allPrimitives().size());
-        Assert.assertEquals(3, rapidData.allPrimitives().size());
+        Assert.assertEquals(3, osmData.allNonDeletedPrimitives().size());
+        Assert.assertEquals(3, rapidData.allNonDeletedPrimitives().size());
 
-        final RapiDAddCommand command = new RapiDAddCommand(rapidData, osmData, rapidData.getSelected());
+        RapiDAddCommand command = new RapiDAddCommand(rapidData, osmData, rapidData.getSelected());
         command.executeCommand();
-        Assert.assertEquals(6, osmData.allPrimitives().size());
-        Assert.assertTrue(rapidData.allPrimitives().isEmpty());
+        Assert.assertEquals(6, osmData.allNonDeletedPrimitives().size());
+        Assert.assertTrue(rapidData.allNonDeletedPrimitives().isEmpty());
 
         command.undoCommand();
-        Assert.assertEquals(3, osmData.allPrimitives().size());
-        Assert.assertEquals(3, rapidData.allPrimitives().size());
+        Assert.assertEquals(3, osmData.allNonDeletedPrimitives().size());
+        Assert.assertEquals(3, rapidData.allNonDeletedPrimitives().size());
 
         final Tag dupe = new Tag("dupe", "n".concat(Long.toString(way2.lastNode().getUniqueId())));
         way1.lastNode().put(dupe);
+        command = new RapiDAddCommand(rapidData, osmData, rapidData.getSelected());
         command.executeCommand();
-        Assert.assertEquals(6, osmData.allPrimitives().size());
-        Assert.assertTrue(rapidData.allPrimitives().isEmpty());
+        Assert.assertEquals(5, osmData.allNonDeletedPrimitives().size());
+        Assert.assertTrue(rapidData.allNonDeletedPrimitives().isEmpty());
 
         command.undoCommand();
-        Assert.assertEquals(3, osmData.allPrimitives().size());
-        Assert.assertEquals(3, rapidData.allPrimitives().size());
+        Assert.assertEquals(3, osmData.allNonDeletedPrimitives().size());
+        Assert.assertEquals(3, rapidData.allNonDeletedPrimitives().size());
+    }
+
+    @Test
+    public void testMultipleUndoRedoWithMove() {
+        final DataSet to = new DataSet();
+        final DataSet from = new DataSet();
+        final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
+                new Node(new LatLon(0.1, 0.1)));
+        way1.getNodes().stream().forEach(node -> from.addPrimitive(node));
+        from.addPrimitive(way1);
+        from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
+
+        UndoRedoHandler.getInstance().add(new RapiDAddCommand(from, to, Collections.singleton(way1)));
+
+        final Node tNode = (Node) to.getPrimitiveById(way1.firstNode());
+
+        UndoRedoHandler.getInstance().add(new MoveCommand(tNode, LatLon.ZERO));
+
+        Assert.assertTrue(UndoRedoHandler.getInstance().getRedoCommands().isEmpty());
+        Assert.assertEquals(2, UndoRedoHandler.getInstance().getUndoCommands().size());
+
+        UndoRedoHandler.getInstance().undo(UndoRedoHandler.getInstance().getUndoCommands().size());
+        Assert.assertTrue(UndoRedoHandler.getInstance().getUndoCommands().isEmpty());
+        Assert.assertEquals(2, UndoRedoHandler.getInstance().getRedoCommands().size());
+        UndoRedoHandler.getInstance().redo(UndoRedoHandler.getInstance().getRedoCommands().size());
+
+        UndoRedoHandler.getInstance().undo(UndoRedoHandler.getInstance().getUndoCommands().size());
+        UndoRedoHandler.getInstance().redo(UndoRedoHandler.getInstance().getRedoCommands().size());
+
+        UndoRedoHandler.getInstance().undo(UndoRedoHandler.getInstance().getUndoCommands().size());
+        UndoRedoHandler.getInstance().redo(UndoRedoHandler.getInstance().getRedoCommands().size());
     }
 }

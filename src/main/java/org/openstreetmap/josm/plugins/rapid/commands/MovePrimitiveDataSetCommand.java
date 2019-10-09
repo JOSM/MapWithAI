@@ -7,13 +7,16 @@ import static org.openstreetmap.josm.tools.I18n.trn;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.openstreetmap.josm.command.AddPrimitivesCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.PrimitiveData;
+import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
-import org.openstreetmap.josm.plugins.rapid.backend.RapiDDataUtils;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -22,21 +25,19 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  */
 public class MovePrimitiveDataSetCommand extends Command {
-    private final DataSet to;
-    private final DataSet from;
-    private final Collection<OsmPrimitive> primitives;
     private SequenceCommand command = null;
 
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives) {
         super(to);
-        this.to = to;
-        this.from = from;
-        this.primitives = primitives;
+        if (from == null || to.isLocked() || from.isLocked() || to.equals(from)) {
+            Logging.error("{0}: Cannot move primitives from {1} to {2}", RapiDPlugin.NAME, from, to);
+        } else {
+            command = moveCollection(from, to, primitives);
+        }
     }
 
     @Override
     public boolean executeCommand() {
-        command = moveCollection(from, to, primitives);
         if (command != null) {
             command.executeCommand();
         }
@@ -50,24 +51,24 @@ public class MovePrimitiveDataSetCommand extends Command {
      * @param from      The sending dataset
      * @param selection The primitives to move
      */
-    public SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
-        SequenceCommand returnCommand = null;
-        if (from == null || to.isLocked() || from.isLocked() || to.equals(from)) {
-            Logging.error("{0}: Cannot move primitives from {1} to {2}", RapiDPlugin.NAME, from, to);
-        } else {
-            final List<Command> commands = new ArrayList<>();
+    public static SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
+        final List<Command> commands = new ArrayList<>();
 
-            final Collection<OsmPrimitive> allNeededPrimitives = new ArrayList<>();
-            RapiDDataUtils.addPrimitivesToCollection(allNeededPrimitives, selection);
+        final Collection<OsmPrimitive> selected = from.getAllSelected();
+        from.setSelected(selection);
+        final MergeSourceBuildingVisitor builder = new MergeSourceBuildingVisitor(from);
+        final DataSet hull = builder.build();
+        from.setSelected(selected);
 
-            commands.add(new DeletePrimitivesCommand(from, selection, true));
-            final AddPrimitivesCommand addPrimitivesCommand = new AddPrimitivesCommand(to, allNeededPrimitives, selection);
-            commands.add(addPrimitivesCommand);
+        final List<PrimitiveData> primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save)
+                .collect(Collectors.toList());
 
-            returnCommand = new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
-                    "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
-        }
-        return returnCommand;
+        commands.add(new AddPrimitivesCommand(primitiveAddData,
+                selection.stream().map(OsmPrimitive::save).collect(Collectors.toList()), to));
+        commands.add(new DeletePrimitivesCommand(from, selection, true));
+
+        return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
+                "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
     }
 
     @Override

@@ -72,11 +72,13 @@ public class RapiDAddCommand extends Command implements Runnable {
             if (locked) {
                 rapid.unlock();
             }
-            final Command tCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
-            List<OsmPrimitive> allPrimitives = new ArrayList<>();
+            final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
+            final List<OsmPrimitive> allPrimitives = new ArrayList<>();
             RapiDDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
             final Command createConnectionsCommand = createConnections(editable, allPrimitives);
-            command = new SequenceCommand(getDescriptionText(), tCommand, createConnectionsCommand);
+            if (command == null) { // needed for undo/redo (don't create a new command)
+                command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
+            }
             command.executeCommand();
 
             if (locked) {

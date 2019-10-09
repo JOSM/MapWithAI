@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -27,6 +28,7 @@ import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
 import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
 import org.openstreetmap.josm.data.preferences.sources.SourceType;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
@@ -43,8 +45,31 @@ public final class RapiDDataUtils {
     public static final String DEFAULT_RAPID_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&result_type=road_building_vector_xml&bbox={bbox}";
     public static final int MAXIMUM_SIDE_DIMENSIONS = 1000; // 1 km
 
+    static final Object LAYER_LOCK = new Object();
+
     private RapiDDataUtils() {
         // Hide the constructor
+    }
+
+    /**
+     * Get the first {@link RapiDLayer} that we can find.
+     *
+     * @param create true if we want to create a new layer
+     * @return A RapiDLayer, or a new RapiDLayer if none exist. May return
+     *         {@code null} if {@code create} is {@code false}.
+     */
+    public static RapiDLayer getLayer(boolean create) {
+        final List<RapiDLayer> rapidLayers = MainApplication.getLayerManager().getLayersOfType(RapiDLayer.class);
+        RapiDLayer layer = null;
+        synchronized (LAYER_LOCK) {
+            if (rapidLayers.isEmpty() && create) {
+                layer = new RapiDLayer(new DataSet(), RapiDPlugin.NAME, null);
+                MainApplication.getLayerManager().addLayer(layer);
+            } else if (!rapidLayers.isEmpty()) {
+                layer = rapidLayers.get(0);
+            }
+        }
+        return layer;
     }
 
     /**
@@ -112,7 +137,7 @@ public final class RapiDDataUtils {
             InputStream inputStream = null;
             final DataSet dataSet = new DataSet();
             String urlString = getRapiDURL();
-            if (DetectTaskingManager.hasTaskingManagerLayer()) {
+            if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
                 urlString += "&crop_bbox={crop_bbox}";
             }
 
@@ -120,7 +145,7 @@ public final class RapiDDataUtils {
 
             try {
                 final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
-                        DetectTaskingManager.getTaskingManagerBBox().toStringCSV(",")));
+                        DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",")));
                 final HttpClient client = HttpClient.create(url);
                 final StringBuilder defaultUserAgent = new StringBuilder();
                 defaultUserAgent.append(client.getHeaders().get("User-Agent"));
@@ -216,11 +241,16 @@ public final class RapiDDataUtils {
      * @return A RapiD url
      */
     public static String getRapiDURL() {
-        final List<String> urls = getRapiDURLs();
+        final RapiDLayer layer = getLayer(false);
         String url = Config.getPref().get(RapiDPlugin.NAME.concat(".current_api"), DEFAULT_RAPID_API);
-        if (!urls.contains(url)) {
-            url = DEFAULT_RAPID_API;
-            setRapiDUrl(DEFAULT_RAPID_API);
+        if (layer != null && layer.getRapiDUrl() != null) {
+            url = layer.getRapiDUrl();
+        } else {
+            final List<String> urls = getRapiDURLs();
+            if (!urls.contains(url)) {
+                url = DEFAULT_RAPID_API;
+                setRapiDUrl(DEFAULT_RAPID_API, true);
+            }
         }
         return url;
     }
@@ -228,15 +258,22 @@ public final class RapiDDataUtils {
     /**
      * Set the RapiD url
      *
-     * @param url The url to set as the default
+     * @param url       The url to set as the default
+     * @param permanent {@code true} if we want the setting to persist between
+     *                  sessions
      */
-    public static void setRapiDUrl(String url) {
-        final List<String> urls = getRapiDURLs();
-        if (!urls.contains(url)) {
-            urls.add(url);
-            setRapiDURLs(urls);
+    public static void setRapiDUrl(String url, boolean permanent) {
+        final RapiDLayer layer = getLayer(false);
+        if (permanent) {
+            final List<String> urls = getRapiDURLs();
+            if (!urls.contains(url)) {
+                urls.add(url);
+                setRapiDURLs(urls);
+            }
+            Config.getPref().put(RapiDPlugin.NAME.concat(".current_api"), url);
+        } else if (layer != null) {
+            layer.setRapiDUrl(url);
         }
-        Config.getPref().put(RapiDPlugin.NAME.concat(".current_api"), url);
     }
 
     /**
@@ -278,17 +315,29 @@ public final class RapiDDataUtils {
     /**
      * Set whether or not a we switch from the RapiD layer to an OSM data layer
      *
-     * @param selected true if we are going to switch layers
+     * @param selected  true if we are going to switch layers
+     * @param permanent {@code true} if we want the setting to persist between
+     *                  sessions
      */
-    public static void setSwitchLayers(boolean selected) {
-        Config.getPref().putBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), selected);
+    public static void setSwitchLayers(boolean selected, boolean permanent) {
+        final RapiDLayer layer = getLayer(false);
+        if (permanent) {
+            Config.getPref().putBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), selected);
+        } else if (layer != null) {
+            layer.setSwitchLayers(selected);
+        }
     }
 
     /**
      * @return {@code true} if we want to automatically switch layers
      */
     public static boolean isSwitchLayers() {
-        return Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
+        final RapiDLayer layer = getLayer(false);
+        boolean returnBoolean = Config.getPref().getBoolean(RapiDPlugin.NAME.concat(".autoswitchlayers"), true);
+        if (layer != null && layer.isSwitchLayers() != null) {
+            returnBoolean = layer.isSwitchLayers();
+        }
+        return returnBoolean;
     }
 
     /**
@@ -297,17 +346,29 @@ public final class RapiDDataUtils {
      * @return The maximum selection. If 0, allow any number.
      */
     public static int getMaximumAddition() {
-        return Config.getPref().getInt(RapiDPlugin.NAME.concat(".maximumselection"), 50);
+        final RapiDLayer rapidLayer = RapiDDataUtils.getLayer(false);
+        Integer defaultReturn = Config.getPref().getInt(RapiDPlugin.NAME.concat(".maximumselection"), 50);
+        if (rapidLayer != null && rapidLayer.getMaximumAddition() != null) {
+            defaultReturn = rapidLayer.getMaximumAddition();
+        }
+        return defaultReturn;
     }
 
     /**
      * Set the maximum number of objects that can be added at one time.
      *
-     * @param max The maximum number of objects to select (0 allows any number to be
-     *            selected).
+     * @param max       The maximum number of objects to select (0 allows any number
+     *                  to be selected).
+     * @param permanent {@code true} if we want the setting to persist between
+     *                  sessions
      */
-    public static void setMaximumAddition(int max) {
-        Config.getPref().putInt(RapiDPlugin.NAME.concat(".maximumselection"), max);
+    public static void setMaximumAddition(int max, boolean permanent) {
+        final RapiDLayer rapidLayer = getLayer(false);
+        if (permanent) {
+            Config.getPref().putInt(RapiDPlugin.NAME.concat(".maximumselection"), max);
+        } else if (rapidLayer != null) {
+            rapidLayer.setMaximumAddition(max);
+        }
     }
 
     public static List<BBox> reduceBBoxSize(BBox bbox) {
@@ -357,5 +418,43 @@ public final class RapiDDataUtils {
         final LatLon bottomLeft = new LatLon(miny, minx);
         // TODO handle poles
         return topLeft.greatCircleDistance(bottomLeft);
+    }
+
+    /**
+     * Get the data for RapiD
+     *
+     * @param layer    A pre-existing {@link RapiDLayer}
+     * @param osmLayer The osm datalayer with a set of bounds
+     */
+    public static void getRapiDData(RapiDLayer layer, OsmDataLayer osmLayer) {
+        final DataSet editSet = osmLayer.getDataSet();
+        final List<Bounds> editSetBounds = editSet.getDataSourceBounds();
+        final DataSet rapidSet = layer.getDataSet();
+        final List<Bounds> rapidBounds = rapidSet.getDataSourceBounds();
+        for (final Bounds bound : editSetBounds) {
+            // TODO remove bounds that are already downloaded
+            if (rapidBounds.parallelStream().filter(bound::equals).count() == 0) {
+                final DataSet newData = getData(bound.toBBox());
+                synchronized (LAYER_LOCK) {
+                    layer.unlock();
+                    layer.mergeFrom(newData);
+                    layer.lock();
+                }
+            }
+        }
+    }
+
+    /**
+     * Get data for a {@link RapiDLayer}
+     *
+     * @param layer The {@link RapiDLayer} to add data to
+     */
+    public static void getRapiDData(RapiDLayer layer) {
+        final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
+        for (final OsmDataLayer osmLayer : osmLayers) {
+            if (!osmLayer.isLocked()) {
+                getRapiDData(layer, osmLayer);
+            }
+        }
     }
 }

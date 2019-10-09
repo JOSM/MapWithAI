@@ -25,8 +25,11 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class RapiDDataUtilsTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
     /**
@@ -47,10 +50,10 @@ public class RapiDDataUtilsTest {
     @Test
     public void testGetDataCropped() {
         final BBox testBBox = getTestBBox();
-        GpxData gpxData = new GpxData();
+        final GpxData gpxData = new GpxData();
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0735205, -108.5711561)));
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0736682, -108.5708568)));
-        GpxLayer gpx = new GpxLayer(gpxData, DetectTaskingManager.RAPID_CROP_AREA);
+        final GpxLayer gpx = new GpxLayer(gpxData, DetectTaskingManagerUtils.RAPID_CROP_AREA);
         final DataSet originalData = RapiDDataUtils.getData(testBBox);
         MainApplication.getLayerManager().addLayer(gpx);
         final DataSet ds = RapiDDataUtils.getData(testBBox);
@@ -122,13 +125,13 @@ public class RapiDDataUtilsTest {
     public void testRapiDURLPreferences() {
         final String fakeUrl = "https://fake.url";
         Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
-        RapiDDataUtils.setRapiDUrl(fakeUrl);
+        RapiDDataUtils.setRapiDUrl(fakeUrl, true);
         Assert.assertEquals(fakeUrl, RapiDDataUtils.getRapiDURL());
         final List<String> urls = new ArrayList<>(RapiDDataUtils.getRapiDURLs());
         Assert.assertEquals(2, urls.size());
-        RapiDDataUtils.setRapiDUrl(RapiDDataUtils.DEFAULT_RAPID_API);
+        RapiDDataUtils.setRapiDUrl(RapiDDataUtils.DEFAULT_RAPID_API, true);
         Assert.assertEquals(RapiDDataUtils.DEFAULT_RAPID_API, RapiDDataUtils.getRapiDURL());
-        RapiDDataUtils.setRapiDUrl(fakeUrl);
+        RapiDDataUtils.setRapiDUrl(fakeUrl, true);
         Assert.assertEquals(fakeUrl, RapiDDataUtils.getRapiDURL());
         urls.remove(fakeUrl);
         RapiDDataUtils.setRapiDURLs(urls);
@@ -167,9 +170,9 @@ public class RapiDDataUtilsTest {
     }
 
     private static void checkBBoxesConnect(BBox originalBBox, Collection<BBox> bboxes) {
-        for (BBox bbox1 : bboxes) {
+        for (final BBox bbox1 : bboxes) {
             boolean bboxFoundConnections = false;
-            for (BBox bbox2 : bboxes) {
+            for (final BBox bbox2 : bboxes) {
                 if (!bbox1.equals(bbox2)) {
                     bboxFoundConnections = bboxCheckConnections(bbox1, bbox2);
                     if (bboxFoundConnections) {
@@ -186,8 +189,8 @@ public class RapiDDataUtilsTest {
 
     private static boolean bboxCheckConnections(BBox bbox1, BBox bbox2) {
         int shared = 0;
-        for (LatLon bbox1Corner : getBBoxCorners(bbox1)) {
-            for (LatLon bbox2Corner : getBBoxCorners(bbox2)) {
+        for (final LatLon bbox1Corner : getBBoxCorners(bbox1)) {
+            for (final LatLon bbox2Corner : getBBoxCorners(bbox2)) {
                 if (bbox1Corner.equalsEpsilon(bbox2Corner)) {
                     shared++;
                 }

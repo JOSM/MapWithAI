@@ -16,6 +16,8 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.rapid.commands.CreateConnectionsCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class RapiDMoveActionTest {
     RapiDMoveAction moveAction;
     DataSet rapidData;
@@ -24,6 +26,7 @@ public class RapiDMoveActionTest {
     Way way2;
 
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
     @Before
@@ -53,9 +56,9 @@ public class RapiDMoveActionTest {
         rapidData.addSelected(way1);
         moveAction.actionPerformed(null);
         Assert.assertEquals(osmLayer, MainApplication.getLayerManager().getActiveLayer());
-        Assert.assertSame(osmLayer.getDataSet(), way1.getDataSet());
+        Assert.assertNotNull(osmLayer.getDataSet().getPrimitiveById(way1));
         UndoRedoHandler.getInstance().undo();
-        Assert.assertNotSame(osmLayer.getDataSet(), way1.getDataSet());
+        Assert.assertNull(osmLayer.getDataSet().getPrimitiveById(way1));
     }
 
     @Test
@@ -64,10 +67,11 @@ public class RapiDMoveActionTest {
         way1.lastNode().put(CreateConnectionsCommand.DUPE_KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
         rapidData.lock();
         rapidData.addSelected(way1);
+        final DataSet ds = osmLayer.getDataSet();
 
         moveAction.actionPerformed(null);
-        Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
-        Assert.assertFalse(way1.lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
+        Assert.assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
+        Assert.assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
 
         UndoRedoHandler.getInstance().undo();
         Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
@@ -86,10 +90,11 @@ public class RapiDMoveActionTest {
         Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
         Assert.assertFalse(way2.firstNode().hasKey(CreateConnectionsCommand.CONN_KEY));
         Assert.assertFalse(way2.getNode(1).hasKey(CreateConnectionsCommand.CONN_KEY));
-        Assert.assertFalse(way1.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
+        Assert.assertTrue(way1.lastNode().isDeleted());
 
         UndoRedoHandler.getInstance().undo();
         Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
         Assert.assertTrue(way1.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
+        Assert.assertFalse(way1.lastNode().isDeleted());
     }
 }

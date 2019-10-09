@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -71,8 +72,11 @@ public class CreateConnectionsCommand extends Command {
      * @return A {@link SequenceCommand} to create connections with
      */
     public static SequenceCommand createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
-        final Collection<Node> nodes = Utils.filteredCollection(collection, Node.class);
+        final Collection<Node> nodes = Utils.filteredCollection(collection, Node.class).stream()
+                .map(dataSet::getPrimitiveById).map(Node.class::cast).filter(Objects::nonNull)
+                .collect(Collectors.toList());
         final List<Command> changedKeyList = new ArrayList<>();
+        SequenceCommand returnSequence = null;
         for (final Node node : nodes) {
             if (node.hasKey(CONN_KEY)) {
                 changedKeyList.addAll(connectedCommand(dataSet, node));
@@ -82,9 +86,9 @@ public class CreateConnectionsCommand extends Command {
             }
         }
         if (!changedKeyList.isEmpty()) {
-            return new SequenceCommand(getRealDescriptionText(), changedKeyList);
+            returnSequence = new SequenceCommand(getRealDescriptionText(), changedKeyList);
         }
-        return null;
+        return returnSequence;
     }
 
     private static List<Command> connectedCommand(DataSet dataSet, Node node) {
@@ -114,14 +118,14 @@ public class CreateConnectionsCommand extends Command {
                     node.get(DUPE_KEY), DUPE_KEY);
         }
 
-        List<Command> commands = new ArrayList<>();
+        final List<Command> commands = new ArrayList<>();
         if (primitiveConnections[0] instanceof Node) {
-            Node replaceNode = (Node) primitiveConnections[0];
-            Command tCommand = replaceNode(node, replaceNode);
+            final Node replaceNode = (Node) primitiveConnections[0];
+            final Command tCommand = replaceNode(node, replaceNode);
             if (tCommand != null) {
                 commands.add(tCommand);
                 if (replaceNode.hasKey(DUPE_KEY)) {
-                    String key = replaceNode.get(DUPE_KEY);
+                    final String key = replaceNode.get(DUPE_KEY);
                     commands.add(new ChangePropertyCommand(replaceNode, DUPE_KEY, key));
                 } else {
                     replaceNode.put(DUPE_KEY, "empty_value"); // This is needed to actually have a command.

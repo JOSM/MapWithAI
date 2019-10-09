@@ -12,50 +12,53 @@ import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class RapiDActionTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
     @Test
     public void testGetLayer() {
-        Layer rapid = RapiDAction.getLayer(false);
+        Layer rapid = RapiDDataUtils.getLayer(false);
         Assert.assertNull(rapid);
 
-        rapid = RapiDAction.getLayer(true);
+        rapid = RapiDDataUtils.getLayer(true);
         Assert.assertEquals(RapiDLayer.class, rapid.getClass());
 
-        Layer tRapid = RapiDAction.getLayer(false);
+        Layer tRapid = RapiDDataUtils.getLayer(false);
         Assert.assertSame(rapid, tRapid);
 
-        tRapid = RapiDAction.getLayer(true);
+        tRapid = RapiDDataUtils.getLayer(true);
         Assert.assertSame(rapid, tRapid);
     }
 
     @Test
     public void testGetData() {
-        final RapiDLayer rapid = RapiDAction.getLayer(true);
+        final RapiDLayer rapid = RapiDDataUtils.getLayer(true);
         final OsmDataLayer osm = new OsmDataLayer(new DataSet(), "test", null);
         MainApplication.getLayerManager().addLayer(osm);
-        RapiDAction.getRapiDData(rapid, osm);
+        RapiDDataUtils.getRapiDData(rapid, osm);
 
         Assert.assertTrue(rapid.getDataSet().getDataSourceBounds().isEmpty());
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(0, 0, 0.001, 0.001), "random test"));
 
         osm.lock();
-        RapiDAction.getRapiDData(rapid);
+        RapiDDataUtils.getRapiDData(rapid);
         Assert.assertTrue(rapid.getDataSet().getDataSourceBounds().isEmpty());
         osm.unlock();
 
-        RapiDAction.getRapiDData(rapid);
+        RapiDDataUtils.getRapiDData(rapid);
         Assert.assertFalse(rapid.getDataSet().getDataSourceBounds().isEmpty());
         Assert.assertEquals(1, rapid.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "random test"));
-        RapiDAction.getRapiDData(rapid);
+        RapiDDataUtils.getRapiDData(rapid);
         Assert.assertEquals(2, rapid.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
 
-        RapiDAction.getRapiDData(rapid);
+        RapiDDataUtils.getRapiDData(rapid);
         Assert.assertEquals(2, rapid.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
     }
 }

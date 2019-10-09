@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -18,8 +19,6 @@ import javax.swing.JPanel;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.gpx.GpxData;
-import org.openstreetmap.josm.data.gpx.WayPoint;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.ExtendedDialog;
@@ -47,10 +46,12 @@ public class RapiDArbitraryAction extends JosmAction {
     private final JosmTextField rightLon = new JosmTextField();
     private final JCheckBox checkbox = new JCheckBox();
 
+    private static final String ARBITRARY_DATA_STRING = "Get arbitrary data from RapiD";
+
     public RapiDArbitraryAction() {
-        super(tr("{0}: Download arbitrary data", RapiDPlugin.NAME), null, tr("Get arbitrary data from RapiD"),
+        super(tr("{0}: Download arbitrary data", RapiDPlugin.NAME), null, tr(ARBITRARY_DATA_STRING),
                 Shortcut.registerShortcut("data:arbitraryrapid",
-                        tr("Data: Arbitrary {0} Data", tr("Get arbitrary data from RapiD")), KeyEvent.VK_R,
+                        tr("Data: Arbitrary {0} Data", tr(ARBITRARY_DATA_STRING)), KeyEvent.VK_R,
                         Shortcut.ALT_CTRL_SHIFT), true);
     }
 
@@ -63,7 +64,7 @@ public class RapiDArbitraryAction extends JosmAction {
         private static final long serialVersionUID = 2795301151521238635L;
 
         RapiDArbitraryDialog(String[] buttons, JPanel panel) {
-            super(MainApplication.getMainFrame(), tr("Get arbitrary data from RapiD"), buttons);
+            super(MainApplication.getMainFrame(), tr(ARBITRARY_DATA_STRING), buttons);
             setButtonIcons("ok", "cancel");
             configureContextsensitiveHelp(ht("/Action/DownloadArbitraryRapiDData"), true);
             setContent(panel);
@@ -92,14 +93,14 @@ public class RapiDArbitraryAction extends JosmAction {
         panel.add(p, BorderLayout.NORTH);
 
         p.add(new JLabel(tr("Lower Latitude")), GBC.eol());
-        p.add(lowerLat, GBC.eol().fill(GBC.HORIZONTAL));
+        p.add(lowerLat, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
 
         p.add(new JLabel(tr("Left Longitude")), GBC.eol());
-        p.add(leftLon, GBC.eol().fill(GBC.HORIZONTAL));
+        p.add(leftLon, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         p.add(new JLabel(tr("Upper Latitude")), GBC.eol());
-        p.add(upperLat, GBC.eol().fill(GBC.HORIZONTAL));
+        p.add(upperLat, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         p.add(new JLabel(tr("Right Longitude")), GBC.eol());
-        p.add(rightLon, GBC.eol().fill(GBC.HORIZONTAL));
+        p.add(rightLon, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
 
         p.add(new JLabel(tr("Crop to bbox?")));
         p.add(checkbox, GBC.eol());
@@ -125,11 +126,11 @@ public class RapiDArbitraryAction extends JosmAction {
 
         if (checkbox.isSelected()) {
             MainApplication.getLayerManager().addLayer(new GpxLayer(
-                    DetectTaskingManager.createTaskingManagerGpxData(bbox), DetectTaskingManager.RAPID_CROP_AREA));
+                    DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox), DetectTaskingManagerUtils.RAPID_CROP_AREA));
         }
 
         final DataSet data = RapiDDataUtils.getData(bbox);
-        final RapiDLayer layer = RapiDAction.getLayer(true);
+        final RapiDLayer layer = RapiDDataUtils.getLayer(true);
         final DataSet rapidData = layer.getDataSet();
         boolean locked = rapidData.isLocked();
         if (locked) {

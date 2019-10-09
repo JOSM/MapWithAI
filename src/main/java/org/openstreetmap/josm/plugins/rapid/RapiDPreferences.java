@@ -85,11 +85,11 @@ public class RapiDPreferences implements SubPreferenceSetting {
 
     @Override
     public boolean ok() {
-        RapiDDataUtils.setRapiDUrl((String) possibleRapidApiUrl.getSelectedItem());
-        RapiDDataUtils.setSwitchLayers(switchLayerCheckBox.isSelected());
+        RapiDDataUtils.setRapiDUrl((String) possibleRapidApiUrl.getSelectedItem(), true);
+        RapiDDataUtils.setSwitchLayers(switchLayerCheckBox.isSelected(), true);
         final Object value = maximumAdditionSpinner.getValue();
         if (value instanceof Number) {
-            RapiDDataUtils.setMaximumAddition(((Number) value).intValue());
+            RapiDDataUtils.setMaximumAddition(((Number) value).intValue(), true);
         }
         return false;
     }
