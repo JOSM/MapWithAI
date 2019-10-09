@@ -167,7 +167,7 @@ release:
   - |
     mkdir -pv "pages/public/dist/$version"
     cp -v build/dist/* build/tmp/jar/MANIFEST.MF "pages/public/dist/$version"
-    rm -fv "pages/dist/latest"
+    rm -fv "pages/public/dist/latest"
     ln -s "./$version" "pages/public/dist/latest"
   - &push_pages_branch |
     cd pages/
@@ -192,10 +192,10 @@ publish master update site:
     commitHash=`git rev-parse HEAD`
     commitMessage="Make latest commit from master available via JOSM update site ($commitHash)"
   - |
-    rm -vrf pages/snapshot/master
-    mkdir -pv pages/snapshot/master
-    cp -v build/snapshot-update-site pages/public/snapshot/master/update-site
-    cp -v build/dist/* pages/public/snapshot/master
+    rm -vrf "pages/public/snapshot/master"
+    mkdir -pv "pages/public/snapshot/master"
+    cp -v "build/snapshot-update-site" "pages/public/snapshot/master/update-site"
+    cp -v "build/dist/*" "pages/public/snapshot/master"
   - *push_pages_branch
   dependencies:
   - build
