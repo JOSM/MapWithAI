@@ -347,7 +347,7 @@ public final class RapiDDataUtils {
      */
     public static int getMaximumAddition() {
         final RapiDLayer rapidLayer = RapiDDataUtils.getLayer(false);
-        Integer defaultReturn = Config.getPref().getInt(RapiDPlugin.NAME.concat(".maximumselection"), 50);
+        Integer defaultReturn = Config.getPref().getInt(RapiDPlugin.NAME.concat(".maximumselection"), 5);
         if (rapidLayer != null && rapidLayer.getMaximumAddition() != null) {
             defaultReturn = rapidLayer.getMaximumAddition();
         }
