@@ -139,7 +139,7 @@ tests:
 #  stage: deploy
 #  environment:
 #    name: transifex
-#    url: https://www.transifex.com/josm/josm/josm-plugin_rapid/
+#    url: https://www.transifex.com/josm/josm/josm-plugin_$CI_PROJECT_NAME
 #  before_script:
 #  - apt-get update && apt-get install -yq gettext git
 #  - pip install git+https://github.com/transifex/transifex-client.git
@@ -148,18 +148,18 @@ tests:
 #  dependencies:
 #  - build
 #  only:
-#  - master@smocktaylor/rapid
+#  - master@$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
 
 release:
   stage: deploy
   environment:
     name: pages branch / dist directory
-    url: https://gitlab.com/smocktaylor/rapid/tree/pages/public/dist
+    url: https://gitlab.com/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/tree/pages/public/dist
   script:
   - &clone_pages_branch |
     echo "$SSH_PRIVATE_DEPLOY_KEY" > ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
-    git clone --depth 1 --branch pages git@gitlab.com:smocktaylor/rapid.git pages
+    git clone --depth 1 --branch pages git@gitlab.com:$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME.git pages
   - |
     version=`git describe --always --dirty`
     longVersion=`git describe --always --long --dirty`
@@ -172,20 +172,20 @@ release:
   - &push_pages_branch |
     cd pages/
     git config user.name "Deploy with GitLab CI"
-    git config user.email "smocktaylor/rapid@gitlab.com"
+    git config user.email "$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME@$CI_SERVER_HOST"
     git stage .
     git commit -a -m "$commitMessage"
     git push origin pages
   dependencies:
   - build
   only:
-  - tags@smocktaylor/rapid
+  - tags@$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
 
 publish master update site:
   stage: deploy
   environment:
     name: pages branch / snapshot update site
-    url: https://gitlab.com/smocktaylor/rapid/tree/pages
+    url: https://gitlab.com/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/tree/pages
   script:
   - *clone_pages_branch
   - |
@@ -200,16 +200,16 @@ publish master update site:
   dependencies:
   - build
   only:
-  - master@smocktaylor/rapid
+  - master@$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
 
 publish to / GitLab.com packages:
   stage: deploy
   environment:
-    name: GitLab.com / JOSM-rapid packages
-    url: https://gitlab.com/smocktaylor/rapid/-/packages
+    name: GitLab.com / JOSM-$CI_PROJECT_NAME packages
+    url: https://gitlab.com/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/-/packages
   script:
   - ./gradlew publishPluginPublicationToGitlabRepository
   dependencies:
   - build
   only:
-  - tags@smocktaylor/rapid
+  - tags@$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
