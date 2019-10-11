@@ -11,8 +11,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -29,6 +30,7 @@ import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
 import org.openstreetmap.josm.data.preferences.sources.SourceType;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.rapid.RapiDPlugin;
@@ -81,20 +83,23 @@ public final class RapiDDataUtils {
     public static DataSet getData(BBox bbox) {
         final DataSet dataSet = new DataSet();
         if (bbox.isValid()) {
-            final List<Future<?>> futures = new ArrayList<>();
-            for (final BBox tbbox : reduceBBoxSize(bbox)) {
-                futures.add(MainApplication.worker.submit(new GetDataRunnable(tbbox, dataSet)));
+            final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
+            monitor.setCancelable(Boolean.FALSE);
+            final List<BBox> bboxes = reduceBBoxSize(bbox);
+            monitor.beginTask(tr("Downloading {0} data", RapiDPlugin.NAME), bboxes.size());
+            final ForkJoinPool pool = new ForkJoinPool();
+            for (final BBox tbbox : bboxes) {
+                pool.submit(new GetDataRunnable(tbbox, dataSet, monitor));
             }
-            for (final Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (final InterruptedException e) {
-                    Logging.debug(e);
-                    Thread.currentThread().interrupt();
-                } catch (ExecutionException e) {
-                    Logging.debug(e);
-                }
+            pool.shutdown();
+            try {
+                pool.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Logging.debug(e);
+                Thread.currentThread().interrupt();
             }
+            monitor.finishTask();
+            monitor.close();
         }
 
         /* Microsoft buildings don't have a source, so we add one */
@@ -105,10 +110,12 @@ public final class RapiDDataUtils {
     private static class GetDataRunnable implements Runnable {
         private final BBox bbox;
         private final DataSet dataSet;
+        private final PleaseWaitProgressMonitor monitor;
 
-        public GetDataRunnable(BBox bbox, DataSet dataSet) {
+        public GetDataRunnable(BBox bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
             this.bbox = bbox;
             this.dataSet = dataSet;
+            this.monitor = monitor;
         }
 
         @Override
@@ -117,6 +124,7 @@ public final class RapiDDataUtils {
             synchronized (RapiDDataUtils.GetDataRunnable.class) {
                 getDataSet().mergeFrom(temporaryDataSet);
             }
+            monitor.worked(1);
         }
 
         /**
@@ -423,25 +431,61 @@ public final class RapiDDataUtils {
     /**
      * Get the data for RapiD
      *
+     * @param layer  A pre-existing {@link RapiDLayer}
+     * @param bboxes The bboxes to get the data in
+     */
+    public static void getRapiDData(RapiDLayer layer, Collection<BBox> bboxes) {
+        final DataSet rapidSet = layer.getDataSet();
+        final List<BBox> rapidBounds = rapidSet.getDataSourceBounds().stream().map(Bounds::toBBox).collect(Collectors.toList());
+        final List<BBox> editSetBBoxes = bboxes.stream()
+                .filter(bbox -> rapidBounds.stream().noneMatch(tBBox -> tBBox.bounds(bbox)))
+                .collect(Collectors.toList());
+        final ForkJoinPool pool = new ForkJoinPool();
+        for (final BBox bbox : editSetBBoxes) {
+            // TODO remove bounds that are already downloaded
+            if (rapidBounds.parallelStream().filter(bbox::bounds).count() == 0) {
+                pool.execute(() -> {
+                    final DataSet newData = getData(bbox);
+                    synchronized (LAYER_LOCK) {
+                        layer.unlock();
+                        try {
+                            layer.mergeFrom(newData);
+                        } finally {
+                            layer.lock();
+                        }
+                    }
+                });
+            }
+        }
+        pool.shutdown();
+        try {
+            pool.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Logging.debug(e);
+            Thread.currentThread().interrupt();
+        }
+
+    }
+
+    /**
+     * Get the data for RapiD
+     *
+     * @param layer  A pre-existing {@link RapiDLayer}
+     * @param bboxes The bboxes to get the data in
+     */
+    public static void getRapiDData(RapiDLayer layer, BBox... bboxes) {
+        getRapiDData(layer, Arrays.asList(bboxes));
+    }
+
+    /**
+     * Get the data for RapiD
+     *
      * @param layer    A pre-existing {@link RapiDLayer}
      * @param osmLayer The osm datalayer with a set of bounds
      */
     public static void getRapiDData(RapiDLayer layer, OsmDataLayer osmLayer) {
-        final DataSet editSet = osmLayer.getDataSet();
-        final List<Bounds> editSetBounds = editSet.getDataSourceBounds();
-        final DataSet rapidSet = layer.getDataSet();
-        final List<Bounds> rapidBounds = rapidSet.getDataSourceBounds();
-        for (final Bounds bound : editSetBounds) {
-            // TODO remove bounds that are already downloaded
-            if (rapidBounds.parallelStream().filter(bound::equals).count() == 0) {
-                final DataSet newData = getData(bound.toBBox());
-                synchronized (LAYER_LOCK) {
-                    layer.unlock();
-                    layer.mergeFrom(newData);
-                    layer.lock();
-                }
-            }
-        }
+        getRapiDData(layer,
+                osmLayer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox).collect(Collectors.toList()));
     }
 
     /**

@@ -20,7 +20,6 @@ import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
-import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MapView;
@@ -129,17 +128,7 @@ public class RapiDArbitraryAction extends JosmAction {
                     DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox), DetectTaskingManagerUtils.RAPID_CROP_AREA));
         }
 
-        final DataSet data = RapiDDataUtils.getData(bbox);
-        final RapiDLayer layer = RapiDDataUtils.getLayer(true);
-        final DataSet rapidData = layer.getDataSet();
-        boolean locked = rapidData.isLocked();
-        if (locked) {
-            rapidData.unlock();
-        }
-        rapidData.mergeFrom(data);
-        if (locked) {
-            rapidData.lock();
-        }
+        RapiDDataUtils.getRapiDData(RapiDDataUtils.getLayer(true), bbox);
     }
 
     private void setBounds(Bounds b) {

@@ -69,20 +69,22 @@ public class RapiDAddCommand extends Command implements Runnable {
         }
         synchronized (this) {
             final boolean locked = rapid.isLocked();
-            if (locked) {
-                rapid.unlock();
-            }
-            final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
-            final List<OsmPrimitive> allPrimitives = new ArrayList<>();
-            RapiDDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
-            final Command createConnectionsCommand = createConnections(editable, allPrimitives);
-            if (command == null) { // needed for undo/redo (don't create a new command)
-                command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
-            }
-            command.executeCommand();
-
-            if (locked) {
-                rapid.lock();
+            try {
+                if (locked) {
+                    rapid.unlock();
+                }
+                final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, rapid, primitives);
+                final List<OsmPrimitive> allPrimitives = new ArrayList<>();
+                RapiDDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
+                final Command createConnectionsCommand = createConnections(editable, allPrimitives);
+                if (command == null) { // needed for undo/redo (don't create a new command)
+                    command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
+                }
+                command.executeCommand();
+            } finally {
+                if (locked) {
+                    rapid.lock();
+                }
             }
         }
     }
@@ -102,16 +104,19 @@ public class RapiDAddCommand extends Command implements Runnable {
     @Override
     public void undoCommand() {
         final boolean locked = rapid.isLocked();
-        if (locked) {
-            rapid.unlock();
-        }
-        synchronized (this) {
-            if (command != null) {
-                command.undoCommand();
+        try {
+            if (locked) {
+                rapid.unlock();
             }
-        }
-        if (locked) {
-            rapid.lock();
+            synchronized (this) {
+                if (command != null) {
+                    command.undoCommand();
+                }
+            }
+        } finally {
+            if (locked) {
+                rapid.lock();
+            }
         }
     }
 

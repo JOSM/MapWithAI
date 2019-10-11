@@ -93,16 +93,12 @@ public class RapiDRemoteControl extends RequestHandler.RawURLParseRequestHandler
         }
 
         if (download != null && download.isInWorld()) {
-            layer.getDataSet().unlock();
-            layer.getDataSet().mergeFrom(RapiDDataUtils.getData(download));
-            layer.getDataSet().lock();
+            RapiDDataUtils.getRapiDData(layer, download);
         } else if (MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                .filter(tLayer -> !(tLayer instanceof RapiDLayer)).count() != 0) {
+                .anyMatch(tLayer -> !(tLayer instanceof RapiDLayer))) {
             RapiDDataUtils.getRapiDData(layer);
         } else if (crop != null && crop.isInWorld()) {
-            layer.getDataSet().unlock();
-            layer.getDataSet().mergeFrom(RapiDDataUtils.getData(crop));
-            layer.getDataSet().lock();
+            RapiDDataUtils.getRapiDData(layer, crop);
         }
     }
 

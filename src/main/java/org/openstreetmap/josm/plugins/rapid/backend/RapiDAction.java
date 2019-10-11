@@ -22,8 +22,7 @@ public class RapiDAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        final RapiDLayer layer = RapiDDataUtils.getLayer(true);
-        RapiDDataUtils.getRapiDData(layer);
+        RapiDDataUtils.getRapiDData(RapiDDataUtils.getLayer(true));
     }
 
     @Override
