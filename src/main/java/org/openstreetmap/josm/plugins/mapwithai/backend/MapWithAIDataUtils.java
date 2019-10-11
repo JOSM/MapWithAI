@@ -308,8 +308,8 @@ public final class MapWithAIDataUtils {
      */
     public static void addMapWithAIPaintStyles() {
         // TODO figure out how to use the one in the jar file
-        final ExtendedSourceEntry mapWithAI = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "rapid.mapcss",
-                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
+        final ExtendedSourceEntry mapWithAI = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "mapwithai.mapcss",
+                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/mapwithai.mapcss");
         final List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
         for (final SourceEntry paintStyle : paintStyles) {
             if (mapWithAI.url.equals(paintStyle.url)) {

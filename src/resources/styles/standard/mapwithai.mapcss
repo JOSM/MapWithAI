@@ -1,22 +1,22 @@
 meta
 {
-    title: "RapiD";
-    description: "Visualization of RapiD data";
+    title: "MapWithAI";
+    description: "Visualization of MapWithAI data";
     author: "Taylor Smock";
     version: "1_2019-09-21";
     min-josm-version: "15229";
 }
 
 /*******************************************
- * Set .rapid for all known RapiD datasets *
+ * Set .mapwithai for all known MapWithAI datasets *
  *******************************************/
 way[source=~/^(?i)(microsoft|digitalglobe)$/] {
-    set .rapid;
+    set .mapwithai;
 }
 
-way.rapid {
+way.mapwithai {
     color: fuchsia;
 }
-way.rapid:closed2 {
+way.mapwithai:closed2 {
     fill-color: fuchsia;
 }

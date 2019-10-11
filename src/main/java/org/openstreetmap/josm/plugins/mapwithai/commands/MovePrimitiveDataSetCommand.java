@@ -50,6 +50,7 @@ public class MovePrimitiveDataSetCommand extends Command {
      * @param to        The receiving dataset
      * @param from      The sending dataset
      * @param selection The primitives to move
+     * @return The command that does the actual move
      */
     public static SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
         final List<Command> commands = new ArrayList<>();

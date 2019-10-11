@@ -62,7 +62,7 @@ public final class DetectTaskingManagerUtils {
     }
 
     /**
-     * @return A {@link Bound} made from a tasking manager layer, or one that is not
+     * @return A {@link BBox} made from a tasking manager layer, or one that is not
      *         valid.
      */
     public static BBox getTaskingManagerBBox() {

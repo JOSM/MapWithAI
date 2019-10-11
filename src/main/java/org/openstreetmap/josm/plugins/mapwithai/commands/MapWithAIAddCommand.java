@@ -28,7 +28,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      * Add primitives from MapWithAI to the OSM data layer
      *
      * @param mapWithAILayer The MapWithAI layer
-     * @param editableLayer  The OSM layer
+     * @param editLayer      The OSM layer
      * @param selection      The primitives to add from MapWithAI
      */
     public MapWithAIAddCommand(MapWithAILayer mapWithAILayer, OsmDataLayer editLayer, Collection<OsmPrimitive> selection) {
@@ -96,6 +96,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      *                   connecting to
      * @param collection The primitives with connection information (currently only
      *                   checks Nodes)
+     * @return A Command to create connections from the collection
      */
     public static Command createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
         return new CreateConnectionsCommand(dataSet, collection);

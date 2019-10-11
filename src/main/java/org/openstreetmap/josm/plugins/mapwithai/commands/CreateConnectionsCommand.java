@@ -141,7 +141,8 @@ public class CreateConnectionsCommand extends Command {
      * Get the primitives from a dataset with specified ids
      *
      * @param dataSet The dataset holding the primitives (hopefully)
-     * @param ids     The ids formated like n<NUMBER>,r<NUMBER>,w<NUMBER>
+     * @param ids     The ids formated like
+     *                n&lt;NUMBER&gt;,r&lt;NUMBER&gt;,w&lt;NUMBER&gt;
      * @return The primitives that the ids point to, if in the dataset.
      */
     private static OsmPrimitive[] getPrimitives(DataSet dataSet, String ids) {
@@ -213,7 +214,8 @@ public class CreateConnectionsCommand extends Command {
      * @param way       The way to add the node to
      * @param first     The first node in a waysegment (the node is between this and
      *                  the second node)
-     * @param second    The second node in a waysegemnt
+     * @param second    The second node in a waysegment
+     * @return Command to add a node to a way, or null if it won't be done
      */
     public static Command addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
         Command tCommand = null;

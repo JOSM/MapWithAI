@@ -101,7 +101,7 @@ tasks.processResources {
   from("$projectDir/src/resources")
 }
 
-archivesBaseName = "rapid"
+archivesBaseName = "mapwithai"
 josm {
   i18n {
     pathTransformer = getPathTransformer("gitlab.com/smocktaylor/rapid/blob")

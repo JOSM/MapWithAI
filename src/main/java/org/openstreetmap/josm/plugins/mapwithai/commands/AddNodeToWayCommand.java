@@ -20,10 +20,10 @@ public class AddNodeToWayCommand extends Command {
     /**
      * Add a node to a way in an undoable manner
      *
-     * @param toAddNode  The node to add
-     * @param way        The way to add the node to
-     * @param firstNode  The node that comes before the node to add
-     * @param secondNode The node that comes after the node to add
+     * @param toAddNode The node to add
+     * @param way       The way to add the node to
+     * @param first     The node that comes before the node to add
+     * @param second    The node that comes after the node to add
      */
     public AddNodeToWayCommand(Node toAddNode, Way way, Node first, Node second) {
         super(way.getDataSet());
