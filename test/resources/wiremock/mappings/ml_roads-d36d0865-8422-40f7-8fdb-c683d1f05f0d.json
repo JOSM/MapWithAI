@@ -1,0 +1,29 @@
+{
+  "id" : "d36d0865-8422-40f7-8fdb-c683d1f05f0d",
+  "name" : "ml_roads",
+  "request" : {
+    "url" : "/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&result_type=road_building_vector_xml&bbox=-108.5715723,39.0734162,-108.5707107,39.0738791",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version=\"1.0\"?>\n<osm attribution=\"http://www.openstreetmap.org/copyright\" copyright=\"OpenStreetMap and contributors\" generator=\"fb_conflation_service\" version=\"0.6\">\n  <bounds maxlat=\"39.0738691\" maxlon=\"-108.57072358101\" minlat=\"39.0734262\" minlon=\"-108.57155941899\"/>\n  <node action=\"modify\" id=\"-2115501659910767206\" lat=\"39.0735990\" lon=\"-108.5707442\" visible=\"true\">\n    <tag k=\"conn\" v=\"w626760817,n5917002841,n5917002155\"/>\n  </node>\n  <node action=\"modify\" id=\"-373066400259132\" lat=\"39.0735906\" lon=\"-108.5709913\" visible=\"true\">\n    <tag k=\"conn\" v=\"w676695801,n5917002119,n5917002154\"/>\n  </node>\n  <node action=\"modify\" id=\"-1944810158953697\" lat=\"39.0735948\" lon=\"-108.5708516\" visible=\"true\">\n    <tag k=\"conn\" v=\"w630961276,n176213658,n5907055576\"/>\n  </node>\n  <node action=\"modify\" id=\"-710999622096597555\" lat=\"39.0736112\" lon=\"-108.5710852\" visible=\"true\">\n    <tag k=\"dupe\" v=\"n6815623346\"/>\n  </node>\n  <way action=\"modify\" id=\"-1203473873173507\" visible=\"true\">\n    <nd ref=\"-710999622096597555\"/>\n    <nd ref=\"-373066400259132\"/>\n    <nd ref=\"-1944810158953697\"/>\n    <nd ref=\"-2115501659910767206\"/>\n    <tag k=\"highway\" v=\"residential\"/>\n    <tag k=\"source\" v=\"digitalglobe\"/>\n  </way>\n</osm>\n",
+    "headers" : {
+      "Content-Type" : "text/xml; charset=UTF-8",
+      "Strict-Transport-Security" : "max-age=15552000; preload",
+      "Vary" : "Accept-Encoding",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-XSS-Protection" : "0",
+      "Access-Control-Allow-Origin" : "https://facebook.com",
+      "X-FB-Debug" : "aVFiJSWAL1DuwxZ3xy0r7kz2/Z8y9FsGpK/y34APwCHgc+MFqOzGysy4StVtW8Vs+hFglYo+CrVtGqequk0s/Q==",
+      "Date" : "Mon, 14 Oct 2019 21:48:02 GMT",
+      "Connection" : "keep-alive"
+    }
+  },
+  "uuid" : "d36d0865-8422-40f7-8fdb-c683d1f05f0d",
+  "persistent" : true,
+  "scenarioName" : "scenario-1-ml_roads",
+  "requiredScenarioState" : "scenario-1-ml_roads-2",
+  "insertionIndex" : 3
+}

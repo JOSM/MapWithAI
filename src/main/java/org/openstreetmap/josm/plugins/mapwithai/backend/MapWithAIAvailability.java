@@ -29,7 +29,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
 public class MapWithAIAvailability {
-    private static final String RAPID_RELEASES = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_realeases.geojson";
+    private static String rapidReleases = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_realeases.geojson";
     private static MapWithAIAvailability instance = null;
     private static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
     private static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
@@ -42,8 +42,8 @@ public class MapWithAIAvailability {
     }
 
     private MapWithAIAvailability() {
-        try (CachedFile rapidReleases = new CachedFile(RAPID_RELEASES);
-                JsonParser parser = Json.createParser(rapidReleases.getContentReader())) {
+        try (CachedFile cachedRapidReleases = new CachedFile(rapidReleases);
+                JsonParser parser = Json.createParser(cachedRapidReleases.getContentReader())) {
             if (parser.hasNext()) {
                 JsonParser.Event event = parser.next();
                 if (JsonParser.Event.START_OBJECT.equals(event)) {
@@ -150,5 +150,12 @@ public class MapWithAIAvailability {
      */
     public static Map<String, String> getPossibleDataTypesAndMessages() {
         return POSSIBLE_DATA_POINTS;
+    }
+
+    /**
+     * @param url The URL where the MapWithAI data releases are.
+     */
+    public static void setReleaseUrl(String url) {
+        rapidReleases = url;
     }
 }

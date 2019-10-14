@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -8,6 +10,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -25,12 +28,24 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class MapWithAIDataUtilsTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+
+    @Before
+    public void setUp() {
+        String URL = MapWithAIDataUtils.getMapWithAIUrl().replace("https://www.facebook.com/maps",
+                wireMockRule.baseUrl());
+        MapWithAIDataUtils.setMapWithAIUrl(URL, true);
+    }
 
     /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to
@@ -124,11 +139,11 @@ public class MapWithAIDataUtilsTest {
     @Test
     public void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
-        Assert.assertEquals(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API, MapWithAIDataUtils.getMapWithAIUrl());
+        Assert.assertNotEquals(fakeUrl, MapWithAIDataUtils.getMapWithAIUrl());
         MapWithAIDataUtils.setMapWithAIUrl(fakeUrl, true);
         Assert.assertEquals(fakeUrl, MapWithAIDataUtils.getMapWithAIUrl());
         final List<String> urls = new ArrayList<>(MapWithAIDataUtils.getMapWithAIURLs());
-        Assert.assertEquals(2, urls.size());
+        Assert.assertEquals(3, urls.size());
         MapWithAIDataUtils.setMapWithAIUrl(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API, true);
         Assert.assertEquals(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API, MapWithAIDataUtils.getMapWithAIUrl());
         MapWithAIDataUtils.setMapWithAIUrl(fakeUrl, true);

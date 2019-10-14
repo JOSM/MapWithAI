@@ -273,7 +273,7 @@ public final class MapWithAIDataUtils {
     public static void setMapWithAIUrl(String url, boolean permanent) {
         final MapWithAILayer layer = getLayer(false);
         if (permanent) {
-            final List<String> urls = getMapWithAIURLs();
+            final List<String> urls = new ArrayList<>(getMapWithAIURLs());
             if (!urls.contains(url)) {
                 urls.add(url);
                 setMapWithAIURLs(urls);

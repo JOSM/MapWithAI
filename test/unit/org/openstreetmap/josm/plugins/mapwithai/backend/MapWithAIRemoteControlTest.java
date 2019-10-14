@@ -1,18 +1,20 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Utils;
+
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -34,6 +36,16 @@ public class MapWithAIRemoteControlTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().main().projection();
+
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+
+    @Before
+    public void setUp() {
+        String URL = MapWithAIDataUtils.getMapWithAIUrl().replace("https://www.facebook.com/maps",
+                wireMockRule.baseUrl());
+        MapWithAIDataUtils.setMapWithAIUrl(URL, true);
+    }
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();
