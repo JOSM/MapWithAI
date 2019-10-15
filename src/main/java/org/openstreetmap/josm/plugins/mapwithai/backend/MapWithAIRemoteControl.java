@@ -143,4 +143,17 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         return new String[] { "bbox", "url", MAX_OBJ, SWITCH_LAYER, "crop_bbox" };
     }
 
+    @Override
+    public String getUsage() {
+        return tr("downloads {0} data", MapWithAIPlugin.NAME);
+    }
+
+    @Override
+    public String[] getUsageExamples() {
+        return new String[] { "/mapwithai", "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059",
+                "/mapwithai?url=https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}",
+                "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&max_obj=1",
+                "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&switch_layer=false",
+                "/mapwithai?crop_bbox=-108.4625421,39.0621223,-108.4594728,39.0633059" };
+    }
 }
