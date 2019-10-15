@@ -2,11 +2,13 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.awaitility.Awaitility.await;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -121,11 +123,14 @@ public class MapWithAILayerTest {
         osm.unlock();
 
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
+        await().atMost(10, TimeUnit.SECONDS).until(() -> !mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
         Assert.assertFalse(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
         Assert.assertEquals(1, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "random test"));
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
+        await().atMost(10, TimeUnit.SECONDS).until(
+                () -> mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count() == 2);
         Assert.assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
 
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);

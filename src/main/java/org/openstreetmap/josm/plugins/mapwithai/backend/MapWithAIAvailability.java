@@ -49,17 +49,15 @@ public final class MapWithAIAvailability {
     private MapWithAIAvailability() {
         try (CachedFile cachedRapidReleases = new CachedFile(rapidReleases);
                 JsonParser parser = Json.createParser(cachedRapidReleases.getContentReader())) {
-            final JsonParser.Event event = parser.next();
-            if (JsonParser.Event.START_OBJECT.equals(event)) {
-                final Stream<Entry<String, JsonValue>> entries = parser.getObjectStream();
-                final Optional<Entry<String, JsonValue>> objects = entries
-                        .filter(entry -> "objects".equals(entry.getKey())).findFirst();
-                if (objects.isPresent()) {
-                    final JsonObject value = objects.get().getValue().asJsonObject();
-                    final JsonObject centroid = value.getJsonObject("rapid_releases_1011_centroid");
-                    final JsonArray countries = centroid.getJsonArray("geometries");
-                    parseForCountries(countries);
-                }
+            parser.next();
+            final Stream<Entry<String, JsonValue>> entries = parser.getObjectStream();
+            final Optional<Entry<String, JsonValue>> objects = entries
+                    .filter(entry -> "objects".equals(entry.getKey())).findFirst();
+            if (objects.isPresent()) {
+                final JsonObject value = objects.get().getValue().asJsonObject();
+                final JsonObject centroid = value.getJsonObject("rapid_releases_1011_centroid");
+                final JsonArray countries = centroid.getJsonArray("geometries");
+                parseForCountries(countries);
             }
         } catch (IOException e) {
             Logging.debug(e);

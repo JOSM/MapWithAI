@@ -3,17 +3,19 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.EventQueue;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -76,6 +78,7 @@ public final class MapWithAIDataUtils {
         return layer;
     }
 
+
     /**
      * Get a dataset from the API servers using a bbox
      *
@@ -83,54 +86,74 @@ public final class MapWithAIDataUtils {
      * @return A DataSet with data inside the bbox
      */
     public static DataSet getData(BBox bbox) {
-        final DataSet dataSet = new DataSet();
-        if (bbox.isValid()) {
-            final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-            monitor.setCancelable(Boolean.FALSE);
-            monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME));
-            monitor.indeterminateSubTask(null);
-            new ForkJoinPool().invoke(new GetDataRunnable(bbox, dataSet)); // TODO use an application level pool
-            monitor.finishTask();
-            monitor.close();
-        }
+        return getData(Arrays.asList(bbox));
+    }
 
-        /* Microsoft buildings don't have a source, so we add one */
-        MapWithAIDataUtils.addSourceTags(dataSet, "building", "Microsoft");
+    /**
+     * Get a dataset from the API servers using a list bboxes
+     *
+     * @param bbox The bboxes from which to get data
+     * @return A DataSet with data inside the bboxes
+     */
+    public static DataSet getData(List<BBox> bbox) {
+        final DataSet dataSet = new DataSet();
+        final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).collect(Collectors.toList());
+        final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
+        try {
+            EventQueue.invokeAndWait(() -> {
+                monitor.setCancelable(Boolean.FALSE);
+                monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME));
+                monitor.indeterminateSubTask(null);
+            });
+        } catch (InvocationTargetException e) {
+            Logging.debug(e);
+        } catch (InterruptedException e) {
+            Logging.debug(e);
+            Thread.currentThread().interrupt();
+        }
+        ForkJoinPool.commonPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
+
         return dataSet;
     }
 
     private static class GetDataRunnable extends RecursiveTask<DataSet> {
         private static final long serialVersionUID = 258423685658089715L;
-        private final transient BBox bbox;
+        private final transient List<BBox> bbox;
         private final transient DataSet dataSet;
+        private final transient PleaseWaitProgressMonitor monitor;
 
-        public GetDataRunnable(BBox bbox, DataSet dataSet) {
+        public GetDataRunnable(BBox bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
+            this(Arrays.asList(bbox), dataSet, monitor);
+        }
+
+        public GetDataRunnable(List<BBox> bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
             this.bbox = bbox;
             this.dataSet = dataSet;
+            this.monitor = monitor;
         }
 
         @Override
         public DataSet compute() {
             List<BBox> bboxes = reduceBBoxSize(bbox);
             if (bboxes.size() == 1) {
-                final DataSet temporaryDataSet = getDataReal(getBbox());
+                final DataSet temporaryDataSet = getDataReal(bboxes.get(0));
                 synchronized (MapWithAIDataUtils.GetDataRunnable.class) {
                     dataSet.mergeFrom(temporaryDataSet);
                 }
             } else {
                 Collection<GetDataRunnable> tasks = bboxes.parallelStream()
-                        .map(tBbox -> new GetDataRunnable(tBbox, getRawResult())).collect(Collectors.toList());
+                        .map(tBbox -> new GetDataRunnable(tBbox, dataSet, null)).collect(Collectors.toList());
                 tasks.forEach(GetDataRunnable::fork);
                 tasks.forEach(GetDataRunnable::join);
             }
-            return dataSet;
-        }
+            if (Objects.nonNull(monitor)) {
+                monitor.finishTask();
+                monitor.close();
+            }
 
-        /**
-         * @return The {@code BBox} associated with this object
-         */
-        public BBox getBbox() {
-            return bbox;
+            /* Microsoft buildings don't have a source, so we add one */
+            MapWithAIDataUtils.addSourceTags(dataSet, "building", "Microsoft");
+            return dataSet;
         }
 
         private static DataSet getDataReal(BBox bbox) {
@@ -371,6 +394,12 @@ public final class MapWithAIDataUtils {
         }
     }
 
+    public static List<BBox> reduceBBoxSize(List<BBox> bboxes) {
+        List<BBox> returnBBoxes = new ArrayList<>();
+        bboxes.forEach(bbox -> returnBBoxes.addAll(reduceBBoxSize(bbox)));
+        return returnBBoxes;
+    }
+
     public static List<BBox> reduceBBoxSize(BBox bbox) {
         final List<BBox> returnBounds = new ArrayList<>();
         final double width = getWidth(bbox);
@@ -432,30 +461,17 @@ public final class MapWithAIDataUtils {
         final List<BBox> editSetBBoxes = bboxes.stream()
                 .filter(bbox -> mapWithAIBounds.stream().noneMatch(tBBox -> tBBox.bounds(bbox)))
                 .collect(Collectors.toList());
-        final ForkJoinPool pool = new ForkJoinPool();
-        for (final BBox bbox : editSetBBoxes) {
-            // TODO remove bounds that are already downloaded
-            if (mapWithAIBounds.parallelStream().filter(bbox::bounds).count() == 0) {
-                pool.execute(() -> {
-                    final DataSet newData = getData(bbox);
-                    Lock lock = layer.getLock();
-                    lock.lock();
-                    try {
-                        layer.mergeFrom(newData);
-                    } finally {
-                        lock.unlock();
-                    }
-                });
+        ForkJoinPool.commonPool().execute(() -> {
+            layer.getDataSet().clear();
+            final DataSet newData = getData(editSetBBoxes);
+            Lock lock = layer.getLock();
+            lock.lock();
+            try {
+                layer.mergeFrom(newData);
+            } finally {
+                lock.unlock();
             }
-        }
-        pool.shutdown();
-        try {
-            pool.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Logging.debug(e);
-            Thread.currentThread().interrupt();
-        }
-
+        });
     }
 
     /**

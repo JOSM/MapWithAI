@@ -2,6 +2,9 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.awaitility.Awaitility.await;
+
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -123,6 +126,9 @@ public class MapWithAIRemoteControlTest {
         BBox temp = getTestBBox();
         newHandler("http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp.toStringCSV(","))).handle();
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
+
+        await().atMost(10, TimeUnit.SECONDS)
+                .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
 
         final BBox added = MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().iterator().next().toBBox();
         Assert.assertTrue(temp.bounds(added));

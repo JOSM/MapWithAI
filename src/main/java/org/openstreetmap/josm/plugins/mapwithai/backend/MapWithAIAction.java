@@ -5,9 +5,11 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -15,7 +17,10 @@ import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Shortcut;
 
@@ -48,7 +53,12 @@ public class MapWithAIAction extends JosmAction {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         if (layer != null) {
             final Notification notification = new Notification();
-            final List<Bounds> bounds = layer.getDataSet().getDataSourceBounds();
+            final List<Bounds> bounds = new ArrayList<>(layer.getDataSet().getDataSourceBounds());
+            if (bounds.isEmpty()) {
+                MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                        .map(OsmDataLayer::getDataSet).filter(Objects::nonNull).map(DataSet::getDataSourceBounds)
+                        .forEach(bounds::addAll);
+            }
             final StringBuilder message = new StringBuilder();
             message.append(MapWithAIPlugin.NAME);
             message.append(": ");
