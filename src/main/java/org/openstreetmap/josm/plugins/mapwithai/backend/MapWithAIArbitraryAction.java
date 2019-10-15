@@ -39,11 +39,11 @@ import org.openstreetmap.josm.tools.Shortcut;
 public class MapWithAIArbitraryAction extends JosmAction {
     private static final long serialVersionUID = 9048113038651190619L;
 
-    private final JosmTextField lowerLat = new JosmTextField();
-    private final JosmTextField upperLat = new JosmTextField();
-    private final JosmTextField leftLon = new JosmTextField();
-    private final JosmTextField rightLon = new JosmTextField();
-    private final JCheckBox checkbox = new JCheckBox();
+    private final transient JosmTextField lowerLat = new JosmTextField();
+    private final transient JosmTextField upperLat = new JosmTextField();
+    private final transient JosmTextField leftLon = new JosmTextField();
+    private final transient JosmTextField rightLon = new JosmTextField();
+    private final transient JCheckBox checkbox = new JCheckBox();
 
     private static final String ARBITRARY_DATA_STRING = tr("Get arbitrary data from {0}", MapWithAIPlugin.NAME);
 

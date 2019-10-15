@@ -52,13 +52,13 @@ public class MapWithAIAction extends JosmAction {
             final StringBuilder message = new StringBuilder();
             message.append(MapWithAIPlugin.NAME);
             message.append(": ");
-            MapWithAIAvailability availability = MapWithAIAvailability.getInstance();
-            Map<String, Boolean> availableTypes = new TreeMap<>();
+            final MapWithAIAvailability availability = MapWithAIAvailability.getInstance();
+            final Map<String, Boolean> availableTypes = new TreeMap<>();
             for (final Bounds bound : bounds) {
                 availability.getDataTypes(bound.getCenter())
                 .forEach((type, available) -> availableTypes.merge(type, available, Boolean::logicalOr));
             }
-            List<String> types = availableTypes.entrySet().stream().filter(Entry::getValue)
+            final List<String> types = availableTypes.entrySet().stream().filter(Entry::getValue)
                     .map(entry -> MapWithAIAvailability.getPossibleDataTypesAndMessages().get(entry.getKey()))
                     .collect(Collectors.toList());
             if (types.isEmpty()) {

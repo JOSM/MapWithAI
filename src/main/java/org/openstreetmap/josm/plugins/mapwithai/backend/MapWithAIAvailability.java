@@ -22,18 +22,23 @@ import javax.json.stream.JsonParser;
 
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
+import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
-public class MapWithAIAvailability {
+public final class MapWithAIAvailability {
     private static String rapidReleases = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_realeases.geojson";
-    private static MapWithAIAvailability instance = null;
     private static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
     private static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
     private static final Map<String, String> COUNTRY_NAME_FIX = new HashMap<>();
+
+    private static class InstanceHelper {
+        static final MapWithAIAvailability INSTANCE = new MapWithAIAvailability();
+    }
+
     static {
         COUNTRY_NAME_FIX.put("Egypt", "Egypt, Arab Rep.");
         COUNTRY_NAME_FIX.put("Dem. Rep. Congo", "Congo, Dem. Rep.");
@@ -44,18 +49,16 @@ public class MapWithAIAvailability {
     private MapWithAIAvailability() {
         try (CachedFile cachedRapidReleases = new CachedFile(rapidReleases);
                 JsonParser parser = Json.createParser(cachedRapidReleases.getContentReader())) {
-            if (parser.hasNext()) {
-                JsonParser.Event event = parser.next();
-                if (JsonParser.Event.START_OBJECT.equals(event)) {
-                    Stream<Entry<String, JsonValue>> entries = parser.getObjectStream();
-                    Optional<Entry<String, JsonValue>> objects = entries.filter(entry -> "objects".equals(entry.getKey()))
-                            .findFirst();
-                    if (objects.isPresent()) {
-                        JsonObject value = objects.get().getValue().asJsonObject();
-                        JsonObject centroid = value.getJsonObject("rapid_releases_1011_centroid");
-                        JsonArray countries = centroid.getJsonArray("geometries");
-                        parseForCountries(countries);
-                    }
+            final JsonParser.Event event = parser.next();
+            if (JsonParser.Event.START_OBJECT.equals(event)) {
+                final Stream<Entry<String, JsonValue>> entries = parser.getObjectStream();
+                final Optional<Entry<String, JsonValue>> objects = entries
+                        .filter(entry -> "objects".equals(entry.getKey())).findFirst();
+                if (objects.isPresent()) {
+                    final JsonObject value = objects.get().getValue().asJsonObject();
+                    final JsonObject centroid = value.getJsonObject("rapid_releases_1011_centroid");
+                    final JsonArray countries = centroid.getJsonArray("geometries");
+                    parseForCountries(countries);
                 }
             }
         } catch (IOException e) {
@@ -67,25 +70,29 @@ public class MapWithAIAvailability {
      * @return the unique instance
      */
     public static MapWithAIAvailability getInstance() {
-        if (instance == null) {
-            instance = new MapWithAIAvailability();
-        }
-        return instance;
+        return InstanceHelper.INSTANCE;
     }
 
     private static void parseForCountries(JsonArray countries) {
         for (int i = 0; i < countries.size(); i++) {
-            JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
-            String countryName = cornerCaseNames(country.getString("Country"));
-            Optional<OsmPrimitive> realCountry = Territories.getDataSet().allPrimitives().parallelStream()
+            final JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
+            final String countryName = cornerCaseNames(country.getString("Country"));
+            DataSet territories;
+            try {
+                territories = Territories.getDataSet();
+            } catch (NullPointerException e) {
+                Territories.initialize();
+                territories = Territories.getDataSet();
+            }
+            final Optional<OsmPrimitive> realCountry = territories.allPrimitives().parallelStream()
                     .filter(primitive -> countryName.equalsIgnoreCase(primitive.get("name:en")))
                     .findFirst();
             if (realCountry.isPresent()) {
-                String key = realCountry.get().get("ISO3166-1:alpha2");
+                final String key = realCountry.get().get("ISO3166-1:alpha2");
                 // We need to handle cases like Alaska more elegantly
-                Map<String, Boolean> data = COUNTRIES.getOrDefault(key, new TreeMap<>());
-                for (Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
-                    boolean hasData = "yes".equals(country.getString(entry.getValue()));
+                final Map<String, Boolean> data = COUNTRIES.getOrDefault(key, new TreeMap<>());
+                for (final Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
+                    final boolean hasData = "yes".equals(country.getString(entry.getValue()));
                     if (hasData || !data.containsKey(entry.getKey())) {
                         data.put(entry.getKey(), hasData);
                     }
@@ -98,10 +105,11 @@ public class MapWithAIAvailability {
     }
 
     private static String cornerCaseNames(String name) {
+        String returnName = name;
         if (COUNTRY_NAME_FIX.containsKey(name)) {
-            name = COUNTRY_NAME_FIX.get(name);
+            returnName = COUNTRY_NAME_FIX.get(name);
         }
-        return name;
+        return returnName;
     }
 
     /**
@@ -110,7 +118,7 @@ public class MapWithAIAvailability {
      *         available data.
      */
     public boolean hasData(BBox bbox) {
-        List<LatLon> corners = new ArrayList<>();
+        final List<LatLon> corners = new ArrayList<>();
         corners.add(bbox.getBottomRight());
         corners.add(new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon()));
         corners.add(bbox.getTopLeft());
@@ -124,7 +132,7 @@ public class MapWithAIAvailability {
      */
     public boolean hasData(LatLon latLon) {
         boolean returnBoolean = false;
-        for (Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
+        for (final Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
             if (Territories.isIso3166Code(entry.getKey(), latLon)) {
                 returnBoolean = entry.getValue().entrySet().parallelStream().anyMatch(Entry::getValue);
                 break;

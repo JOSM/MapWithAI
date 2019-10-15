@@ -47,6 +47,7 @@ def versions = [
   pmd: "6.6.0",
   spotbugs: "3.1.12",
   wiremock: "2.25.0",
+  findsecbugs: "1.9.0",
 ]
 
 repositories {
@@ -57,6 +58,7 @@ dependencies {
   if (!JavaVersion.current().isJava9Compatible()) {
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
   }
+  spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${versions.findsecbugs}"
   errorprone("com.google.errorprone:error_prone_core:${versions.errorprone}")
 
   testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
