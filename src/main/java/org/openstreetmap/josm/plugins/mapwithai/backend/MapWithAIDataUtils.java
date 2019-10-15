@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -85,19 +86,9 @@ public final class MapWithAIDataUtils {
         if (bbox.isValid()) {
             final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
             monitor.setCancelable(Boolean.FALSE);
-            final List<BBox> bboxes = reduceBBoxSize(bbox);
-            monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME), bboxes.size());
-            final ForkJoinPool pool = new ForkJoinPool();
-            for (final BBox tbbox : bboxes) {
-                pool.submit(new GetDataRunnable(tbbox, dataSet, monitor));
-            }
-            pool.shutdown();
-            try {
-                pool.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Logging.debug(e);
-                Thread.currentThread().interrupt();
-            }
+            monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME));
+            monitor.indeterminateSubTask(null);
+            new ForkJoinPool().invoke(new GetDataRunnable(bbox, dataSet)); // TODO use an application level pool
             monitor.finishTask();
             monitor.close();
         }
@@ -107,24 +98,31 @@ public final class MapWithAIDataUtils {
         return dataSet;
     }
 
-    private static class GetDataRunnable implements Runnable {
-        private final BBox bbox;
-        private final DataSet dataSet;
-        private final PleaseWaitProgressMonitor monitor;
+    private static class GetDataRunnable extends RecursiveTask<DataSet> {
+        private static final long serialVersionUID = 258423685658089715L;
+        private final transient BBox bbox;
+        private final transient DataSet dataSet;
 
-        public GetDataRunnable(BBox bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
+        public GetDataRunnable(BBox bbox, DataSet dataSet) {
             this.bbox = bbox;
             this.dataSet = dataSet;
-            this.monitor = monitor;
         }
 
         @Override
-        public void run() {
-            final DataSet temporaryDataSet = getDataReal(getBbox());
-            synchronized (MapWithAIDataUtils.GetDataRunnable.class) {
-                getDataSet().mergeFrom(temporaryDataSet);
+        public DataSet compute() {
+            List<BBox> bboxes = reduceBBoxSize(bbox);
+            if (bboxes.size() == 1) {
+                final DataSet temporaryDataSet = getDataReal(getBbox());
+                synchronized (MapWithAIDataUtils.GetDataRunnable.class) {
+                    dataSet.mergeFrom(temporaryDataSet);
+                }
+            } else {
+                Collection<GetDataRunnable> tasks = bboxes.parallelStream()
+                        .map(tBbox -> new GetDataRunnable(tBbox, getRawResult())).collect(Collectors.toList());
+                tasks.forEach(GetDataRunnable::fork);
+                tasks.forEach(GetDataRunnable::join);
             }
-            monitor.worked(1);
+            return dataSet;
         }
 
         /**
@@ -132,13 +130,6 @@ public final class MapWithAIDataUtils {
          */
         public BBox getBbox() {
             return bbox;
-        }
-
-        /**
-         * @return The {@code DataSet} associated with this object
-         */
-        public DataSet getDataSet() {
-            return dataSet;
         }
 
         private static DataSet getDataReal(BBox bbox) {
