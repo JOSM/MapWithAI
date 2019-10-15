@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="Ruleset for josm-rapid-plugin"
+<ruleset name="Ruleset for josm-mapwithai-plugin"
          xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">

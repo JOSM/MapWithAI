@@ -133,7 +133,7 @@ build with java 13:
 #  stage: deploy
 #  environment:
 #    name: transifex
-#    url: https://www.transifex.com/josm/josm/josm-plugin_rapid/
+#    url: https://www.transifex.com/josm/josm/josm-plugin_mapwithai/
 #  before_script:
 #  - apt-get update && apt-get install -yq gettext git
 #  - pip install git+https://github.com/transifex/transifex-client.git
@@ -142,18 +142,18 @@ build with java 13:
 #  dependencies:
 #  - build
 #  only:
-#  - master@smocktaylor/rapid
+#  - master@gokaart/JOSM_MapWithAI
 
 release:
   stage: deploy
   environment:
     name: pages branch / dist directory
-    url: https://gitlab.com/smocktaylor/rapid/tree/pages/public/dist
+    url: https://gitlab.com/gokaart/JOSM_MapWithAI/tree/pages/public/dist
   script:
   - &clone_pages_branch |
     echo "$SSH_PRIVATE_DEPLOY_KEY" > ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
-    git clone --depth 1 --branch pages git@gitlab.com:smocktaylor/rapid.git pages
+    git clone --depth 1 --branch pages git@gitlab.com:gokaart/JOSM_MapWithAI.git pages
   - |
     version=`git describe --always --dirty`
     longVersion=`git describe --always --long --dirty`
@@ -166,20 +166,20 @@ release:
   - &push_pages_branch |
     cd pages/
     git config user.name "Deploy with GitLab CI"
-    git config user.email "smocktaylor/rapid@gitlab.com"
+    git config user.email "gokaart/JOSM_MapWithAI@gitlab.com"
     git stage .
     git commit -a -m "$commitMessage"
     git push origin pages
   dependencies:
   - build
   only:
-  - tags@smocktaylor/rapid
+  - tags@gokaart/JOSM_MapWithAI
 
 publish master update site:
   stage: deploy
   environment:
     name: pages branch / snapshot update site
-    url: https://gitlab.com/smocktaylor/rapid/tree/pages
+    url: https://gitlab.com/gokaart/JOSM_MapWithAI/tree/pages
   script:
   - *clone_pages_branch
   - |
@@ -194,16 +194,16 @@ publish master update site:
   dependencies:
   - build
   only:
-  - master@smocktaylor/rapid
+  - master@gokaart/JOSM_MapWithAI
 
 publish to / GitLab.com packages:
   stage: deploy
   environment:
-    name: GitLab.com / JOSM-rapid packages
-    url: https://gitlab.com/smocktaylor/rapid/-/packages
+    name: GitLab.com / JOSM-MapWithAI packages
+    url: https://gitlab.com/gokaart/JOSM_MapWithAI/-/packages
   script:
   - ./gradlew publishPluginPublicationToGitlabRepository
   dependencies:
   - build
   only:
-  - tags@smocktaylor/rapid
+  - tags@gokaart/JOSM_MapWithAI

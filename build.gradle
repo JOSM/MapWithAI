@@ -106,7 +106,7 @@ tasks.processResources {
 archivesBaseName = "mapwithai"
 josm {
   i18n {
-    pathTransformer = getPathTransformer("gitlab.com/smocktaylor/rapid/blob")
+    pathTransformer = getPathTransformer("gitlab.com/gokaart/JOSM_MapWithAI/blob")
   }
 }
 
@@ -159,7 +159,7 @@ task generateSnapshotUpdateSite(type: GeneratePluginList) {
   outputFile = new File(project.buildDir, "snapshot-update-site")
   versionSuffix = {a -> ""}
   doFirst {
-    def pluginDownloadUrl = "https://smocktaylor.gitlab.io/$archivesBaseName/snapshot/master/${archivesBaseName}.jar"
+    def pluginDownloadUrl = "https://gokaart.gitlab.io/$archivesBaseName/snapshot/master/${archivesBaseName}.jar"
     it.iconBase64Provider = {
       def file = new File(sourceSets.main.resources.srcDirs[0], it)
       if (file.exists()) {

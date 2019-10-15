@@ -1,7 +1,7 @@
 # JOSM MapWithAI Plugin (formerly RapiD Plugin)
 
-[![pipeline status](https://gitlab.com/smocktaylor/rapid/badges/master/pipeline.svg)](https://gitlab.com/smocktaylor/rapid/commits/master)
-[![code coverage](https://gitlab.com/smocktaylor/rapid/badges/master/coverage.svg)](https://codecov.io/github/smocktaylor/rapid?branch=master)
+[![pipeline status](https://gitlab.com/gokaart/JOSM_MapWithAI/badges/master/pipeline.svg)](https://gitlab.com/gokaart/JOSM_MapWithAI/commits/master)
+[![code coverage](https://gitlab.com/gokaart/JOSM_MapWithAI/badges/master/coverage.svg)](https://codecov.io/github/gokaart/JOSM_MapWithAI?branch=master)
 [![license](https://img.shields.io/badge/license-GPLv2-blue.svg?style=flat-square)](./LICENSE)
 
 This plugin brings MapWithAI information into JOSM.
@@ -21,18 +21,18 @@ To use this plugin, [install JOSM](https://josm.openstreetmap.de/wiki/Download) 
 
 ### Optional JOSM Setup
 1. Open JOSM
-2. Add the "MapWithAI" paintstyle by going to "Map Settings" -> "Map Paint Styles" -> the plus sign next to "Active styles" -> enter `https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss` in the "URL / File" field.
+2. Add the "MapWithAI" paintstyle by going to "Map Settings" -> "Map Paint Styles" -> the plus sign next to "Active styles" -> enter `https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss` in the "URL / File" field.
 
 ## Information
 * [RapiD](https://mapwith.ai/rapid)
-* [HOT Tasking Manager + RapiD] (https://tasks-assisted.hotosm.org/)
+* [HOT Tasking Manager + RapiD](https://tasks-assisted.hotosm.org/)
 * [RapiD source code and country requests](https://github.com/facebookincubator/RapiD)
 * [mapwith.ai](https://mapwith.ai/)
 
 ## Contributing
 
-- The **source code** is hosted on [GitLab](https://gitlab.com/smocktaylor/rapid).
-- **Issues** are managed in [GitLab](https://gitlab.com/smocktaylor/rapid/issues)
+- The **source code** is hosted on [GitLab](https://gitlab.com/gokaart/JOSM_MapWithAI).
+- **Issues** are managed in [GitLab](https://gitlab.com/gokaart/JOSM_MapWithAI/issues)
 - **Translations** are not currently done.
 
 ## Authors
