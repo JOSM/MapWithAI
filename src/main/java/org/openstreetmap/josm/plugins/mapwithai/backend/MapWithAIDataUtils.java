@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -437,13 +438,12 @@ public final class MapWithAIDataUtils {
             if (mapWithAIBounds.parallelStream().filter(bbox::bounds).count() == 0) {
                 pool.execute(() -> {
                     final DataSet newData = getData(bbox);
-                    synchronized (LAYER_LOCK) {
-                        layer.unlock();
-                        try {
-                            layer.mergeFrom(newData);
-                        } finally {
-                            layer.lock();
-                        }
+                    Lock lock = layer.getLock();
+                    lock.lock();
+                    try {
+                        layer.mergeFrom(newData);
+                    } finally {
+                        lock.unlock();
                     }
                 });
             }

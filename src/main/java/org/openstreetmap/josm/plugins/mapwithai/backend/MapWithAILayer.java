@@ -4,9 +4,16 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
+import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
@@ -21,6 +28,7 @@ public class MapWithAILayer extends OsmDataLayer {
     private Integer maximumAddition = null;
     private String url = null;
     private Boolean switchLayers = null;
+    private final Lock lock;
 
     /**
      * Create a new MapWithAI layer
@@ -31,11 +39,11 @@ public class MapWithAILayer extends OsmDataLayer {
      */
     public MapWithAILayer(DataSet data, String name, File associatedFile) {
         super(data, name, associatedFile);
-        this.lock();
         data.setUploadPolicy(UploadPolicy.BLOCKED);
+        lock = new MapLock();
     }
 
-    // @Override only JOSM > 15323
+    // @Override TODO remove comment on 2020-01-01
     public String getChangesetSourceTag() {
         return "MapWithAI";
     }
@@ -70,17 +78,51 @@ public class MapWithAILayer extends OsmDataLayer {
         if (p instanceof JPanel) {
             final JPanel panel = (JPanel) p;
             if (maximumAddition != null) {
-                panel.add(new JLabel(tr("Maximum Additions: {0}", maximumAddition), JLabel.HORIZONTAL),
+                panel.add(new JLabel(tr("Maximum Additions: {0}", maximumAddition), SwingConstants.HORIZONTAL),
                         GBC.eop().insets(15, 0, 0, 0));
             }
             if (url != null) {
-                panel.add(new JLabel(tr("URL: {0}", url), JLabel.HORIZONTAL), GBC.eop().insets(15, 0, 0, 0));
+                panel.add(new JLabel(tr("URL: {0}", url), SwingConstants.HORIZONTAL), GBC.eop().insets(15, 0, 0, 0));
             }
             if (switchLayers != null) {
-                panel.add(new JLabel(tr("Switch Layers: {0}", switchLayers), JLabel.HORIZONTAL),
+                panel.add(new JLabel(tr("Switch Layers: {0}", switchLayers), SwingConstants.HORIZONTAL),
                         GBC.eop().insets(15, 0, 0, 0));
             }
         }
         return p;
+    }
+
+    @Override
+    public Action[] getMenuEntries() {
+        List<Action> actions = Arrays.asList(super.getMenuEntries()).stream()
+                .filter(action -> !(action instanceof LayerSaveAction) && !(action instanceof LayerSaveAsAction))
+                .collect(Collectors.toList());
+        return actions.toArray(new Action[0]);
+    }
+
+    public Lock getLock() {
+        return lock;
+    }
+
+    private class MapLock extends ReentrantLock {
+        private static final long serialVersionUID = 5441350396443132682L;
+        private boolean dataSetLocked;
+
+        @Override
+        public void lock() {
+            super.lock();
+            dataSetLocked = getDataSet().isLocked();
+            if (dataSetLocked) {
+                getDataSet().unlock();
+            }
+        }
+
+        @Override
+        public void unlock() {
+            super.unlock();
+            if (dataSetLocked) {
+                getDataSet().lock();
+            }
+        }
     }
 }

@@ -41,7 +41,7 @@ tasks.withType(JavaCompile).configureEach {
 def versions = [
   awaitility: "4.0.1",
   errorprone: "2.3.3",
-  jacoco: "0.8.2",
+  jacoco: "0.8.5",
   jmockit: "1.46",
   junit: "5.5.2",
   pmd: "6.6.0",

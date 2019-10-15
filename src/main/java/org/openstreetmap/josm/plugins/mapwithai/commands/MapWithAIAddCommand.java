@@ -7,6 +7,7 @@ import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -23,6 +24,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     DataSet mapWithAI;
     Collection<OsmPrimitive> primitives;
     Command command = null;
+    Lock lock = null;
 
     /**
      * Add primitives from MapWithAI to the OSM data layer
@@ -33,7 +35,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      */
     public MapWithAIAddCommand(MapWithAILayer mapWithAILayer, OsmDataLayer editLayer, Collection<OsmPrimitive> selection) {
         this(mapWithAILayer.getDataSet(), editLayer.getDataSet(), selection);
-
+        lock = mapWithAILayer.getLock();
     }
 
     /**
@@ -68,10 +70,9 @@ public class MapWithAIAddCommand extends Command implements Runnable {
             throw new IllegalArgumentException();
         }
         synchronized (this) {
-            final boolean locked = mapWithAI.isLocked();
             try {
-                if (locked) {
-                    mapWithAI.unlock();
+                if (lock != null) {
+                    lock.lock();
                 }
                 final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI, primitives);
                 final List<OsmPrimitive> allPrimitives = new ArrayList<>();
@@ -82,8 +83,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                 }
                 command.executeCommand();
             } finally {
-                if (locked) {
-                    mapWithAI.lock();
+                if (lock != null) {
+                    lock.unlock();
                 }
             }
         }
@@ -104,10 +105,9 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public void undoCommand() {
-        final boolean locked = mapWithAI.isLocked();
         try {
-            if (locked) {
-                mapWithAI.unlock();
+            if (lock != null) {
+                lock.lock();
             }
             synchronized (this) {
                 if (command != null) {
@@ -115,8 +115,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                 }
             }
         } finally {
-            if (locked) {
-                mapWithAI.lock();
+            if (lock != null) {
+                lock.unlock();
             }
         }
     }

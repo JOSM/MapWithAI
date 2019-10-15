@@ -3,10 +3,13 @@ package org.openstreetmap.josm.plugins.mapwithai;
 
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
@@ -20,11 +23,13 @@ import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIArbitraryAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
+import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 
-public final class MapWithAIPlugin extends Plugin {
+public final class MapWithAIPlugin extends Plugin implements Destroyable {
     /** The name of the plugin */
     public static final String NAME = "MapWithAI";
     private static String versionInfo;
@@ -83,5 +88,21 @@ public final class MapWithAIPlugin extends Plugin {
 
     private static void setVersionInfo(String newVersionInfo) {
         versionInfo = newVersionInfo;
+    }
+
+    @Override
+    public void destroy() {
+        final JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        final Map<Action, Component> actions = Arrays.asList(dataMenu.getComponents()).stream()
+                .filter(component -> component instanceof JMenuItem).map(component -> (JMenuItem) component)
+                .collect(Collectors.toMap(JMenuItem::getAction, component -> component));
+        for (final Entry<Action, Component> action : actions.entrySet()) {
+            if (MENU_ENTRIES.containsKey(action.getKey().getClass())) {
+                dataMenu.remove(action.getValue());
+            }
+        }
+
+        MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
+        .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
     }
 }
