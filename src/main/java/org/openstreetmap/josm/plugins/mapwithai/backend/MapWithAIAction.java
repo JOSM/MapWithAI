@@ -40,8 +40,7 @@ public class MapWithAIAction extends JosmAction {
     public void actionPerformed(ActionEvent event) {
         if (isEnabled()) {
             MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true));
-            MapWithAIAvailability.getInstance();
-            // createMessageDialog();
+            createMessageDialog();
         }
     }
 

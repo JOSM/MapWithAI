@@ -36,7 +36,7 @@ public final class MapWithAIAvailability {
     private static final Map<String, String> COUNTRY_NAME_FIX = new HashMap<>();
 
     private static class InstanceHelper {
-        static final MapWithAIAvailability INSTANCE = new MapWithAIAvailability();
+        static MapWithAIAvailability instance = new MapWithAIAvailability();
     }
 
     static {
@@ -68,7 +68,10 @@ public final class MapWithAIAvailability {
      * @return the unique instance
      */
     public static MapWithAIAvailability getInstance() {
-        return InstanceHelper.INSTANCE;
+        if (COUNTRIES.isEmpty()) {
+            InstanceHelper.instance = new MapWithAIAvailability();
+        }
+        return InstanceHelper.instance;
     }
 
     private static void parseForCountries(JsonArray countries) {
