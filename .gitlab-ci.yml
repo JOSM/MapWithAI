@@ -83,6 +83,13 @@ build:
   dependencies:
   - assemble
 
+test:
+  stage: test
+  script:
+  - ./gradlew test --stacktrace
+  dependencies:
+  - assemble
+
 compile against min JOSM:
   stage: test
   script:

@@ -40,7 +40,8 @@ public class MapWithAIAction extends JosmAction {
     public void actionPerformed(ActionEvent event) {
         if (isEnabled()) {
             MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true));
-            createMessageDialog();
+            MapWithAIAvailability.getInstance();
+            // createMessageDialog();
         }
     }
 
@@ -56,8 +57,8 @@ public class MapWithAIAction extends JosmAction {
             final List<Bounds> bounds = new ArrayList<>(layer.getDataSet().getDataSourceBounds());
             if (bounds.isEmpty()) {
                 MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                        .map(OsmDataLayer::getDataSet).filter(Objects::nonNull).map(DataSet::getDataSourceBounds)
-                        .forEach(bounds::addAll);
+                .map(OsmDataLayer::getDataSet).filter(Objects::nonNull).map(DataSet::getDataSourceBounds)
+                .forEach(bounds::addAll);
             }
             final StringBuilder message = new StringBuilder();
             message.append(MapWithAIPlugin.NAME);

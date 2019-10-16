@@ -2,6 +2,9 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.awaitility.Awaitility.await;
+
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,7 +24,7 @@ public class MapWithAIAvailabilityTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+    public JOSMTestRules test = new JOSMTestRules();
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
@@ -32,6 +35,8 @@ public class MapWithAIAvailabilityTest {
                 + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_realeases.geojson");
         Territories.initialize();
         instance = MapWithAIAvailability.getInstance();
+        LatLon temp = new LatLon(40, -100);
+        await().atMost(10, TimeUnit.SECONDS).until(() -> Territories.isIso3166Code("US", temp));
     }
 
     @Test
