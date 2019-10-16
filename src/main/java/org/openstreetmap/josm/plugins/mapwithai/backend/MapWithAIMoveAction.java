@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.UndoRedoHandler;
+import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -34,14 +36,19 @@ public class MapWithAIMoveAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent event) {
         for (final MapWithAILayer mapWithAI : MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class)) {
+            DataSet ds = mapWithAI.getDataSet();
             final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
             OsmDataLayer editLayer = null;
             final int maxAddition = MapWithAIDataUtils.getMaximumAddition();
             Collection<OsmPrimitive> selected;
+            List<Node> nodes = ds.getSelectedNodes().stream().filter(node -> !node.getReferrers().isEmpty())
+                    .collect(Collectors.toList());
+            ds.clearSelection(nodes);
+            nodes.stream().map(Node::getReferrers).forEach(ds::addSelected);
             if (maxAddition > 0) {
-                selected = mapWithAI.getDataSet().getSelected().stream().limit(maxAddition).collect(Collectors.toList());
+                selected = ds.getSelected().stream().limit(maxAddition).collect(Collectors.toList());
             } else {
-                selected = mapWithAI.getDataSet().getSelected();
+                selected = ds.getSelected();
             }
             for (final OsmDataLayer osmLayer : osmLayers) {
                 if (!osmLayer.isLocked() && osmLayer.isVisible() && osmLayer.isUploadable()
