@@ -131,4 +131,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
             Collection<OsmPrimitive> added) {
         modified.addAll(primitives);
     }
+
+    public int getAddedObjects() {
+        return primitives.size();
+    }
 }

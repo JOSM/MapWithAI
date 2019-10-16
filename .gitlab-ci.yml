@@ -202,7 +202,8 @@ publish to / GitLab.com packages:
     name: GitLab.com / JOSM-MapWithAI packages
     url: https://gitlab.com/gokaart/JOSM_MapWithAI/-/packages
   script:
-  - ./gradlew publishPluginPublicationToGitlabRepository publishAllPublicationsToGitlabRepository releaseToGitlab
+  - ./gradlew publishAllPublicationsToGitlabRepository
+  - ./gradlew releaseToGitlab
   dependencies:
   - build
   only:

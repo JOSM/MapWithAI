@@ -14,6 +14,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
+import org.openstreetmap.josm.actions.UploadAction;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
@@ -26,6 +27,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -33,6 +35,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     /** The name of the plugin */
     public static final String NAME = "MapWithAI";
     private static String versionInfo;
+
+    private final MapWithAIUploadHook uploadHook;
 
     private final PreferenceSetting preferenceSetting;
 
@@ -47,6 +51,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         super(info);
 
         preferenceSetting = new MapWithAIPreferences();
+        uploadHook = new MapWithAIUploadHook(info);
 
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         for (final Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
@@ -70,6 +75,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         MapWithAIDataUtils.addMapWithAIPaintStyles();
 
+        UploadAction.registerUploadHook(uploadHook);
+
         setVersionInfo(info.localversion);
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
     }
@@ -90,6 +97,11 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         versionInfo = newVersionInfo;
     }
 
+    /**
+     * This is so that if JOSM ever decides to support updating plugins without
+     * restarting, I don't have to do anything (hopefully -- I might have to change
+     * the interface and method). Not currently used... (October 16, 2019)
+     */
     @Override
     public void destroy() {
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
@@ -101,6 +113,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
                 dataMenu.remove(action.getValue());
             }
         }
+        UploadAction.unregisterUploadHook(uploadHook);
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
         .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));

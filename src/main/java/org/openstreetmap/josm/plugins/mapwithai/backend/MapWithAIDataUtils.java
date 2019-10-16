@@ -50,6 +50,7 @@ import org.openstreetmap.josm.tools.Logging;
 public final class MapWithAIDataUtils {
     public static final String DEFAULT_MAPWITHAI_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&result_type=road_building_vector_xml&bbox={bbox}";
     public static final int MAXIMUM_SIDE_DIMENSIONS = 1000; // 1 km
+    private static final int DEFAULT_MAXIMUM_ADDITION = 5;
 
     static final Object LAYER_LOCK = new Object();
 
@@ -293,6 +294,9 @@ public final class MapWithAIDataUtils {
                 urls.add(url);
                 setMapWithAIURLs(urls);
             }
+            if (DEFAULT_MAPWITHAI_API.equals(url)) {
+                url = "";
+            }
             Config.getPref().put(MapWithAIPlugin.NAME.concat(".current_api"), url);
         } else if (layer != null) {
             layer.setMapWithAIUrl(url);
@@ -345,7 +349,11 @@ public final class MapWithAIDataUtils {
     public static void setSwitchLayers(boolean selected, boolean permanent) {
         final MapWithAILayer layer = getLayer(false);
         if (permanent) {
-            Config.getPref().putBoolean(MapWithAIPlugin.NAME.concat(".autoswitchlayers"), selected);
+            if (!selected) {
+                Config.getPref().putBoolean(MapWithAIPlugin.NAME.concat(".autoswitchlayers"), selected);
+            } else {
+                Config.getPref().put(MapWithAIPlugin.NAME.concat(".autoswitchlayers"), null);
+            }
         } else if (layer != null) {
             layer.setSwitchLayers(selected);
         }
@@ -370,11 +378,16 @@ public final class MapWithAIDataUtils {
      */
     public static int getMaximumAddition() {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
-        Integer defaultReturn = Config.getPref().getInt(MapWithAIPlugin.NAME.concat(".maximumselection"), 5);
+        Integer defaultReturn = Config.getPref().getInt(MapWithAIPlugin.NAME.concat(".maximumselection"),
+                getDefaultMaximumAddition());
         if (mapWithAILayer != null && mapWithAILayer.getMaximumAddition() != null) {
             defaultReturn = mapWithAILayer.getMaximumAddition();
         }
         return defaultReturn;
+    }
+
+    public static int getDefaultMaximumAddition() {
+        return DEFAULT_MAXIMUM_ADDITION;
     }
 
     /**
@@ -388,7 +401,11 @@ public final class MapWithAIDataUtils {
     public static void setMaximumAddition(int max, boolean permanent) {
         final MapWithAILayer mapWithAILayer = getLayer(false);
         if (permanent) {
-            Config.getPref().putInt(MapWithAIPlugin.NAME.concat(".maximumselection"), max);
+            if (getDefaultMaximumAddition() != max) {
+                Config.getPref().putInt(MapWithAIPlugin.NAME.concat(".maximumselection"), max);
+            } else {
+                Config.getPref().put(MapWithAIPlugin.NAME.concat(".maximumselection"), null);
+            }
         } else if (mapWithAILayer != null) {
             mapWithAILayer.setMaximumAddition(max);
         }
