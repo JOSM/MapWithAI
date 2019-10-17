@@ -40,7 +40,7 @@ tasks.withType(JavaCompile).configureEach {
 
 archivesBaseName = "mapwithai"
 def gitlabGroup = "gokaart"
-def gitlabRepositoryName = "JOSM_lane-connectivity"
+def gitlabRepositoryName = "JOSM_MapWithAI"
 
 
 def versions = [
