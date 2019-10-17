@@ -142,18 +142,18 @@ build with java 13:
 #  dependencies:
 #  - build
 #  only:
-#  - master@gokaart/JOSM_MapWithAI
+#  - master
 
 release:
   stage: deploy
   environment:
     name: pages branch / dist directory
-    url: https://gitlab.com/gokaart/JOSM_MapWithAI/tree/pages/public/dist
+    url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}
   script:
   - &clone_pages_branch |
     echo "$SSH_PRIVATE_DEPLOY_KEY" > ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
-    git clone --depth 1 --branch pages git@gitlab.com:gokaart/JOSM_MapWithAI.git pages
+    git clone --depth 1 --branch pages ${CI_REPOSITORY_URL} pages
   - |
     version=`git describe --always --dirty`
     longVersion=`git describe --always --long --dirty`
@@ -166,20 +166,23 @@ release:
   - &push_pages_branch |
     cd pages/
     git config user.name "Deploy with GitLab CI"
-    git config user.email "gokaart/JOSM_MapWithAI@gitlab.com"
+    git config user.email "${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}@${CI_SERVER_HOST}"
     git stage .
     git commit -a -m "$commitMessage"
     git push origin pages
   dependencies:
   - build
   only:
-  - tags@gokaart/JOSM_MapWithAI
+    refs:
+    - tags
+    variables:
+    - $SSH_PRIVATE_DEPLOY_KEY
 
 publish master update site:
   stage: deploy
   environment:
     name: pages branch / snapshot update site
-    url: https://gitlab.com/gokaart/JOSM_MapWithAI/tree/pages
+    url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}/snapshot/master/update-site
   script:
   - *clone_pages_branch
   - |
@@ -194,17 +197,21 @@ publish master update site:
   dependencies:
   - build
   only:
-  - master@gokaart/JOSM_MapWithAI
+    refs:
+    - master
+    variables:
+    - $SSH_PRIVATE_DEPLOY_KEY
 
 publish to / GitLab.com packages:
   stage: deploy
   environment:
-    name: GitLab.com / JOSM-MapWithAI packages
-    url: https://gitlab.com/gokaart/JOSM_MapWithAI/-/packages
+    name: GitLab.com / ${CI_PROJECT_NAME} packages
+    url: ${CI_PROJECT_URL}/-/packages
   script:
   - ./gradlew publishAllPublicationsToGitlabRepository
   - ./gradlew releaseToGitlab
   dependencies:
   - build
   only:
-  - tags@gokaart/JOSM_MapWithAI
+    refs:
+    - tags

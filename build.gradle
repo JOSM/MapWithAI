@@ -38,6 +38,11 @@ tasks.withType(JavaCompile).configureEach {
   }
 }
 
+archivesBaseName = "mapwithai"
+def gitlabGroup = "gokaart"
+def gitlabRepositoryName = "JOSM_lane-connectivity"
+
+
 def versions = [
   awaitility: "4.0.1",
   errorprone: "2.3.3",
@@ -103,10 +108,9 @@ tasks.processResources {
   from("$projectDir/src/resources")
 }
 
-archivesBaseName = "mapwithai"
 josm {
   i18n {
-    pathTransformer = getPathTransformer("gitlab.com/gokaart/JOSM_MapWithAI/blob")
+    pathTransformer = getPathTransformer("gitlab.com/${gitlabGroup}/${gitlabRepositoryName}/blob")
   }
 }
 
@@ -159,7 +163,7 @@ task generateSnapshotUpdateSite(type: GeneratePluginList) {
   outputFile = new File(project.buildDir, "snapshot-update-site")
   versionSuffix = {a -> ""}
   doFirst {
-    def pluginDownloadUrl = "https://gokaart.gitlab.io/JOSM_MapWithAI/snapshot/master/${archivesBaseName}.jar"
+    def pluginDownloadUrl = "https://${gitlabGroup}.gitlab.io/${gitlabRepositoryName}/snapshot/master/${archivesBaseName}.jar"
     it.iconBase64Provider = {
       def file = new File(sourceSets.main.resources.srcDirs[0], it)
       if (file.exists()) {
