@@ -11,18 +11,18 @@ cache:
 #############################
 # Various additional Checks #
 #############################
-include:
-  - template: SAST.gitlab-ci.yml
-    #- template: Code-Quality.gitlab-ci.yml
-    #- template: Dependency-Scanning.gitlab-ci.yml
-    #- template: Container-Scanning.gitlab-ci.yml
-    #- template: DAST.gitlab-ci.yml
-    #- template: License-Management.gitlab-ci.yml
+#include:
+#  - template: SAST.gitlab-ci.yml
+#  - template: Code-Quality.gitlab-ci.yml
+#  - template: Dependency-Scanning.gitlab-ci.yml
+#  - template: Container-Scanning.gitlab-ci.yml
+#  - template: DAST.gitlab-ci.yml
+#  - template: License-Management.gitlab-ci.yml
 
-sast:
-  variables:
-    GRADLE_PATH: "./gradlew"
-    CI_DEBUG_TRACE: "true"
+#sast:
+#  variables:
+#    GRADLE_PATH: "./gradlew"
+#    CI_DEBUG_TRACE: "true"
 
 ###############
 # Build stage #
