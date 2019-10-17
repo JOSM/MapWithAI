@@ -2,6 +2,11 @@
 package org.openstreetmap.josm.plugins.mapwithai;
 
 import java.awt.Component;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +38,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -79,6 +85,11 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());
+        try {
+            exportStyleFile("styles/standard/mapwithai.mapcss");
+        } catch (IOException e) {
+            Logging.debug(e);
+        }
     }
 
     @Override
@@ -111,6 +122,37 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     private static void setVersionInfo(String newVersionInfo) {
         versionInfo = newVersionInfo;
+    }
+
+    /**
+     * Exports the mapCSS file to the preferences directory.
+     *
+     * @param resourceName resource name
+     * @throws IOException if any I/O error occurs
+     */
+    private void exportStyleFile(String resourceName) throws IOException {
+        String sep = System.getProperty("file.separator");
+        try (InputStream stream = MapWithAIPlugin.class.getResourceAsStream("/data/" + resourceName)) {
+            if (stream == null) {
+                Logging.debug("{0}: MapPaint: stream is null", NAME);
+                throw new IOException("Cannot get resource \"" + resourceName + "\" from Jar file.");
+            }
+
+            String outPath;
+            int readBytes;
+            byte[] buffer = new byte[4096];
+
+            String valDirPath = Config.getDirs().getUserDataDirectory(true) + sep + "styles";
+            File valDir = new File(valDirPath);
+            valDir.mkdirs();
+            outPath = valDir.getAbsolutePath() + sep + resourceName;
+
+            try (OutputStream resStreamOut = new FileOutputStream(outPath)) {
+                while ((readBytes = stream.read(buffer)) > 0) {
+                    resStreamOut.write(buffer, 0, readBytes);
+                }
+            }
+        }
     }
 
     /**
