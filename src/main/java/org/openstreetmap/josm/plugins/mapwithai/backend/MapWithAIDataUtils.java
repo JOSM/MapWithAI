@@ -42,6 +42,7 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.HttpClient.Response;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Utils;
 
 /**
  * @author Taylor Smock
@@ -51,6 +52,8 @@ public final class MapWithAIDataUtils {
     public static final String DEFAULT_MAPWITHAI_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&result_type=road_building_vector_xml&bbox={bbox}";
     public static final int MAXIMUM_SIDE_DIMENSIONS = 1000; // 1 km
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
+
+    private static ForkJoinPool forkJoinPool;
 
     static final Object LAYER_LOCK = new Object();
 
@@ -112,7 +115,7 @@ public final class MapWithAIDataUtils {
             Logging.debug(e);
             Thread.currentThread().interrupt();
         }
-        ForkJoinPool.commonPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
+        getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
 
         return dataSet;
     }
@@ -478,7 +481,7 @@ public final class MapWithAIDataUtils {
         final List<BBox> editSetBBoxes = bboxes.stream()
                 .filter(bbox -> mapWithAIBounds.stream().noneMatch(tBBox -> tBBox.bounds(bbox)))
                 .collect(Collectors.toList());
-        ForkJoinPool.commonPool().execute(() -> {
+        getForkJoinPool().execute(() -> {
             layer.getDataSet().clear();
             final DataSet newData = getData(editSetBBoxes);
             Lock lock = layer.getLock();
@@ -524,5 +527,16 @@ public final class MapWithAIDataUtils {
                 getMapWithAIData(layer, osmLayer);
             }
         }
+    }
+
+    /**
+     * @return The {@link ForkJoinPool} for MapWithAI use.
+     */
+    public static ForkJoinPool getForkJoinPool() {
+        if (Objects.isNull(forkJoinPool) || forkJoinPool.isShutdown()) {
+            forkJoinPool = Utils.newForkJoinPool(MapWithAIPlugin.NAME.concat(".forkjoinpoolthreads"),
+                    MapWithAIPlugin.NAME, Thread.NORM_PRIORITY);
+        }
+        return forkJoinPool;
     }
 }
