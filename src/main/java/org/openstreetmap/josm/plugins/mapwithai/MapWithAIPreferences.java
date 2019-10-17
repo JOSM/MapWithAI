@@ -18,19 +18,20 @@ import javax.swing.SpinnerNumberModel;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.gui.preferences.SubPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.TabPreferenceSetting;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 
 public class MapWithAIPreferences implements SubPreferenceSetting {
     private final JComboBox<String> possibleMapWithAIApiUrl;
-
     private final JCheckBox switchLayerCheckBox;
-
+    private final JCheckBox mergeBuildingAddressCheckBox;
     private final JSpinner maximumAdditionSpinner;
 
     public MapWithAIPreferences() {
         possibleMapWithAIApiUrl = new JComboBox<>();
         switchLayerCheckBox = new JCheckBox();
-        maximumAdditionSpinner = new JSpinner(new SpinnerNumberModel(MapWithAIDataUtils.getMaximumAddition(), 0, 100, 1));
+        maximumAdditionSpinner = new JSpinner(
+                new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 100, 1));
+        mergeBuildingAddressCheckBox = new JCheckBox();
     }
 
     @Override
@@ -38,6 +39,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         final JLabel mapWithAIApiUrl = new JLabel(tr("{0} API URL", MapWithAIPlugin.NAME));
         final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
         final JLabel maximumAddition = new JLabel(tr("Maximum features (add)"));
+        final JLabel mergeBuildingWithAddress = new JLabel(tr("Merge existing address nodes onto added buildings?"));
         final JPanel container = new JPanel(new GridBagLayout());
         container.setAlignmentY(Component.TOP_ALIGNMENT);
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -48,12 +50,13 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         if (textField instanceof JTextField) {
             ((JTextField) textField).setColumns(36);
         }
-        for (final String url : MapWithAIDataUtils.getMapWithAIURLs()) {
+        for (final String url : MapWithAIPreferenceHelper.getMapWithAIURLs()) {
             possibleMapWithAIApiUrl.addItem(url);
         }
-        possibleMapWithAIApiUrl.setSelectedItem(MapWithAIDataUtils.getMapWithAIUrl());
+        possibleMapWithAIApiUrl.setSelectedItem(MapWithAIPreferenceHelper.getMapWithAIUrl());
 
-        switchLayerCheckBox.setSelected(MapWithAIDataUtils.isSwitchLayers());
+        switchLayerCheckBox.setSelected(MapWithAIPreferenceHelper.isSwitchLayers());
+        mergeBuildingAddressCheckBox.setSelected(MapWithAIPreferenceHelper.isMergeBuildingAddress());
 
         constraints.gridx = 0;
         constraints.gridy = 0;
@@ -80,16 +83,22 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         constraints.gridx++;
         container.add(maximumAdditionSpinner, constraints);
 
+        constraints.gridx--;
+        constraints.gridy++;
+        container.add(mergeBuildingWithAddress, constraints);
+        constraints.gridx++;
+        container.add(mergeBuildingAddressCheckBox, constraints);
+
         getTabPreferenceSetting(gui).addSubTab(this, MapWithAIPlugin.NAME, container);
     }
 
     @Override
     public boolean ok() {
-        MapWithAIDataUtils.setMapWithAIUrl((String) possibleMapWithAIApiUrl.getSelectedItem(), true);
-        MapWithAIDataUtils.setSwitchLayers(switchLayerCheckBox.isSelected(), true);
+        MapWithAIPreferenceHelper.setMapWithAIUrl((String) possibleMapWithAIApiUrl.getSelectedItem(), true);
+        MapWithAIPreferenceHelper.setSwitchLayers(switchLayerCheckBox.isSelected(), true);
         final Object value = maximumAdditionSpinner.getValue();
         if (value instanceof Number) {
-            MapWithAIDataUtils.setMaximumAddition(((Number) value).intValue(), true);
+            MapWithAIPreferenceHelper.setMaximumAddition(((Number) value).intValue(), true);
         }
         return false;
     }
@@ -116,6 +125,10 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
      */
     public JCheckBox getSwitchLayerCheckBox() {
         return switchLayerCheckBox;
+    }
+
+    public JCheckBox getMergeBuildingAddressCheckBox() {
+        return mergeBuildingAddressCheckBox;
     }
 
     /**

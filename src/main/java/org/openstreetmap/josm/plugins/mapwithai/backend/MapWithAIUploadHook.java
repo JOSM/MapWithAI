@@ -26,12 +26,14 @@ public class MapWithAIUploadHook implements UploadHook {
             tags.put("mapwithai", addedObjects.toString());
             final StringBuilder sb = new StringBuilder();
             sb.append("version=").append(version);
-                if (MapWithAIDataUtils.getMaximumAddition() != MapWithAIDataUtils.getDefaultMaximumAddition()) {
-                    sb.append(";maxadd=").append(MapWithAIDataUtils.getMaximumAddition());
-                }
-                if (!MapWithAIDataUtils.getMapWithAIUrl().equalsIgnoreCase(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API)) {
-                    sb.append(";url=").append(MapWithAIDataUtils.getMapWithAIUrl());
-                }
+            if (MapWithAIPreferenceHelper.getMaximumAddition() != MapWithAIPreferenceHelper
+                    .getDefaultMaximumAddition()) {
+                sb.append(";maxadd=").append(MapWithAIPreferenceHelper.getMaximumAddition());
+            }
+            if (!MapWithAIPreferenceHelper.getMapWithAIUrl()
+                    .equalsIgnoreCase(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)) {
+                sb.append(";url=").append(MapWithAIPreferenceHelper.getMapWithAIUrl());
+            }
             if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
                 sb.append(";task=").append(DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","));
             }

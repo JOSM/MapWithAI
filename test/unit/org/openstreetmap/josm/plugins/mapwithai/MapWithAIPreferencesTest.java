@@ -8,8 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
-import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPreferences;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -47,16 +46,16 @@ public class MapWithAIPreferencesTest {
         Assert.assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount());
         Assert.assertEquals(pane.getPluginPreference(), preferences.getTabPreferenceSetting(pane));
 
-        final boolean switchLayers = MapWithAIDataUtils.isSwitchLayers();
+        final boolean switchLayers = MapWithAIPreferenceHelper.isSwitchLayers();
 
         Assert.assertEquals(switchLayers, preferences.getSwitchLayerCheckBox().isSelected());
         preferences.ok();
-        Assert.assertEquals(switchLayers, MapWithAIDataUtils.isSwitchLayers());
+        Assert.assertEquals(switchLayers, MapWithAIPreferenceHelper.isSwitchLayers());
 
         preferences.getSwitchLayerCheckBox().setSelected(!switchLayers);
-        Assert.assertNotEquals(!switchLayers, MapWithAIDataUtils.isSwitchLayers());
+        Assert.assertNotEquals(!switchLayers, MapWithAIPreferenceHelper.isSwitchLayers());
         preferences.ok();
-        Assert.assertEquals(!switchLayers, MapWithAIDataUtils.isSwitchLayers());
+        Assert.assertEquals(!switchLayers, MapWithAIPreferenceHelper.isSwitchLayers());
 
         final Object tmp = preferences.getMaximumAdditionSpinner().getModel();
         SpinnerNumberModel spinnerModel = null;
@@ -64,12 +63,12 @@ public class MapWithAIPreferencesTest {
             spinnerModel = (SpinnerNumberModel) tmp;
         }
         Assert.assertNotNull(spinnerModel);
-        final Number currentNumber = MapWithAIDataUtils.getMaximumAddition();
+        final Number currentNumber = MapWithAIPreferenceHelper.getMaximumAddition();
         Assert.assertEquals(currentNumber.intValue(), spinnerModel.getNumber().intValue());
         spinnerModel.setValue(currentNumber.intValue() + 3);
-        Assert.assertNotEquals(spinnerModel.getNumber().intValue(), MapWithAIDataUtils.getMaximumAddition());
+        Assert.assertNotEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
         preferences.ok();
-        Assert.assertEquals(spinnerModel.getNumber().intValue(), MapWithAIDataUtils.getMaximumAddition());
+        Assert.assertEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
 
         Assert.assertNotNull(preferences.getPossibleMapWithAIApiUrl().getSelectedItem());
     }

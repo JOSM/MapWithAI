@@ -45,9 +45,9 @@ public class MapWithAIRemoteControlTest {
 
     @Before
     public void setUp() {
-        String URL = MapWithAIDataUtils.getMapWithAIUrl().replace("https://www.facebook.com/maps",
+        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com/maps",
                 wireMockRule.baseUrl());
-        MapWithAIDataUtils.setMapWithAIUrl(URL, true);
+        MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
     }
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
@@ -80,7 +80,7 @@ public class MapWithAIRemoteControlTest {
      */
     @Test
     public void testNominalRequest() throws Exception {
-        newHandler("https://localhost?url=" + Utils.encodeUrl(MapWithAIDataUtils.getMapWithAIUrl())).handle();
+        newHandler("https://localhost?url=" + Utils.encodeUrl(MapWithAIPreferenceHelper.getMapWithAIUrl())).handle();
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         Assert.assertTrue(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
@@ -92,9 +92,9 @@ public class MapWithAIRemoteControlTest {
         newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl)).handle();
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
-        Assert.assertEquals(badUrl, MapWithAIDataUtils.getMapWithAIUrl());
+        Assert.assertEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
-        Assert.assertNotEquals(badUrl, MapWithAIDataUtils.getMapWithAIUrl());
+        Assert.assertNotEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
 
         badUrl = "NothingToSeeHere";
         thrown.expect(RequestHandlerBadRequestException.class);
@@ -110,9 +110,9 @@ public class MapWithAIRemoteControlTest {
                 + maxObj.toString()).handle();
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
-        Assert.assertEquals(maxObj.intValue(), MapWithAIDataUtils.getMaximumAddition());
+        Assert.assertEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
-        Assert.assertNotEquals(maxObj.intValue(), MapWithAIDataUtils.getMaximumAddition());
+        Assert.assertNotEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
 
         thrown.expect(RequestHandlerBadRequestException.class);
         thrown.expectMessage("NumberFormatException (For input string: \"BAD_VALUE\")");
@@ -128,7 +128,7 @@ public class MapWithAIRemoteControlTest {
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         await().atMost(10, TimeUnit.SECONDS)
-                .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
+        .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
 
         final BBox added = MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().iterator().next().toBBox();
         Assert.assertTrue(temp.bounds(added));

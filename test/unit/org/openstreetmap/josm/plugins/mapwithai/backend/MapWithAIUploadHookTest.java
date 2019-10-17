@@ -78,7 +78,7 @@ public class MapWithAIUploadHookTest {
         Assert.assertTrue(
                 Arrays.asList(tags.get("mapwithai:options").split(";")).contains("version=".concat(info.localversion)));
 
-        MapWithAIDataUtils.setMapWithAIUrl("false-url", false);
+        MapWithAIPreferenceHelper.setMapWithAIUrl("false-url", false);
 
         tags.clear();
 
@@ -93,7 +93,7 @@ public class MapWithAIUploadHookTest {
         Assert.assertTrue(split.contains("version=".concat(info.localversion)));
         Assert.assertTrue(split.contains("url=false-url"));
 
-        MapWithAIDataUtils.setMaximumAddition(20, false);
+        MapWithAIPreferenceHelper.setMaximumAddition(20, false);
         tags.clear();
         hook.modifyChangesetTags(tags);
         split = Arrays.asList(tags.get("mapwithai:options").split(";"));

@@ -79,13 +79,13 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
 
         if (maxObj != null) {
-            MapWithAIDataUtils.setMaximumAddition(maxObj, false);
+            MapWithAIPreferenceHelper.setMaximumAddition(maxObj, false);
         }
         if (url != null) {
-            MapWithAIDataUtils.setMapWithAIUrl(url, false);
+            MapWithAIPreferenceHelper.setMapWithAIUrl(url, false);
         }
         if (switchLayer != null) {
-            MapWithAIDataUtils.setSwitchLayers(switchLayer, false);
+            MapWithAIPreferenceHelper.setSwitchLayers(switchLayer, false);
         }
 
         if (download != null && download.isInWorld()) {
@@ -154,6 +154,6 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
                 "/mapwithai?url=https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}",
                 "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&max_obj=1",
                 "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&switch_layer=false",
-                "/mapwithai?crop_bbox=-108.4625421,39.0621223,-108.4594728,39.0633059" };
+        "/mapwithai?crop_bbox=-108.4625421,39.0621223,-108.4594728,39.0633059" };
     }
 }

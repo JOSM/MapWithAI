@@ -42,9 +42,9 @@ public class MapWithAIDataUtilsTest {
 
     @Before
     public void setUp() {
-        String URL = MapWithAIDataUtils.getMapWithAIUrl().replace("https://www.facebook.com/maps",
+        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com/maps",
                 wireMockRule.baseUrl());
-        MapWithAIDataUtils.setMapWithAIUrl(URL, true);
+        MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
     }
 
     /**
@@ -139,18 +139,20 @@ public class MapWithAIDataUtilsTest {
     @Test
     public void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
-        Assert.assertNotEquals(fakeUrl, MapWithAIDataUtils.getMapWithAIUrl());
-        MapWithAIDataUtils.setMapWithAIUrl(fakeUrl, true);
-        Assert.assertEquals(fakeUrl, MapWithAIDataUtils.getMapWithAIUrl());
-        final List<String> urls = new ArrayList<>(MapWithAIDataUtils.getMapWithAIURLs());
+        Assert.assertNotEquals(fakeUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
+        MapWithAIPreferenceHelper.setMapWithAIUrl(fakeUrl, true);
+        Assert.assertEquals(fakeUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
+        final List<String> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIURLs());
         Assert.assertEquals(3, urls.size());
-        MapWithAIDataUtils.setMapWithAIUrl(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API, true);
-        Assert.assertEquals(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API, MapWithAIDataUtils.getMapWithAIUrl());
-        MapWithAIDataUtils.setMapWithAIUrl(fakeUrl, true);
-        Assert.assertEquals(fakeUrl, MapWithAIDataUtils.getMapWithAIUrl());
+        MapWithAIPreferenceHelper.setMapWithAIUrl(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, true);
+        Assert.assertEquals(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API,
+                MapWithAIPreferenceHelper.getMapWithAIUrl());
+        MapWithAIPreferenceHelper.setMapWithAIUrl(fakeUrl, true);
+        Assert.assertEquals(fakeUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
         urls.remove(fakeUrl);
-        MapWithAIDataUtils.setMapWithAIURLs(urls);
-        Assert.assertEquals(MapWithAIDataUtils.DEFAULT_MAPWITHAI_API, MapWithAIDataUtils.getMapWithAIUrl());
+        MapWithAIPreferenceHelper.setMapWithAIURLs(urls);
+        Assert.assertEquals(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API,
+                MapWithAIPreferenceHelper.getMapWithAIUrl());
     }
 
     @Test

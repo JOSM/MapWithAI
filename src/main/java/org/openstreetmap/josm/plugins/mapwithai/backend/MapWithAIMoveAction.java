@@ -39,7 +39,7 @@ public class MapWithAIMoveAction extends JosmAction {
             DataSet ds = mapWithAI.getDataSet();
             final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
             OsmDataLayer editLayer = null;
-            final int maxAddition = MapWithAIDataUtils.getMaximumAddition();
+            final int maxAddition = MapWithAIPreferenceHelper.getMaximumAddition();
             Collection<OsmPrimitive> selected;
             List<Node> nodes = ds.getSelectedNodes().stream().filter(node -> !node.getReferrers().isEmpty())
                     .collect(Collectors.toList());
@@ -60,7 +60,7 @@ public class MapWithAIMoveAction extends JosmAction {
             if (editLayer != null) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
-                if (MapWithAIDataUtils.isSwitchLayers()) {
+                if (MapWithAIPreferenceHelper.isSwitchLayers()) {
                     MainApplication.getLayerManager().setActiveLayer(editLayer);
                 }
             }
