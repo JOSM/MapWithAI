@@ -30,7 +30,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
 public final class MapWithAIAvailability {
-    private static String rapidReleases = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_realeases.geojson";
+    private static String rapidReleases = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_releases.geojson";
     private static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
     private static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
     private static final Map<String, String> COUNTRY_NAME_FIX = new HashMap<>();
@@ -49,6 +49,7 @@ public final class MapWithAIAvailability {
     private MapWithAIAvailability() {
         try (CachedFile cachedRapidReleases = new CachedFile(rapidReleases);
                 JsonParser parser = Json.createParser(cachedRapidReleases.getContentReader())) {
+            cachedRapidReleases.setMaxAge(604800);
             parser.next();
             final Stream<Entry<String, JsonValue>> entries = parser.getObjectStream();
             final Optional<Entry<String, JsonValue>> objects = entries
@@ -57,7 +58,8 @@ public final class MapWithAIAvailability {
                 final JsonObject value = objects.get().getValue().asJsonObject();
                 final JsonObject centroid = value.getJsonObject("rapid_releases_1011_centroid");
                 final JsonArray countries = centroid.getJsonArray("geometries");
-                parseForCountries(countries);
+                COUNTRIES.clear();
+                COUNTRIES.putAll(parseForCountries(countries));
             }
         } catch (IOException e) {
             Logging.debug(e);
@@ -74,7 +76,8 @@ public final class MapWithAIAvailability {
         return InstanceHelper.instance;
     }
 
-    private static void parseForCountries(JsonArray countries) {
+    private static Map<String, Map<String, Boolean>> parseForCountries(JsonArray countries) {
+        Map<String, Map<String, Boolean>> returnCountries = new TreeMap<>();
         for (int i = 0; i < countries.size(); i++) {
             final JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
             final String countryName = cornerCaseNames(country.getString("Country"));
@@ -91,18 +94,19 @@ public final class MapWithAIAvailability {
             if (realCountry.isPresent()) {
                 final String key = realCountry.get().get("ISO3166-1:alpha2");
                 // We need to handle cases like Alaska more elegantly
-                final Map<String, Boolean> data = COUNTRIES.getOrDefault(key, new TreeMap<>());
+                final Map<String, Boolean> data = returnCountries.getOrDefault(key, new TreeMap<>());
                 for (final Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
                     final boolean hasData = "yes".equals(country.getString(entry.getValue()));
                     if (hasData || !data.containsKey(entry.getKey())) {
                         data.put(entry.getKey(), hasData);
                     }
                 }
-                COUNTRIES.put(key, data);
+                returnCountries.put(key, data);
             } else {
                 Logging.error(tr("{0}: We couldn''t find {1}", MapWithAIPlugin.NAME, countryName));
             }
         }
+        return returnCountries;
     }
 
     private static String cornerCaseNames(String name) {
