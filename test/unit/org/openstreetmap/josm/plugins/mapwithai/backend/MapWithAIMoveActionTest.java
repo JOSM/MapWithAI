@@ -13,7 +13,8 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.plugins.mapwithai.commands.CreateConnectionsCommand;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -64,37 +65,39 @@ public class MapWithAIMoveActionTest {
     @Test
     public void testConflationDupeKeyRemoval() {
         mapWithAIData.unlock();
-        way1.lastNode().put(CreateConnectionsCommand.DUPE_KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
+        way1.lastNode().put(DuplicateCommand.DUPE_KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
         mapWithAIData.lock();
         mapWithAIData.addSelected(way1);
         final DataSet ds = osmLayer.getDataSet();
 
         moveAction.actionPerformed(null);
-        Assert.assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
-        Assert.assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
+        Assert.assertTrue(
+                ((Way) ds.getPrimitiveById(way1)).lastNode().equals(((Way) ds.getPrimitiveById(way2)).lastNode()));
+        Assert.assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.DUPE_KEY));
+        Assert.assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(DuplicateCommand.DUPE_KEY));
 
         UndoRedoHandler.getInstance().undo();
-        Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
-        Assert.assertTrue(way1.lastNode().hasKey(CreateConnectionsCommand.DUPE_KEY));
+        Assert.assertFalse(way2.lastNode().hasKey(DuplicateCommand.DUPE_KEY));
+        Assert.assertTrue(way1.lastNode().hasKey(DuplicateCommand.DUPE_KEY));
     }
 
     @Test
     public void testConflationConnKeyRemoval() {
         mapWithAIData.unlock();
-        way1.lastNode().put(CreateConnectionsCommand.CONN_KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
+        way1.lastNode().put(ConnectedCommand.CONN_KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
                 + Long.toString(way2.lastNode().getUniqueId()) + ",n" + Long.toString(way2.firstNode().getUniqueId()));
         mapWithAIData.lock();
         mapWithAIData.addSelected(way1);
 
         moveAction.actionPerformed(null);
-        Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
-        Assert.assertFalse(way2.firstNode().hasKey(CreateConnectionsCommand.CONN_KEY));
-        Assert.assertFalse(way2.getNode(1).hasKey(CreateConnectionsCommand.CONN_KEY));
+        Assert.assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY));
+        Assert.assertFalse(way2.firstNode().hasKey(ConnectedCommand.CONN_KEY));
+        Assert.assertFalse(way2.getNode(1).hasKey(ConnectedCommand.CONN_KEY));
         Assert.assertTrue(way1.lastNode().isDeleted());
 
         UndoRedoHandler.getInstance().undo();
-        Assert.assertFalse(way2.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
-        Assert.assertTrue(way1.lastNode().hasKey(CreateConnectionsCommand.CONN_KEY));
+        Assert.assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY));
+        Assert.assertTrue(way1.lastNode().hasKey(ConnectedCommand.CONN_KEY));
         Assert.assertFalse(way1.lastNode().isDeleted());
     }
 }
