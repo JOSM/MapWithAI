@@ -66,7 +66,7 @@ public final class MapWithAIDataUtils {
 
         public GetDataRunnable(List<BBox> bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
             super();
-            this.bbox = bbox;
+            this.bbox = new ArrayList<>(bbox);
             this.dataSet = dataSet;
             this.monitor = monitor;
         }
