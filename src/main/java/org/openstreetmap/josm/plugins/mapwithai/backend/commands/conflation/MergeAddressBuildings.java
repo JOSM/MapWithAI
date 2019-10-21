@@ -62,30 +62,25 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
         return returnCommand;
     }
 
-    private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, Relation rel) {
+    private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, OsmPrimitive object) {
         final List<IPrimitive> toCheck = new ArrayList<>();
-        toCheck.addAll(affectedDataSet.searchNodes(rel.getBBox()));
-        final Collection<IPrimitive> nodesInside = Geometry.filterInsideMultipolygon(toCheck, rel);
-        final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
-                .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());
+        toCheck.addAll(affectedDataSet.searchNodes(object.getBBox()));
+        final Collection<IPrimitive> nodesInside;
 
-        final List<Command> commandList = new ArrayList<>();
-        if (nodesWithAddresses.size() == 1) {
-            commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), rel));
+        if (object instanceof Way) {
+            nodesInside = Geometry.filterInsidePolygon(toCheck, (Way) object);
+        } else if (object instanceof Relation) {
+            nodesInside = Geometry.filterInsideMultipolygon(toCheck, (Relation) object);
+        } else {
+            throw new IllegalArgumentException("The method needs a way or a relation");
         }
-        return commandList;
-    }
 
-    private Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, Way way) {
-        final List<IPrimitive> toCheck = new ArrayList<>();
-        toCheck.addAll(affectedDataSet.searchNodes(way.getBBox()));
-        final Collection<IPrimitive> nodesInside = Geometry.filterInsidePolygon(toCheck, way);
         final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
                 .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
         if (nodesWithAddresses.size() == 1) {
-            commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), way));
+            commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object));
         }
         return commandList;
     }

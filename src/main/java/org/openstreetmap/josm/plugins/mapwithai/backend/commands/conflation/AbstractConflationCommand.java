@@ -49,7 +49,7 @@ public abstract class AbstractConflationCommand extends Command {
 
     /**
      * @param primitives The primitives to run the command on
-     * @return The command that will be run
+     * @return The command that will be run (may be {@code null})
      */
     public Command getCommand(List<OsmPrimitive> primitives) {
         possiblyAffectedPrimitives = primitives.stream().distinct().collect(Collectors.toList());
