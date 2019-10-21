@@ -1,6 +1,9 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import java.util.concurrent.TimeUnit;
+
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -39,6 +42,8 @@ public class MapWithAIActionTest {
 
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "temporary", null));
         action.actionPerformed(null);
+        Awaitility.await().timeout(8, TimeUnit.SECONDS)
+                .until(() -> 1 == MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
         Assert.assertEquals(1, MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
     }
 }
