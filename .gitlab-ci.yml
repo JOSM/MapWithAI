@@ -76,6 +76,16 @@ build:
   artifacts:
     paths:
     - build
+  dependencies:
+  - assemble
+
+test:
+  stage: test
+  script:
+  - ./gradlew check jacocoTestReport
+  artifacts:
+    paths:
+    - build
     reports:
       junit: build/test-results/test/TEST-*.xml
       codequality: build/reports/pmd/main.xml
