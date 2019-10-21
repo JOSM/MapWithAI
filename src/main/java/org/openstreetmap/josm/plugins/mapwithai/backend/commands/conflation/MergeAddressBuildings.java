@@ -80,7 +80,17 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
 
         final List<Command> commandList = new ArrayList<>();
         if (nodesWithAddresses.size() == 1) {
-            commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object));
+            String currentKey = null;
+            try {
+                // Remove the key to avoid the popup from utilsplugin2
+                currentKey = object.get(BUILDING_KEY);
+                object.remove(BUILDING_KEY);
+                commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object));
+            } finally {
+                if (currentKey != null) {
+                    object.put(BUILDING_KEY, currentKey);
+                }
+            }
         }
         return commandList;
     }
