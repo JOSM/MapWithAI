@@ -25,6 +25,10 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     private static final String MAX_OBJ = "max_obj";
     private static final String SWITCH_LAYER = "switch_layer";
 
+    public MapWithAIRemoteControl() {
+        super();
+    }
+
     @Override
     protected void validateRequest() throws RequestHandlerBadRequestException {
         if (args != null) {

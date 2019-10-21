@@ -7,10 +7,12 @@ import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -132,7 +134,34 @@ public class MapWithAIAddCommand extends Command implements Runnable {
         modified.addAll(primitives);
     }
 
-    public int getAddedObjects() {
-        return primitives.size();
+    /**
+     * @return The number of MapWithAI objects added in this command that are not
+     *         deleted
+     */
+    public Long getAddedObjects() {
+        Long returnLong;
+        if (this.equals(UndoRedoHandler.getInstance().getLastCommand())) {
+            returnLong = Long.valueOf(primitives.size());
+        } else {
+            returnLong = primitives.stream().map(editable::getPrimitiveById).filter(Objects::nonNull)
+                    .filter(prim -> !prim.isDeleted()).count();
+        }
+        return returnLong;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        boolean returnBoolean = false;
+        if (other instanceof MapWithAIAddCommand && hashCode() == other.hashCode()) {
+            returnBoolean = true;
+        }
+        return returnBoolean;
+    }
+
+    @Override
+    public int hashCode() {
+        synchronized (this) {
+            return Objects.hash(editable, mapWithAI, primitives, command, lock);
+        }
     }
 }

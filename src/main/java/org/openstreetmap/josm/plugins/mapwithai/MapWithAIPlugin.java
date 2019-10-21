@@ -3,10 +3,13 @@ package org.openstreetmap.josm.plugins.mapwithai;
 
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.swing.Action;
@@ -14,9 +17,9 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.actions.UploadAction;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
+import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
 import org.openstreetmap.josm.plugins.Plugin;
@@ -26,6 +29,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIArbitraryAction
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.tools.Destroyable;
@@ -36,9 +40,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     public static final String NAME = "MapWithAI";
     private static String versionInfo;
 
-    private final MapWithAIUploadHook uploadHook;
-
     private final PreferenceSetting preferenceSetting;
+
+    private final List<Destroyable> destroyables;
 
     private static final Map<Class<? extends JosmAction>, Boolean> MENU_ENTRIES = new LinkedHashMap<>();
     static {
@@ -51,7 +55,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         super(info);
 
         preferenceSetting = new MapWithAIPreferences();
-        uploadHook = new MapWithAIUploadHook(info);
 
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         for (final Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
@@ -75,10 +78,28 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         MapWithAIDataUtils.addMapWithAIPaintStyles();
 
-        UploadAction.registerUploadHook(uploadHook);
-
         setVersionInfo(info.localversion);
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
+        destroyables = new ArrayList<>();
+        destroyables.add(new MapWithAIUploadHook(info));
+        mapFrameInitialized(null, MainApplication.getMap());
+
+    }
+
+    @Override
+    public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
+        final Optional<MapWithAIObject> possibleMapWithAIObject = destroyables.parallelStream()
+                .filter(MapWithAIObject.class::isInstance).map(MapWithAIObject.class::cast).findFirst();
+        final MapWithAIObject mapWithAIObject = possibleMapWithAIObject.orElse(new MapWithAIObject());
+        if (oldFrame != null && oldFrame.statusLine != null) {
+            mapWithAIObject.removeMapStatus(oldFrame.statusLine);
+        }
+        if (newFrame != null && newFrame.statusLine != null) {
+            mapWithAIObject.addMapStatus(newFrame.statusLine);
+        }
+        if (!destroyables.contains(mapWithAIObject)) {
+            destroyables.add(mapWithAIObject);
+        }
     }
 
     @Override
@@ -108,14 +129,16 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         final Map<Action, Component> actions = Arrays.asList(dataMenu.getComponents()).stream()
                 .filter(component -> component instanceof JMenuItem).map(component -> (JMenuItem) component)
                 .collect(Collectors.toMap(JMenuItem::getAction, component -> component));
+
         for (final Entry<Action, Component> action : actions.entrySet()) {
             if (MENU_ENTRIES.containsKey(action.getKey().getClass())) {
                 dataMenu.remove(action.getValue());
             }
         }
-        UploadAction.unregisterUploadHook(uploadHook);
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
         .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
+
+        destroyables.forEach(Destroyable::destroy);
     }
 }

@@ -20,6 +20,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -38,6 +39,7 @@ import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.HttpClient.Response;
 import org.openstreetmap.josm.tools.Logging;
@@ -48,8 +50,27 @@ import org.openstreetmap.josm.tools.Utils;
  *
  */
 public final class MapWithAIDataUtils {
+    public static final int MAXIMUM_SIDE_DIMENSIONS = 1000; // 1 km
+    private static ForkJoinPool forkJoinPool;
+    static final Object LAYER_LOCK = new Object();
+
     private static class GetDataRunnable extends RecursiveTask<DataSet> {
         private static final long serialVersionUID = 258423685658089715L;
+        private final transient List<BBox> bbox;
+        private final transient DataSet dataSet;
+        private final transient PleaseWaitProgressMonitor monitor;
+
+        public GetDataRunnable(BBox bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
+            this(Arrays.asList(bbox), dataSet, monitor);
+        }
+
+        public GetDataRunnable(List<BBox> bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
+            super();
+            this.bbox = bbox;
+            this.dataSet = dataSet;
+            this.monitor = monitor;
+        }
+
         private static DataSet getDataReal(BBox bbox) {
             InputStream inputStream = null;
             final DataSet dataSet = new DataSet();
@@ -91,31 +112,17 @@ public final class MapWithAIDataUtils {
             }
             return dataSet;
         }
-        private final transient List<BBox> bbox;
-        private final transient DataSet dataSet;
-
-        private final transient PleaseWaitProgressMonitor monitor;
-
-        public GetDataRunnable(BBox bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
-            this(Arrays.asList(bbox), dataSet, monitor);
-        }
-
-        public GetDataRunnable(List<BBox> bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
-            this.bbox = bbox;
-            this.dataSet = dataSet;
-            this.monitor = monitor;
-        }
 
         @Override
         public DataSet compute() {
-            List<BBox> bboxes = reduceBBoxSize(bbox);
+            final List<BBox> bboxes = reduceBBoxSize(bbox);
             if (bboxes.size() == 1) {
                 final DataSet temporaryDataSet = getDataReal(bboxes.get(0));
                 synchronized (MapWithAIDataUtils.GetDataRunnable.class) {
                     dataSet.mergeFrom(temporaryDataSet);
                 }
             } else {
-                Collection<GetDataRunnable> tasks = bboxes.parallelStream()
+                final Collection<GetDataRunnable> tasks = bboxes.parallelStream()
                         .map(tBbox -> new GetDataRunnable(tBbox, dataSet, null)).collect(Collectors.toList());
                 tasks.forEach(GetDataRunnable::fork);
                 tasks.forEach(GetDataRunnable::join);
@@ -130,12 +137,6 @@ public final class MapWithAIDataUtils {
             return dataSet;
         }
     }
-
-    public static final int MAXIMUM_SIDE_DIMENSIONS = 1000; // 1 km
-
-    private static ForkJoinPool forkJoinPool;
-
-    static final Object LAYER_LOCK = new Object();
 
     private MapWithAIDataUtils() {
         // Hide the constructor
@@ -313,7 +314,7 @@ public final class MapWithAIDataUtils {
         getForkJoinPool().execute(() -> {
             layer.getDataSet().clear();
             final DataSet newData = getData(editSetBBoxes);
-            Lock lock = layer.getLock();
+            final Lock lock = layer.getLock();
             lock.lock();
             try {
                 layer.mergeFrom(newData);
@@ -384,7 +385,7 @@ public final class MapWithAIDataUtils {
      *         {@link MAXIMUM_SIDE_DIMENSIONS}
      */
     public static List<BBox> reduceBBoxSize(List<BBox> bboxes) {
-        List<BBox> returnBBoxes = new ArrayList<>();
+        final List<BBox> returnBBoxes = new ArrayList<>();
         bboxes.forEach(bbox -> returnBBoxes.addAll(reduceBBoxSize(bbox)));
         return returnBBoxes;
     }
@@ -411,5 +412,14 @@ public final class MapWithAIDataUtils {
                 ds.removePrimitive(primitive);
             }
         }
+    }
+
+    /**
+     * @return The number of objects added from the MapWithAI data layer
+     */
+    public static Long getAddedObjects() {
+        return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
+                .filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
+                .mapToLong(MapWithAIAddCommand::getAddedObjects).sum();
     }
 }

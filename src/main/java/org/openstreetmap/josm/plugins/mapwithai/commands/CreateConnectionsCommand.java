@@ -72,7 +72,7 @@ public class CreateConnectionsCommand extends Command {
         final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
                 .filter(Objects::nonNull).collect(Collectors.toList());
         for (Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
-            AbstractConflationCommand abstractCommand;
+            final AbstractConflationCommand abstractCommand;
             try {
                 abstractCommand = abstractCommandClass.getConstructor(DataSet.class).newInstance(dataSet);
             } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
@@ -80,11 +80,11 @@ public class CreateConnectionsCommand extends Command {
                 Logging.debug(e);
                 continue;
             }
-            Collection<OsmPrimitive> tPrimitives = new TreeSet<>();
+            final Collection<OsmPrimitive> tPrimitives = new TreeSet<>();
             abstractCommand.getInterestedTypes()
             .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));
 
-            Command actualCommand = abstractCommand.getCommand(tPrimitives.stream()
+            final Command actualCommand = abstractCommand.getCommand(tPrimitives.stream()
                     .filter(prim -> prim.hasKey(abstractCommand.getKey())).collect(Collectors.toList()));
             if (Objects.nonNull(actualCommand)) {
                 changedKeyList.add(actualCommand);

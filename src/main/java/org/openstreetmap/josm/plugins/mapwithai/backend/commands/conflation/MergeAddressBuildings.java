@@ -55,23 +55,21 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
             .forEach(rel -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), rel)));
         }
 
-        Command returnCommand;
+        Command returnCommand = null;
         if (!commands.isEmpty()) {
             returnCommand = new SequenceCommand(getDescriptionText(), commands);
-        } else {
-            returnCommand = null;
         }
         return returnCommand;
     }
 
-    private Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, Relation rel) {
-        List<IPrimitive> toCheck = new ArrayList<>();
+    private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, Relation rel) {
+        final List<IPrimitive> toCheck = new ArrayList<>();
         toCheck.addAll(affectedDataSet.searchNodes(rel.getBBox()));
-        Collection<IPrimitive> nodesInside = Geometry.filterInsideMultipolygon(toCheck, rel);
-        List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
+        final Collection<IPrimitive> nodesInside = Geometry.filterInsideMultipolygon(toCheck, rel);
+        final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
                 .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());
 
-        List<Command> commandList = new ArrayList<>();
+        final List<Command> commandList = new ArrayList<>();
         if (nodesWithAddresses.size() == 1) {
             commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), rel));
         }
@@ -79,13 +77,13 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
     }
 
     private Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, Way way) {
-        List<IPrimitive> toCheck = new ArrayList<>();
+        final List<IPrimitive> toCheck = new ArrayList<>();
         toCheck.addAll(affectedDataSet.searchNodes(way.getBBox()));
-        Collection<IPrimitive> nodesInside = Geometry.filterInsidePolygon(toCheck, way);
-        List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
+        final Collection<IPrimitive> nodesInside = Geometry.filterInsidePolygon(toCheck, way);
+        final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
                 .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());
 
-        List<Command> commandList = new ArrayList<>();
+        final List<Command> commandList = new ArrayList<>();
         if (nodesWithAddresses.size() == 1) {
             commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), way));
         }

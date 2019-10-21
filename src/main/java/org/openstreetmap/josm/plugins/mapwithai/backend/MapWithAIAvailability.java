@@ -77,7 +77,7 @@ public final class MapWithAIAvailability {
     }
 
     private static Map<String, Map<String, Boolean>> parseForCountries(JsonArray countries) {
-        Map<String, Map<String, Boolean>> returnCountries = new TreeMap<>();
+        final Map<String, Map<String, Boolean>> returnCountries = new TreeMap<>();
         for (int i = 0; i < countries.size(); i++) {
             final JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
             final String countryName = cornerCaseNames(country.getString("Country"));

@@ -84,15 +84,13 @@ public class DuplicateCommand extends AbstractConflationCommand {
 
     @Override
     public Command getRealCommand() {
-        List<Command> commands = new ArrayList<>();
+        final List<Command> commands = new ArrayList<>();
         possiblyAffectedPrimitives.stream().filter(Node.class::isInstance).map(Node.class::cast)
         .filter(node -> node.hasKey(DUPE_KEY))
         .forEach(node -> commands.addAll(duplicateNode(getAffectedDataSet(), node)));
-        Command returnCommand;
+        Command returnCommand = null;
         if (!commands.isEmpty()) {
             returnCommand = new SequenceCommand(getDescriptionText(), commands);
-        } else {
-            returnCommand = null;
         }
         return returnCommand;
     }

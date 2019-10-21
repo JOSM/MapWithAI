@@ -75,7 +75,6 @@ public abstract class AbstractConflationCommand extends Command {
         final OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
         for (int i = 0; i < connections.length; i++) {
             final String member = connections[i];
-            final long id = Long.parseLong(member.substring(1));
             final char firstChar = member.charAt(0);
             OsmPrimitiveType type = null;
             if (firstChar == 'w') {
@@ -88,6 +87,7 @@ public abstract class AbstractConflationCommand extends Command {
                 throw new IllegalArgumentException(
                         tr("{0}: We don't know how to handle {1} types", MapWithAIPlugin.NAME, firstChar));
             }
+            final long id = Long.parseLong(member.substring(1));
             primitiveConnections[i] = dataSet.getPrimitiveById(id, type);
             if (primitiveConnections[i] == null) {
                 missingPrimitives.put(i, new Pair<>(id, type));

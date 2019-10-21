@@ -36,20 +36,17 @@ public class MapWithAIMoveAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent event) {
         for (final MapWithAILayer mapWithAI : MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class)) {
-            DataSet ds = mapWithAI.getDataSet();
+            final DataSet ds = mapWithAI.getDataSet();
             final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
             OsmDataLayer editLayer = null;
             final int maxAddition = MapWithAIPreferenceHelper.getMaximumAddition();
-            Collection<OsmPrimitive> selected;
-            List<Node> nodes = ds.getSelectedNodes().stream().filter(node -> !node.getReferrers().isEmpty())
+            final List<Node> nodes = ds.getSelectedNodes().stream().filter(node -> !node.getReferrers().isEmpty())
                     .collect(Collectors.toList());
             ds.clearSelection(nodes);
             nodes.stream().map(Node::getReferrers).forEach(ds::addSelected);
-            if (maxAddition > 0) {
-                selected = ds.getSelected().stream().limit(maxAddition).collect(Collectors.toList());
-            } else {
-                selected = ds.getSelected();
-            }
+            final Collection<OsmPrimitive> selected = maxAddition > 0
+                    ? ds.getSelected().stream().limit(maxAddition).collect(Collectors.toList())
+                    : ds.getSelected();
             for (final OsmDataLayer osmLayer : osmLayers) {
                 if (!osmLayer.isLocked() && osmLayer.isVisible() && osmLayer.isUploadable()
                         && osmLayer.getClass().equals(OsmDataLayer.class)) {

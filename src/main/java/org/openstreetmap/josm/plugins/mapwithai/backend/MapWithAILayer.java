@@ -94,7 +94,7 @@ public class MapWithAILayer extends OsmDataLayer {
 
     @Override
     public Action[] getMenuEntries() {
-        List<Action> actions = Arrays.asList(super.getMenuEntries()).stream()
+        final List<Action> actions = Arrays.asList(super.getMenuEntries()).stream()
                 .filter(action -> !(action instanceof LayerSaveAction) && !(action instanceof LayerSaveAsAction))
                 .collect(Collectors.toList());
         return actions.toArray(new Action[0]);
@@ -107,6 +107,10 @@ public class MapWithAILayer extends OsmDataLayer {
     private class MapLock extends ReentrantLock {
         private static final long serialVersionUID = 5441350396443132682L;
         private boolean dataSetLocked;
+
+        public MapLock() {
+            // Do nothing
+        }
 
         @Override
         public void lock() {

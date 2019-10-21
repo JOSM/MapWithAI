@@ -8,7 +8,7 @@ import java.util.List;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 
-public class MapWithAIPreferenceHelper {
+public final class MapWithAIPreferenceHelper {
     public static final String DEFAULT_MAPWITHAI_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&result_type=road_building_vector_xml&bbox={bbox}";
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
@@ -100,6 +100,7 @@ public class MapWithAIPreferenceHelper {
      */
     public static void setMapWithAIUrl(String url, boolean permanent) {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+        String setUrl = url;
         if (permanent) {
             final List<String> urls = new ArrayList<>(getMapWithAIURLs());
             if (!urls.contains(url)) {
@@ -107,11 +108,11 @@ public class MapWithAIPreferenceHelper {
                 setMapWithAIURLs(urls);
             }
             if (DEFAULT_MAPWITHAI_API.equals(url)) {
-                url = "";
+                setUrl = "";
             }
-            Config.getPref().put(MapWithAIPlugin.NAME.concat(".current_api"), url);
+            Config.getPref().put(MapWithAIPlugin.NAME.concat(".current_api"), setUrl);
         } else if (layer != null) {
-            layer.setMapWithAIUrl(url);
+            layer.setMapWithAIUrl(setUrl);
         }
     }
 

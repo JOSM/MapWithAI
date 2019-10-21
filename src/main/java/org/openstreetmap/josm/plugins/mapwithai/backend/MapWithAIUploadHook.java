@@ -3,25 +3,26 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.util.Map;
 
+import org.openstreetmap.josm.actions.UploadAction;
 import org.openstreetmap.josm.actions.upload.UploadHook;
-import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.plugins.PluginInformation;
-import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.tools.Destroyable;
 
 /**
  * @author Taylor Smock
  *
  */
-public class MapWithAIUploadHook implements UploadHook {
+public class MapWithAIUploadHook implements UploadHook, Destroyable {
     private final String version;
 
     public MapWithAIUploadHook(PluginInformation info) {
         version = info.localversion;
+        UploadAction.registerUploadHook(this);
     }
 
     @Override
     public void modifyChangesetTags(Map<String, String> tags) {
-        final Integer addedObjects = getAddedObjects();
+        final Long addedObjects = MapWithAIDataUtils.getAddedObjects();
         if (addedObjects != 0) {
             tags.put("mapwithai", addedObjects.toString());
             final StringBuilder sb = new StringBuilder();
@@ -42,9 +43,8 @@ public class MapWithAIUploadHook implements UploadHook {
         }
     }
 
-    private static int getAddedObjects() {
-        return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
-                .filter(object -> object instanceof MapWithAIAddCommand).map(object -> (MapWithAIAddCommand) object)
-                .mapToInt(MapWithAIAddCommand::getAddedObjects).sum();
+    @Override
+    public void destroy() {
+        UploadAction.unregisterUploadHook(this);
     }
 }
