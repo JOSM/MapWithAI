@@ -19,6 +19,8 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
+import javax.swing.SwingUtilities;
+
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -214,21 +216,27 @@ public final class MapWithAIDataUtils {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).collect(Collectors.toList());
         final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-        try {
-            EventQueue.invokeAndWait(() -> {
-                monitor.setCancelable(Boolean.FALSE);
-                monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME));
-                monitor.indeterminateSubTask(null);
-            });
-        } catch (InvocationTargetException e) {
-            Logging.debug(e);
-        } catch (InterruptedException e) {
-            Logging.debug(e);
-            Thread.currentThread().interrupt();
+        if (SwingUtilities.isEventDispatchThread()) {
+            try {
+                EventQueue.invokeAndWait(() -> startMonitor(monitor));
+            } catch (InvocationTargetException e) {
+                Logging.debug(e);
+            } catch (InterruptedException e) {
+                Logging.debug(e);
+                Thread.currentThread().interrupt();
+            }
+        } else {
+            startMonitor(monitor);
         }
         getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
 
         return dataSet;
+    }
+
+    private static void startMonitor(PleaseWaitProgressMonitor monitor) {
+        monitor.setCancelable(Boolean.FALSE);
+        monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME));
+        monitor.indeterminateSubTask(null);
     }
 
     /**
