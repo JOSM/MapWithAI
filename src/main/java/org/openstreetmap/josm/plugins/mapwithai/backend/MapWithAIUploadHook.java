@@ -31,12 +31,12 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
                     .getDefaultMaximumAddition()) {
                 sb.append(";maxadd=").append(MapWithAIPreferenceHelper.getMaximumAddition());
             }
+            if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
+                sb.append(";task=").append(DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","));
+            }
             if (!MapWithAIPreferenceHelper.getMapWithAIUrl()
                     .equalsIgnoreCase(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)) {
                 sb.append(";url=").append(MapWithAIPreferenceHelper.getMapWithAIUrl());
-            }
-            if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
-                sb.append(";task=").append(DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","));
             }
             tags.put("mapwithai:options", sb.toString());
 

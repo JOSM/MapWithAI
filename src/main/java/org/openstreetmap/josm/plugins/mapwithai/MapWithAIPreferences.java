@@ -39,7 +39,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         final JLabel mapWithAIApiUrl = new JLabel(tr("{0} API URL", MapWithAIPlugin.NAME));
         final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
         final JLabel maximumAddition = new JLabel(tr("Maximum features (add)"));
-        final JLabel mergeBuildingWithAddress = new JLabel(tr("Merge existing address nodes onto added buildings?"));
+        final JLabel mergeBuildingWithAddress = new JLabel(tr("Merge address nodes and buildings"));
         final JPanel container = new JPanel(new GridBagLayout());
         container.setAlignmentY(Component.TOP_ALIGNMENT);
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -48,7 +48,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         possibleMapWithAIApiUrl.setPrototypeDisplayValue("https://example.url/some/end/point");
         final Component textField = possibleMapWithAIApiUrl.getEditor().getEditorComponent();
         if (textField instanceof JTextField) {
-            ((JTextField) textField).setColumns(36);
+            ((JTextField) textField).setColumns(24);
         }
         for (final String url : MapWithAIPreferenceHelper.getMapWithAIURLs()) {
             possibleMapWithAIApiUrl.addItem(url);

@@ -160,8 +160,6 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public int hashCode() {
-        synchronized (this) {
-            return Objects.hash(editable, mapWithAI, primitives, command, lock);
-        }
+        return Objects.hash(editable, mapWithAI, primitives, lock);
     }
 }
