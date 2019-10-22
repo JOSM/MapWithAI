@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.DownloadPolicy;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.tools.GBC;
@@ -40,6 +41,7 @@ public class MapWithAILayer extends OsmDataLayer {
     public MapWithAILayer(DataSet data, String name, File associatedFile) {
         super(data, name, associatedFile);
         data.setUploadPolicy(UploadPolicy.BLOCKED);
+        data.setDownloadPolicy(DownloadPolicy.BLOCKED);
         lock = new MapLock();
     }
 
