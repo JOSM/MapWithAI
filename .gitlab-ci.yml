@@ -82,7 +82,7 @@ build:
 test:
   stage: test
   script:
-  - ./gradlew check jacocoTestReport --stacktrace
+  - ./gradlew check jacocoTestReport --stacktrace --continue
   artifacts:
     paths:
     - build
