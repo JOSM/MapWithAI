@@ -89,7 +89,13 @@ test {
     jvmArgs("-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}")
   }
   useJUnitPlatform()
-  testLogging.exceptionFormat = 'full'
+  testLogging {
+    exceptionFormat "full"
+    events "passed", "skipped", "failed"
+    info {
+      showStandardStreams true
+    }
+  }
 }
 
 sourceSets {

@@ -182,4 +182,8 @@ public final class MapWithAIPreferenceHelper {
             layer.setSwitchLayers(selected);
         }
     }
+
+    public static double getMaxNodeDistance() {
+        return Config.getPref().getDouble(MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.6);
+    }
 }

@@ -59,7 +59,7 @@ public class MapWithAIPluginTest {
         final int originalPaintStyles = MapPaintPrefHelper.INSTANCE.get().size();
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
-        Assert.assertEquals(dataMenuSize + 3, dataMenu.getMenuComponentCount());
+        Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
         Assert.assertEquals(originalPaintStyles + 1, MapPaintPrefHelper.INSTANCE.get().size());
     }
 

@@ -1,13 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import static org.openstreetmap.josm.tools.I18n.tr;
-
-import java.awt.EventQueue;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,11 +8,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
-
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
@@ -29,7 +19,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
-import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.preferences.sources.ExtendedSourceEntry;
 import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
@@ -38,13 +27,8 @@ import org.openstreetmap.josm.data.preferences.sources.SourceType;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
-import org.openstreetmap.josm.io.IllegalDataException;
-import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
-import org.openstreetmap.josm.tools.HttpClient;
-import org.openstreetmap.josm.tools.HttpClient.Response;
-import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 /**
@@ -55,90 +39,6 @@ public final class MapWithAIDataUtils {
     public static final int MAXIMUM_SIDE_DIMENSIONS = 10000; // RapiD is about 1km, max is 10km
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
-
-    private static class GetDataRunnable extends RecursiveTask<DataSet> {
-        private static final long serialVersionUID = 258423685658089715L;
-        private final transient List<BBox> bbox;
-        private final transient DataSet dataSet;
-        private final transient PleaseWaitProgressMonitor monitor;
-
-        public GetDataRunnable(BBox bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
-            this(Arrays.asList(bbox), dataSet, monitor);
-        }
-
-        public GetDataRunnable(List<BBox> bbox, DataSet dataSet, PleaseWaitProgressMonitor monitor) {
-            super();
-            this.bbox = new ArrayList<>(bbox);
-            this.dataSet = dataSet;
-            this.monitor = monitor;
-        }
-
-        private static DataSet getDataReal(BBox bbox) {
-            InputStream inputStream = null;
-            final DataSet dataSet = new DataSet();
-            String urlString = MapWithAIPreferenceHelper.getMapWithAIUrl();
-            if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
-                urlString += "&crop_bbox={crop_bbox}";
-            }
-
-            dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
-
-            try {
-                final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
-                        DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",")));
-                final HttpClient client = HttpClient.create(url);
-                final StringBuilder defaultUserAgent = new StringBuilder();
-                defaultUserAgent.append(client.getHeaders().get("User-Agent"));
-                if (defaultUserAgent.toString().trim().length() == 0) {
-                    defaultUserAgent.append("JOSM");
-                }
-                defaultUserAgent.append(tr("/ {0} {1}", MapWithAIPlugin.NAME, MapWithAIPlugin.getVersionInfo()));
-                client.setHeader("User-Agent", defaultUserAgent.toString());
-                Logging.debug("{0}: Getting {1}", MapWithAIPlugin.NAME, client.getURL().toString());
-                final Response response = client.connect();
-                inputStream = response.getContent();
-                final DataSet mergeData = OsmReader.parseDataSet(inputStream, null);
-                dataSet.mergeFrom(mergeData);
-                response.disconnect();
-            } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-                Logging.debug(e);
-            } finally {
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                    } catch (final IOException e) {
-                        Logging.debug(e);
-                    }
-                }
-                dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
-            }
-            return dataSet;
-        }
-
-        @Override
-        public DataSet compute() {
-            final List<BBox> bboxes = reduceBBoxSize(bbox);
-            if (bboxes.size() == 1) {
-                final DataSet temporaryDataSet = getDataReal(bboxes.get(0));
-                synchronized (MapWithAIDataUtils.GetDataRunnable.class) {
-                    dataSet.mergeFrom(temporaryDataSet);
-                }
-            } else {
-                final Collection<GetDataRunnable> tasks = bboxes.parallelStream()
-                        .map(tBbox -> new GetDataRunnable(tBbox, dataSet, null)).collect(Collectors.toList());
-                tasks.forEach(GetDataRunnable::fork);
-                tasks.forEach(GetDataRunnable::join);
-            }
-            if (Objects.nonNull(monitor)) {
-                monitor.finishTask();
-                monitor.close();
-            }
-
-            /* Microsoft buildings don't have a source, so we add one */
-            MapWithAIDataUtils.addSourceTags(dataSet, "building", "Microsoft");
-            return dataSet;
-        }
-    }
 
     private MapWithAIDataUtils() {
         // Hide the constructor
@@ -214,29 +114,14 @@ public final class MapWithAIDataUtils {
      */
     public static DataSet getData(List<BBox> bbox) {
         final DataSet dataSet = new DataSet();
-        final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).collect(Collectors.toList());
+        final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
         final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-        if (SwingUtilities.isEventDispatchThread()) {
-            try {
-                EventQueue.invokeAndWait(() -> startMonitor(monitor));
-            } catch (InvocationTargetException e) {
-                Logging.debug(e);
-            } catch (InterruptedException e) {
-                Logging.debug(e);
-                Thread.currentThread().interrupt();
-            }
-        } else {
-            startMonitor(monitor);
-        }
+        monitor.setCancelable(Boolean.FALSE);
         getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
+        monitor.finishTask();
+        monitor.close();
 
         return dataSet;
-    }
-
-    private static void startMonitor(PleaseWaitProgressMonitor monitor) {
-        monitor.setCancelable(Boolean.FALSE);
-        monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME));
-        monitor.indeterminateSubTask(null);
     }
 
     /**
@@ -288,7 +173,8 @@ public final class MapWithAIDataUtils {
      * @param layer The {@link MapWithAILayer} to add data to
      */
     public static void getMapWithAIData(MapWithAILayer layer) {
-        final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
+        final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
+                .stream().filter(obj -> !MapWithAILayer.class.isInstance(obj)).collect(Collectors.toList());
         for (final OsmDataLayer osmLayer : osmLayers) {
             if (!osmLayer.isLocked()) {
                 getMapWithAIData(layer, osmLayer);

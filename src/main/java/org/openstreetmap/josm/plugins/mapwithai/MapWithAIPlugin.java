@@ -32,6 +32,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -49,6 +50,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MENU_ENTRIES.put(MapWithAIAction.class, false);
         MENU_ENTRIES.put(MapWithAIArbitraryAction.class, true);
         MENU_ENTRIES.put(MapWithAIMoveAction.class, false);
+        MENU_ENTRIES.put(MergeDuplicateWaysAction.class, true);
     }
 
     public MapWithAIPlugin(PluginInformation info) {
@@ -83,7 +85,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());
-
     }
 
     @Override

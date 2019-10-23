@@ -72,7 +72,7 @@ assemble with java 13:
 build:
   stage: test
   script:
-  - ./gradlew build generatePot generateSnapshotUpdateSite --stacktrace
+  - ./gradlew build generatePot generateSnapshotUpdateSite --info
   artifacts:
     paths:
     - build
@@ -82,7 +82,8 @@ build:
 test:
   stage: test
   script:
-  - ./gradlew check jacocoTestReport --stacktrace --continue
+  - ./gradlew check --stacktrace --continue --info
+  - ./gradlew jacocoTestReport
   artifacts:
     paths:
     - build
