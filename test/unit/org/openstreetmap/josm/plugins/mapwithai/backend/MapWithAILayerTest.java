@@ -7,6 +7,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -17,12 +18,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
+import org.openstreetmap.josm.data.UndoRedoHandler;
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -54,6 +61,14 @@ public class MapWithAILayerTest {
 
     @Test
     public void testGetSource() {
+        Assert.assertNull(layer.getChangesetSourceTag());
+        DataSet to = new DataSet();
+        DataSet from = new DataSet();
+        Way way = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
+        way.getNodes().stream().forEach(to::addPrimitive);
+        to.addPrimitive(way);
+        MapWithAIAddCommand command = new MapWithAIAddCommand(from, to, Collections.singleton(way));
+        UndoRedoHandler.getInstance().add(command);
         Assert.assertNotNull(layer.getChangesetSourceTag());
         Assert.assertFalse(layer.getChangesetSourceTag().trim().isEmpty());
     }

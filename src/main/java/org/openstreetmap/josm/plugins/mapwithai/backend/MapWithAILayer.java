@@ -47,7 +47,10 @@ public class MapWithAILayer extends OsmDataLayer {
 
     // @Override TODO remove comment on 2020-01-01
     public String getChangesetSourceTag() {
-        return "MapWithAI";
+        if (MapWithAIDataUtils.getAddedObjects() > 0) {
+            return "MapWithAI";
+        }
+        return null;
     }
 
     public void setMaximumAddition(Integer max) {
