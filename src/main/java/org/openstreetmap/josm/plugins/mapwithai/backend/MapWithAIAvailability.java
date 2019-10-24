@@ -42,6 +42,9 @@ public final class MapWithAIAvailability {
     static {
         COUNTRY_NAME_FIX.put("Egypt", "Egypt, Arab Rep.");
         COUNTRY_NAME_FIX.put("Dem. Rep. Congo", "Congo, Dem. Rep.");
+        COUNTRY_NAME_FIX.put("Democratic Republic of the Congo", "Congo, Dem. Rep.");
+        COUNTRY_NAME_FIX.put("eSwatini", "Swaziland");
+        COUNTRY_NAME_FIX.put("Gambia", "Gambia, The");
         POSSIBLE_DATA_POINTS.put("roads", "RapiD roads available");
         POSSIBLE_DATA_POINTS.put("buildings", "MS buildings available");
     }
@@ -56,7 +59,7 @@ public final class MapWithAIAvailability {
                     .filter(entry -> "objects".equals(entry.getKey())).findFirst();
             if (objects.isPresent()) {
                 final JsonObject value = objects.get().getValue().asJsonObject();
-                final JsonObject centroid = value.getJsonObject("rapid_releases_1011_centroid");
+                final JsonObject centroid = value.getJsonObject("rapid_releases_points");
                 final JsonArray countries = centroid.getJsonArray("geometries");
                 COUNTRIES.clear();
                 COUNTRIES.putAll(parseForCountries(countries));
