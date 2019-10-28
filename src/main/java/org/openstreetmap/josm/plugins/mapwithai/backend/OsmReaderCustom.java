@@ -10,8 +10,6 @@ import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
-import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.tools.Logging;
 
 /**
  * TODO remove this class in January 2019 (if required patch is pulled)
@@ -24,11 +22,8 @@ import org.openstreetmap.josm.tools.Logging;
 public class OsmReaderCustom extends OsmReader {
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
-        try {
-            this.convertUnknownToTags = convertUnknownToTags;
-        } catch (Exception e) {
-            Logging.error("{0}: For best results, use JOSM >r15470", MapWithAIPlugin.NAME);
-        }
+        // TODO when we update to r15470 this.convertUnknownToTags =
+        // convertUnknownToTags;
     }
 
     @Override
