@@ -59,10 +59,16 @@ public final class MapWithAIAvailability {
                     .filter(entry -> "objects".equals(entry.getKey())).findFirst();
             if (objects.isPresent()) {
                 final JsonObject value = objects.get().getValue().asJsonObject();
-                final JsonObject centroid = value.getJsonObject("rapid_releases_points");
-                final JsonArray countries = centroid.getJsonArray("geometries");
-                COUNTRIES.clear();
-                COUNTRIES.putAll(parseForCountries(countries));
+                if (value != null) {
+                    final JsonObject centroid = value.getJsonObject("rapid_releases_points");
+                    if (centroid != null) {
+                        final JsonArray countries = centroid.getJsonArray("geometries");
+                        if (countries != null) {
+                            COUNTRIES.clear();
+                            COUNTRIES.putAll(parseForCountries(countries));
+                        }
+                    }
+                }
             }
         } catch (IOException e) {
             Logging.debug(e);
