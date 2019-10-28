@@ -24,8 +24,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
@@ -221,7 +220,7 @@ public class MergeDuplicateWays extends Command {
 
     /**
      * Find a node's duplicate in a set of duplicates
-     * 
+     *
      * @param node       The node to find in the set
      * @param compressed The set of node duplicates
      * @return The node that the param {@code node} duplicates
@@ -302,8 +301,8 @@ public class MergeDuplicateWays extends Command {
             for (int k = 0; k < way2.getNodesCount(); k++) {
                 final Node possDupeNode = way2.getNode(k);
                 if (origNode.equals(possDupeNode)
-                        || origNode.getCoor().greatCircleDistance(possDupeNode.getCoor()) < Config.getPref()
-                        .getDouble(MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.5)) {
+                        || origNode.getCoor().greatCircleDistance(possDupeNode.getCoor()) < MapWithAIPreferenceHelper
+                                .getMaxNodeDistance()) {
                     final Pair<Integer, Node> origNodePair = new Pair<>(j, origNode);
                     final Map<Integer, Node> dupeNodeMap = duplicateNodes.getOrDefault(origNodePair, new HashMap<>());
                     dupeNodeMap.put(k, possDupeNode);
