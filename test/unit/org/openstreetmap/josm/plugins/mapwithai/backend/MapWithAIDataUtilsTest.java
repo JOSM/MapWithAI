@@ -159,25 +159,33 @@ public class MapWithAIDataUtilsTest {
     public void testSplitBounds() {
         final BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
         List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(1, bboxes.size());
+        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
         checkInBBox(bbox, bboxes);
 
         bbox.add(0.001, 0.001);
         bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(1, bboxes.size());
+        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
         checkInBBox(bbox, bboxes);
 
         bbox.add(0.01, 0.01);
         bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(4, bboxes.size());
+        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
         checkInBBox(bbox, bboxes);
         checkBBoxesConnect(bbox, bboxes);
 
         bbox.add(0.1, 0.1);
         bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(144, bboxes.size());
+        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
         checkInBBox(bbox, bboxes);
         checkBBoxesConnect(bbox, bboxes);
+    }
+
+    private static int getExpectedNumberOfBBoxes(BBox bbox) {
+        double width = MapWithAIDataUtils.getWidth(bbox);
+        double height = MapWithAIDataUtils.getHeight(bbox);
+        int widthDivisions = (int) Math.ceil(width / MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+        int heightDivisions = (int) Math.ceil(height / MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+        return widthDivisions * heightDivisions;
     }
 
     private static void checkInBBox(BBox bbox, Collection<BBox> bboxes) {

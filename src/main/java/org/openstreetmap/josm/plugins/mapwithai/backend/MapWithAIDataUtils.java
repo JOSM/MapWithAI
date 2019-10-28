@@ -52,7 +52,7 @@ import org.openstreetmap.josm.tools.Utils;
  *
  */
 public final class MapWithAIDataUtils {
-    public static final int MAXIMUM_SIDE_DIMENSIONS = 1000; // 1 km
+    public static final int MAXIMUM_SIDE_DIMENSIONS = 10000; // RapiD is about 1km, max is 10km
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
