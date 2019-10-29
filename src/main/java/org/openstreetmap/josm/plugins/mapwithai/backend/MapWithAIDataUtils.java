@@ -248,6 +248,7 @@ public final class MapWithAIDataUtils {
                 .collect(Collectors.toList());
     }
 
+    // TODO replace with {@link BBox.bboxesAreFunctionallyEqual} when version bumped to >r15483
     private static boolean bboxesAreFunctionallyEqual(BBox bbox1, BBox bbox2, Double maxDifference) {
         if (maxDifference == null) {
             maxDifference = LatLon.MAX_SERVER_PRECISION;
