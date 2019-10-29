@@ -20,12 +20,10 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.preferences.sources.ExtendedSourceEntry;
-import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
-import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
-import org.openstreetmap.josm.data.preferences.sources.SourceType;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
+import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
@@ -46,20 +44,31 @@ public final class MapWithAIDataUtils {
     }
 
     /**
-     * Add a paintstyle from the jar (TODO)
+     * Add a paintstyle from the jar
      */
     public static void addMapWithAIPaintStyles() {
-        // TODO figure out how to use the one in the jar file
-        final ExtendedSourceEntry mapWithAI = new ExtendedSourceEntry(SourceType.MAP_PAINT_STYLE, "mapwithai.mapcss",
-                "https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss");
-        final List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
-        for (final SourceEntry paintStyle : paintStyles) {
-            if (mapWithAI.url.equals(paintStyle.url)) {
-                return;
-            }
+        // Remove old url's that were automatically added -- remove after Jan 01, 2020
+        List<String> oldUrls = Arrays.asList(
+                "https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss",
+                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
+        MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(style -> oldUrls.contains(style.url))
+        .forEach(MapPaintStyles::removeStyle);
+
+        if (MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                .noneMatch(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))) {
+            MapCSSStyleSource style = new MapCSSStyleSource("resource://styles/standard/mapwithai.mapcss",
+                    MapWithAIPlugin.NAME, "MapWithAI");
+            MapPaintStyles.addStyle(style);
         }
-        paintStyles.add(mapWithAI);
-        MapPaintPrefHelper.INSTANCE.put(paintStyles);
+    }
+
+    /**
+     * Remove MapWithAI paint styles
+     */
+    public static void removeMapWithAIPaintStyles() {
+        MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                .filter(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))
+                .forEach(MapPaintStyles::removeStyle);
     }
 
     /**

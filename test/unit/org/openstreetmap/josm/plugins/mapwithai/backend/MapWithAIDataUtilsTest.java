@@ -22,10 +22,10 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
-import org.openstreetmap.josm.data.preferences.sources.SourceEntry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
+import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
+import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -124,15 +124,16 @@ public class MapWithAIDataUtilsTest {
 
     @Test
     public void testAddPaintStyle() {
-        List<SourceEntry> paintStyles = MapPaintPrefHelper.INSTANCE.get();
+        List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
+        int initialSize = paintStyles.size();
         // There are two default paint styles
-        Assert.assertEquals(2, paintStyles.size());
+        Assert.assertEquals(initialSize, paintStyles.size());
         MapWithAIDataUtils.addMapWithAIPaintStyles();
-        paintStyles = MapPaintPrefHelper.INSTANCE.get();
-        Assert.assertEquals(3, paintStyles.size());
+        paintStyles = MapPaintStyles.getStyles().getStyleSources();
+        Assert.assertEquals(initialSize + 1, paintStyles.size());
         MapWithAIDataUtils.addMapWithAIPaintStyles();
-        paintStyles = MapPaintPrefHelper.INSTANCE.get();
-        Assert.assertEquals(3, paintStyles.size());
+        paintStyles = MapPaintStyles.getStyles().getStyleSources();
+        Assert.assertEquals(initialSize + 1, paintStyles.size());
         MapWithAIDataUtils.addMapWithAIPaintStyles();
     }
 

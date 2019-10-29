@@ -11,8 +11,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.openstreetmap.josm.data.preferences.sources.MapPaintPrefHelper;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -56,11 +56,11 @@ public class MapWithAIPluginTest {
     @Test
     public void testMapWithAIPlugin() {
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
-        final int originalPaintStyles = MapPaintPrefHelper.INSTANCE.get().size();
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
         Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
-        Assert.assertEquals(originalPaintStyles + 1, MapPaintPrefHelper.INSTANCE.get().size());
+        Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                .filter(source -> source.url != null && source.url.contains("mapwithai")).count());
     }
 
     /**
