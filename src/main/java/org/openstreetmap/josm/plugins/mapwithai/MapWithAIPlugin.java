@@ -25,6 +25,8 @@ import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
+import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
+import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
 import org.openstreetmap.josm.plugins.Plugin;
@@ -78,7 +80,16 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
             }
         }
 
-        MapWithAIDataUtils.addMapWithAIPaintStyles();
+        try {
+            if (MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                    .noneMatch(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))) {
+                MapCSSStyleSource style = new MapCSSStyleSource("resource://styles/standard/mapwithai.mapcss", NAME,
+                        "Show objects probably added with MapWithAI");
+                MapPaintStyles.addStyle(style);
+            }
+        } catch (Exception e) {
+            MapWithAIDataUtils.addMapWithAIPaintStyles();
+        }
 
         setVersionInfo(info.localversion);
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
