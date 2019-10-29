@@ -60,15 +60,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         for (final Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
-            boolean alreadyAdded = false;
-            for (final Component component : dataMenu.getMenuComponents()) {
-                if (component instanceof JMenuItem
-                        && entry.getKey().equals(((JMenuItem) component).getAction().getClass())) {
-                    alreadyAdded = true;
-                    break;
-                }
-            }
-            if (!alreadyAdded) {
+            if (Arrays.asList(dataMenu.getMenuComponents()).parallelStream()
+                    .filter(JMenuItem.class::isInstance).map(JMenuItem.class::cast)
+                    .noneMatch(component -> entry.getKey().equals(component.getAction().getClass()))) {
                 try {
                     MainMenu.add(dataMenu, entry.getKey().getDeclaredConstructor().newInstance(), entry.getValue());
                 } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
@@ -127,8 +121,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     @Override
     public void destroy() {
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
-        final Map<Action, Component> actions = Arrays.asList(dataMenu.getComponents()).stream()
-                .filter(component -> component instanceof JMenuItem).map(component -> (JMenuItem) component)
+        final Map<Action, Component> actions = Arrays.asList(dataMenu.getMenuComponents()).stream()
+                .filter(JMenuItem.class::isInstance).map(JMenuItem.class::cast)
                 .collect(Collectors.toMap(JMenuItem::getAction, component -> component));
 
         for (final Entry<Action, Component> action : actions.entrySet()) {
