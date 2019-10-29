@@ -3,8 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 
@@ -183,7 +187,30 @@ public final class MapWithAIPreferenceHelper {
         }
     }
 
+    /**
+     * Get the maximum distance for a node to be considered a duplicate
+     *
+     * @return The max distance between nodes for duplicates
+     */
     public static double getMaxNodeDistance() {
         return Config.getPref().getDouble(MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.6);
+    }
+
+    /**
+     * @return A map of tags to replacement tags (use {@link Tag.ofString} to parse)
+     */
+    public static Map<String, String> getReplacementTags() {
+        Map<String, String> defaultMap = Collections.emptyMap();
+        List<Map<String, String>> listOfMaps = Config.getPref()
+                .getListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), Arrays.asList(defaultMap));
+        return listOfMaps.isEmpty() ? defaultMap : listOfMaps.get(0);
+    }
+
+    /**
+     * @param tagsToReplace set the tags to replace
+     */
+    public static void setReplacementTags(Map<String, String> tagsToReplace) {
+        List<Map<String, String>> tags = tagsToReplace.isEmpty() ? null : Arrays.asList(new TreeMap<>(tagsToReplace));
+        Config.getPref().putListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), tags);
     }
 }

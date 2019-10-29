@@ -22,6 +22,7 @@ import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
@@ -31,6 +32,7 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.HttpClient.Response;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Pair;
 
 /**
  * Get data in a parallel manner
@@ -92,6 +94,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         synchronized (LOCK) {
             /* Microsoft buildings don't have a source, so we add one */
             MapWithAIDataUtils.addSourceTags(dataSet, "building", "Microsoft");
+            replaceTags(dataSet);
             removeCommonTags(dataSet);
             mergeNodes(dataSet);
             // filterDataSet(dataSet);
@@ -101,6 +104,19 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
             }
         }
         return dataSet;
+    }
+
+    /**
+     * Replace tags in a dataset with a set of replacement tags
+     * 
+     * @param dataSet The dataset with primitives to change
+     */
+    public static void replaceTags(DataSet dataSet) {
+        Map<Tag, Tag> replaceTags = MapWithAIPreferenceHelper.getReplacementTags().entrySet().parallelStream()
+                .map(entry -> new Pair<>(Tag.ofString(entry.getKey()), Tag.ofString(entry.getValue())))
+                .collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
+        replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
+                .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())).forEach(prim -> prim.put(replace)));
     }
 
     private static void cleanupDataSet(DataSet dataSet) {
