@@ -29,6 +29,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 /**
@@ -205,9 +206,9 @@ public final class MapWithAIDataUtils {
         final List<BBox> editSetBBoxes = bboxes.stream()
                 .filter(bbox -> mapWithAIBounds.stream().noneMatch(tBBox -> tBBox.bounds(bbox)))
                 .collect(Collectors.toList());
+        final List<BBox> toDownload = reduceBBox(mapWithAIBounds, editSetBBoxes);
         getForkJoinPool().execute(() -> {
-            layer.getDataSet().clear();
-            final DataSet newData = getData(editSetBBoxes);
+            final DataSet newData = getData(toDownload);
             final Lock lock = layer.getLock();
             lock.lock();
             try {
@@ -216,6 +217,56 @@ public final class MapWithAIDataUtils {
                 lock.unlock();
             }
         });
+    }
+
+    private static List<BBox> reduceBBox(List<BBox> alreadyDownloaded, List<BBox> wantToDownload) {
+        List<BBox> alreadyDownloadedReduced = new ArrayList<>(alreadyDownloaded);
+        int aDRSize = -1;
+        do {
+            aDRSize = alreadyDownloadedReduced.size();
+            for (int i = 0; i < alreadyDownloadedReduced.size(); i++) {
+                BBox bbox1 = alreadyDownloadedReduced.get(i);
+                for (int j = 0; j < alreadyDownloadedReduced.size(); j++) {
+                    BBox bbox2 = alreadyDownloadedReduced.get(j);
+                    if (bbox1 != bbox2 && bboxesShareSide(bbox1, bbox2)) {
+                        bbox1.add(bbox2);
+                        alreadyDownloadedReduced.remove(bbox2);
+                    }
+                }
+            }
+        } while (aDRSize != alreadyDownloadedReduced.size());
+        for (BBox bbox : wantToDownload) {
+            for (BBox downloaded : alreadyDownloaded) {
+                if (bboxesAreFunctionallyEqual(bbox, downloaded, null)) {
+                    Logging.debug("YEP");
+                }
+            }
+        }
+        return wantToDownload.parallelStream()
+                .filter(bbox1 -> alreadyDownloadedReduced.parallelStream()
+                        .noneMatch(bbox2 -> bboxesAreFunctionallyEqual(bbox1, bbox2, 0.00002)))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean bboxesAreFunctionallyEqual(BBox bbox1, BBox bbox2, Double maxDifference) {
+        if (maxDifference == null) {
+            maxDifference = LatLon.MAX_SERVER_PRECISION;
+        }
+        return (bbox1 != null && bbox2 != null)
+                && (Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < maxDifference
+                        && Math.abs(bbox1.getBottomRightLon() - bbox2.getBottomRightLon()) < maxDifference
+                        && Math.abs(bbox1.getTopLeftLat() - bbox2.getTopLeftLat()) < maxDifference
+                        && Math.abs(bbox1.getTopLeftLon() - bbox2.getTopLeftLon()) < maxDifference);
+    }
+
+    private static boolean bboxesShareSide(BBox bbox1, BBox bbox2) {
+        List<Double> bbox1Lons = Arrays.asList(bbox1.getTopLeftLon(), bbox1.getBottomRightLon());
+        List<Double> bbox1Lats = Arrays.asList(bbox1.getTopLeftLat(), bbox1.getBottomRightLat());
+        List<Double> bbox2Lons = Arrays.asList(bbox2.getTopLeftLon(), bbox2.getBottomRightLon());
+        List<Double> bbox2Lats = Arrays.asList(bbox2.getTopLeftLat(), bbox2.getBottomRightLat());
+        Long lonDupeCount = bbox1Lons.parallelStream().filter(lon -> bbox2Lons.parallelStream().anyMatch(lon2 -> Double.compare(lon, lon2) == 0)).count();
+        Long latDupeCount = bbox1Lats.parallelStream().filter(lat -> bbox2Lats.parallelStream().anyMatch(lat2 -> Double.compare(lat, lat2) == 0)).count();
+        return (lonDupeCount + latDupeCount) > 1;
     }
 
     /**
