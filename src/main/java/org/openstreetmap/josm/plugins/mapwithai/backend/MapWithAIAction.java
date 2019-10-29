@@ -32,7 +32,7 @@ public class MapWithAIAction extends JosmAction {
     public MapWithAIAction() {
         super(tr("{0}: Download data", MapWithAIPlugin.NAME), null, tr("Get data from {0}", MapWithAIPlugin.NAME),
                 Shortcut.registerShortcut("data:mapWithAI", tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R,
-                        Shortcut.SHIFT),
+                        Shortcut.CTRL),
                 true);
     }
 
