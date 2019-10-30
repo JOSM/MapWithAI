@@ -40,6 +40,8 @@ public final class MapWithAIDataUtils {
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
+    private static final String PAINT_STYLE_RESOURCE_URL = "resource://styles/standard/mapwithai.mapcss";
+
     private MapWithAIDataUtils() {
         // Hide the constructor
     }
@@ -55,12 +57,24 @@ public final class MapWithAIDataUtils {
         MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(style -> oldUrls.contains(style.url))
         .forEach(MapPaintStyles::removeStyle);
 
-        if (MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .noneMatch(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))) {
-            final MapCSSStyleSource style = new MapCSSStyleSource("resource://styles/standard/mapwithai.mapcss",
-                    MapWithAIPlugin.NAME, "MapWithAI");
-            MapPaintStyles.addStyle(style);
+        Optional<MapCSSStyleSource> possiblePaintStyle = MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                .filter(MapCSSStyleSource.class::isInstance).map(MapCSSStyleSource.class::cast)
+                .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url)).findFirst();
+        if (possiblePaintStyle.isPresent()) {
+            MapCSSStyleSource source = possiblePaintStyle.get();
+            if (!source.getErrors().isEmpty()) {
+                MapPaintStyles.removeStyle(source);
+                reallyAddPaintStyle();
+            }
+        } else {
+            reallyAddPaintStyle();
         }
+    }
+
+    private static final void reallyAddPaintStyle() {
+        final MapCSSStyleSource style = new MapCSSStyleSource(PAINT_STYLE_RESOURCE_URL, MapWithAIPlugin.NAME,
+                "MapWithAI");
+        MapPaintStyles.addStyle(style);
     }
 
     /**
@@ -68,7 +82,7 @@ public final class MapWithAIDataUtils {
      */
     public static void removeMapWithAIPaintStyles() {
         MapPaintStyles.getStyles().getStyleSources().parallelStream()
-        .filter(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))
+        .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url))
         .forEach(MapPaintStyles::removeStyle);
     }
 
