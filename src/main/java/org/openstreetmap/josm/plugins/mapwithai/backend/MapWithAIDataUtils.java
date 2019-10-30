@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
@@ -35,7 +36,7 @@ import org.openstreetmap.josm.tools.Utils;
  *
  */
 public final class MapWithAIDataUtils {
-    public static final int MAXIMUM_SIDE_DIMENSIONS = 10000; // RapiD is about 1km, max is 10km
+    public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1km, max is 10km
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
@@ -48,7 +49,7 @@ public final class MapWithAIDataUtils {
      */
     public static void addMapWithAIPaintStyles() {
         // Remove old url's that were automatically added -- remove after Jan 01, 2020
-        List<String> oldUrls = Arrays.asList(
+        final List<String> oldUrls = Arrays.asList(
                 "https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss",
                 "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
         MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(style -> oldUrls.contains(style.url))
@@ -56,7 +57,7 @@ public final class MapWithAIDataUtils {
 
         if (MapPaintStyles.getStyles().getStyleSources().parallelStream()
                 .noneMatch(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))) {
-            MapCSSStyleSource style = new MapCSSStyleSource("resource://styles/standard/mapwithai.mapcss",
+            final MapCSSStyleSource style = new MapCSSStyleSource("resource://styles/standard/mapwithai.mapcss",
                     MapWithAIPlugin.NAME, "MapWithAI");
             MapPaintStyles.addStyle(style);
         }
@@ -67,8 +68,8 @@ public final class MapWithAIDataUtils {
      */
     public static void removeMapWithAIPaintStyles() {
         MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .filter(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))
-                .forEach(MapPaintStyles::removeStyle);
+        .filter(source -> "resource://styles/standard/mapwithai.mapcss".equals(source.url))
+        .forEach(MapPaintStyles::removeStyle);
     }
 
     /**
@@ -195,6 +196,17 @@ public final class MapWithAIDataUtils {
     /**
      * Get the data for MapWithAI
      *
+     * @param layer    A pre-existing {@link MapWithAILayer}
+     * @param osmLayer The osm datalayer with a set of bounds
+     */
+    public static void getMapWithAIData(MapWithAILayer layer, OsmDataLayer osmLayer) {
+        getMapWithAIData(layer,
+                osmLayer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox).collect(Collectors.toList()));
+    }
+
+    /**
+     * Get the data for MapWithAI
+     *
      * @param layer  A pre-existing {@link MapWithAILayer}
      * @param bboxes The bboxes to get the data in
      */
@@ -229,23 +241,23 @@ public final class MapWithAIDataUtils {
     }
 
     private static List<BBox> reduceBBox(List<BBox> alreadyDownloaded, List<BBox> wantToDownload) {
-        List<BBox> alreadyDownloadedReduced = new ArrayList<>(alreadyDownloaded);
+        final List<BBox> alreadyDownloadedReduced = new ArrayList<>(alreadyDownloaded);
         int aDRSize = -1;
         do {
             aDRSize = alreadyDownloadedReduced.size();
             for (int i = 0; i < alreadyDownloadedReduced.size(); i++) {
-                BBox bbox1 = alreadyDownloadedReduced.get(i);
+                final BBox bbox1 = alreadyDownloadedReduced.get(i);
                 for (int j = 0; j < alreadyDownloadedReduced.size(); j++) {
-                    BBox bbox2 = alreadyDownloadedReduced.get(j);
-                    if (bbox1 != bbox2 && bboxesShareSide(bbox1, bbox2)) {
+                    final BBox bbox2 = alreadyDownloadedReduced.get(j);
+                    if (!bbox1.equals(bbox2) && bboxesShareSide(bbox1, bbox2)) {
                         bbox1.add(bbox2);
                         alreadyDownloadedReduced.remove(bbox2);
                     }
                 }
             }
         } while (aDRSize != alreadyDownloadedReduced.size());
-        for (BBox bbox : wantToDownload) {
-            for (BBox downloaded : alreadyDownloaded) {
+        for (final BBox bbox : wantToDownload) {
+            for (final BBox downloaded : alreadyDownloaded) {
                 if (bboxesAreFunctionallyEqual(bbox, downloaded, null)) {
                     Logging.debug("YEP");
                 }
@@ -253,41 +265,29 @@ public final class MapWithAIDataUtils {
         }
         return wantToDownload.parallelStream()
                 .filter(bbox1 -> alreadyDownloadedReduced.parallelStream()
-                        .noneMatch(bbox2 -> bboxesAreFunctionallyEqual(bbox1, bbox2, 0.00002)))
+                        .noneMatch(bbox2 -> bboxesAreFunctionallyEqual(bbox1, bbox2, 0.000_02)))
                 .collect(Collectors.toList());
     }
 
     // TODO replace with {@link BBox.bboxesAreFunctionallyEqual} when version bumped to >r15483
     private static boolean bboxesAreFunctionallyEqual(BBox bbox1, BBox bbox2, Double maxDifference) {
-        if (maxDifference == null) {
-            maxDifference = LatLon.MAX_SERVER_PRECISION;
-        }
-        return (bbox1 != null && bbox2 != null)
-                && (Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < maxDifference
-                        && Math.abs(bbox1.getBottomRightLon() - bbox2.getBottomRightLon()) < maxDifference
-                        && Math.abs(bbox1.getTopLeftLat() - bbox2.getTopLeftLat()) < maxDifference
-                        && Math.abs(bbox1.getTopLeftLon() - bbox2.getTopLeftLon()) < maxDifference);
+        final double diff = Optional.ofNullable(maxDifference).orElse(LatLon.MAX_SERVER_PRECISION);
+        return (bbox1 != null && bbox2 != null && Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < diff
+                && Math.abs(bbox1.getBottomRightLon() - bbox2.getBottomRightLon()) < diff
+                && Math.abs(bbox1.getTopLeftLat() - bbox2.getTopLeftLat()) < diff
+                && Math.abs(bbox1.getTopLeftLon() - bbox2.getTopLeftLon()) < diff);
     }
 
     private static boolean bboxesShareSide(BBox bbox1, BBox bbox2) {
-        List<Double> bbox1Lons = Arrays.asList(bbox1.getTopLeftLon(), bbox1.getBottomRightLon());
-        List<Double> bbox1Lats = Arrays.asList(bbox1.getTopLeftLat(), bbox1.getBottomRightLat());
-        List<Double> bbox2Lons = Arrays.asList(bbox2.getTopLeftLon(), bbox2.getBottomRightLon());
-        List<Double> bbox2Lats = Arrays.asList(bbox2.getTopLeftLat(), bbox2.getBottomRightLat());
-        Long lonDupeCount = bbox1Lons.parallelStream().filter(lon -> bbox2Lons.parallelStream().anyMatch(lon2 -> Double.compare(lon, lon2) == 0)).count();
-        Long latDupeCount = bbox1Lats.parallelStream().filter(lat -> bbox2Lats.parallelStream().anyMatch(lat2 -> Double.compare(lat, lat2) == 0)).count();
+        final List<Double> bbox1Lons = Arrays.asList(bbox1.getTopLeftLon(), bbox1.getBottomRightLon());
+        final List<Double> bbox1Lats = Arrays.asList(bbox1.getTopLeftLat(), bbox1.getBottomRightLat());
+        final List<Double> bbox2Lons = Arrays.asList(bbox2.getTopLeftLon(), bbox2.getBottomRightLon());
+        final List<Double> bbox2Lats = Arrays.asList(bbox2.getTopLeftLat(), bbox2.getBottomRightLat());
+        final Long lonDupeCount = bbox1Lons.parallelStream()
+                .filter(lon -> bbox2Lons.parallelStream().anyMatch(lon2 -> Double.compare(lon, lon2) == 0)).count();
+        final Long latDupeCount = bbox1Lats.parallelStream()
+                .filter(lat -> bbox2Lats.parallelStream().anyMatch(lat2 -> Double.compare(lat, lat2) == 0)).count();
         return (lonDupeCount + latDupeCount) > 1;
-    }
-
-    /**
-     * Get the data for MapWithAI
-     *
-     * @param layer    A pre-existing {@link MapWithAILayer}
-     * @param osmLayer The osm datalayer with a set of bounds
-     */
-    public static void getMapWithAIData(MapWithAILayer layer, OsmDataLayer osmLayer) {
-        getMapWithAIData(layer,
-                osmLayer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox).collect(Collectors.toList()));
     }
 
     public static double getWidth(BBox bbox) {

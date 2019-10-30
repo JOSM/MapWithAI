@@ -38,14 +38,14 @@ public final class MapWithAIPreferenceHelper {
     public static String getMapWithAIUrl() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         String url = Config.getPref().get(MapWithAIPlugin.NAME.concat(".current_api"), DEFAULT_MAPWITHAI_API);
-        if (layer != null && layer.getMapWithAIUrl() != null) {
-            url = layer.getMapWithAIUrl();
-        } else {
+        if (layer == null || layer.getMapWithAIUrl() == null) {
             final List<String> urls = getMapWithAIURLs();
             if (!urls.contains(url)) {
                 url = DEFAULT_MAPWITHAI_API;
                 setMapWithAIUrl(DEFAULT_MAPWITHAI_API, true);
             }
+        } else {
+            url = layer.getMapWithAIUrl();
         }
         return url;
     }
@@ -140,10 +140,10 @@ public final class MapWithAIPreferenceHelper {
     public static void setMaximumAddition(int max, boolean permanent) {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
         if (permanent) {
-            if (getDefaultMaximumAddition() != max) {
-                Config.getPref().putInt(MAXIMUMSELECTION, max);
-            } else {
+            if (getDefaultMaximumAddition() == max) {
                 Config.getPref().put(MAXIMUMSELECTION, null);
+            } else {
+                Config.getPref().putInt(MAXIMUMSELECTION, max);
             }
         } else if (mapWithAILayer != null) {
             mapWithAILayer.setMaximumAddition(max);
@@ -159,10 +159,10 @@ public final class MapWithAIPreferenceHelper {
      */
     public static void setMergeBuildingAddress(boolean selected, boolean permanent) {
         if (permanent) {
-            if (!selected) {
-                Config.getPref().putBoolean(MERGEBUILDINGADDRESSES, selected);
-            } else {
+            if (selected) {
                 Config.getPref().put(MERGEBUILDINGADDRESSES, null);
+            } else {
+                Config.getPref().putBoolean(MERGEBUILDINGADDRESSES, selected);
             }
         }
     }
@@ -177,10 +177,10 @@ public final class MapWithAIPreferenceHelper {
     public static void setSwitchLayers(boolean selected, boolean permanent) {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         if (permanent) {
-            if (!selected) {
-                Config.getPref().putBoolean(AUTOSWITCHLAYERS, selected);
-            } else {
+            if (selected) {
                 Config.getPref().put(AUTOSWITCHLAYERS, null);
+            } else {
+                Config.getPref().putBoolean(AUTOSWITCHLAYERS, selected);
             }
         } else if (layer != null) {
             layer.setSwitchLayers(selected);
@@ -200,8 +200,8 @@ public final class MapWithAIPreferenceHelper {
      * @return A map of tags to replacement tags (use {@link Tag.ofString} to parse)
      */
     public static Map<String, String> getReplacementTags() {
-        Map<String, String> defaultMap = Collections.emptyMap();
-        List<Map<String, String>> listOfMaps = Config.getPref()
+        final Map<String, String> defaultMap = Collections.emptyMap();
+        final List<Map<String, String>> listOfMaps = Config.getPref()
                 .getListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), Arrays.asList(defaultMap));
         return listOfMaps.isEmpty() ? defaultMap : listOfMaps.get(0);
     }
@@ -210,7 +210,8 @@ public final class MapWithAIPreferenceHelper {
      * @param tagsToReplace set the tags to replace
      */
     public static void setReplacementTags(Map<String, String> tagsToReplace) {
-        List<Map<String, String>> tags = tagsToReplace.isEmpty() ? null : Arrays.asList(new TreeMap<>(tagsToReplace));
+        final List<Map<String, String>> tags = tagsToReplace.isEmpty() ? null
+                : Arrays.asList(new TreeMap<>(tagsToReplace));
         Config.getPref().putListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), tags);
     }
 }

@@ -40,6 +40,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     private final JSpinner maximumAdditionSpinner;
     private final ReplacementPreferenceTable table;
     private final List<PrefEntry> displayData;
+    private static final int MAX_SELECTED_TO_EDIT = 1;
 
     public MapWithAIPreferences() {
         possibleMapWithAIApiUrl = new JComboBox<>();
@@ -53,8 +54,8 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     }
 
     private static void fillDisplayData(List<PrefEntry> list) {
-        Map<String, String> current = new TreeMap<>(MapWithAIPreferenceHelper.getReplacementTags());
-        for (Entry<String, String> entry : current.entrySet()) {
+        final Map<String, String> current = new TreeMap<>(MapWithAIPreferenceHelper.getReplacementTags());
+        for (final Entry<String, String> entry : current.entrySet()) {
             list.add(new PrefEntry(entry.getKey(), new StringSetting(entry.getValue()), new StringSetting(null), false));
         }
     }
@@ -99,15 +100,15 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
         final JPanel expert = new JPanel(new GridBagLayout());
         expert.add(Box.createHorizontalGlue(), GBC.std().fill(GridBagConstraints.HORIZONTAL));
-        JScrollPane scroll = new JScrollPane(table);
+        final JScrollPane scroll = new JScrollPane(table);
         expert.add(scroll, GBC.eol().fill(GridBagConstraints.BOTH));
         scroll.setPreferredSize(new Dimension(400, 200));
 
-        JButton add = new JButton(tr("Add"));
+        final JButton add = new JButton(tr("Add"));
         expert.add(Box.createHorizontalGlue(), GBC.std().fill(GridBagConstraints.HORIZONTAL));
         expert.add(add, GBC.std().insets(0, 5, 0, 0));
         add.addActionListener(e -> {
-            PrefEntry pe = table.addPreference(gui);
+            final PrefEntry pe = table.addPreference(gui);
             if (pe != null && pe.getValue() instanceof StringSetting) {
                 displayData.add(pe);
                 Collections.sort(displayData);
@@ -115,19 +116,19 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
             }
         });
 
-        JButton edit = new JButton(tr("Edit"));
+        final JButton edit = new JButton(tr("Edit"));
         expert.add(edit, GBC.std().insets(5, 5, 0, 0));
         edit.addActionListener(e -> {
-            List<PrefEntry> toEdit = table.getSelectedItems();
-            if (toEdit.size() == 1) {
+            final List<PrefEntry> toEdit = table.getSelectedItems();
+            if (toEdit.size() == MAX_SELECTED_TO_EDIT) {
                 table.editPreference(gui);
             }
         });
 
-        JButton delete = new JButton(tr("Delete"));
+        final JButton delete = new JButton(tr("Delete"));
         expert.add(delete, GBC.std().insets(5, 5, 0, 0));
         delete.addActionListener(e -> {
-            List<PrefEntry> toRemove = table.getSelectedItems();
+            final List<PrefEntry> toRemove = table.getSelectedItems();
             if (!toRemove.isEmpty()) {
                 displayData.removeAll(toRemove);
             }
@@ -136,7 +137,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
         ExpertToggleAction.addVisibilitySwitcher(expert);
 
-        JPanel pane = new JPanel(new GridBagLayout());
+        final JPanel pane = new JPanel(new GridBagLayout());
         pane.add(nonExpert, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         pane.add(expert);
 
@@ -156,7 +157,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     }
 
     private static Map<String, String> convertPrefToMap(List<PrefEntry> displayData) {
-        Map<String, String> returnMap = displayData.isEmpty() ? Collections.emptyMap() : new TreeMap<>();
+        final Map<String, String> returnMap = displayData.isEmpty() ? Collections.emptyMap() : new TreeMap<>();
         displayData.forEach(entry -> returnMap.put(entry.getKey(), entry.getValue().getValue().toString()));
         return returnMap;
     }

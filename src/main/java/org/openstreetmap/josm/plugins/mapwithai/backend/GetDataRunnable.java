@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static final Object LOCK = new Object();
 
+    private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
+    private static final String SERVER_ID_KEY = "server_id";
+
     /**
      * @param bbox    The initial bbox to get data from (don't reduce beforehand --
      *                it will be reduced here)
@@ -67,17 +71,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         super();
         this.bbox = new ArrayList<>(bbox);
         this.dataSet = dataSet;
-        if (monitor == null) {
-            monitor = NullProgressMonitor.INSTANCE;
-        }
-        this.monitor = monitor;
+        this.monitor = Optional.ofNullable(monitor).orElse(NullProgressMonitor.INSTANCE);
     }
 
     @Override
     public DataSet compute() {
         final List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
         monitor.beginTask(tr("Downloading {0} data", MapWithAIPlugin.NAME), bboxes.size() - 1);
-        if (bboxes.size() == 1) {
+        if (bboxes.size() == MAX_NUMBER_OF_BBOXES_TO_PROCESS) {
             final DataSet temporaryDataSet = getDataReal(bboxes.get(0));
             synchronized (GetDataRunnable.class) {
                 dataSet.mergeFrom(temporaryDataSet);
@@ -108,11 +109,11 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     /**
      * Replace tags in a dataset with a set of replacement tags
-     * 
+     *
      * @param dataSet The dataset with primitives to change
      */
     public static void replaceTags(DataSet dataSet) {
-        Map<Tag, Tag> replaceTags = MapWithAIPreferenceHelper.getReplacementTags().entrySet().parallelStream()
+        final Map<Tag, Tag> replaceTags = MapWithAIPreferenceHelper.getReplacementTags().entrySet().parallelStream()
                 .map(entry -> new Pair<>(Tag.ofString(entry.getKey()), Tag.ofString(entry.getValue())))
                 .collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
         replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
@@ -121,13 +122,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static void cleanupDataSet(DataSet dataSet) {
         Map<OsmPrimitive, String> origIds = dataSet.allPrimitives().parallelStream()
-                .filter(prim -> prim.hasKey("orig_id")).distinct()
-                .collect(Collectors.toMap(prim -> prim, prim -> prim.get("orig_id")));
-        Map<OsmPrimitive, String> serverIds = dataSet.allPrimitives().parallelStream()
-                .filter(prim -> prim.hasKey("server_id")).distinct()
-                .collect(Collectors.toMap(prim -> prim, prim -> prim.get("server_id")));
+                .filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID)).distinct()
+                .collect(Collectors.toMap(prim -> prim, prim -> prim.get(MergeDuplicateWays.ORIG_ID)));
+        final Map<OsmPrimitive, String> serverIds = dataSet.allPrimitives().parallelStream()
+                .filter(prim -> prim.hasKey(SERVER_ID_KEY)).distinct()
+                .collect(Collectors.toMap(prim -> prim, prim -> prim.get(SERVER_ID_KEY)));
 
-        List<OsmPrimitive> toDelete = origIds.entrySet().parallelStream()
+        final List<OsmPrimitive> toDelete = origIds.entrySet().parallelStream()
                 .filter(entry -> serverIds.containsValue(entry.getValue())).map(Entry::getKey)
                 .collect(Collectors.toList());
         if (!toDelete.isEmpty()) {
@@ -135,8 +136,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
         origIds = origIds.entrySet().parallelStream().filter(entry -> !toDelete.contains(entry.getKey()))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-        serverIds.forEach((prim, str) -> prim.remove("server_id"));
-        origIds.forEach((prim, str) -> prim.remove("orig_id"));
+        serverIds.forEach((prim, str) -> prim.remove(SERVER_ID_KEY));
+        origIds.forEach((prim, str) -> prim.remove(MergeDuplicateWays.ORIG_ID));
     }
 
     /**
@@ -147,8 +148,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     public static void removeCommonTags(DataSet dataSet) {
         dataSet.allPrimitives().parallelStream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
         .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
-        dataSet.getNodes().parallelStream().forEach(node -> node.remove("server_id"));
-        List<Node> emptyNodes = dataSet.getNodes().parallelStream().distinct().filter(node -> !node.isDeleted())
+        dataSet.getNodes().parallelStream().forEach(node -> node.remove(SERVER_ID_KEY));
+        final List<Node> emptyNodes = dataSet.getNodes().parallelStream().distinct().filter(node -> !node.isDeleted())
                 .filter(node -> node.getReferrers().isEmpty() && !node.hasKeys()).collect(Collectors.toList());
         if (!emptyNodes.isEmpty()) {
             new DeleteCommand(emptyNodes).executeCommand();
@@ -156,18 +157,18 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static void mergeNodes(DataSet dataSet) {
-        List<Node> nodes = dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted())
+        final List<Node> nodes = dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted())
                 .collect(Collectors.toList());
         for (int i = 0; i < nodes.size(); i++) {
-            Node n1 = nodes.get(i);
-            BBox bbox = new BBox();
+            final Node n1 = nodes.get(i);
+            final BBox bbox = new BBox();
             bbox.addPrimitive(n1, 0.001);
-            List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream()
-                    .filter(node -> !node.isDeleted() && node != n1
-                    && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
-                    .getMaxNodeDistance())
+            final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream()
+                    .filter(node -> !node.isDeleted() && !node.equals(n1)
+                            && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
+                            .getMaxNodeDistance())
                     .collect(Collectors.toList());
-            Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, n1);
+            final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, n1);
             if (mergeCommand != null) {
                 mergeCommand.executeCommand();
                 nodes.removeAll(nearbyNodes);

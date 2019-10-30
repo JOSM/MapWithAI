@@ -22,14 +22,15 @@ import org.openstreetmap.josm.io.OsmReader;
 public class OsmReaderCustom extends OsmReader {
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
+        super();
         // TODO when we update to r15470 this.convertUnknownToTags =
         // convertUnknownToTags;
     }
 
     @Override
     protected OsmPrimitive buildPrimitive(PrimitiveData pd) {
-        Long serverId = pd.getUniqueId();
-        OsmPrimitive p = super.buildPrimitive(pd);
+        final Long serverId = pd.getUniqueId();
+        final OsmPrimitive p = super.buildPrimitive(pd);
         p.put("server_id", Long.toString(serverId));
         return p;
     }

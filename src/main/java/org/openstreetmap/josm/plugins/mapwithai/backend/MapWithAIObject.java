@@ -50,11 +50,13 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
 
     private void setText() {
         final Long addedObjects = MapWithAIDataUtils.getAddedObjects();
-        if (addedObjects != 0L) {
+        if (addedObjects == 0L) {
+            mapWithAIObjects.setVisible(false);
             mapWithAIObjects.setVisible(true);
             mapWithAIObjects.setText(tr("{0} Objects Added: {1}", MapWithAIPlugin.NAME, addedObjects));
         } else {
-            mapWithAIObjects.setVisible(false);
+            mapWithAIObjects.setVisible(true);
+            mapWithAIObjects.setText(tr("{0} Objects Added: {1}", MapWithAIPlugin.NAME, addedObjects));
         }
         final int maxAdd = MapWithAIPreferenceHelper.getMaximumAddition();
         if (addedObjects == 0) {

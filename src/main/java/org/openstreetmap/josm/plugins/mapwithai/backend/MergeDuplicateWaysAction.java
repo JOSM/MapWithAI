@@ -36,7 +36,7 @@ public class MergeDuplicateWaysAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<Way> ways = new ArrayList<>(MainApplication.getLayerManager().getActiveDataSet().getSelectedWays());
+        final List<Way> ways = new ArrayList<>(MainApplication.getLayerManager().getActiveDataSet().getSelectedWays());
         Command command = null;
         int i = 0;
         do {

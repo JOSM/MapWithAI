@@ -27,11 +27,11 @@ import org.openstreetmap.josm.tools.Utils;
 public class CreateConnectionsCommand extends Command {
     private final Collection<OsmPrimitive> primitives;
     private Command command = null;
-    private static final List<Class<? extends AbstractConflationCommand>> conflationCommands = new ArrayList<>();
+    private static final List<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new ArrayList<>();
     static {
-        conflationCommands.add(ConnectedCommand.class);
-        conflationCommands.add(DuplicateCommand.class);
-        conflationCommands.add(MergeAddressBuildings.class);
+        CONFLATION_COMMANDS.add(ConnectedCommand.class);
+        CONFLATION_COMMANDS.add(DuplicateCommand.class);
+        CONFLATION_COMMANDS.add(MergeAddressBuildings.class);
     }
 
     public CreateConnectionsCommand(DataSet data, Collection<OsmPrimitive> primitives) {
@@ -71,7 +71,7 @@ public class CreateConnectionsCommand extends Command {
         SequenceCommand returnSequence = null;
         final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
                 .filter(Objects::nonNull).collect(Collectors.toList());
-        for (Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
+        for (final Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
             final AbstractConflationCommand abstractCommand;
             try {
                 abstractCommand = abstractCommandClass.getConstructor(DataSet.class).newInstance(dataSet);
@@ -115,13 +115,13 @@ public class CreateConnectionsCommand extends Command {
      * @param command A command to run when copying data from the MapWithAI layer
      */
     public static void addConflationCommand(Class<? extends AbstractConflationCommand> command) {
-        conflationCommands.add(command);
+        CONFLATION_COMMANDS.add(command);
     }
 
     /**
      * @return A set of commands to run when copying data from the MapWithAI layer
      */
     public static List<Class<? extends AbstractConflationCommand>> getConflationCommands() {
-        return Collections.unmodifiableList(conflationCommands);
+        return Collections.unmodifiableList(CONFLATION_COMMANDS);
     }
 }

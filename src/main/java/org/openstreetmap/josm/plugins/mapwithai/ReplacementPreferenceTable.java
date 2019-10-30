@@ -30,12 +30,12 @@ public class ReplacementPreferenceTable extends PreferencesTable {
 
     @Override
     public PrefEntry addPreference(final JComponent gui) {
-        JPanel p = new JPanel(new GridBagLayout());
+        final JPanel p = new JPanel(new GridBagLayout());
         p.add(new JLabel(tr("Original Tag")), GBC.std().insets(0, 0, 5, 0));
-        JosmTextField tkey = new JosmTextField("", 50);
+        final JosmTextField tkey = new JosmTextField("", 50);
         p.add(tkey, GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
         p.add(new JLabel(tr("Replacement Tag")), GBC.std().insets(0, 0, 5, 0));
-        JosmTextField tValue = new JosmTextField("", 50);
+        final JosmTextField tValue = new JosmTextField("", 50);
         p.add(tValue, GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
         PrefEntry pe = null;
