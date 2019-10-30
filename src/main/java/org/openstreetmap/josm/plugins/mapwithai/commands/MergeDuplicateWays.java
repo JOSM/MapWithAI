@@ -66,6 +66,8 @@ public class MergeDuplicateWays extends Command {
                 filterDataSet(getAffectedDataSet(), commands);
             } else if (way1 != null && way2 == null) {
                 checkForDuplicateWays(way1, commands);
+            } else if (way1 == null) {
+                checkForDuplicateWays(way2, commands);
             } else {
                 Command command = checkForDuplicateWays(way1, way2);
                 if (command != null) {
@@ -302,7 +304,7 @@ public class MergeDuplicateWays extends Command {
                 final Node possDupeNode = way2.getNode(k);
                 if (origNode.equals(possDupeNode)
                         || origNode.getCoor().greatCircleDistance(possDupeNode.getCoor()) < MapWithAIPreferenceHelper
-                                .getMaxNodeDistance()) {
+                        .getMaxNodeDistance()) {
                     final Pair<Integer, Node> origNodePair = new Pair<>(j, origNode);
                     final Map<Integer, Node> dupeNodeMap = duplicateNodes.getOrDefault(origNodePair, new HashMap<>());
                     dupeNodeMap.put(k, possDupeNode);
