@@ -189,10 +189,8 @@ public final class MapWithAIDataUtils {
                 .stream().filter(obj -> !MapWithAILayer.class.isInstance(obj)).collect(Collectors.toList());
         boolean gotData = false;
         for (final OsmDataLayer osmLayer : osmLayers) {
-            if (!osmLayer.isLocked()) {
-                if (getMapWithAIData(layer, osmLayer)) {
-                    gotData = true;
-                }
+            if (!osmLayer.isLocked() && getMapWithAIData(layer, osmLayer)) {
+                gotData = true;
             }
         }
         return gotData;
