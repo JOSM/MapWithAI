@@ -41,7 +41,6 @@ public class OsmReaderCustom extends OsmReader {
      * @param source the source input stream. Must not be null.
      * @param progressMonitor the progress monitor. If null, {@link NullProgressMonitor#INSTANCE} is assumed
      * @param convertUnknownToTags true if unknown xml attributes should be kept as tags
-     * @param saveOriginalId if true, keep the original id (as a tag, "current_id")
      *
      * @return the dataset with the parsed data
      * @throws IllegalDataException if an error was found while parsing the data from the source

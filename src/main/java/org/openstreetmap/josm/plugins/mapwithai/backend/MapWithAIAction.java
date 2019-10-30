@@ -20,6 +20,7 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Shortcut;
@@ -39,8 +40,26 @@ public class MapWithAIAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent event) {
         if (isEnabled()) {
-            MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true));
-            createMessageDialog();
+            final boolean hasLayer = MapWithAIDataUtils.getLayer(false) != null;
+            if (MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true))) {
+                createMessageDialog();
+            } else if (hasLayer) {
+                toggleLayer();
+            }
+        }
+    }
+
+    private static void toggleLayer() {
+        final OsmDataLayer mapwithai = MapWithAIDataUtils.getLayer(false);
+        final OsmDataLayer osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                .filter(layer -> !(layer instanceof MapWithAILayer)).findFirst().orElse(null);
+        final Layer currentLayer = MainApplication.getLayerManager().getActiveLayer();
+        if (currentLayer != null) {
+            if (currentLayer.equals(mapwithai) && osmData != null) {
+                MainApplication.getLayerManager().setActiveLayer(osmData);
+            } else if (currentLayer.equals(osmData) && mapwithai != null) {
+                MainApplication.getLayerManager().setActiveLayer(mapwithai);
+            }
         }
     }
 

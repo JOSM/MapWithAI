@@ -117,8 +117,8 @@ public class MergeDuplicateWays extends Command {
     /**
      * Check for ways that are (partial) duplicates, and if so merge them
      *
-     * @param way A way to check
-     * @return non-null command if there are duplicate ways
+     * @param way      A way to check
+     * @param commands A list of commands to add to
      */
     public static void checkForDuplicateWays(Way way, List<Command> commands) {
         final Collection<Way> nearbyWays = way.getDataSet().searchWays(way.getBBox());
@@ -294,7 +294,7 @@ public class MergeDuplicateWays extends Command {
      *
      * @param way1 An initial way with nodes
      * @param way2 A way that may have duplicate nodes with way1
-     * @return A map of node -> node(s) duplicates
+     * @return A map of node -&gt; node(s) duplicates
      */
     public static Map<Pair<Integer, Node>, Map<Integer, Node>> getDuplicateNodes(Way way1, Way way2) {
         final Map<Pair<Integer, Node>, Map<Integer, Node>> duplicateNodes = new LinkedHashMap<>();

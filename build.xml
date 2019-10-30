@@ -27,6 +27,10 @@
   <property name="ivy.jar.dir" value="${ivy.home}/lib"/>
   <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
 
+  <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
+    <include name="utilsplugin2.jar"/>
+  </fileset>
+
   <target name="download-ivy">
     <mkdir dir="${ivy.jar.dir}"/>
     <get src="https://jcenter.bintray.com/org/apache/ivy/ivy/2.4.0/ivy-2.4.0.jar" dest="${ivy.jar.file}" usetimestamp="true" ignoreerrors="true"/>

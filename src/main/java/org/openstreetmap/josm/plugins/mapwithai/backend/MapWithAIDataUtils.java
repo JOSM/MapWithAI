@@ -182,15 +182,20 @@ public final class MapWithAIDataUtils {
      * Get data for a {@link MapWithAILayer}
      *
      * @param layer The {@link MapWithAILayer} to add data to
+     * @return true if data was downloaded
      */
-    public static void getMapWithAIData(MapWithAILayer layer) {
+    public static boolean getMapWithAIData(MapWithAILayer layer) {
         final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
                 .stream().filter(obj -> !MapWithAILayer.class.isInstance(obj)).collect(Collectors.toList());
+        boolean gotData = false;
         for (final OsmDataLayer osmLayer : osmLayers) {
             if (!osmLayer.isLocked()) {
-                getMapWithAIData(layer, osmLayer);
+                if (getMapWithAIData(layer, osmLayer)) {
+                    gotData = true;
+                }
             }
         }
+        return gotData;
     }
 
     /**
@@ -198,9 +203,10 @@ public final class MapWithAIDataUtils {
      *
      * @param layer    A pre-existing {@link MapWithAILayer}
      * @param osmLayer The osm datalayer with a set of bounds
+     * @return true if data was downloaded
      */
-    public static void getMapWithAIData(MapWithAILayer layer, OsmDataLayer osmLayer) {
-        getMapWithAIData(layer,
+    public static boolean getMapWithAIData(MapWithAILayer layer, OsmDataLayer osmLayer) {
+        return getMapWithAIData(layer,
                 osmLayer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox).collect(Collectors.toList()));
     }
 
@@ -209,9 +215,10 @@ public final class MapWithAIDataUtils {
      *
      * @param layer  A pre-existing {@link MapWithAILayer}
      * @param bboxes The bboxes to get the data in
+     * @return true if data was downloaded
      */
-    public static void getMapWithAIData(MapWithAILayer layer, BBox... bboxes) {
-        getMapWithAIData(layer, Arrays.asList(bboxes));
+    public static boolean getMapWithAIData(MapWithAILayer layer, BBox... bboxes) {
+        return getMapWithAIData(layer, Arrays.asList(bboxes));
     }
 
     /**
@@ -219,8 +226,9 @@ public final class MapWithAIDataUtils {
      *
      * @param layer  A pre-existing {@link MapWithAILayer}
      * @param bboxes The bboxes to get the data in
+     * @return true if data was downloaded
      */
-    public static void getMapWithAIData(MapWithAILayer layer, Collection<BBox> bboxes) {
+    public static boolean getMapWithAIData(MapWithAILayer layer, Collection<BBox> bboxes) {
         final DataSet mapWithAISet = layer.getDataSet();
         final List<BBox> mapWithAIBounds = mapWithAISet.getDataSourceBounds().stream().map(Bounds::toBBox)
                 .collect(Collectors.toList());
@@ -228,16 +236,19 @@ public final class MapWithAIDataUtils {
                 .filter(bbox -> mapWithAIBounds.stream().noneMatch(tBBox -> tBBox.bounds(bbox)))
                 .collect(Collectors.toList());
         final List<BBox> toDownload = reduceBBox(mapWithAIBounds, editSetBBoxes);
-        getForkJoinPool().execute(() -> {
-            final DataSet newData = getData(toDownload);
-            final Lock lock = layer.getLock();
-            lock.lock();
-            try {
-                layer.mergeFrom(newData);
-            } finally {
-                lock.unlock();
-            }
-        });
+        if (!toDownload.isEmpty()) {
+            getForkJoinPool().execute(() -> {
+                final DataSet newData = getData(toDownload);
+                final Lock lock = layer.getLock();
+                lock.lock();
+                try {
+                    layer.mergeFrom(newData);
+                } finally {
+                    lock.unlock();
+                }
+            });
+        }
+        return !toDownload.isEmpty();
     }
 
     private static List<BBox> reduceBBox(List<BBox> alreadyDownloaded, List<BBox> wantToDownload) {

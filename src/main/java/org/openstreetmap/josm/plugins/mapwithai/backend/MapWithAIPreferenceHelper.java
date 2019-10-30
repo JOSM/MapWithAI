@@ -197,7 +197,7 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
-     * @return A map of tags to replacement tags (use {@link Tag.ofString} to parse)
+     * @return A map of tags to replacement tags (use {@link Tag#ofString} to parse)
      */
     public static Map<String, String> getReplacementTags() {
         final Map<String, String> defaultMap = Collections.emptyMap();
