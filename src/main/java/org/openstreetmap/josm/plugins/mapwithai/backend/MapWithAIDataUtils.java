@@ -40,7 +40,7 @@ public final class MapWithAIDataUtils {
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
-    private static final String PAINT_STYLE_RESOURCE_URL = "resource://styles/standard/mapwithai.mapcss";
+    private static final String PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
 
     private MapWithAIDataUtils() {
         // Hide the constructor
@@ -53,28 +53,24 @@ public final class MapWithAIDataUtils {
         // Remove old url's that were automatically added -- remove after Jan 01, 2020
         final List<String> oldUrls = Arrays.asList(
                 "https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss",
-                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss");
+                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss",
+                "resource://styles/standard/mapwithai.mapcss");
         MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(style -> oldUrls.contains(style.url))
         .forEach(MapPaintStyles::removeStyle);
 
-        Optional<MapCSSStyleSource> possiblePaintStyle = MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .filter(MapCSSStyleSource.class::isInstance).map(MapCSSStyleSource.class::cast)
-                .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url)).findFirst();
-        if (possiblePaintStyle.isPresent()) {
-            MapCSSStyleSource source = possiblePaintStyle.get();
-            if (!source.getErrors().isEmpty()) {
-                MapPaintStyles.removeStyle(source);
-                reallyAddPaintStyle();
-            }
-        } else {
-            reallyAddPaintStyle();
+        if (!checkIfMapWithAIPaintStyleExists()) {
+            final MapCSSStyleSource style = new MapCSSStyleSource(PAINT_STYLE_RESOURCE_URL, MapWithAIPlugin.NAME,
+                    "MapWithAI");
+            MapPaintStyles.addStyle(style);
         }
     }
 
-    private static final void reallyAddPaintStyle() {
-        final MapCSSStyleSource style = new MapCSSStyleSource(PAINT_STYLE_RESOURCE_URL, MapWithAIPlugin.NAME,
-                "MapWithAI");
-        MapPaintStyles.addStyle(style);
+    /**
+     * @return true if a MapWithAI paint style exists
+     */
+    public static boolean checkIfMapWithAIPaintStyleExists() {
+        return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
+                .map(MapCSSStyleSource.class::cast).anyMatch(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url));
     }
 
     /**

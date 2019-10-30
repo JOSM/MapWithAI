@@ -60,7 +60,7 @@ public class MapWithAIPluginTest {
         plugin = new MapWithAIPlugin(info);
         Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
         Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .filter(source -> source.url != null && source.url.contains("mapwithai")).count());
+                .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
     }
 
     /**

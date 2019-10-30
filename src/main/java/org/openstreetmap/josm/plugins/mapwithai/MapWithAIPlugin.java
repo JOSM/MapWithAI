@@ -33,12 +33,15 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 
 public final class MapWithAIPlugin extends Plugin implements Destroyable {
     /** The name of the plugin */
     public static final String NAME = "MapWithAI";
+
+    private static final String PAINTSTYLE_PREEXISTS = NAME.concat(".paintstyleprexists");
     private static String versionInfo;
 
     private final PreferenceSetting preferenceSetting;
@@ -70,6 +73,10 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
                     Logging.debug(e);
                 }
             }
+        }
+
+        if (!Config.getPref().getKeySet().contains(PAINTSTYLE_PREEXISTS)) {
+            Config.getPref().putBoolean(PAINTSTYLE_PREEXISTS, MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
         }
 
         MapWithAIDataUtils.addMapWithAIPaintStyles();
@@ -134,7 +141,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
         .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
-        MapWithAIDataUtils.removeMapWithAIPaintStyles();
+        if (Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
+            MapWithAIDataUtils.removeMapWithAIPaintStyles();
+        }
 
         destroyables.forEach(Destroyable::destroy);
     }

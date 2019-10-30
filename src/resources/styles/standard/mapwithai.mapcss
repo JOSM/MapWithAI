@@ -15,8 +15,8 @@ way[source=~/^(?i)(microsoft|digitalglobe)$/] {
 }
 
 way.mapwithai {
-    color: fuchsia;
+    color: mapwithai#FF00FF;
 }
 way.mapwithai:closed2 {
-    fill-color: fuchsia;
+    fill-color: mapwithai#FF00FF;
 }
