@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.ChangeCommand;
+import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -85,7 +86,9 @@ public class MergeDuplicateWays extends Command {
 
     @Override
     public void undoCommand() {
-        for (final Command tCommand : commands) {
+        List<Command> reversedCommands = new ArrayList<>(commands);
+        Collections.reverse(reversedCommands);
+        for (final Command tCommand : reversedCommands) {
             tCommand.undoCommand();
         }
     }
@@ -209,6 +212,7 @@ public class MergeDuplicateWays extends Command {
             if (newWay.getNodesCount() > 0) {
                 commands.add(new DeleteCommand(way2));
                 commands.add(new ChangeCommand(way1, newWay));
+                commands.add(new ChangePropertyCommand(way1.getDataSet(), Collections.singleton(newWay), way2.getKeys()));
             }
             if (commands.contains(null)) {
                 commands = commands.stream().filter(Objects::nonNull).collect(Collectors.toList());
