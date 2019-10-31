@@ -24,6 +24,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
+import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
@@ -80,6 +81,14 @@ public final class MapWithAIDataUtils {
         MapPaintStyles.getStyles().getStyleSources().parallelStream()
         .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url))
         .forEach(MapPaintStyles::removeStyle);
+    }
+
+    /**
+     * @return get the MapWithAI Paint style
+     */
+    public static StyleSource getMapWithAIPaintStyle() {
+        return MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url)).findAny().orElse(null);
     }
 
     /**

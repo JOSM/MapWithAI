@@ -7,16 +7,47 @@ meta
     min-josm-version: "15229";
 }
 
-/*******************************************
+/***************************************************
  * Set .mapwithai for all known MapWithAI datasets *
- *******************************************/
-way[source=~/^(?i)(microsoft|digitalglobe)$/] {
+ ***************************************************/
+settings::show_all {
+    label: tr("Show possible MapWithAI objects");
+}
+setting::show_new {
+    type: boolean;
+    label: tr("New");
+    default: true;
+    group: "show_all";
+}
+setting::show_modified {
+    type: boolean;
+    label: tr("Modified");
+    default: false;
+    group: "show_all";
+}
+setting::show_old {
+    type: boolean;
+    label: tr("Pre-existing");
+    default: false;
+    group: "show_all";
+}
+/* This requires support in the plugin (will read key for mapwithai.mapcss:boolean:toggle_with_layer) */
+setting::toggle_with_layer {
+    type: boolean;
+    label: tr("Toggle paintstyle on/off with layer");
+    default: false;
+}
+
+way[source=~/^(?i)(microsoft|digitalglobe)$/][setting("show_old")]!:new!:modified,
+way[source=~/^(?i)(microsoft|digitalglobe)$/][setting("show_new")]:new,
+way[source=~/^(?i)(microsoft|digitalglobe)$/][setting("show_modified")]:modified {
     set .mapwithai;
 }
 
 way.mapwithai {
     color: mapwithai#FF00FF;
 }
+
 way.mapwithai:closed2 {
     fill-color: mapwithai#FF00FF;
 }

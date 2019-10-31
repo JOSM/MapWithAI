@@ -18,14 +18,21 @@ import javax.swing.SwingConstants;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
+import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListener;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
+import org.openstreetmap.josm.gui.mappaint.StyleSource;
+import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 
 /**
  * @author Taylor Smock
  *
  */
-public class MapWithAILayer extends OsmDataLayer {
+public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener {
     private Integer maximumAddition = null;
     private String url = null;
     private Boolean switchLayers = null;
@@ -43,6 +50,7 @@ public class MapWithAILayer extends OsmDataLayer {
         data.setUploadPolicy(UploadPolicy.BLOCKED);
         data.setDownloadPolicy(DownloadPolicy.BLOCKED);
         lock = new MapLock();
+        MainApplication.getLayerManager().addActiveLayerChangeListener(this);
     }
 
     // @Override TODO remove comment on 2020-01-01
@@ -131,5 +139,32 @@ public class MapWithAILayer extends OsmDataLayer {
                 getDataSet().lock();
             }
         }
+    }
+
+    @Override
+    public void activeOrEditLayerChanged(ActiveLayerChangeEvent e) {
+        if (checkIfToggleLayer()) {
+            StyleSource style = MapWithAIDataUtils.getMapWithAIPaintStyle();
+            if (style.active != this.equals(MainApplication.getLayerManager().getActiveLayer())) {
+                MapPaintStyles.toggleStyleActive(MapPaintStyles.getStyles().getStyleSources().indexOf(style));
+            }
+        }
+    }
+
+    private boolean checkIfToggleLayer() {
+        List<String> keys = Config.getPref().getKeySet().parallelStream()
+                .filter(string -> string.contains(MapWithAIPlugin.NAME) && string.contains("boolean:toggle_with_layer"))
+                .collect(Collectors.toList());
+        boolean toggle = false;
+        if (keys.size() == 1) {
+            toggle = Config.getPref().getBoolean(keys.get(0), false);
+        }
+        return toggle;
+    }
+
+    @Override
+    public synchronized void destroy() {
+        super.destroy();
+        MainApplication.getLayerManager().removeActiveLayerChangeListener(this);
     }
 }
