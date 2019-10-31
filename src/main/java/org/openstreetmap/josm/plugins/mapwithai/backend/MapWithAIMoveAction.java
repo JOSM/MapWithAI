@@ -26,6 +26,7 @@ import org.openstreetmap.josm.tools.Shortcut;
 public class MapWithAIMoveAction extends JosmAction {
     /** UID for abstract action */
     private static final long serialVersionUID = 319374598;
+    private Notification lastNotification = null;
 
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), null, tr("Add data from {0}", MapWithAIPlugin.NAME),
@@ -78,10 +79,13 @@ public class MapWithAIMoveAction extends JosmAction {
         message.append(tr("maximum additions per action are ")).append(maxAddition).append(", ");
         message.append(tr("tried to add ")).append(triedToAdd).append(".");
         notification.setContent(message.toString());
-        notification.setDuration(Notification.TIME_LONG);
+        notification.setDuration(Notification.TIME_DEFAULT);
         notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
         notification.show();
-
+        if (lastNotification != null) {
+            lastNotification.setDuration(0);
+        }
+        lastNotification = notification;
     }
 
     @Override

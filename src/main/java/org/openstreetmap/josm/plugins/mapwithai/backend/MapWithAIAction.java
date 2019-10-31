@@ -98,7 +98,7 @@ public class MapWithAIAction extends JosmAction {
             }
 
             notification.setContent(message.toString());
-            notification.setDuration(Notification.TIME_LONG);
+            notification.setDuration(Notification.TIME_DEFAULT);
             notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
             notification.show();
         }
