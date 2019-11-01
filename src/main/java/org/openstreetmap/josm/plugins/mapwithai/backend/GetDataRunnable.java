@@ -94,7 +94,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
         synchronized (LOCK) {
             /* Microsoft buildings don't have a source, so we add one */
-            MapWithAIDataUtils.addSourceTags(dataSet, "building", "Microsoft");
+            MapWithAIDataUtils.addSourceTags(dataSet, "building", "microsoft");
             replaceTags(dataSet);
             removeCommonTags(dataSet);
             mergeNodes(dataSet);
