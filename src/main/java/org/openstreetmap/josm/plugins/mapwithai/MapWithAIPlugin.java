@@ -83,6 +83,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         setVersionInfo(info.localversion);
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
+        new MapWithAIRemoteControl(); // instantiate to get action into Remote Control Preferences
         destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());

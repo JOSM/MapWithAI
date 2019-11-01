@@ -16,6 +16,9 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 
 public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHandler {
 
+    private static final PermissionPrefWithDefault PERMISSION_PREF_WITH_DEFAULT = new PermissionPrefWithDefault(
+            MapWithAIPlugin.NAME.concat(".remote_control"), true, tr("MapWithAI"));
+
     private BBox download = null;
     private BBox crop = null;
     private Integer maxObj = null;
@@ -134,7 +137,7 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
 
     @Override
     public PermissionPrefWithDefault getPermissionPref() {
-        return null;
+        return PERMISSION_PREF_WITH_DEFAULT;
     }
 
     @Override
