@@ -49,7 +49,7 @@ def versions = [
   jacoco: "0.8.5",
   jmockit: "1.46",
   junit: "5.5.2",
-  pmd: "6.18.0",
+  pmd: "6.19.0",
   spotbugs: "4.0.0-beta4",
   wiremock: "2.25.1",
   findsecbugs: "1.10.1",
