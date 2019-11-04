@@ -10,8 +10,10 @@ meta
 /***************************************************
  * Set .mapwithai for all known MapWithAI datasets *
  ***************************************************/
-settings::show_all {
-    label: tr("Show possible MapWithAI objects");
+@supports (min-josm-version: 15289) {
+    settings::show_all {
+        label: tr("Show possible MapWithAI objects");
+    }
 }
 setting::show_new {
     type: boolean;
