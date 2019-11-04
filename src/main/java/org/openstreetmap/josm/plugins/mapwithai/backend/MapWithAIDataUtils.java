@@ -78,7 +78,7 @@ public final class MapWithAIDataUtils {
      * Remove MapWithAI paint styles
      */
     public static void removeMapWithAIPaintStyles() {
-        MapPaintStyles.getStyles().getStyleSources().parallelStream()
+        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
         .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url))
         .forEach(MapPaintStyles::removeStyle);
     }
