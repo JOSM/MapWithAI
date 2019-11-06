@@ -146,7 +146,6 @@ public final class MapWithAIDataUtils {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
         final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-        monitor.setCancelable(Boolean.FALSE);
         getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
         monitor.finishTask();
         monitor.close();
