@@ -56,7 +56,8 @@ public final class MapWithAIDataUtils {
                 "https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss",
                 "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss",
                 "resource://styles/standard/mapwithai.mapcss");
-        MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(style -> oldUrls.contains(style.url))
+        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
+                .filter(style -> oldUrls.contains(style.url))
         .forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
