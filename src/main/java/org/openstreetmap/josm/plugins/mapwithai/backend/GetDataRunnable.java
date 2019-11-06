@@ -44,7 +44,7 @@ import org.openstreetmap.josm.tools.Pair;
  */
 public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelListener {
     private static final long serialVersionUID = 258423685658089715L;
-    private final transient List<BBox> bbox;
+    private final List<BBox> bbox;
     private static HttpClient client;
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
@@ -250,4 +250,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             client.disconnect();
         }
     }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+    }
+
 }

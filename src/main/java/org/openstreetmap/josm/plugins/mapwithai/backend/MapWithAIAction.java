@@ -88,8 +88,7 @@ public class MapWithAIAction extends JosmAction {
                 .forEach(bounds::addAll);
             }
             final StringBuilder message = new StringBuilder();
-            message.append(MapWithAIPlugin.NAME);
-            message.append(": ");
+            message.append(MapWithAIPlugin.NAME).append(": ");
             final MapWithAIAvailability availability = MapWithAIAvailability.getInstance();
             final Map<String, Boolean> availableTypes = new TreeMap<>();
             for (final Bounds bound : bounds) {
@@ -102,8 +101,7 @@ public class MapWithAIAction extends JosmAction {
             if (types.isEmpty()) {
                 message.append(tr("No data available"));
             } else {
-                message.append("Data available: ");
-                message.append(String.join(", ", types));
+                message.append("Data available: ").append(String.join(", ", types));
             }
 
             notification.setContent(message.toString());

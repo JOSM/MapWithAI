@@ -25,8 +25,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     DataSet editable;
     DataSet mapWithAI;
     Collection<OsmPrimitive> primitives;
-    Command command = null;
-    Lock lock = null;
+    Command command;
+    Lock lock;
 
     /**
      * Add primitives from MapWithAI to the OSM data layer

@@ -26,7 +26,7 @@ import org.openstreetmap.josm.tools.Shortcut;
 public class MapWithAIMoveAction extends JosmAction {
     /** UID for abstract action */
     private static final long serialVersionUID = 319374598;
-    private Notification lastNotification = null;
+    private transient Notification lastNotification;
 
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), null, tr("Add data from {0}", MapWithAIPlugin.NAME),
@@ -41,8 +41,6 @@ public class MapWithAIMoveAction extends JosmAction {
     public void actionPerformed(ActionEvent event) {
         for (final MapWithAILayer mapWithAI : MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class)) {
             final DataSet ds = mapWithAI.getDataSet();
-            final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class);
-            OsmDataLayer editLayer = null;
             final int maxAddition = MapWithAIPreferenceHelper.getMaximumAddition();
             final List<Node> nodes = ds.getSelectedNodes().stream().filter(node -> !node.getReferrers().isEmpty())
                     .collect(Collectors.toList());
@@ -51,33 +49,34 @@ public class MapWithAIMoveAction extends JosmAction {
             if (ds.getSelected().size() > maxAddition) {
                 createMaxAddedDialog(maxAddition, ds.getSelected().size());
             }
-            final Collection<OsmPrimitive> selected = maxAddition > 0
-                    ? ds.getSelected().stream().limit(maxAddition).collect(Collectors.toList())
-                            : ds.getSelected();
-                    for (final OsmDataLayer osmLayer : osmLayers) {
-                        if (!osmLayer.isLocked() && osmLayer.isVisible() && osmLayer.isUploadable()
-                                && osmLayer.getClass().equals(OsmDataLayer.class)) {
-                            editLayer = osmLayer;
-                            break;
-                        }
-                    }
-                    if (editLayer != null) {
-                        final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
-                        UndoRedoHandler.getInstance().add(command);
-                        if (MapWithAIPreferenceHelper.isSwitchLayers()) {
-                            MainApplication.getLayerManager().setActiveLayer(editLayer);
-                        }
-                    }
+            final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
+            final OsmDataLayer editLayer = getOsmDataLayer();
+            if (editLayer != null) {
+                final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
+                UndoRedoHandler.getInstance().add(command);
+                if (MapWithAIPreferenceHelper.isSwitchLayers()) {
+                    MainApplication.getLayerManager().setActiveLayer(editLayer);
+                }
+            }
         }
+    }
+
+    private static Collection<OsmPrimitive> limitCollection(DataSet ds, int maxSize) {
+        return maxSize > 0 ? ds.getSelected().stream().limit(maxSize).collect(Collectors.toList()) : ds.getSelected();
+    }
+
+    private static OsmDataLayer getOsmDataLayer() {
+        return MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                .filter(OsmDataLayer::isVisible).filter(OsmDataLayer::isUploadable)
+                .filter(osmLayer -> !osmLayer.isLocked() && osmLayer.getClass().equals(OsmDataLayer.class)).findFirst()
+                .orElse(null);
     }
 
     private void createMaxAddedDialog(int maxAddition, int triedToAdd) {
         final Notification notification = new Notification();
         final StringBuilder message = new StringBuilder();
-        message.append(MapWithAIPlugin.NAME);
-        message.append(": ");
-        message.append(tr("maximum additions per action are ")).append(maxAddition).append(", ");
-        message.append(tr("tried to add ")).append(triedToAdd).append(".");
+        message.append(MapWithAIPlugin.NAME).append(": ").append(tr("maximum additions per action are "))
+        .append(maxAddition).append(", ").append(tr("tried to add ")).append(triedToAdd).append('.');
         notification.setContent(message.toString());
         notification.setDuration(Notification.TIME_DEFAULT);
         notification.setIcon(JOptionPane.INFORMATION_MESSAGE);

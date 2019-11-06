@@ -19,14 +19,17 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     private static final PermissionPrefWithDefault PERMISSION_PREF_WITH_DEFAULT = new PermissionPrefWithDefault(
             MapWithAIPlugin.NAME.concat(".remote_control"), true, tr("MapWithAI"));
 
-    private BBox download = null;
-    private BBox crop = null;
-    private Integer maxObj = null;
-    private Boolean switchLayer = null;
-    private String url = null;
+    private BBox download;
+    private BBox crop;
+    private Integer maxObj;
+    private Boolean switchLayer;
+    private String url;
 
     private static final String MAX_OBJ = "max_obj";
     private static final String SWITCH_LAYER = "switch_layer";
+    private static final String BBOX = "bbox";
+    private static final String CROP_BBOX = "crop_bbox";
+    private static final String URL_STRING = "url";
 
     public MapWithAIRemoteControl() {
         super();
@@ -36,18 +39,18 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     protected void validateRequest() throws RequestHandlerBadRequestException {
         if (args != null) {
             try {
-                if (args.containsKey("bbox")) {
-                    download = parseBBox(args.get("bbox"));
+                if (args.containsKey(BBOX)) {
+                    download = parseBBox(args.get(BBOX));
                 }
-                if (args.containsKey("crop_bbox")) {
-                    crop = parseBBox(args.get("crop_bbox"));
+                if (args.containsKey(CROP_BBOX)) {
+                    crop = parseBBox(args.get(CROP_BBOX));
                 }
                 if (args.containsKey(MAX_OBJ)) {
                     maxObj = Integer.parseInt(args.get(MAX_OBJ));
                 }
-                if (args.containsKey("url")) {
-                    final String urlString = args.get("url");
-                    // Ensure the URL is valid
+                if (args.containsKey(URL_STRING)) {
+                    final String urlString = args.get(URL_STRING);
+                    // Ensure the URL_STRING is valid
                     url = new URL(urlString).toString();
                 }
                 if (args.containsKey(SWITCH_LAYER)) {
@@ -109,26 +112,17 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     public String getPermissionMessage() {
         final String br = "<br />";
         final StringBuilder sb = new StringBuilder();
-        sb.append(tr("Remote Control has been asked to load data from the API."));
-        sb.append(" (");
-        sb.append(url);
-        sb.append(")");
-        sb.append(br);
-        sb.append(tr("{0} will ", MapWithAIPlugin.NAME));
-        if (!switchLayer) {
+        sb.append(tr("Remote Control has been asked to load data from the API.")).append(" (").append(url).append(')')
+        .append(br).append(tr("{0} will ", MapWithAIPlugin.NAME));
+        if (Boolean.FALSE.equals(switchLayer)) {
             sb.append(tr("not "));
         }
-        sb.append(tr("automatically switch layers."));
-        sb.append(br);
+        sb.append(tr("automatically switch layers.")).append(br);
         if (download != null) {
-            sb.append(tr("We will download data in "));
-            sb.append(download.toStringCSV(","));
-            sb.append(br);
+            sb.append(tr("We will download data in ")).append(download.toStringCSV(",")).append(br);
         }
         if (crop != null) {
-            sb.append(tr("We will crop the data to"));
-            sb.append(crop.toStringCSV(","));
-            sb.append(br);
+            sb.append(tr("We will crop the data to")).append(crop.toStringCSV(",")).append(br);
         }
         sb.append(tr("There is a maximum addition of {0} objects at one time", maxObj));
         return sb.toString();
@@ -147,7 +141,7 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
 
     @Override
     public String[] getOptionalParams() {
-        return new String[] { "bbox", "url", MAX_OBJ, SWITCH_LAYER, "crop_bbox" };
+        return new String[] { BBOX, URL_STRING, MAX_OBJ, SWITCH_LAYER, CROP_BBOX };
     }
 
     @Override

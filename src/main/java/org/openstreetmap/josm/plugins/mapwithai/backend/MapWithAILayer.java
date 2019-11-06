@@ -33,9 +33,9 @@ import org.openstreetmap.josm.tools.GBC;
  *
  */
 public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener {
-    private Integer maximumAddition = null;
-    private String url = null;
-    private Boolean switchLayers = null;
+    private Integer maximumAddition;
+    private String url;
+    private Boolean switchLayers;
     private final Lock lock;
 
     /**
@@ -151,7 +151,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         }
     }
 
-    private boolean checkIfToggleLayer() {
+    private static boolean checkIfToggleLayer() {
         List<String> keys = Config.getPref().getKeySet().parallelStream()
                 .filter(string -> string.contains(MapWithAIPlugin.NAME) && string.contains("boolean:toggle_with_layer"))
                 .collect(Collectors.toList());

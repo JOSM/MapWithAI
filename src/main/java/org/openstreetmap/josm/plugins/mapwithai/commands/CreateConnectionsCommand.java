@@ -26,7 +26,7 @@ import org.openstreetmap.josm.tools.Utils;
 
 public class CreateConnectionsCommand extends Command {
     private final Collection<OsmPrimitive> primitives;
-    private Command command = null;
+    private Command command;
     private static final List<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new ArrayList<>();
     static {
         CONFLATION_COMMANDS.add(ConnectedCommand.class);

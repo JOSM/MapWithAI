@@ -5,7 +5,6 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -47,18 +46,9 @@ public final class DetectTaskingManagerUtils {
      *         {@link DetectTaskingManagerUtils#PATTERNS} or {@code null}.
      */
     public static Layer getTaskingManagerLayer() {
-        Layer returnLayer = null;
-        final List<Layer> layers = MainApplication.getLayerManager().getLayers();
-        for (final Pattern pattern : PATTERNS) {
-            final Optional<Layer> layer = layers.parallelStream()
-                    .filter(tlayer -> pattern.matcher(tlayer.getName()).matches())
-                    .findFirst();
-            if (layer.isPresent()) {
-                returnLayer = layer.get();
-                break;
-            }
-        }
-        return returnLayer;
+        return MainApplication.getLayerManager().getLayers().parallelStream().filter(
+                tlayer -> PATTERNS.parallelStream().anyMatch(pattern -> pattern.matcher(tlayer.getName()).matches()))
+                .findFirst().orElse(null);
     }
 
     /**

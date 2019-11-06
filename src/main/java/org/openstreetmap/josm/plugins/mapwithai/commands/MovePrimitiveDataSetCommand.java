@@ -25,7 +25,7 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  */
 public class MovePrimitiveDataSetCommand extends Command {
-    private SequenceCommand command = null;
+    private SequenceCommand command;
 
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives) {
         super(to);

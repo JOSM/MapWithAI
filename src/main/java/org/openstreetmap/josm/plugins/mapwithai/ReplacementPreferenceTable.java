@@ -38,11 +38,9 @@ public class ReplacementPreferenceTable extends PreferencesTable {
         final JosmTextField tValue = new JosmTextField("", 50);
         p.add(tValue, GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
-        PrefEntry pe = null;
-        if (askAddSetting(gui, p)) {
-            pe = new PrefEntry(tkey.getText(), new StringSetting(tValue.getText()), new StringSetting(null), false);
-        }
-        return pe;
+        return askAddSetting(gui, p)
+                ? new PrefEntry(tkey.getText(), new StringSetting(tValue.getText()), new StringSetting(null), false)
+                : null;
     }
 
     private static boolean askAddSetting(JComponent gui, JPanel p) {
