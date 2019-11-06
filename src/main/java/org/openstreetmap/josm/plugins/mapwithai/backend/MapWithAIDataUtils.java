@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,6 +14,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
+import javax.swing.JOptionPane;
+
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -21,6 +25,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
@@ -38,6 +43,7 @@ import org.openstreetmap.josm.tools.Utils;
  */
 public final class MapWithAIDataUtils {
     public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1km, max is 10km
+    private static final int TOO_MANY_BBOXES = 20;
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
@@ -146,11 +152,16 @@ public final class MapWithAIDataUtils {
     public static DataSet getData(List<BBox> bbox) {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
-        final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-        getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
-        monitor.finishTask();
-        monitor.close();
-
+        if (realBBoxes.size() < TOO_MANY_BBOXES || ConditionalOptionPaneUtil.showConfirmationDialog(
+                MapWithAIPlugin.NAME.concat(".alwaysdownload"), null,
+                tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
+                        realBBoxes.size()),
+                null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION)) {
+            final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
+            getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
+            monitor.finishTask();
+            monitor.close();
+        }
         return dataSet;
     }
 
