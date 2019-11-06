@@ -102,7 +102,7 @@ public class MapWithAIArbitraryAction extends JosmAction {
         p.add(new JLabel(tr("Right Longitude")), GBC.eol());
         p.add(rightLon, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
 
-        p.add(new JLabel(tr("Crop to bbox?")));
+        p.add(new JLabel(tr("Crop to download area?")));
         p.add(checkbox, GBC.eol());
 
         final String[] buttons = { tr("Download"), tr("Cancel") };
