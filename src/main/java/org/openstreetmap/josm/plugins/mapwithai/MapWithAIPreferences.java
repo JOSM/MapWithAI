@@ -70,6 +70,16 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         nonExpert.setAlignmentY(Component.TOP_ALIGNMENT);
         nonExpert.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        mapWithAIApiUrl.setToolTipText(tr("The URL that will be called to get data from"));
+        switchLayer.setToolTipText(
+                tr("If checked, automatically switch from the {0} layer to the OSM layer when objects are added",
+                        MapWithAIPlugin.NAME));
+        maximumAddition.setToolTipText(tr(
+                "This is the maximum number of complete OSM objects that can be added from the {0} layer, child objects do not count to this limit",
+                MapWithAIPlugin.NAME));
+        mergeBuildingWithAddress.setToolTipText(tr(
+                "If checked, automatically merge address nodes onto added buildings, if and only if one address is withing the building boundary"));
+
         possibleMapWithAIApiUrl.setEditable(true);
         possibleMapWithAIApiUrl.setPrototypeDisplayValue("https://example.url/some/end/point");
         final Component textField = possibleMapWithAIApiUrl.getEditor().getEditorComponent();
