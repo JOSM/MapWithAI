@@ -10,6 +10,7 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
@@ -38,9 +39,20 @@ public class ReplacementPreferenceTable extends PreferencesTable {
         final JosmTextField tValue = new JosmTextField("", 50);
         p.add(tValue, GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
+        p.add(new JSeparator(), GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
+        p.add(new JLabel(tr("Example")), GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
+        p.add(new JLabel(tr("Original Tag")), GBC.std().insets(0, 0, 5, 0));
+        JosmTextField tmp = new JosmTextField("highway=residential");
+        tmp.setEditable(false);
+        p.add(tmp, GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
+        p.add(new JLabel(tr("Replacement Tag")), GBC.std().insets(0, 0, 5, 0));
+        tmp = new JosmTextField("disused:highway=road");
+        tmp.setEditable(false);
+        p.add(tmp, GBC.eop().insets(5, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
+
         return askAddSetting(gui, p)
                 ? new PrefEntry(tkey.getText(), new StringSetting(tValue.getText()), new StringSetting(null), false)
-                : null;
+                        : null;
     }
 
     private static boolean askAddSetting(JComponent gui, JPanel p) {
