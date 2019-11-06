@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
+import org.openstreetmap.josm.actions.AbstractMergeAction;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -41,23 +42,31 @@ public class MapWithAIAction extends JosmAction {
     public void actionPerformed(ActionEvent event) {
         if (isEnabled()) {
             final boolean hasLayer = MapWithAIDataUtils.getLayer(false) != null;
-            if (MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true))) {
+            final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
+                    .stream().filter(layer -> !(layer instanceof MapWithAILayer)).collect(Collectors.toList());
+            final OsmDataLayer layer = getOsmLayer(osmLayers);
+            if (layer != null && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
                 createMessageDialog();
-            } else if (hasLayer) {
-                toggleLayer();
+            } else if (layer != null && hasLayer) {
+                toggleLayer(layer);
             }
         }
     }
 
-    private static void toggleLayer() {
+    private static OsmDataLayer getOsmLayer(List<OsmDataLayer> osmLayers) {
+        return osmLayers.size() == 1
+                ? osmLayers.get(0)
+                        : AbstractMergeAction.askTargetLayer(osmLayers.toArray(new OsmDataLayer[0]),
+                                tr("Please select the target layer"), tr("Select target layer"), tr("OK"), "download");
+    }
+
+    private static void toggleLayer(Layer toLayer) {
         final OsmDataLayer mapwithai = MapWithAIDataUtils.getLayer(false);
-        final OsmDataLayer osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                .filter(layer -> !(layer instanceof MapWithAILayer)).findFirst().orElse(null);
         final Layer currentLayer = MainApplication.getLayerManager().getActiveLayer();
         if (currentLayer != null) {
-            if (currentLayer.equals(mapwithai) && osmData != null) {
-                MainApplication.getLayerManager().setActiveLayer(osmData);
-            } else if (currentLayer.equals(osmData) && mapwithai != null) {
+            if (currentLayer.equals(mapwithai) && toLayer != null) {
+                MainApplication.getLayerManager().setActiveLayer(toLayer);
+            } else if (currentLayer.equals(toLayer) && mapwithai != null) {
                 MainApplication.getLayerManager().setActiveLayer(mapwithai);
             }
         }
