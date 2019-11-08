@@ -5,6 +5,8 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,18 +35,30 @@ public final class MapWithAIAvailability {
     private static String rapidReleases = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_releases.geojson";
     private static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
     private static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
-    private static final Map<String, String> COUNTRY_NAME_FIX = new HashMap<>();
+    /** Original country, replacement countries */
+    private static final Map<String, Collection<String>> COUNTRY_NAME_FIX = new HashMap<>();
 
     private static class InstanceHelper {
         static MapWithAIAvailability instance = new MapWithAIAvailability();
     }
 
     static {
-        COUNTRY_NAME_FIX.put("Egypt", "Egypt, Arab Rep.");
-        COUNTRY_NAME_FIX.put("Dem. Rep. Congo", "Congo, Dem. Rep.");
-        COUNTRY_NAME_FIX.put("Democratic Republic of the Congo", "Congo, Dem. Rep.");
-        COUNTRY_NAME_FIX.put("eSwatini", "Swaziland");
-        COUNTRY_NAME_FIX.put("Gambia", "Gambia, The");
+        COUNTRY_NAME_FIX.put("Egypt", Collections.singleton("Egypt, Arab Rep."));
+        COUNTRY_NAME_FIX.put("Dem. Rep. Congo", Collections.singleton("Congo, Dem. Rep."));
+        COUNTRY_NAME_FIX.put("Democratic Republic of the Congo", Collections.singleton("Congo, Dem. Rep."));
+        COUNTRY_NAME_FIX.put("eSwatini", Collections.singleton("Swaziland"));
+        COUNTRY_NAME_FIX.put("Gambia", Collections.singleton("Gambia, The"));
+        COUNTRY_NAME_FIX.put("The Bahamas", Collections.singleton("Bahamas, The"));
+        COUNTRY_NAME_FIX.put("Ivory Coast", Collections.singleton("Côte d'Ivoire"));
+        COUNTRY_NAME_FIX.put("Somaliland", Collections.singleton("Somalia")); // Technically a self-declared independent
+        // area of Somalia
+        COUNTRY_NAME_FIX.put("Carribean Countries",
+                Arrays.asList("Antigua and Barbuda", "Anguilla", "Barbados", "British Virgin Islands", "Cayman Islands",
+                        "Dominica", "Dominican Republic", "Grenada", "Guadeloupe", "Haiti", "Jamaica", "Martinique",
+                        "Montserrat", "Puerto Rico", "Saba", "Saint-Barthélemy", "Saint-Martin", "Sint Eustatius",
+                        "Sint Maarten", "St. Kitts and Nevis", "St. Lucia", "St. Vincent and the Grenadines",
+                        "Turks and Caicos Islands"));
+        COUNTRY_NAME_FIX.put("Falkland Islands (Islas Maldivas)", Collections.singleton("Falkland Islands"));
         POSSIBLE_DATA_POINTS.put("roads", "RapiD roads available");
         POSSIBLE_DATA_POINTS.put("buildings", "MS buildings available");
     }
@@ -91,34 +105,30 @@ public final class MapWithAIAvailability {
         final DataSet territories = Territories.getDataSet();
         for (int i = 0; i < countries.size(); i++) {
             final JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
-            final String countryName = cornerCaseNames(country.getString("Country"));
-            final Optional<OsmPrimitive> realCountry = territories.allPrimitives().parallelStream()
-                    .filter(primitive -> countryName.equalsIgnoreCase(primitive.get("name:en")))
-                    .findFirst();
-            if (realCountry.isPresent()) {
-                final String key = realCountry.get().get("ISO3166-1:alpha2");
-                // We need to handle cases like Alaska more elegantly
-                final Map<String, Boolean> data = returnCountries.getOrDefault(key, new TreeMap<>());
-                for (final Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
-                    final boolean hasData = "yes".equals(country.getString(entry.getValue()));
-                    if (hasData || !data.containsKey(entry.getKey())) {
-                        data.put(entry.getKey(), hasData);
+            for (String countryName : cornerCaseNames(country.getString("Country"))) {
+                final Optional<OsmPrimitive> realCountry = territories.allPrimitives().parallelStream()
+                        .filter(primitive -> countryName.equalsIgnoreCase(primitive.get("name:en"))).findFirst();
+                if (realCountry.isPresent()) {
+                    final String key = realCountry.get().get("ISO3166-1:alpha2");
+                    // We need to handle cases like Alaska more elegantly
+                    final Map<String, Boolean> data = returnCountries.getOrDefault(key, new TreeMap<>());
+                    for (final Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
+                        final boolean hasData = "yes".equals(country.getString(entry.getValue()));
+                        if (hasData || !data.containsKey(entry.getKey())) {
+                            data.put(entry.getKey(), hasData);
+                        }
                     }
+                    returnCountries.put(key, data);
+                } else {
+                    Logging.error(tr("{0}: We couldn''t find {1}", MapWithAIPlugin.NAME, countryName));
                 }
-                returnCountries.put(key, data);
-            } else {
-                Logging.error(tr("{0}: We couldn''t find {1}", MapWithAIPlugin.NAME, countryName));
             }
         }
         return returnCountries;
     }
 
-    private static String cornerCaseNames(String name) {
-        String returnName = name;
-        if (COUNTRY_NAME_FIX.containsKey(name)) {
-            returnName = COUNTRY_NAME_FIX.get(name);
-        }
-        return returnName;
+    private static Collection<String> cornerCaseNames(String name) {
+        return COUNTRY_NAME_FIX.containsKey(name) ? COUNTRY_NAME_FIX.get(name) : Collections.singleton(name);
     }
 
     /**
