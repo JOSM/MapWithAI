@@ -32,7 +32,8 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
 public final class MapWithAIAvailability {
-    private static String rapidReleases = "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/raw/master/data/rapid_releases.geojson";
+    private static String rapidReleases = "https://raw.githubusercontent.com/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson";
+    /** A map of country to a map of available types */
     private static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
     private static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
     /** Original country, replacement countries */
@@ -109,7 +110,17 @@ public final class MapWithAIAvailability {
                 final Optional<OsmPrimitive> realCountry = territories.allPrimitives().parallelStream()
                         .filter(primitive -> countryName.equalsIgnoreCase(primitive.get("name:en"))).findFirst();
                 if (realCountry.isPresent()) {
-                    final String key = realCountry.get().get("ISO3166-1:alpha2");
+                    final OsmPrimitive countryLoop = realCountry.get();
+                    final String key = Optional.ofNullable(countryLoop.get("ISO3166-1:alpha2"))
+                            .orElse(Optional.ofNullable(countryLoop.get("ISO3166-2")).orElse(""));
+                    if ("".equals(key)) {
+                        Logging.error("{0}: {1} does not have a \"ISO3166-1:alpha2\" or \"ISO3166-2\" key. {2}",
+                                MapWithAIPlugin.NAME,
+                                countryLoop, countryLoop.getInterestingTags());
+                    } else {
+                        Logging.trace("{0}: {1} has a country code of {2}", MapWithAIPlugin.NAME,
+                                countryLoop.get("name:en"), key);
+                    }
                     // We need to handle cases like Alaska more elegantly
                     final Map<String, Boolean> data = returnCountries.getOrDefault(key, new TreeMap<>());
                     for (final Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
@@ -152,6 +163,7 @@ public final class MapWithAIAvailability {
     public boolean hasData(LatLon latLon) {
         boolean returnBoolean = false;
         for (final Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
+            Logging.debug(entry.getKey());
             if (Territories.isIso3166Code(entry.getKey(), latLon)) {
                 returnBoolean = entry.getValue().entrySet().parallelStream().anyMatch(Entry::getValue);
                 break;
