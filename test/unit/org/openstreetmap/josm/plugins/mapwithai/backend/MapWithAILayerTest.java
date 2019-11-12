@@ -53,7 +53,7 @@ public class MapWithAILayerTest {
 
     @Before
     public void setUp() {
-        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com/maps",
+        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com",
                 wireMockRule.baseUrl());
         MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
         layer = new MapWithAILayer(new DataSet(), "test", null);

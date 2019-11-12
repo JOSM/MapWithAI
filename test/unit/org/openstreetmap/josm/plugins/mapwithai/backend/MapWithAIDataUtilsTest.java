@@ -42,7 +42,7 @@ public class MapWithAIDataUtilsTest {
 
     @Before
     public void setUp() {
-        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com/maps",
+        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com",
                 wireMockRule.baseUrl());
         MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
     }
@@ -55,7 +55,7 @@ public class MapWithAIDataUtilsTest {
     public void testGetData() {
         final BBox testBBox = getTestBBox();
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(testBBox));
-        Assert.assertEquals(1, ds.getWays().size());
+        Assert.assertEquals(2, ds.getWays().size());
     }
 
     /**
@@ -74,7 +74,7 @@ public class MapWithAIDataUtilsTest {
         final DataSet ds = MapWithAIDataUtils.getData(testBBox);
         Assert.assertEquals(1, ds.getWays().size());
         Assert.assertEquals(3, ds.getNodes().size());
-        Assert.assertEquals(1, originalData.getWays().size());
+        Assert.assertEquals(2, originalData.getWays().size());
         Assert.assertEquals(4, originalData.getNodes().size());
     }
 

@@ -1,0 +1,28 @@
+{
+  "id" : "b8d51a0d-76b7-4805-b72e-61dda7951bb7",
+  "name" : "maps_ml_roads",
+  "request" : {
+    "url" : "/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox=0.0,0.0,0.001,0.001",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm generator=\"NS_ROADS_SERVICE\" version=\"0.6\">\n  <bounds maxlat=\"0.00099\" maxlon=\"0.00098999999999962\" minlat=\"1.0E-5\" minlon=\"1.0000000000381E-5\"/>\n</osm>\n",
+    "headers" : {
+      "Content-Type" : "text/xml; charset=UTF-8",
+      "Strict-Transport-Security" : "max-age=15552000; preload",
+      "Vary" : "Accept-Encoding",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-XSS-Protection" : "0",
+      "Access-Control-Allow-Origin" : "https://facebook.com",
+      "X-FB-Debug" : "JepMhi9THt+anWgV2bD3AUwkBCmQHcAf93a5Sxr4w4tC4ggxVGdfCmpPbnFKM7jxb9q8elehQuf78I2KZCn6KQ==",
+      "Date" : "Tue, 12 Nov 2019 16:20:36 GMT",
+      "Alt-Svc" : "h3-23=\":443\"; ma=3600",
+      "Connection" : "keep-alive"
+    }
+  },
+  "uuid" : "b8d51a0d-76b7-4805-b72e-61dda7951bb7",
+  "persistent" : true,
+  "insertionIndex" : 5
+}
