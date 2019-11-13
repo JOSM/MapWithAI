@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
 
@@ -26,12 +27,15 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
+import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor.CancelListener;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
+import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.HttpClient.Response;
 import org.openstreetmap.josm.tools.Logging;
@@ -53,6 +57,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
 
     private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
     private static final String SERVER_ID_KEY = "server_id";
+    private static final int DEFAULT_TIMEOUT = 50_000; // 50 seconds
+
+    private static final double ARTIFACT_ANGLE = 0.1745; // 10 degrees in radians
 
     /**
      * @param bbox    The initial bbox to get data from (don't reduce beforehand --
@@ -110,6 +117,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 removeCommonTags(dataSet);
                 mergeNodes(dataSet);
                 cleanupDataSet(dataSet);
+                mergeWays(dataSet);
+                dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+                .forEach(GetDataRunnable::cleanupArtifacts);
                 for (int i = 0; i < 5; i++) {
                     new MergeDuplicateWays(dataSet).executeCommand();
                 }
@@ -177,9 +187,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             bbox.addPrimitive(n1, 0.001);
             final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream()
                     .filter(node -> !node.isDeleted() && !node.equals(n1)
-                            && n1.getKeys().equals(node.getKeys())
-                            && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
-                            .getMaxNodeDistance())
+                            && ((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty()
+                                    || node.getKeys().isEmpty())
+                                    && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
+                                    .getMaxNodeDistance()
+                                    || !n1.getKeys().isEmpty() && n1.getKeys().equals(node.getKeys())
+                                    && n1.getCoor().greatCircleDistance(
+                                            node.getCoor()) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))
                     .collect(Collectors.toList());
             final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, n1);
             if (mergeCommand != null) {
@@ -187,6 +201,102 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 nodes.removeAll(nearbyNodes);
             }
         }
+    }
+
+    private static void mergeWays(DataSet dataSet) {
+        final List<Way> ways = dataSet.getWays().parallelStream().filter(way -> !way.isDeleted()).collect(Collectors.toList());
+        for (int i = 0; i < ways.size(); i++) {
+            final Way way1 = ways.get(i);
+            final BBox bbox = new BBox();
+            bbox.addPrimitive(way1, 0.001);
+            final List<Way> nearbyWays = dataSet.searchWays(bbox).parallelStream().filter(way -> way.getNodes().parallelStream().filter(node -> way1.getNodes().contains(node)).count() > 1).collect(Collectors.toList());
+            way1.getNodePairs(false);
+            nearbyWays.parallelStream().flatMap(way2 -> checkWayDuplications(way1, way2).entrySet().parallelStream())
+            .forEach(GetDataRunnable::addMissingElement);
+        }
+    }
+
+    protected static void addMissingElement(Map.Entry<WaySegment, List<WaySegment>> entry) {
+        Way way = entry.getKey().way;
+        Way waySegmentWay = entry.getKey().toWay();
+        Node toAdd = entry.getValue().parallelStream()
+                .flatMap(seg -> Arrays.asList(seg.getFirstNode(), seg.getSecondNode()).parallelStream())
+                .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
+        if (toAdd != null
+                && Geometry.getDistance(waySegmentWay, toAdd) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10) {
+            way.addNode(entry.getKey().lowerIndex + 1, toAdd);
+        }
+        for (int i = 0; i < way.getNodesCount() - 2; i++) {
+            Node node0 = way.getNode(i);
+            Node node3 = way.getNode(i + 2);
+            if (node0.equals(node3)) {
+                List<Node> nodes = way.getNodes();
+                nodes.remove(i + 2); // SonarLint doesn't like this (if it was i instead of i + 2, it would be an
+                // issue)
+                way.setNodes(nodes);
+            }
+        }
+    }
+
+    protected static void cleanupArtifacts(Way way) {
+        for (int i = 0; i < way.getNodesCount() - 2; i++) {
+            Node node0 = way.getNode(i);
+            Node node1 = way.getNode(i + 1);
+            Node node2 = way.getNode(i + 2);
+            double angle = Geometry.getCornerAngle(node0.getEastNorth(), node1.getEastNorth(), node2.getEastNorth());
+            if (angle < ARTIFACT_ANGLE) {
+                List<Node> nodes = way.getNodes();
+                nodes.remove(i + 1); // not an issue since I'm adding it back
+                nodes.add(i + 2, node1);
+            }
+        }
+        if (way.getNodesCount() == 2 && way.getDataSet() != null) {
+            BBox tBBox = new BBox();
+            tBBox.addPrimitive(way, 0.001);
+            if (way.getDataSet().searchWays(tBBox).parallelStream()
+                    .filter(tWay -> !way.equals(tWay) && !tWay.isDeleted()).anyMatch(
+                            tWay -> Geometry.getDistance(way, tWay) < MapWithAIPreferenceHelper.getMaxNodeDistance())) {
+                way.setDeleted(true);
+            }
+        }
+    }
+    protected static Map<WaySegment, List<WaySegment>> checkWayDuplications(Way way1, Way way2) {
+        List<WaySegment> waySegments1 = way1.getNodePairs(false).stream()
+                .map(pair -> WaySegment.forNodePair(way1, pair.a, pair.b)).collect(Collectors.toList());
+        List<WaySegment> waySegments2 = way2.getNodePairs(false).stream()
+                .map(pair -> WaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
+        Map<WaySegment, List<WaySegment>> partials = new TreeMap<>();
+        for (WaySegment segment1 : waySegments1) {
+            boolean same = false;
+            boolean first = false;
+            boolean second = false;
+            List<WaySegment> replacements = new ArrayList<>();
+            for (WaySegment segment2 : waySegments2) {
+                same = segment1.isSimilar(segment2);
+                if (same) {
+                    break;
+                }
+                if (Math.max(Geometry.getDistance(way1, segment2.getFirstNode()), Geometry.getDistance(way1,
+                        segment2.getSecondNode())) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10) {
+                    if (!first && (segment1.getFirstNode().equals(segment2.getFirstNode())
+                            || segment1.getFirstNode().equals(segment2.getSecondNode()))) {
+                        replacements.add(segment2);
+                        first = true;
+                    } else if (!second && (segment1.getSecondNode().equals(segment2.getFirstNode())
+                            || segment1.getSecondNode().equals(segment2.getSecondNode()))) {
+                        replacements.add(segment2);
+                        second = true;
+                    }
+                }
+            }
+            if (same) {
+                continue;
+            }
+            if (replacements.size() == 2) {
+                partials.put(segment1, replacements);
+            }
+        }
+        return partials;
     }
 
     /**
@@ -197,6 +307,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      * @return A dataset with the data from the bbox
      */
     private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
+        // Logging.error(bbox.toStringCSV(","));
         InputStream inputStream = null;
         final DataSet dataSet = new DataSet();
         String urlString = MapWithAIPreferenceHelper.getMapWithAIUrl();
@@ -210,6 +321,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
                     DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",")));
             client = HttpClient.create(url);
+            client.setReadTimeout(DEFAULT_TIMEOUT);
             final StringBuilder defaultUserAgent = new StringBuilder();
             defaultUserAgent.append(client.getHeaders().get("User-Agent"));
             if (defaultUserAgent.toString().trim().length() == 0) {

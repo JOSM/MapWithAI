@@ -43,7 +43,8 @@ public class MapWithAIAction extends JosmAction {
         if (isEnabled()) {
             final boolean hasLayer = MapWithAIDataUtils.getLayer(false) != null;
             final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
-                    .stream().filter(layer -> !(layer instanceof MapWithAILayer)).collect(Collectors.toList());
+                    .stream().filter(layer -> !(layer instanceof MapWithAILayer)).filter(Layer::isVisible)
+                    .collect(Collectors.toList());
             final OsmDataLayer layer = getOsmLayer(osmLayers);
             if (layer != null && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
                 createMessageDialog();
