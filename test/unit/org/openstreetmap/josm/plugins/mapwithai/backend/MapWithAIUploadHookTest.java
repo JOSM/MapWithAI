@@ -78,7 +78,7 @@ public class MapWithAIUploadHookTest {
         Assert.assertTrue(
                 Arrays.asList(tags.get("mapwithai:options").split(";")).contains("version=".concat(info.localversion)));
 
-        MapWithAIPreferenceHelper.setMapWithAIUrl("false-url", false);
+        MapWithAIPreferenceHelper.setMapWithAIUrl("False URL", "false-url", true, true);
 
         tags.clear();
 

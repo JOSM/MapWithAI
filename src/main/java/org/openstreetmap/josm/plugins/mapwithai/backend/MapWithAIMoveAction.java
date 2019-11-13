@@ -1,5 +1,6 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.event.ActionEvent;
@@ -35,6 +36,7 @@ public class MapWithAIMoveAction extends JosmAction {
                         KeyEvent.VK_A,
                         Shortcut.SHIFT),
                 true);
+        setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 
     @Override

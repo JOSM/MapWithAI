@@ -24,12 +24,14 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     private Integer maxObj;
     private Boolean switchLayer;
     private String url;
+    private String source;
 
     private static final String MAX_OBJ = "max_obj";
     private static final String SWITCH_LAYER = "switch_layer";
     private static final String BBOX = "bbox";
     private static final String CROP_BBOX = "crop_bbox";
     private static final String URL_STRING = "url";
+    private static final String SOURCE_STRING = "source";
 
     public MapWithAIRemoteControl() {
         super();
@@ -52,6 +54,9 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
                     final String urlString = args.get(URL_STRING);
                     // Ensure the URL_STRING is valid
                     url = new URL(urlString).toString();
+                }
+                if (args.containsKey(SOURCE_STRING)) {
+                    source = args.get(SOURCE_STRING);
                 }
                 if (args.containsKey(SWITCH_LAYER)) {
                     switchLayer = Boolean.parseBoolean(args.get(SWITCH_LAYER));
@@ -92,7 +97,9 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
             MapWithAIPreferenceHelper.setMaximumAddition(maxObj, false);
         }
         if (url != null) {
-            MapWithAIPreferenceHelper.setMapWithAIUrl(url, false);
+            // TODO make option for permanent url
+            String tSource = source == null ? url : source;
+            MapWithAIPreferenceHelper.setMapWithAIUrl(url, tSource, true, false);
         }
         if (switchLayer != null) {
             MapWithAIPreferenceHelper.setSwitchLayers(switchLayer, false);

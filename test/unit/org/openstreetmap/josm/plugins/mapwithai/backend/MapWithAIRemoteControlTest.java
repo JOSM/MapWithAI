@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.awaitility.Awaitility.await;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,9 +46,13 @@ public class MapWithAIRemoteControlTest {
 
     @Before
     public void setUp() {
-        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com",
-                wireMockRule.baseUrl());
-        MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
+        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream()
+                .map(map -> {
+                    map.put("url",
+                            map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
+                            .replace("https://www.facebook.com", wireMockRule.baseUrl()));
+                    return map;
+                }).collect(Collectors.toList()));
     }
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
@@ -80,7 +85,8 @@ public class MapWithAIRemoteControlTest {
      */
     @Test
     public void testNominalRequest() throws Exception {
-        newHandler("https://localhost?url=" + Utils.encodeUrl(MapWithAIPreferenceHelper.getMapWithAIUrl())).handle();
+        newHandler("https://localhost?url="
+                + Utils.encodeUrl(MapWithAIPreferenceHelper.getMapWithAIUrl().get(0).get("url"))).handle();
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         Assert.assertTrue(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
@@ -88,19 +94,20 @@ public class MapWithAIRemoteControlTest {
 
     @Test
     public void testTemporaryUrl() throws Exception {
-        String badUrl = "https://bad.url";
+        final String badUrl = "https://bad.url";
         newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl)).handle();
         Assert.assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
-        Assert.assertEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
+        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> badUrl.equals(map.get("url"))));
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
         Assert.assertNotEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
 
-        badUrl = "NothingToSeeHere";
+        final String badUrl2 = "NothingToSeeHere";
         thrown.expect(RequestHandlerBadRequestException.class);
-        thrown.expectMessage("MalformedURLException: no protocol: " + badUrl);
+        thrown.expectMessage("MalformedURLException: no protocol: " + badUrl2);
 
-        newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl)).handle();
+        newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl2)).handle();
     }
 
     @Test

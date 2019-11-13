@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +30,7 @@ import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -39,12 +42,23 @@ public class MapWithAIDataUtilsTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+    WireMockServer wireMockServer;
 
     @Before
     public void setUp() {
-        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com",
-                wireMockRule.baseUrl());
-        MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
+        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
+            map.put("url", getDefaultMapWithAIAPIForTest(
+                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API_BUILDING)));
+            return map;
+        }).collect(Collectors.toList()));
+    }
+
+    private String getDefaultMapWithAIAPIForTest(String url) {
+        return getDefaultMapWithAIAPIForTest(url, "https://www.facebook.com");
+    }
+
+    private String getDefaultMapWithAIAPIForTest(String url, String wireMockReplace) {
+        return url.replace(wireMockReplace, wireMockRule.baseUrl());
     }
 
     /**
@@ -140,20 +154,26 @@ public class MapWithAIDataUtilsTest {
     @Test
     public void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
-        Assert.assertNotEquals(fakeUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
-        MapWithAIPreferenceHelper.setMapWithAIUrl(fakeUrl, true);
-        Assert.assertEquals(fakeUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
-        final List<String> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIURLs());
-        Assert.assertEquals(3, urls.size());
-        MapWithAIPreferenceHelper.setMapWithAIUrl(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, true);
-        Assert.assertEquals(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API,
-                MapWithAIPreferenceHelper.getMapWithAIUrl());
-        MapWithAIPreferenceHelper.setMapWithAIUrl(fakeUrl, true);
-        Assert.assertEquals(fakeUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
-        urls.remove(fakeUrl);
-        MapWithAIPreferenceHelper.setMapWithAIURLs(urls);
-        Assert.assertEquals(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API,
-                MapWithAIPreferenceHelper.getMapWithAIUrl());
+        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .noneMatch(map -> fakeUrl.equals(map.get("url"))));
+        MapWithAIPreferenceHelper.setMapWithAIUrl("Fake", fakeUrl, true, true);
+        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> fakeUrl.equals(map.get("url"))));
+        final List<Map<String, String>> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIURLs());
+        Assert.assertEquals(2, urls.size());
+        MapWithAIPreferenceHelper.setMapWithAIUrl("MapWithAI", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, true,
+                true);
+        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equals(map.get("url"))));
+        MapWithAIPreferenceHelper.setMapWithAIUrl("Fake2", fakeUrl, true, true);
+        Assert.assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .filter(map -> fakeUrl.equals(map.get("url"))).count());
+        MapWithAIPreferenceHelper.setMapWithAIURLs(urls.parallelStream()
+                .filter(map -> !fakeUrl.equalsIgnoreCase(map.getOrDefault("url", ""))).collect(Collectors.toList()));
+        Assert.assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().size());
+        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> getDefaultMapWithAIAPIForTest(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
+                        .equals(map.get("url"))));
     }
 
     @Test

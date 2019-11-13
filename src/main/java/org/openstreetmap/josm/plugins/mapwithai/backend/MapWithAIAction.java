@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.event.ActionEvent;
@@ -36,6 +37,7 @@ public class MapWithAIAction extends JosmAction {
                 Shortcut.registerShortcut("data:mapWithAI", tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R,
                         Shortcut.CTRL),
                 true);
+        setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 
     @Override

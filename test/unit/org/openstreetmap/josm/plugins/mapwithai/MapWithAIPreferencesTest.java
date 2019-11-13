@@ -69,8 +69,6 @@ public class MapWithAIPreferencesTest {
         Assert.assertNotEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
         preferences.ok();
         Assert.assertEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
-
-        Assert.assertNotNull(preferences.getPossibleMapWithAIApiUrl().getSelectedItem());
     }
 
     /**

@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
@@ -27,6 +29,7 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
@@ -63,7 +66,7 @@ public final class MapWithAIDataUtils {
                 "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss",
                 "resource://styles/standard/mapwithai.mapcss");
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(style -> oldUrls.contains(style.url))
+        .filter(style -> oldUrls.contains(style.url))
         .forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
@@ -152,15 +155,30 @@ public final class MapWithAIDataUtils {
     public static DataSet getData(List<BBox> bbox) {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
-        if (realBBoxes.size() < TOO_MANY_BBOXES || ConditionalOptionPaneUtil.showConfirmationDialog(
-                MapWithAIPlugin.NAME.concat(".alwaysdownload"), null,
-                tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
-                        realBBoxes.size()),
-                null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION)) {
-            final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-            getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
-            monitor.finishTask();
-            monitor.close();
+        if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> Boolean.valueOf(map.getOrDefault("enabled", "false")))) {
+            if (realBBoxes.size() < TOO_MANY_BBOXES || ConditionalOptionPaneUtil.showConfirmationDialog(
+                    MapWithAIPlugin.NAME.concat(".alwaysdownload"), null,
+                    tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
+                            realBBoxes.size()),
+                    null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION)) {
+                final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
+                getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
+                monitor.finishTask();
+                monitor.close();
+            }
+        } else {
+            Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIURLs().isEmpty()
+                    ? new Notification(tr("There are no defined URLs. To get the defaults, restart JOSM"))
+                            : new Notification(tr("No URLS are enabled"));
+                    noUrls.setDuration(Notification.TIME_DEFAULT);
+                    noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
+            noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
+                    if (SwingUtilities.isEventDispatchThread()) {
+                        noUrls.show();
+                    } else {
+                        SwingUtilities.invokeLater(noUrls::show);
+                    }
         }
         return dataSet;
     }

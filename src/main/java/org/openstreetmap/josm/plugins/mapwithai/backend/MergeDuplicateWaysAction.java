@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.event.ActionEvent;
@@ -31,7 +32,7 @@ public class MergeDuplicateWaysAction extends JosmAction {
                         tr(DESCRIPTION), KeyEvent.VK_EXCLAMATION_MARK,
                         Shortcut.ALT_CTRL_SHIFT),
                 true);
-
+        setHelpId(ht("Plugin/MapWithAI"));
     }
 
     @Override

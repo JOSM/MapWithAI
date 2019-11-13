@@ -52,6 +52,7 @@ public class MapWithAIArbitraryAction extends JosmAction {
                 Shortcut.registerShortcut("data:arbitrarymapwithai",
                         tr("Data: Arbitrary {0} Data", tr(ARBITRARY_DATA_STRING)), KeyEvent.VK_R,
                         Shortcut.ALT_CTRL_SHIFT), true);
+        setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 
     @Override
@@ -65,7 +66,7 @@ public class MapWithAIArbitraryAction extends JosmAction {
         MapWithAIArbitraryDialog(String[] buttons, JPanel panel) {
             super(MainApplication.getMainFrame(), tr(ARBITRARY_DATA_STRING), buttons);
             setButtonIcons("ok", "cancel");
-            configureContextsensitiveHelp(ht("/Action/DownloadArbitraryMapWithAIData"), true);
+            configureContextsensitiveHelp(ht("Plugin/MapWithAI#BasicUsage"), true);
             setContent(panel);
             setCancelButton(2);
         }

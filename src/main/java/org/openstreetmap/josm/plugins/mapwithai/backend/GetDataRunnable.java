@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
@@ -49,7 +51,7 @@ import org.openstreetmap.josm.tools.Pair;
 public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelListener {
     private static final long serialVersionUID = 258423685658089715L;
     private final List<BBox> bbox;
-    private static HttpClient client;
+    private static List<HttpClient> clients;
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
 
@@ -307,59 +309,69 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      * @return A dataset with the data from the bbox
      */
     private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
-        // Logging.error(bbox.toStringCSV(","));
-        InputStream inputStream = null;
         final DataSet dataSet = new DataSet();
-        String urlString = MapWithAIPreferenceHelper.getMapWithAIUrl();
+        List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
+                .map(map -> new TreeMap<>(map)).collect(Collectors.toList());
         if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
-            urlString += "&crop_bbox={crop_bbox}";
+            urlMaps.forEach(map -> map.put("url", map.get("url").concat("&crop_bbox={crop_bbox}")));
         }
 
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
-        try {
-            final URL url = new URL(urlString.replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
-                    DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",")));
-            client = HttpClient.create(url);
-            client.setReadTimeout(DEFAULT_TIMEOUT);
-            final StringBuilder defaultUserAgent = new StringBuilder();
-            defaultUserAgent.append(client.getHeaders().get("User-Agent"));
-            if (defaultUserAgent.toString().trim().length() == 0) {
-                defaultUserAgent.append("JOSM");
+        clients = new ArrayList<>();
+        urlMaps.forEach(map -> {
+            try {
+                clients.add(HttpClient.create(new URL(map.get("url").replace("{bbox}", bbox.toStringCSV(","))
+                        .replace("{crop_bbox}", DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",")))));
+            } catch (MalformedURLException e1) {
+                Logging.debug(e1);
             }
-            defaultUserAgent.append(tr("/ {0} {1}", MapWithAIPlugin.NAME, MapWithAIPlugin.getVersionInfo()));
-            client.setHeader("User-Agent", defaultUserAgent.toString());
-            if (!monitor.isCanceled()) {
+        });
+        clients.forEach(client -> clientCall(client, dataSet, monitor));
+        dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
+        return dataSet;
+    }
+
+    private static void clientCall(HttpClient client, DataSet dataSet, ProgressMonitor monitor) {
+        final StringBuilder defaultUserAgent = new StringBuilder();
+        client.setReadTimeout(DEFAULT_TIMEOUT);
+        defaultUserAgent.append(client.getHeaders().get("User-Agent"));
+        if (defaultUserAgent.toString().trim().length() == 0) {
+            defaultUserAgent.append("JOSM");
+        }
+        defaultUserAgent.append(tr("/ {0} {1}", MapWithAIPlugin.NAME, MapWithAIPlugin.getVersionInfo()));
+        client.setHeader("User-Agent", defaultUserAgent.toString());
+        if (!monitor.isCanceled()) {
+            InputStream inputStream = null;
+            try {
                 Logging.debug("{0}: Getting {1}", MapWithAIPlugin.NAME, client.getURL().toString());
                 final Response response = client.connect();
                 inputStream = response.getContent();
                 final DataSet mergeData = OsmReaderCustom.parseDataSet(inputStream, null, true);
                 dataSet.mergeFrom(mergeData);
                 response.disconnect();
-            }
-        } catch (SocketException e) {
-            if (!monitor.isCanceled()) {
-                Logging.debug(e);
-            }
-        } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-            Logging.debug(e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (final IOException e) {
+            } catch (SocketException e) {
+                if (!monitor.isCanceled()) {
                     Logging.debug(e);
                 }
+            } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
+                Logging.debug(e);
+            } finally {
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (final IOException e) {
+                        Logging.debug(e);
+                    }
+                }
             }
-            dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
         }
-        return dataSet;
     }
 
     @Override
     public void operationCanceled() {
-        if (client != null) {
-            client.disconnect();
+        if (clients != null) {
+            clients.parallelStream().filter(Objects::nonNull).forEach(HttpClient::disconnect);
         }
     }
 

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -53,9 +54,11 @@ public class MapWithAILayerTest {
 
     @Before
     public void setUp() {
-        String URL = MapWithAIPreferenceHelper.getMapWithAIUrl().replace("https://www.facebook.com",
-                wireMockRule.baseUrl());
-        MapWithAIPreferenceHelper.setMapWithAIUrl(URL, true);
+        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
+            map.put("url", map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
+                    .replace("https://www.facebook.com", wireMockRule.baseUrl()));
+            return map;
+        }).collect(Collectors.toList()));
         layer = new MapWithAILayer(new DataSet(), "test", null);
     }
 

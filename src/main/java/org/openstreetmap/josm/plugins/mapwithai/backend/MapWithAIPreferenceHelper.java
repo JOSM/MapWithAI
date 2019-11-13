@@ -7,17 +7,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
     public static final String DEFAULT_MAPWITHAI_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}";
+    protected static final String DEFAULT_MAPWITHAI_API_BUILDING = DEFAULT_MAPWITHAI_API
+            .concat("&result_type=road_building_vector_xml");
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
     private static final String MAXIMUMSELECTION = MapWithAIPlugin.NAME.concat(".maximumselection");
+    private static final String API_CONFIG = MapWithAIPlugin.NAME.concat(".apis");
+    private static final String API_MAP_CONFIG = API_CONFIG.concat("map");
+    private static final String URL_STRING = "url";
+    private static final String SOURCE_STRING = "source";
+    private static final String ENABLED_STRING = "enabled";
 
     private MapWithAIPreferenceHelper() {
         // Hide the constructor
@@ -31,33 +40,65 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
-     * Get the current MapWithAI url
+     * Get the current MapWithAI urls
      *
-     * @return A MapWithAI url
+     * @return A list of enabled MapWithAI urls
      */
-    public static String getMapWithAIUrl() {
+    public static List<Map<String, String>> getMapWithAIUrl() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        String url = Config.getPref().get(MapWithAIPlugin.NAME.concat(".current_api"), DEFAULT_MAPWITHAI_API);
-        if (layer == null || layer.getMapWithAIUrl() == null) {
-            final List<String> urls = getMapWithAIURLs();
-            if (!urls.contains(url)) {
-                url = DEFAULT_MAPWITHAI_API;
-                setMapWithAIUrl(DEFAULT_MAPWITHAI_API, true);
-            }
-        } else {
-            url = layer.getMapWithAIUrl();
-        }
-        return url;
+        return layer != null && layer.getMapWithAIUrl() != null
+                ? getMapWithAIURLs().parallelStream().filter(map -> layer.getMapWithAIUrl().equals(map.get(URL_STRING)))
+                        .collect(Collectors.toList())
+                        : getMapWithAIURLs().stream()
+                        .filter(map -> Boolean.valueOf(map.getOrDefault(ENABLED_STRING, Boolean.FALSE.toString())))
+                        .collect(Collectors.toList());
     }
 
     /**
-     * Get the MapWithAI urls (or the default)
+     * Get all of the MapWithAI urls (or the default)
      *
      * @return The urls for MapWithAI endpoints
      */
-    public static List<String> getMapWithAIURLs() {
-        return Config.getPref().getList(MapWithAIPlugin.NAME.concat(".apis"),
-                new ArrayList<>(Arrays.asList(DEFAULT_MAPWITHAI_API)));
+    public static List<Map<String, String>> getMapWithAIURLs() {
+        List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>()).stream()
+                .map(map -> new TreeMap<>(map)).collect(Collectors.toList());
+        if (returnMap.isEmpty()) {
+            List<String> defaultAPIs = ExpertToggleAction.isExpert()
+                    ? Arrays.asList(DEFAULT_MAPWITHAI_API, DEFAULT_MAPWITHAI_API_BUILDING)
+                            : Collections.singletonList(DEFAULT_MAPWITHAI_API);
+                    List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty()
+                            ? defaultAPIs
+                                    : Config.getPref().getList(API_CONFIG);
+                    returnMap.addAll(defaultList.stream().map(string -> {
+                        TreeMap<String, String> map = new TreeMap<>();
+                        map.put(URL_STRING, string);
+                        return map;
+                    }).collect(Collectors.toList()));
+        } else if (ExpertToggleAction.isExpert() && returnMap.parallelStream()
+                .noneMatch(map -> DEFAULT_MAPWITHAI_API_BUILDING.equals(map.get(URL_STRING)))) {
+            Map<String, String> building = returnMap.parallelStream()
+                    .filter(map -> DEFAULT_MAPWITHAI_API_BUILDING.equals(map.get(URL_STRING))).findFirst()
+                    .orElse(new TreeMap<>());
+            returnMap.add(building);
+            building.putIfAbsent(URL_STRING, DEFAULT_MAPWITHAI_API_BUILDING);
+            building.putIfAbsent(ENABLED_STRING, Boolean.TRUE.toString());
+
+        }
+        returnMap.parallelStream().forEach(map -> {
+            String url = map.get(URL_STRING);
+            if (DEFAULT_MAPWITHAI_API.equals(url) || DEFAULT_MAPWITHAI_API_BUILDING.equals(url)) {
+                map.putIfAbsent(SOURCE_STRING, MapWithAIPlugin.NAME);
+            }
+            if (DEFAULT_MAPWITHAI_API_BUILDING.equals(url)) {
+                map.putIfAbsent(ENABLED_STRING, Boolean.toString(ExpertToggleAction.isExpert()));
+            } else if (DEFAULT_MAPWITHAI_API.equals(url)) {
+                map.putIfAbsent(ENABLED_STRING, Boolean.toString(!ExpertToggleAction.isExpert()));
+            } else {
+                map.putIfAbsent(SOURCE_STRING, url);
+                map.putIfAbsent(ENABLED_STRING, Boolean.FALSE.toString());
+            }
+        });
+        return returnMap;
     }
 
     /**
@@ -67,8 +108,7 @@ public final class MapWithAIPreferenceHelper {
      */
     public static int getMaximumAddition() {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
-        Integer defaultReturn = Config.getPref().getInt(MAXIMUMSELECTION,
-                getDefaultMaximumAddition());
+        Integer defaultReturn = Config.getPref().getInt(MAXIMUMSELECTION, getDefaultMaximumAddition());
         if (mapWithAILayer != null && mapWithAILayer.getMaximumAddition() != null) {
             defaultReturn = mapWithAILayer.getMaximumAddition();
         }
@@ -98,24 +138,31 @@ public final class MapWithAIPreferenceHelper {
     /**
      * Set the MapWithAI url
      *
+     * @param source    The source tag for the url
      * @param url       The url to set as the default
+     * @param enabled   {@code true} if the url should be used for downloads
      * @param permanent {@code true} if we want the setting to persist between
      *                  sessions
      */
-    public static void setMapWithAIUrl(String url, boolean permanent) {
+    public static void setMapWithAIUrl(String source, String url, boolean enabled, boolean permanent) {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         String setUrl = url;
-        if (permanent) {
-            final List<String> urls = new ArrayList<>(getMapWithAIURLs());
-            if (!urls.contains(url)) {
-                urls.add(url);
-                setMapWithAIURLs(urls);
-            }
-            if (DEFAULT_MAPWITHAI_API.equals(url)) {
-                setUrl = "";
-            }
-            Config.getPref().put(MapWithAIPlugin.NAME.concat(".current_api"), setUrl);
-        } else if (layer != null) {
+
+        final List<Map<String, String>> urls = new ArrayList<>(getMapWithAIURLs());
+        Map<String, String> addOrModifyMap = urls.parallelStream()
+                .filter(map -> map.getOrDefault(URL_STRING, "").equals(url)).findFirst().orElse(new TreeMap<>());
+        if (addOrModifyMap.isEmpty()) {
+            urls.add(addOrModifyMap);
+        } else {
+            urls.remove(addOrModifyMap);
+            addOrModifyMap = new TreeMap<>(addOrModifyMap);
+            urls.add(addOrModifyMap);
+        }
+        addOrModifyMap.put(URL_STRING, url);
+        addOrModifyMap.put(SOURCE_STRING, source);
+        addOrModifyMap.put(ENABLED_STRING, Boolean.toString(permanent));
+        setMapWithAIURLs(urls);
+        if (layer != null && !permanent && enabled) {
             layer.setMapWithAIUrl(setUrl);
         }
     }
@@ -124,9 +171,21 @@ public final class MapWithAIPreferenceHelper {
      * Set the MapWithAI urls
      *
      * @param urls A list of URLs
+     * @return true if the configuration changed
      */
-    public static void setMapWithAIURLs(List<String> urls) {
-        Config.getPref().putList(MapWithAIPlugin.NAME.concat(".apis"), urls);
+    public static boolean setMapWithAIURLs(List<Map<String, String>> urls) {
+        List<Map<String, String>> setUrls = urls;
+        if (urls.isEmpty()) {
+            TreeMap<String, String> defaultAPIMap = new TreeMap<>();
+            TreeMap<String, String> defaultBuildingAPIMap = new TreeMap<>();
+            defaultAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API);
+            defaultAPIMap.put(ENABLED_STRING, Boolean.TRUE.toString());
+            defaultAPIMap.put(SOURCE_STRING, MapWithAIPlugin.NAME);
+            defaultBuildingAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API_BUILDING);
+            defaultBuildingAPIMap.put(ENABLED_STRING, Boolean.TRUE.toString());
+            defaultBuildingAPIMap.put(SOURCE_STRING, MapWithAIPlugin.NAME);
+        }
+        return Config.getPref().putListOfMaps(API_MAP_CONFIG, setUrls);
     }
 
     /**

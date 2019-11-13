@@ -2,6 +2,7 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.UploadAction;
 import org.openstreetmap.josm.actions.upload.UploadHook;
@@ -34,12 +35,16 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
             if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
                 sb.append(";task=").append(DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","));
             }
-            if (!MapWithAIPreferenceHelper.getMapWithAIUrl()
-                    .equalsIgnoreCase(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)) {
-                sb.append(";url=").append(MapWithAIPreferenceHelper.getMapWithAIUrl());
+            if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream().anyMatch(
+                    map -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(map.get("url")))) {
+                sb.append(";url=")
+                        .append(String.join(";url=",
+                        MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                        .filter(map -> map.containsKey("url")).map(map -> map.get("url"))
+                        .filter(url -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(url))
+                        .collect(Collectors.toList())));
             }
             tags.put("mapwithai:options", sb.toString());
-
         }
     }
 
