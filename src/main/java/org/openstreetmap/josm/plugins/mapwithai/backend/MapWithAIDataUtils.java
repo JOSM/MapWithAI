@@ -370,7 +370,7 @@ public final class MapWithAIDataUtils {
                 returnBounds.add(new BBox(lowerLeft, upperRight));
             }
         }
-        return returnBounds;
+        return returnBounds.stream().distinct().collect(Collectors.toList());
     }
 
     /**
@@ -381,7 +381,7 @@ public final class MapWithAIDataUtils {
     public static List<BBox> reduceBBoxSize(List<BBox> bboxes) {
         final List<BBox> returnBBoxes = new ArrayList<>();
         bboxes.forEach(bbox -> returnBBoxes.addAll(reduceBBoxSize(bbox)));
-        return returnBBoxes;
+        return returnBBoxes.stream().distinct().collect(Collectors.toList());
     }
 
     /**

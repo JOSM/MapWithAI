@@ -79,7 +79,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     public GetDataRunnable(List<BBox> bbox, DataSet dataSet, ProgressMonitor monitor) {
         super();
-        this.bbox = new ArrayList<>(bbox);
+        this.bbox = bbox.stream().distinct().collect(Collectors.toList());
         this.dataSet = dataSet;
         this.monitor = Optional.ofNullable(monitor).orElse(NullProgressMonitor.INSTANCE);
         this.monitor.addCancelListener(this);
