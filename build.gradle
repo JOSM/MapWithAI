@@ -114,6 +114,16 @@ tasks.processResources {
   from("$projectDir/src/resources")
 }
 
+jacocoTestCoverageVerification {
+  violationRules {
+    rule {
+      limit {
+        minimum = 0.67
+      }
+    }
+  }
+}
+
 josm {
   i18n {
     pathTransformer = getPathTransformer("gitlab.com/${gitlabGroup}/${gitlabRepositoryName}/blob")
