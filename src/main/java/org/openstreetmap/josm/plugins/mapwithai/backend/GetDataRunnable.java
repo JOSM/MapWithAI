@@ -36,6 +36,7 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor.CancelListener;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.HttpClient;
@@ -315,6 +316,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
             urlMaps.forEach(map -> map.put("url", map.get("url").concat("&crop_bbox={crop_bbox}")));
         }
+
+        urlMaps.parallelStream().filter(map -> map.containsKey("parameters")).forEach(DataUrl::addUrlParameters);
 
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 

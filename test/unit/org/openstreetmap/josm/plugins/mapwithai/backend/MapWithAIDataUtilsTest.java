@@ -48,7 +48,7 @@ public class MapWithAIDataUtilsTest {
     public void setUp() {
         MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
             map.put("url", getDefaultMapWithAIAPIForTest(
-                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API_BUILDING)));
+                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
             return map;
         }).collect(Collectors.toList()));
     }

@@ -71,7 +71,8 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         .forEach(
                 entry -> list
                 .add(new DataUrl(entry.get(SOURCE), entry.get("url"),
-                        Boolean.valueOf(entry.get("enabled")))));
+                        Boolean.valueOf(entry.getOrDefault("enabled", "false")),
+                        entry.getOrDefault("parameters", "[]"))));
     }
 
     @Override
@@ -94,7 +95,9 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
                 "If checked, automatically merge address nodes onto added buildings, if and only if one address is withing the building boundary"));
 
         switchLayerCheckBox.setSelected(MapWithAIPreferenceHelper.isSwitchLayers());
+        switchLayerCheckBox.setToolTipText(switchLayer.getToolTipText());
         mergeBuildingAddressCheckBox.setSelected(MapWithAIPreferenceHelper.isMergeBuildingAddress());
+        mergeBuildingAddressCheckBox.setToolTipText(mergeBuildingWithAddress.getToolTipText());
 
         final JPanel pane = new JPanel(new GridBagLayout());
         pane.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -107,15 +110,45 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         pane.add(mapWithAIApiUrl, first);
 
         final JScrollPane scroll1 = new JScrollPane(mapwithaiUrlPreferenceTable);
+        scroll1.setToolTipText(mapWithAIApiUrl.getToolTipText());
         pane.add(scroll1, GBC.eol().fill(GridBagConstraints.BOTH));
         scroll1.setPreferredSize(new Dimension(width, height));
+
+        pane.add(new JLabel(), first);
+        JPanel replaceAddEditDeleteScroll1 = new JPanel(new GridBagLayout());
+        pane.add(replaceAddEditDeleteScroll1, second);
+        final JButton addScroll1 = new JButton(tr("Add"));
+        replaceAddEditDeleteScroll1.add(addScroll1, buttonInsets);
+        addScroll1.addActionListener(e -> {
+            mapwithaiurlTableDisplayData.add(DataUrl.emptyData());
+            mapwithaiUrlPreferenceTable.fireDataChanged();
+        });
+        final JButton editScroll1 = new JButton(tr("Edit Parameters"));
+        replaceAddEditDeleteScroll1.add(editScroll1, buttonInsets);
+        editScroll1.addActionListener(e -> {
+            final List<DataUrl> toEdit = mapwithaiUrlPreferenceTable.getSelectedItems();
+            if (toEdit.size() == MAX_SELECTED_TO_EDIT) {
+                mapwithaiUrlPreferenceTable.editPreference(gui);
+            }
+        });
+        final JButton deleteScroll1 = new JButton(tr("Delete"));
+        replaceAddEditDeleteScroll1.add(deleteScroll1, buttonInsets);
+        deleteScroll1.addActionListener(e -> {
+            List<DataUrl> toRemove = mapwithaiUrlPreferenceTable.getSelectedItems();
+            if (!toRemove.isEmpty()) {
+                mapwithaiurlTableDisplayData.removeAll(toRemove);
+            }
+            mapwithaiUrlPreferenceTable.fireDataChanged();
+        });
 
         pane.add(switchLayer, first);
 
         pane.add(switchLayerCheckBox, second);
+        switchLayerCheckBox.setToolTipText(switchLayer.getToolTipText());
 
         pane.add(maximumAddition, first);
         pane.add(maximumAdditionSpinner, second);
+        maximumAdditionSpinner.setToolTipText(maximumAddition.getToolTipText());
 
         pane.add(mergeBuildingWithAddress, first);
         pane.add(mergeBuildingAddressCheckBox, second);
@@ -129,11 +162,11 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         scroll2.setPreferredSize(new Dimension(width, height));
 
         pane.add(new JLabel(), first);
-        JPanel replaceAddEditDelete = new JPanel(new GridBagLayout());
-        pane.add(replaceAddEditDelete, second);
-        final JButton add = new JButton(tr("Add"));
-        replaceAddEditDelete.add(add, buttonInsets);
-        add.addActionListener(e -> {
+        JPanel replaceAddEditDeleteScroll2 = new JPanel(new GridBagLayout());
+        pane.add(replaceAddEditDeleteScroll2, second);
+        final JButton addScroll2 = new JButton(tr("Add"));
+        replaceAddEditDeleteScroll2.add(addScroll2, buttonInsets);
+        addScroll2.addActionListener(e -> {
             final PrefEntry pe = replacementPreferenceTable.addPreference(gui);
             if (pe != null && pe.getValue() instanceof StringSetting) {
                 replacementTableDisplayData.add(pe);
@@ -142,18 +175,18 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
             }
         });
 
-        final JButton edit = new JButton(tr("Edit"));
-        replaceAddEditDelete.add(edit, buttonInsets);
-        edit.addActionListener(e -> {
+        final JButton editScroll2 = new JButton(tr("Edit"));
+        replaceAddEditDeleteScroll2.add(editScroll2, buttonInsets);
+        editScroll2.addActionListener(e -> {
             final List<PrefEntry> toEdit = replacementPreferenceTable.getSelectedItems();
             if (toEdit.size() == MAX_SELECTED_TO_EDIT) {
                 replacementPreferenceTable.editPreference(gui);
             }
         });
 
-        final JButton delete = new JButton(tr("Delete"));
-        replaceAddEditDelete.add(delete, buttonInsets);
-        delete.addActionListener(e -> {
+        final JButton deleteScroll2 = new JButton(tr("Delete"));
+        replaceAddEditDeleteScroll2.add(deleteScroll2, buttonInsets);
+        deleteScroll2.addActionListener(e -> {
             final List<PrefEntry> toRemove = replacementPreferenceTable.getSelectedItems();
             if (!toRemove.isEmpty()) {
                 replacementTableDisplayData.removeAll(toRemove);
@@ -161,7 +194,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
             replacementPreferenceTable.fireDataChanged();
         });
 
-        Arrays.asList(replaceAddEditDelete, scroll2, expertHorizontalGlue, replacementTags)
+        Arrays.asList(replaceAddEditDeleteScroll2, scroll2, expertHorizontalGlue, replacementTags)
         .forEach(ExpertToggleAction::addVisibilitySwitcher);
 
         getTabPreferenceSetting(gui).addSubTab(this, MapWithAIPlugin.NAME, pane);
@@ -169,6 +202,13 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
     @Override
     public boolean ok() {
+        ArrayList<DataUrl> tData = new ArrayList<>(
+                mapwithaiurlTableDisplayData.stream().distinct()
+                .filter(data -> !data.getMap().getOrDefault("url", "http://example.com")
+                        .equalsIgnoreCase(DataUrl.emptyData().getMap().get("url")))
+                .collect(Collectors.toList()));
+        mapwithaiurlTableDisplayData.clear();
+        mapwithaiurlTableDisplayData.addAll(tData);
         MapWithAIPreferenceHelper.setMapWithAIURLs(convertUrlPrefToMap(mapwithaiurlTableDisplayData));
         MapWithAIPreferenceHelper.setSwitchLayers(switchLayerCheckBox.isSelected(), true);
         final Object value = maximumAdditionSpinner.getValue();
@@ -180,7 +220,10 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     }
 
     private static List<Map<String, String>> convertUrlPrefToMap(List<DataUrl> displayData) {
-        return displayData.stream().map(DataUrl::getMap).collect(Collectors.toList());
+        return displayData.stream().map(DataUrl::getMap)
+                .filter(map -> !map.getOrDefault("url", "").isEmpty()
+                        && !DataUrl.emptyData().getMap().get("url").equals(map.get("url")))
+                .collect(Collectors.toList());
     }
 
     private static Map<String, String> convertReplacementPrefToMap(List<PrefEntry> displayData) {

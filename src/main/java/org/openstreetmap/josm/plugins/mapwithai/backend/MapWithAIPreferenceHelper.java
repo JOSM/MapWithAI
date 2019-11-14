@@ -9,15 +9,13 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
     public static final String DEFAULT_MAPWITHAI_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}";
-    protected static final String DEFAULT_MAPWITHAI_API_BUILDING = DEFAULT_MAPWITHAI_API
-            .concat("&result_type=road_building_vector_xml");
+    protected static final String DEFAULT_MAPWITHAI_API_PARAMETERS = "[{\"parameter\": \"result_type=road_building_vector_xml\", \"description\": \"buildings\", \"enabled\": false}]";
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
@@ -27,6 +25,7 @@ public final class MapWithAIPreferenceHelper {
     private static final String URL_STRING = "url";
     private static final String SOURCE_STRING = "source";
     private static final String ENABLED_STRING = "enabled";
+    private static final String PARAMETERS_STRING = "parameters";
 
     private MapWithAIPreferenceHelper() {
         // Hide the constructor
@@ -63,36 +62,22 @@ public final class MapWithAIPreferenceHelper {
         List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>()).stream()
                 .map(map -> new TreeMap<>(map)).collect(Collectors.toList());
         if (returnMap.isEmpty()) {
-            List<String> defaultAPIs = ExpertToggleAction.isExpert()
-                    ? Arrays.asList(DEFAULT_MAPWITHAI_API, DEFAULT_MAPWITHAI_API_BUILDING)
-                            : Collections.singletonList(DEFAULT_MAPWITHAI_API);
-                    List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty()
-                            ? defaultAPIs
-                                    : Config.getPref().getList(API_CONFIG);
-                    returnMap.addAll(defaultList.stream().map(string -> {
-                        TreeMap<String, String> map = new TreeMap<>();
-                        map.put(URL_STRING, string);
-                        return map;
-                    }).collect(Collectors.toList()));
-        } else if (ExpertToggleAction.isExpert() && returnMap.parallelStream()
-                .noneMatch(map -> DEFAULT_MAPWITHAI_API_BUILDING.equals(map.get(URL_STRING)))) {
-            Map<String, String> building = returnMap.parallelStream()
-                    .filter(map -> DEFAULT_MAPWITHAI_API_BUILDING.equals(map.get(URL_STRING))).findFirst()
-                    .orElse(new TreeMap<>());
-            returnMap.add(building);
-            building.putIfAbsent(URL_STRING, DEFAULT_MAPWITHAI_API_BUILDING);
-            building.putIfAbsent(ENABLED_STRING, Boolean.TRUE.toString());
-
+            List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
+            List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty()
+                    ? defaultAPIs
+                            : Config.getPref().getList(API_CONFIG);
+            returnMap.addAll(defaultList.stream().map(string -> {
+                TreeMap<String, String> map = new TreeMap<>();
+                map.put(URL_STRING, string);
+                return map;
+            }).collect(Collectors.toList()));
         }
         returnMap.parallelStream().forEach(map -> {
             String url = map.get(URL_STRING);
-            if (DEFAULT_MAPWITHAI_API.equals(url) || DEFAULT_MAPWITHAI_API_BUILDING.equals(url)) {
+            if (DEFAULT_MAPWITHAI_API.equals(url)) {
                 map.putIfAbsent(SOURCE_STRING, MapWithAIPlugin.NAME);
-            }
-            if (DEFAULT_MAPWITHAI_API_BUILDING.equals(url)) {
-                map.putIfAbsent(ENABLED_STRING, Boolean.toString(ExpertToggleAction.isExpert()));
-            } else if (DEFAULT_MAPWITHAI_API.equals(url)) {
-                map.putIfAbsent(ENABLED_STRING, Boolean.toString(!ExpertToggleAction.isExpert()));
+                map.putIfAbsent(ENABLED_STRING, "true");
+                map.putIfAbsent(PARAMETERS_STRING, DEFAULT_MAPWITHAI_API_PARAMETERS);
             } else {
                 map.putIfAbsent(SOURCE_STRING, url);
                 map.putIfAbsent(ENABLED_STRING, Boolean.FALSE.toString());
@@ -177,13 +162,11 @@ public final class MapWithAIPreferenceHelper {
         List<Map<String, String>> setUrls = urls;
         if (urls.isEmpty()) {
             TreeMap<String, String> defaultAPIMap = new TreeMap<>();
-            TreeMap<String, String> defaultBuildingAPIMap = new TreeMap<>();
             defaultAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API);
             defaultAPIMap.put(ENABLED_STRING, Boolean.TRUE.toString());
             defaultAPIMap.put(SOURCE_STRING, MapWithAIPlugin.NAME);
-            defaultBuildingAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API_BUILDING);
-            defaultBuildingAPIMap.put(ENABLED_STRING, Boolean.TRUE.toString());
-            defaultBuildingAPIMap.put(SOURCE_STRING, MapWithAIPlugin.NAME);
+            defaultAPIMap.put(PARAMETERS_STRING, DEFAULT_MAPWITHAI_API_PARAMETERS);
+            setUrls.add(defaultAPIMap);
         }
         return Config.getPref().putListOfMaps(API_MAP_CONFIG, setUrls);
     }

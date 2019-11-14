@@ -11,8 +11,15 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComponent;
@@ -82,12 +89,13 @@ public class MapWithAIURLPreferenceTable extends JTable {
 
     /**
      * The list of currently selected rows
-     * @return newly created list of PrefEntry
+     *
+     * @return newly created list of DataUrl
      */
-    public List<PrefEntry> getSelectedItems() {
-        List<PrefEntry> entries = new ArrayList<>();
+    public List<DataUrl> getSelectedItems() {
+        List<DataUrl> entries = new ArrayList<>();
         for (int row : getSelectedRows()) {
-            PrefEntry p = (PrefEntry) model.getValueAt(row, -1);
+            DataUrl p = displayData.get(row);
             entries.add(p);
         }
         return entries;
@@ -99,6 +107,7 @@ public class MapWithAIURLPreferenceTable extends JTable {
      * @return true if editing was actually performed during this call
      */
     public boolean editPreference(final JComponent gui) {
+        final int column = 3;
         if (getSelectedRowCount() != 1) {
             JOptionPane.showMessageDialog(
                     gui,
@@ -108,8 +117,18 @@ public class MapWithAIURLPreferenceTable extends JTable {
                     );
             return false;
         }
-        final Object e = model.getValueAt(getSelectedRow(), 1);
+        final Object e = model.getValueAt(getSelectedRow(), column);
         Setting<?> stg = e instanceof PrefEntry ? ((PrefEntry) e).getValue() : null;
+        if (e instanceof JsonArray) {
+            JsonArray array = (JsonArray) e;
+            List<Map<String, String>> map = array.stream().filter(JsonObject.class::isInstance)
+                    .map(JsonObject.class::cast).map(obj -> {
+                        Map<String, String> tMap = new TreeMap<>();
+                        obj.forEach((str, val) -> tMap.put(str, val.toString()));
+                        return tMap;
+                    }).collect(Collectors.toList());
+            stg = new MapListSetting(map);
+        }
         boolean ok = false;
         if (stg instanceof StringSetting || e instanceof String || e instanceof Boolean) {
             editCellAt(getSelectedRow(), getSelectedColumn());
@@ -122,9 +141,39 @@ public class MapWithAIURLPreferenceTable extends JTable {
         } else if (stg instanceof ListListSetting) {
             ok = doEditListList(gui, (PrefEntry) e, (ListListSetting) stg);
         } else if (stg instanceof MapListSetting) {
-            ok = doEditMapList(gui, (PrefEntry) e, (MapListSetting) stg);
+            PrefEntry pref = e instanceof PrefEntry ? (PrefEntry) e : new PrefEntry("Parameters", stg, stg, false);
+            ok = doEditMapList(gui, pref, (MapListSetting) stg);
+            if (!e.equals(pref) && e instanceof JsonArray) {
+                JsonArrayBuilder array = Json.createArrayBuilder();
+                ((MapListSetting) pref.getValue()).getValue()
+                .forEach(entry -> array.add(Json.createObjectBuilder(objectify(entry)).build()));
+                model.setValueAt(array.build(), getSelectedRow(), column);
+                fireDataChanged();
+            }
         }
         return ok;
+    }
+
+    private static Map<String, Object> objectify(Map<String, String> map) {
+        Map<String, Object> returnMap = new TreeMap<>();
+        for (Entry<String, String> entry : map.entrySet()) {
+            Object obj = null;
+            if (entry.getValue().equalsIgnoreCase("true") || entry.getValue().equalsIgnoreCase("false")
+                    || "enabled".equals(entry.getKey())) {
+                obj = Boolean.parseBoolean(entry.getValue());
+            } else if (entry.getValue().matches("[0-9.-]+")) {
+                try {
+                    obj = Double.parseDouble(entry.getValue());
+                    obj = Integer.parseInt(entry.getValue());
+                } catch (NumberFormatException e) {
+                    // do nothing
+                }
+            } else {
+                obj = entry.getValue().replaceAll("(^(\\\\*\\\"+)+|(\\\\*\\\"+)+$)", "");
+            }
+            returnMap.put(entry.getKey(), obj);
+        }
+        return returnMap;
     }
 
     private static boolean doEditList(final JComponent gui, final PrefEntry e, ListSetting lSetting) {
