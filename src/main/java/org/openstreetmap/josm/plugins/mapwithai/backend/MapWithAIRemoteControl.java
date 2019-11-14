@@ -99,7 +99,7 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         if (url != null) {
             // TODO make option for permanent url
             String tSource = source == null ? url : source;
-            MapWithAIPreferenceHelper.setMapWithAIUrl(url, tSource, true, false);
+            MapWithAIPreferenceHelper.setMapWithAIUrl(tSource, url, true, false);
         }
         if (switchLayer != null) {
             MapWithAIPreferenceHelper.setSwitchLayers(switchLayer, false);
