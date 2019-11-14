@@ -265,18 +265,27 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             }
         }
     }
+
+    /**
+     * Check for nearly duplicate way sections
+     *
+     * @param way1 The way to map duplicate segments to
+     * @param way2 The way that may have duplicate segments
+     * @return A Map&lt;WaySegment to modify from way1, List&lt;WaySegments from
+     *         way2&gt; to make the segment conform to &gt;
+     */
     protected static Map<WaySegment, List<WaySegment>> checkWayDuplications(Way way1, Way way2) {
-        List<WaySegment> waySegments1 = way1.getNodePairs(false).stream()
+        final List<WaySegment> waySegments1 = way1.getNodePairs(false).stream()
                 .map(pair -> WaySegment.forNodePair(way1, pair.a, pair.b)).collect(Collectors.toList());
-        List<WaySegment> waySegments2 = way2.getNodePairs(false).stream()
+        final List<WaySegment> waySegments2 = way2.getNodePairs(false).stream()
                 .map(pair -> WaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
-        Map<WaySegment, List<WaySegment>> partials = new TreeMap<>();
-        for (WaySegment segment1 : waySegments1) {
+        final Map<WaySegment, List<WaySegment>> partials = new TreeMap<>();
+        for (final WaySegment segment1 : waySegments1) {
             boolean same = false;
             boolean first = false;
             boolean second = false;
-            List<WaySegment> replacements = new ArrayList<>();
-            for (WaySegment segment2 : waySegments2) {
+            final List<WaySegment> replacements = new ArrayList<>();
+            for (final WaySegment segment2 : waySegments2) {
                 same = segment1.isSimilar(segment2);
                 if (same) {
                     break;
