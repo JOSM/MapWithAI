@@ -31,6 +31,7 @@ import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
+import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor.CancelListener;
@@ -226,7 +227,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 .flatMap(seg -> Arrays.asList(seg.getFirstNode(), seg.getSecondNode()).parallelStream())
                 .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
         if (toAdd != null
-                && Geometry.getDistance(waySegmentWay, toAdd) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10) {
+                && convertToMeters(Geometry.getDistance(waySegmentWay, toAdd)) < MapWithAIPreferenceHelper
+                .getMaxNodeDistance() * 10) {
             way.addNode(entry.getKey().lowerIndex + 1, toAdd);
         }
         for (int i = 0; i < way.getNodesCount() - 2; i++) {
@@ -239,6 +241,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 way.setNodes(nodes);
             }
         }
+    }
+
+    protected static double convertToMeters(double value) {
+        return value * ProjectionRegistry.getProjection().getMetersPerUnit();
     }
 
     protected static void cleanupArtifacts(Way way) {
@@ -281,34 +287,24 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 .map(pair -> WaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
         final Map<WaySegment, List<WaySegment>> partials = new TreeMap<>();
         for (final WaySegment segment1 : waySegments1) {
-            boolean same = false;
-            boolean first = false;
-            boolean second = false;
-            final List<WaySegment> replacements = new ArrayList<>();
-            for (final WaySegment segment2 : waySegments2) {
-                same = segment1.isSimilar(segment2);
-                if (same) {
-                    break;
-                }
-                if (Math.max(Geometry.getDistance(way1, segment2.getFirstNode()), Geometry.getDistance(way1,
-                        segment2.getSecondNode())) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10) {
-                    if (!first && (segment1.getFirstNode().equals(segment2.getFirstNode())
-                            || segment1.getFirstNode().equals(segment2.getSecondNode()))) {
-                        replacements.add(segment2);
-                        first = true;
-                    } else if (!second && (segment1.getSecondNode().equals(segment2.getFirstNode())
-                            || segment1.getSecondNode().equals(segment2.getSecondNode()))) {
-                        replacements.add(segment2);
-                        second = true;
-                    }
-                }
-            }
-            if (same) {
+            Way waySegment1 = segment1.toWay();
+            final List<WaySegment> replacements = waySegments2.parallelStream()
+                    .filter(seg2 -> waySegment1.isFirstLastNode(seg2.getFirstNode())
+                            || waySegment1.isFirstLastNode(seg2.getSecondNode()))
+                    .filter(seg -> {
+                        Node node2 = waySegment1.isFirstLastNode(seg.getFirstNode()) ? seg.getFirstNode()
+                                : seg.getSecondNode();
+                        Node node1 = node2.equals(seg.getFirstNode()) ? seg.getSecondNode() : seg.getFirstNode();
+                        Node node3 = waySegment1.getNode(0).equals(node2) ? waySegment1.getNode(1)
+                                : waySegment1.getNode(0);
+                        return Math.abs(Geometry.getCornerAngle(node1.getEastNorth(), node2.getEastNorth(),
+                                node3.getEastNorth())) < Math.PI / 4;
+                    }).collect(Collectors.toList());
+            if (replacements.size() != 2 || replacements.parallelStream()
+                    .anyMatch(seg -> waySegment1.getNodes().containsAll(seg.toWay().getNodes()))) {
                 continue;
             }
-            if (replacements.size() == 2) {
-                partials.put(segment1, replacements);
-            }
+            partials.put(segment1, replacements);
         }
         return partials;
     }
