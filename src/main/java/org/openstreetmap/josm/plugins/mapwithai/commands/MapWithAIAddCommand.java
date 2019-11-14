@@ -7,8 +7,11 @@ import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -17,9 +20,11 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Pair;
 
 public class MapWithAIAddCommand extends Command implements Runnable {
     DataSet editable;
@@ -27,6 +32,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     Collection<OsmPrimitive> primitives;
     Command command;
     Lock lock;
+    final Map<OsmPrimitive, String> sources;
 
     /**
      * Add primitives from MapWithAI to the OSM data layer
@@ -52,6 +58,9 @@ public class MapWithAIAddCommand extends Command implements Runnable {
         this.mapWithAI = mapWithAI;
         this.editable = editable;
         this.primitives = selection;
+        sources = selection.parallelStream()
+                .map(prim -> new Pair<OsmPrimitive, String>(prim, prim.get(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY)))
+                .filter(pair -> pair.b != null).collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
     }
 
     @Override
@@ -147,6 +156,12 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                     .filter(prim -> !prim.isDeleted()).count();
         }
         return returnLong;
+    }
+
+    public Collection<String> getSourceTags() {
+        return sources.entrySet().parallelStream()
+                .filter(entry -> !editable.getPrimitiveById(entry.getKey()).isDeleted()).map(Entry::getValue)
+                .filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
     }
 
     @Override

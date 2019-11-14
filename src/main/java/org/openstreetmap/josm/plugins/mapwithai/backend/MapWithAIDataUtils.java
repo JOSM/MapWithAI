@@ -173,7 +173,7 @@ public final class MapWithAIDataUtils {
                             : new Notification(tr("No URLS are enabled"));
                     noUrls.setDuration(Notification.TIME_DEFAULT);
                     noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
-            noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
+                    noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
                     if (SwingUtilities.isEventDispatchThread()) {
                         noUrls.show();
                     } else {
@@ -433,5 +433,14 @@ public final class MapWithAIDataUtils {
         return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
                 .filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
                 .mapToLong(MapWithAIAddCommand::getAddedObjects).sum();
+    }
+
+    /**
+     * @return The source tags for Objects added from the MapWithAI data layer
+     */
+    public static List<String> getAddedObjectsSource() {
+        return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
+                .filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
+                .flatMap(com -> com.getSourceTags().stream()).distinct().collect(Collectors.toList());
     }
 }

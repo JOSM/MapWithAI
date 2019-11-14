@@ -30,6 +30,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -68,12 +69,14 @@ public class MapWithAILayerTest {
         DataSet to = new DataSet();
         DataSet from = new DataSet();
         Way way = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
-        way.getNodes().stream().forEach(to::addPrimitive);
-        to.addPrimitive(way);
+        way.getNodes().stream().forEach(from::addPrimitive);
+        from.addPrimitive(way);
+        way.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, MapWithAIPlugin.NAME);
         MapWithAIAddCommand command = new MapWithAIAddCommand(from, to, Collections.singleton(way));
         UndoRedoHandler.getInstance().add(command);
         Assert.assertNotNull(layer.getChangesetSourceTag());
         Assert.assertFalse(layer.getChangesetSourceTag().trim().isEmpty());
+        Assert.assertEquals(layer.getChangesetSourceTag(), MapWithAIPlugin.NAME);
     }
 
     @Test

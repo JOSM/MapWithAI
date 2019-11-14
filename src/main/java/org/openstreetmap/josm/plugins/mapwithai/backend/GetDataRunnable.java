@@ -65,6 +65,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
 
     private static final double ARTIFACT_ANGLE = 0.1745; // 10 degrees in radians
 
+    public static final String MAPWITHAI_SOURCE_TAG_KEY = "mapwithai:source";
+
     /**
      * @param bbox    The initial bbox to get data from (don't reduce beforehand --
      *                it will be reduced here)
@@ -329,20 +331,21 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
         clients = new ArrayList<>();
-        urlMaps.forEach(map -> {
+        urlMaps.parallelStream().forEach(map -> {
             try {
-                clients.add(HttpClient.create(new URL(map.get("url").replace("{bbox}", bbox.toStringCSV(","))
-                        .replace("{crop_bbox}", DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",")))));
+                HttpClient client = HttpClient.create(new URL(map.get("url").replace("{bbox}", bbox.toStringCSV(","))
+                        .replace("{crop_bbox}", DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","))));
+                clients.add(client);
+                clientCall(client, dataSet, map.getOrDefault("source", MapWithAIPlugin.NAME), monitor);
             } catch (MalformedURLException e1) {
                 Logging.debug(e1);
             }
         });
-        clients.forEach(client -> clientCall(client, dataSet, monitor));
         dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
         return dataSet;
     }
 
-    private static void clientCall(HttpClient client, DataSet dataSet, ProgressMonitor monitor) {
+    private static void clientCall(HttpClient client, DataSet dataSet, String source, ProgressMonitor monitor) {
         final StringBuilder defaultUserAgent = new StringBuilder();
         client.setReadTimeout(DEFAULT_TIMEOUT);
         defaultUserAgent.append(client.getHeaders().get("User-Agent"));
@@ -358,6 +361,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 final Response response = client.connect();
                 inputStream = response.getContent();
                 final DataSet mergeData = OsmReaderCustom.parseDataSet(inputStream, null, true);
+                addMapWithAISourceTag(mergeData, source);
                 dataSet.mergeFrom(mergeData);
                 response.disconnect();
             } catch (SocketException e) {
@@ -376,6 +380,21 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 }
             }
         }
+    }
+
+    /**
+     * @param dataSet The dataset to add the mapwithai source tag to
+     * @param source  The source to associate with the data
+     * @return The dataset for easy chaining
+     */
+    protected static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
+        dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted() && node.getReferrers().isEmpty())
+        .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+                .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        dataSet.getRelations().parallelStream().filter(rel -> !rel.isDeleted())
+        .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        return dataSet;
     }
 
     @Override

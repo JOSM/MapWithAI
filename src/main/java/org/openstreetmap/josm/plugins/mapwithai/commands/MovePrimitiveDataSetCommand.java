@@ -17,6 +17,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -63,6 +64,7 @@ public class MovePrimitiveDataSetCommand extends Command {
 
         final List<PrimitiveData> primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save)
                 .collect(Collectors.toList());
+        primitiveAddData.parallelStream().forEach(data -> data.remove(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY));
 
         commands.add(new AddPrimitivesCommand(primitiveAddData,
                 selection.stream().map(OsmPrimitive::save).collect(Collectors.toList()), to));

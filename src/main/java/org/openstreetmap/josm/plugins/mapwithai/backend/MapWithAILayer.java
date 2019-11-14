@@ -55,7 +55,8 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     // @Override TODO remove comment on 2020-01-01
     public String getChangesetSourceTag() {
-        return MapWithAIDataUtils.getAddedObjects() > 0 ? "MapWithAI" : null;
+        return MapWithAIDataUtils.getAddedObjects() > 0 ? String.join("; ", MapWithAIDataUtils.getAddedObjectsSource())
+                : null;
     }
 
     public void setMaximumAddition(Integer max) {
