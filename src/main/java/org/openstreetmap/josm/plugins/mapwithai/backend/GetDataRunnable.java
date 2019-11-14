@@ -257,8 +257,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             BBox tBBox = new BBox();
             tBBox.addPrimitive(way, 0.001);
             if (way.getDataSet().searchWays(tBBox).parallelStream()
-                    .filter(tWay -> !way.equals(tWay) && !tWay.isDeleted()).anyMatch(
-                            tWay -> Geometry.getDistance(way, tWay) < MapWithAIPreferenceHelper.getMaxNodeDistance())) {
+                    .filter(tWay -> !way.equals(tWay) && !tWay.isDeleted())
+                    .anyMatch(tWay -> way.getNodes().parallelStream().filter(
+                            tNode -> Geometry.getDistance(tNode, tWay) < MapWithAIPreferenceHelper.getMaxNodeDistance())
+                            .count() == way.getNodesCount())) {
                 way.setDeleted(true);
             }
         }
