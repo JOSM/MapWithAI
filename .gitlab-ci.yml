@@ -31,7 +31,7 @@ cache:
 assemble:
   stage: build
   script:
-  - ./gradlew assemble --stacktrace
+  - ./gradlew assemble
   artifacts:
     paths:
     - build/
@@ -40,7 +40,7 @@ assemble with java 11:
   stage: build
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   script:
-    - ./gradlew assemble --stacktrace
+    - ./gradlew assemble
   artifacts:
     paths:
       - build/
@@ -49,7 +49,7 @@ assemble with java 12:
   stage: build
   image: registry.gitlab.com/josm/docker-library/openjdk-12-josmplugin:latest
   script:
-    - ./gradlew assemble --stacktrace
+    - ./gradlew assemble
   artifacts:
     paths:
       - build/
@@ -59,11 +59,22 @@ assemble with java 13:
   stage: build
   image: registry.gitlab.com/josm/docker-library/openjdk-13-josmplugin:latest
   script:
-    - ./gradlew assemble --stacktrace
+    - ./gradlew assemble
   artifacts:
     paths:
       - build/
   allow_failure: true
+
+assemble with java 14:
+  stage: build
+  image: registry.gitlab.com/josm/docker-library/openjdk-14-josmplugin:latest
+  script:
+    - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/
+  allow_failure: true
+
 
 ##############
 # Test stage #
@@ -72,7 +83,7 @@ assemble with java 13:
 build:
   stage: test
   script:
-  - ./gradlew build generatePot generateSnapshotUpdateSite --info
+  - ./gradlew build generatePot generateSnapshotUpdateSite #--info
   artifacts:
     paths:
     - build
@@ -82,8 +93,9 @@ build:
 test:
   stage: test
   script:
-  - ./gradlew check --stacktrace --continue --info
+  - ./gradlew check --stacktrace --continue #--info
   - ./gradlew jacocoTestReport
+  - ./gradlew jacocoTestCoverageVerification
   artifacts:
     paths:
     - build
@@ -112,7 +124,7 @@ build with java 11:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   script:
-    - ./gradlew build --stacktrace
+    - ./gradlew build
   dependencies:
     - assemble with java 11
   allow_failure: true # due to copy-paste-detection
@@ -121,7 +133,7 @@ build with java 12:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-12-josmplugin:latest
   script:
-    - ./gradlew build --stacktrace
+    - ./gradlew build
   dependencies:
     - assemble with java 12
   allow_failure: true
@@ -130,9 +142,18 @@ build with java 13:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-13-josmplugin:latest
   script:
-    - ./gradlew build --stacktrace
+    - ./gradlew build
   dependencies:
     - assemble with java 13
+  allow_failure: true
+
+build with java 14:
+  stage: test
+  image: registry.gitlab.com/josm/docker-library/openjdk-14-josmplugin:latest
+  script:
+    - ./gradlew build
+  dependencies:
+    - assemble with java 14
   allow_failure: true
 
 ################

@@ -13,7 +13,7 @@ plugins {
   id "pmd"
   id "com.github.ben-manes.versions" version "0.27.0"
   id "com.github.spotbugs" version "2.0.1"
-  id "org.openstreetmap.josm" version "0.6.4"
+  id "org.openstreetmap.josm" version "0.6.5"
   id "net.ltgt.errorprone" version "1.1.1"
   //id 'de.aaschmid.cpd' version '2.0'
 }
@@ -91,7 +91,7 @@ test {
   useJUnitPlatform()
   testLogging {
     exceptionFormat "full"
-    events "passed", "skipped", "failed"
+    events "skipped", "failed"
     info {
       showStandardStreams true
     }
