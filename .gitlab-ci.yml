@@ -155,6 +155,8 @@ build with java 14:
   dependencies:
     - assemble with java 14
   allow_failure: true
+  only:
+    - schedules
 
 ################
 # Deploy stage #
@@ -209,6 +211,8 @@ release:
     - tags
     variables:
     - $SSH_PRIVATE_DEPLOY_KEY
+  except:
+    - schedules
 
 publish master update site:
   stage: deploy
@@ -233,6 +237,8 @@ publish master update site:
     - master
     variables:
     - $SSH_PRIVATE_DEPLOY_KEY
+  except:
+    - schedules
 
 publish to / GitLab.com packages:
   stage: deploy
@@ -240,10 +246,12 @@ publish to / GitLab.com packages:
     name: GitLab.com / ${CI_PROJECT_NAME} packages
     url: ${CI_PROJECT_URL}/-/packages
   script:
-  - ./gradlew publishAllPublicationsToGitlabRepository
-  - ./gradlew releaseToGitlab
+  - ./gradlew publishAllPublicationsToGitlabRepository --stacktrace
+  - ./gradlew releaseToGitlab --stacktrace --info
   dependencies:
   - build
   only:
     refs:
     - tags
+  except:
+    - schedules
