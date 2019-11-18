@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,15 +24,20 @@ import java.util.stream.Collectors;
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
+import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Tag;
+import org.openstreetmap.josm.data.osm.TagMap;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor.CancelListener;
@@ -124,8 +130,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 mergeNodes(dataSet);
                 cleanupDataSet(dataSet);
                 mergeWays(dataSet);
+                removeAlreadyAddedData(dataSet);
                 dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-                .forEach(GetDataRunnable::cleanupArtifacts);
+                        .forEach(GetDataRunnable::cleanupArtifacts);
                 for (int i = 0; i < 5; i++) {
                     new MergeDuplicateWays(dataSet).executeCommand();
                 }
@@ -133,6 +140,64 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         }
         monitor.finishTask();
         return dataSet;
+    }
+
+    public static void removeAlreadyAddedData(DataSet dataSet) {
+        List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).parallelStream()
+                .map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet)).collect(Collectors.toList());
+        dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+                .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
+                .forEach(way -> {
+                    List<Node> nodes = way.getNodes();
+                    DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
+                    nodes.parallelStream()
+                            .filter(node -> !node.isDeleted()
+                                    && node.getReferrers().parallelStream().allMatch(OsmPrimitive::isDeleted))
+                            .forEach(node -> node.setDeleted(true));
+                });
+    }
+
+    private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
+        List<OsmPrimitive> possibleDuplicates = searchDataSet(ds, primitive);
+        return possibleDuplicates.parallelStream().filter(prim -> !prim.isDeleted())
+                .anyMatch(prim -> checkIfProbableDuplicate(prim, primitive));
+    }
+
+    private static boolean checkIfProbableDuplicate(OsmPrimitive one, OsmPrimitive two) {
+        boolean equivalent = false;
+        TagMap oneMap = one.getKeys();
+        TagMap twoMap = two.getKeys();
+        oneMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
+        twoMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
+        if (one.getClass().equals(two.getClass()) && oneMap.equals(twoMap)) {
+            if (one instanceof Node) {
+                if (one.hasSameInterestingTags(two) && ((Node) one).getCoor().equalsEpsilon(((Node) two).getCoor())) {
+                    equivalent = true;
+                }
+            } else if (one instanceof Way) {
+                equivalent = ((Way) one).getNodes().parallelStream().allMatch(node1 -> ((Way) two).getNodes()
+                        .parallelStream().anyMatch(node2 -> node1.getCoor().equalsEpsilon(node2.getCoor())));
+            } else if (one instanceof Relation) {
+                // TODO (do I really need to do this?)
+            }
+        }
+        return equivalent;
+    }
+
+    private static <T extends AbstractPrimitive> List<OsmPrimitive> searchDataSet(DataSet ds, T primitive) {
+        List<OsmPrimitive> returnList = Collections.emptyList();
+        if (primitive instanceof OsmPrimitive) {
+            BBox tBBox = new BBox();
+            tBBox.addPrimitive((OsmPrimitive) primitive, 0.001);
+            if (primitive instanceof Node) {
+                returnList = new ArrayList<>(ds.searchNodes(tBBox));
+            } else if (primitive instanceof Way) {
+                returnList = new ArrayList<>(ds.searchWays(tBBox));
+            } else if (primitive instanceof Relation) {
+                returnList = new ArrayList<>(ds.searchRelations(tBBox));
+            }
+        }
+        return returnList;
     }
 
     /**
@@ -175,7 +240,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     public static void removeCommonTags(DataSet dataSet) {
         dataSet.allPrimitives().parallelStream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
-        .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
+                .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
         dataSet.getNodes().parallelStream().forEach(node -> node.remove(SERVER_ID_KEY));
         final List<Node> emptyNodes = dataSet.getNodes().parallelStream().distinct().filter(node -> !node.isDeleted())
                 .filter(node -> node.getReferrers().isEmpty() && !node.hasKeys()).collect(Collectors.toList());
@@ -191,13 +256,12 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             final Node n1 = nodes.get(i);
             final BBox bbox = new BBox();
             bbox.addPrimitive(n1, 0.001);
-            final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream()
-                    .filter(node -> !node.isDeleted() && !node.equals(n1)
-                            && ((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty()
-                                    || node.getKeys().isEmpty())
-                                    && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
+            final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream().filter(node -> !node.isDeleted()
+                    && !node.equals(n1)
+                    && ((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty() || node.getKeys().isEmpty())
+                            && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
                                     .getMaxNodeDistance()
-                                    || !n1.getKeys().isEmpty() && n1.getKeys().equals(node.getKeys())
+                            || !n1.getKeys().isEmpty() && n1.getKeys().equals(node.getKeys())
                                     && n1.getCoor().greatCircleDistance(
                                             node.getCoor()) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))
                     .collect(Collectors.toList());
@@ -210,15 +274,18 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     }
 
     private static void mergeWays(DataSet dataSet) {
-        final List<Way> ways = dataSet.getWays().parallelStream().filter(way -> !way.isDeleted()).collect(Collectors.toList());
+        final List<Way> ways = dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+                .collect(Collectors.toList());
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
             final BBox bbox = new BBox();
             bbox.addPrimitive(way1, 0.001);
-            final List<Way> nearbyWays = dataSet.searchWays(bbox).parallelStream().filter(way -> way.getNodes().parallelStream().filter(node -> way1.getNodes().contains(node)).count() > 1).collect(Collectors.toList());
+            final List<Way> nearbyWays = dataSet.searchWays(bbox).parallelStream().filter(
+                    way -> way.getNodes().parallelStream().filter(node -> way1.getNodes().contains(node)).count() > 1)
+                    .collect(Collectors.toList());
             way1.getNodePairs(false);
             nearbyWays.parallelStream().flatMap(way2 -> checkWayDuplications(way1, way2).entrySet().parallelStream())
-            .forEach(GetDataRunnable::addMissingElement);
+                    .forEach(GetDataRunnable::addMissingElement);
         }
     }
 
@@ -228,9 +295,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         Node toAdd = entry.getValue().parallelStream()
                 .flatMap(seg -> Arrays.asList(seg.getFirstNode(), seg.getSecondNode()).parallelStream())
                 .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
-        if (toAdd != null
-                && convertToMeters(Geometry.getDistance(waySegmentWay, toAdd)) < MapWithAIPreferenceHelper
-                .getMaxNodeDistance() * 10) {
+        if (toAdd != null && convertToMeters(
+                Geometry.getDistance(waySegmentWay, toAdd)) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10) {
             way.addNode(entry.getKey().lowerIndex + 1, toAdd);
         }
         for (int i = 0; i < way.getNodesCount() - 2; i++) {
@@ -389,11 +455,11 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     protected static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
         dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted() && node.getReferrers().isEmpty())
-        .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+                .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
                 .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         dataSet.getRelations().parallelStream().filter(rel -> !rel.isDeleted())
-        .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+                .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         return dataSet;
     }
 
