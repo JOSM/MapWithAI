@@ -21,6 +21,8 @@ import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.SSLException;
+
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
@@ -37,6 +39,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
@@ -434,6 +437,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 if (!monitor.isCanceled()) {
                     Logging.debug(e);
                 }
+            } catch (SSLException e) {
+                Logging.debug(e);
+                new Notification(tr("{0}: Bad SSL Certificate: {1}", MapWithAIPlugin.NAME, client.getURL()))
+                        .setDuration(Notification.TIME_DEFAULT).show();
             } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
                 Logging.debug(e);
             } finally {
