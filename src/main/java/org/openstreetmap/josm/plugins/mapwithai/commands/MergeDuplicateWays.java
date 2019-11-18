@@ -35,6 +35,7 @@ public class MergeDuplicateWays extends Command {
     private final Way way2;
 
     private final List<Command> commands;
+    private Command command;
 
     public MergeDuplicateWays(DataSet data) {
         this(data, null, null);
@@ -61,7 +62,7 @@ public class MergeDuplicateWays extends Command {
 
     @Override
     public boolean executeCommand() {
-        if (commands.isEmpty()) {
+        if (commands.isEmpty() || command == null) {
             if (way1 == null && way2 == null) {
                 filterDataSet(getAffectedDataSet(), commands);
             } else if (way1 != null && way2 == null) {
@@ -69,31 +70,38 @@ public class MergeDuplicateWays extends Command {
             } else if (way1 == null) {
                 checkForDuplicateWays(way2, commands);
             } else {
-                final Command command = checkForDuplicateWays(way1, way2);
-                if (command != null) {
-                    commands.add(command);
-                    command.executeCommand();
+                final Command tCommand = checkForDuplicateWays(way1, way2);
+                if (tCommand != null) {
+                    commands.add(tCommand);
+                    tCommand.executeCommand();
                 }
             }
-        } else {
-            for (final Command command : commands) {
-                command.executeCommand();
+            List<Command> realCommands = commands.stream().filter(Objects::nonNull).distinct()
+                    .collect(Collectors.toList());
+            commands.clear();
+            commands.addAll(realCommands);
+            if (!commands.isEmpty() && commands.size() != 1) {
+                command = new SequenceCommand(getDescriptionText(), commands);
+            } else if (commands.size() == 1) {
+                command = commands.get(0);
             }
+        } else {
+            command.executeCommand();
         }
         return true;
     }
 
     @Override
     public void undoCommand() {
-        for (final Command tCommand : commands) {
-            tCommand.undoCommand();
+        if (command != null) {
+            command.undoCommand();
         }
     }
 
     public static void filterDataSet(DataSet dataSet, List<Command> commands) {
         final List<Way> ways = new ArrayList<>(
                 dataSet.getWays().parallelStream().filter(prim -> !prim.isIncomplete() && !prim.isDeleted())
-                        .collect(Collectors.toList()));
+                .collect(Collectors.toList()));
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
             final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).parallelStream()
@@ -208,8 +216,8 @@ public class MergeDuplicateWays extends Command {
             before.forEach(node -> newWay.addNode(0, node));
             after.forEach(newWay::addNode);
             if (newWay.getNodesCount() > 0) {
-                commands.add(new DeleteCommand(way2));
                 commands.add(new ChangeCommand(way1, newWay));
+                commands.add(DeleteCommand.delete(Collections.singleton(way2), true, true));
             }
             if (commands.contains(null)) {
                 commands = commands.stream().filter(Objects::nonNull).collect(Collectors.toList());

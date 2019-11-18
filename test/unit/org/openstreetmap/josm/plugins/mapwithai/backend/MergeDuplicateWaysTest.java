@@ -2,6 +2,12 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -10,10 +16,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -39,9 +45,9 @@ public class MergeDuplicateWaysTest {
     public void testRemoveCommonTags() {
         DataSet ds1 = new DataSet(TestUtils.newNode("orig_id=2222 highway=secondary"));
         GetDataRunnable.removeCommonTags(ds1);
-        Assert.assertEquals(1, ds1.allPrimitives().stream().mapToInt(prim -> prim.getKeys().size()).sum());
+        assertEquals(1, ds1.allPrimitives().stream().mapToInt(prim -> prim.getKeys().size()).sum());
         GetDataRunnable.removeCommonTags(ds1);
-        Assert.assertEquals(1, ds1.allPrimitives().stream().mapToInt(prim -> prim.getKeys().size()).sum());
+        assertEquals(1, ds1.allPrimitives().stream().mapToInt(prim -> prim.getKeys().size()).sum());
     }
 
     /**
@@ -59,19 +65,19 @@ public class MergeDuplicateWaysTest {
         ds1.addPrimitive(way2);
 
         new MergeDuplicateWays(ds1).executeCommand();
-        Assert.assertFalse(way1.isDeleted());
-        Assert.assertFalse(way2.isDeleted());
-        way1.getNodes().forEach(node -> Assert.assertFalse(way2.containsNode(node)));
-        way2.getNodes().forEach(node -> Assert.assertFalse(way1.containsNode(node)));
+        assertFalse(way1.isDeleted());
+        assertFalse(way2.isDeleted());
+        way1.getNodes().forEach(node -> assertFalse(way2.containsNode(node)));
+        way2.getNodes().forEach(node -> assertFalse(way1.containsNode(node)));
 
         Node tNode = new Node(new LatLon(1, 1));
         ds1.addPrimitive(tNode);
         way1.addNode(1, tNode);
 
         new MergeDuplicateWays(ds1).executeCommand();
-        Assert.assertNotSame(way1.isDeleted(), way2.isDeleted());
+        assertNotSame(way1.isDeleted(), way2.isDeleted());
         Way tWay = way1.isDeleted() ? way2 : way1;
-        Assert.assertEquals(4, tWay.getNodesCount());
+        assertEquals(4, tWay.getNodesCount());
     }
 
     /**
@@ -79,6 +85,8 @@ public class MergeDuplicateWaysTest {
      */
     @Test
     public void testMergeWays() {
+        int undoRedoTries = 10;
+
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         Way way2 = TestUtils.newWay("", new Node(new LatLon(1, 1)), new Node(new LatLon(1, 2)));
         Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> set = new LinkedHashSet<>();
@@ -90,23 +98,32 @@ public class MergeDuplicateWaysTest {
         ds.addPrimitive(way1);
 
         // Test with one node in common
-        Assert.assertNull(MergeDuplicateWays.mergeWays(way1, way2, set));
-        Assert.assertFalse(way2.isDeleted());
-        Assert.assertFalse(way1.isDeleted());
-        Assert.assertEquals(2, way1.getNodesCount());
+        assertNull(MergeDuplicateWays.mergeWays(way1, way2, set));
+        assertFalse(way2.isDeleted());
+        assertFalse(way1.isDeleted());
+        assertEquals(2, way1.getNodesCount());
 
+        // Test with two nodes in common
         Node tNode = new Node(new LatLon(0, 0));
         ds.addPrimitive(tNode);
         way2.addNode(0, tNode);
         set.clear(); // we can't use the last pair added
         set.add(new Pair<>(new Pair<>(0, way1.firstNode()), new Pair<>(0, way2.firstNode())));
         set.add(new Pair<>(new Pair<>(1, way1.lastNode()), new Pair<>(1, way2.getNode(1))));
-        MergeDuplicateWays.mergeWays(way1, way2, set).executeCommand();
+        Command command = MergeDuplicateWays.mergeWays(way1, way2, set);
+        for (int i = 0; i < undoRedoTries; i++) {
+            command.executeCommand();
+            assertTrue(way2.isDeleted());
+            assertFalse(way1.isDeleted());
+            assertEquals(3, way1.getNodesCount());
+            command.undoCommand();
+            assertFalse(way2.isDeleted());
+            assertFalse(way1.isDeleted());
+            assertEquals(2, way1.getNodesCount());
+        }
+        command.executeCommand();
 
-        Assert.assertTrue(way2.isDeleted());
-        Assert.assertFalse(way1.isDeleted());
-        Assert.assertEquals(3, way1.getNodesCount());
-
+        // Test with a reversed way
         way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         way2 = TestUtils.newWay("", new Node(new LatLon(1, 1)), new Node(new LatLon(1, 2)));
         way2.addNode(0, new Node(new LatLon(0, 0)));
@@ -121,12 +138,21 @@ public class MergeDuplicateWaysTest {
         set.clear();
         set.add(new Pair<>(new Pair<>(0, way1.firstNode()), new Pair<>(2, way2.lastNode())));
         set.add(new Pair<>(new Pair<>(1, way1.lastNode()), new Pair<>(1, way2.getNode(1))));
-        MergeDuplicateWays.mergeWays(way1, way2, set).executeCommand();
 
-        Assert.assertTrue(way2.isDeleted());
-        Assert.assertFalse(way1.isDeleted());
-        Assert.assertEquals(3, way1.getNodesCount());
+        command = MergeDuplicateWays.mergeWays(way1, way2, set);
+        for (int i = 0; i < undoRedoTries; i++) {
+            command.executeCommand();
+            assertTrue(way2.isDeleted());
+            assertFalse(way1.isDeleted());
+            assertEquals(3, way1.getNodesCount());
 
+            command.undoCommand();
+            assertFalse(way2.isDeleted());
+            assertFalse(way1.isDeleted());
+            assertEquals(2, way1.getNodesCount());
+        }
+
+        // Test that nodes on both sides get added
         way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         way2 = TestUtils.newWay("", new Node(new LatLon(1, 1)), new Node(new LatLon(1, 2)));
         way2.addNode(0, new Node(new LatLon(0, 0)));
@@ -140,13 +166,20 @@ public class MergeDuplicateWaysTest {
         set.add(new Pair<>(new Pair<>(0, way1.firstNode()), new Pair<>(2, way2.getNode(2))));
         set.add(new Pair<>(new Pair<>(1, way1.lastNode()), new Pair<>(3, way2.getNode(3))));
         List<Node> currentWay2Nodes = way2.getNodes();
-        MergeDuplicateWays.mergeWays(way1, way2, set).executeCommand();
+        command = MergeDuplicateWays.mergeWays(way1, way2, set);
 
-        Assert.assertTrue(way2.isDeleted());
-        Assert.assertFalse(way1.isDeleted());
-        Assert.assertEquals(4, way1.getNodesCount());
-        Assert.assertEquals(currentWay2Nodes.get(0), way1.firstNode());
-        Assert.assertEquals(currentWay2Nodes.get(1), way1.getNode(1));
+        for (int i = 0; i < undoRedoTries; i++) {
+            command.executeCommand();
+            assertTrue(way2.isDeleted());
+            assertFalse(way1.isDeleted());
+            assertEquals(4, way1.getNodesCount());
+            assertEquals(currentWay2Nodes.get(0), way1.firstNode());
+            assertEquals(currentWay2Nodes.get(1), way1.getNode(1));
+            command.undoCommand();
+            assertFalse(way2.isDeleted());
+            assertFalse(way1.isDeleted());
+            assertEquals(2, way1.getNodesCount());
+        }
     }
 
     /**
@@ -162,18 +195,18 @@ public class MergeDuplicateWaysTest {
         set.add(pair1);
         set.add(pair2);
 
-        Assert.assertTrue(MergeDuplicateWays.checkDirection(set));
+        assertTrue(MergeDuplicateWays.checkDirection(set));
         pair1.a.a = pair1.a.a - 1;
-        Assert.assertTrue(MergeDuplicateWays.checkDirection(set));
+        assertTrue(MergeDuplicateWays.checkDirection(set));
         pair1.a.a = pair1.a.a + 3;
-        Assert.assertFalse(MergeDuplicateWays.checkDirection(set));
+        assertFalse(MergeDuplicateWays.checkDirection(set));
         pair1.a.a = pair1.a.a - 2;
 
-        Assert.assertTrue(MergeDuplicateWays.checkDirection(set));
+        assertTrue(MergeDuplicateWays.checkDirection(set));
         pair1.b.a = pair1.b.a - 1;
-        Assert.assertTrue(MergeDuplicateWays.checkDirection(set));
+        assertTrue(MergeDuplicateWays.checkDirection(set));
         pair1.b.a = pair1.b.a + 3;
-        Assert.assertFalse(MergeDuplicateWays.checkDirection(set));
+        assertFalse(MergeDuplicateWays.checkDirection(set));
         pair1.b.a = pair1.b.a - 2;
     }
 
@@ -183,14 +216,14 @@ public class MergeDuplicateWaysTest {
     @Test
     public void testSorted() {
         List<Integer> integerList = Arrays.asList(1, 2, 3, 4, 6, 7, 8, 9, 5);
-        Assert.assertFalse(MergeDuplicateWays.sorted(integerList));
+        assertFalse(MergeDuplicateWays.sorted(integerList));
         integerList = integerList.stream().sorted().collect(Collectors.toList());
-        Assert.assertTrue(MergeDuplicateWays.sorted(integerList));
+        assertTrue(MergeDuplicateWays.sorted(integerList));
         integerList.remove(3);
-        Assert.assertFalse(MergeDuplicateWays.sorted(integerList));
+        assertFalse(MergeDuplicateWays.sorted(integerList));
 
         integerList = Arrays.asList(1);
-        Assert.assertTrue(MergeDuplicateWays.sorted(integerList));
+        assertTrue(MergeDuplicateWays.sorted(integerList));
     }
 
     /**
@@ -202,27 +235,27 @@ public class MergeDuplicateWaysTest {
         Way way2 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
 
         Map<Pair<Integer, Node>, Map<Integer, Node>> duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
-        Assert.assertEquals(2, duplicateNodes.size());
-        Assert.assertEquals(2, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
+        assertEquals(2, duplicateNodes.size());
+        assertEquals(2, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
 
         way2.addNode(new Node(new LatLon(0, 0)));
 
         duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
-        Assert.assertEquals(2, duplicateNodes.size());
-        Assert.assertEquals(3, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
+        assertEquals(2, duplicateNodes.size());
+        assertEquals(3, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
 
         way2.addNode(way2.firstNode());
 
         duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
-        Assert.assertEquals(2, duplicateNodes.size());
-        Assert.assertEquals(4, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
+        assertEquals(2, duplicateNodes.size());
+        assertEquals(4, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
 
         way2.setNodes(way2.getNodes().stream().limit(2).collect(Collectors.toList()));
         way2.addNode(new Node(new LatLon(2, 2)));
 
         duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
-        Assert.assertEquals(2, duplicateNodes.size());
-        Assert.assertEquals(2, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
+        assertEquals(2, duplicateNodes.size());
+        assertEquals(2, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
     }
 
 }

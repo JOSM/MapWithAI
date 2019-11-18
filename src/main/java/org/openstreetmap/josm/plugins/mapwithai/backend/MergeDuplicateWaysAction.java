@@ -16,7 +16,6 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
-import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Shortcut;
 
 /**
@@ -51,9 +50,8 @@ public class MergeDuplicateWaysAction extends JosmAction {
             if (command != null) {
                 UndoRedoHandler.getInstance().add(command);
                 i++;
-                Logging.error(Integer.toString(i));
             }
-        } while (command != null && i < 10);
+        } while (command != null && i < 1);
     }
 
 }
