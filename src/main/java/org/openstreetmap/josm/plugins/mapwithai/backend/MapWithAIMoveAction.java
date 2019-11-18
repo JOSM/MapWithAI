@@ -4,9 +4,11 @@ import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
@@ -31,12 +33,26 @@ public class MapWithAIMoveAction extends JosmAction {
 
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), null, tr("Add data from {0}", MapWithAIPlugin.NAME),
-                Shortcut.registerShortcut(
-                        "data:mapwithaiadd", tr("{0}: {1}", MapWithAIPlugin.NAME, tr("Add selected data")),
-                        KeyEvent.VK_A,
-                        Shortcut.SHIFT),
-                true);
+                obtainShortcut(), true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
+    }
+
+    /**
+     * @return The default shortcut, if available, or an alternate shortcut that
+     *         makes sense otherwise
+     */
+    private static Shortcut obtainShortcut() {
+        int key = KeyEvent.VK_A;
+        int modifier = Shortcut.SHIFT;
+        String shortText = "data:mapwithaiadd";
+        Optional<Shortcut> shortCut = Shortcut.findShortcut(key, InputEvent.SHIFT_DOWN_MASK); // Shortcut.SHIFT maps to
+                                                                                              // KeyEvent.SHIFT_DOWN_MASK
+        if (shortCut.isPresent() && !shortText.equals(shortCut.get().getShortText())) {
+            key = KeyEvent.VK_C;
+            modifier = Shortcut.ALT;
+        }
+        return Shortcut.registerShortcut(shortText, tr("{0}: {1}", MapWithAIPlugin.NAME, tr("Add selected data")), key,
+                modifier);
     }
 
     @Override
