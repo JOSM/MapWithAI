@@ -66,8 +66,7 @@ public final class MapWithAIDataUtils {
                 "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss",
                 "resource://styles/standard/mapwithai.mapcss");
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-        .filter(style -> oldUrls.contains(style.url))
-        .forEach(MapPaintStyles::removeStyle);
+                .filter(style -> oldUrls.contains(style.url)).forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
             final MapCSSStyleSource style = new MapCSSStyleSource(PAINT_STYLE_RESOURCE_URL, MapWithAIPlugin.NAME,
@@ -89,8 +88,8 @@ public final class MapWithAIDataUtils {
      */
     public static void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-        .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url))
-        .forEach(MapPaintStyles::removeStyle);
+                .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url))
+                .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
     }
 
     /**
@@ -170,15 +169,15 @@ public final class MapWithAIDataUtils {
         } else {
             Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIURLs().isEmpty()
                     ? new Notification(tr("There are no defined URLs. To get the defaults, restart JOSM"))
-                            : new Notification(tr("No URLS are enabled"));
-                    noUrls.setDuration(Notification.TIME_DEFAULT);
-                    noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
-                    noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
-                    if (SwingUtilities.isEventDispatchThread()) {
-                        noUrls.show();
-                    } else {
-                        SwingUtilities.invokeLater(noUrls::show);
-                    }
+                    : new Notification(tr("No URLS are enabled"));
+            noUrls.setDuration(Notification.TIME_DEFAULT);
+            noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
+            noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
+            if (SwingUtilities.isEventDispatchThread()) {
+                noUrls.show();
+            } else {
+                SwingUtilities.invokeLater(noUrls::show);
+            }
         }
         return dataSet;
     }
@@ -326,7 +325,8 @@ public final class MapWithAIDataUtils {
                 .collect(Collectors.toList());
     }
 
-    // TODO replace with {@link BBox.bboxesAreFunctionallyEqual} when version bumped to >r15483
+    // TODO replace with {@link BBox.bboxesAreFunctionallyEqual} when version bumped
+    // to >r15483
     private static boolean bboxesAreFunctionallyEqual(BBox bbox1, BBox bbox2, Double maxDifference) {
         final double diff = Optional.ofNullable(maxDifference).orElse(LatLon.MAX_SERVER_PRECISION);
         return (bbox1 != null && bbox2 != null && Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < diff
