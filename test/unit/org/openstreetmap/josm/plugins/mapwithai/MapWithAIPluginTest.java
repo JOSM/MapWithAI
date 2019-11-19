@@ -4,9 +4,12 @@ package org.openstreetmap.josm.plugins.mapwithai;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JMenu;
 
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,6 +17,8 @@ import org.junit.Test;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.plugins.PluginInformation;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -61,6 +66,25 @@ public class MapWithAIPluginTest {
         Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
         Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
                 .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+
+        for (boolean existed : Arrays.asList(false, true)) { // false, true order is important
+            plugin = new MapWithAIPlugin(info);
+            Config.getPref().putBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS, existed);
+            plugin.destroy();
+            Assert.assertEquals(dataMenuSize, dataMenu.getMenuComponentCount());
+            Awaitility.await().atMost(5, TimeUnit.SECONDS)
+                    .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+            Assert.assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
+                    MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                            .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+        }
+
+        for (int i = 0; i < 3; i++) {
+            plugin = new MapWithAIPlugin(info);
+            Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
+            Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                    .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+        }
     }
 
     /**

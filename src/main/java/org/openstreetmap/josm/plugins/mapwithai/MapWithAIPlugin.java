@@ -41,7 +41,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     /** The name of the plugin */
     public static final String NAME = "MapWithAI";
 
-    private static final String PAINTSTYLE_PREEXISTS = NAME.concat(".paintstyleprexists");
+    protected static final String PAINTSTYLE_PREEXISTS = NAME.concat(".paintstyleprexists");
     private static String versionInfo;
 
     private final PreferenceSetting preferenceSetting;
@@ -142,7 +142,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
         .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
-        if (Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
+        if (!Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
             MapWithAIDataUtils.removeMapWithAIPaintStyles();
         }
 
