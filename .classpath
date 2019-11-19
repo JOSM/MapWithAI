@@ -17,7 +17,7 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
 	<classpathentry kind="lib" path="/JOSM/test/lib/awaitility-3.1.5.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JOSM-utilsplugin2"/>
 	<classpathentry kind="output" path="build/classes/java/main"/>
