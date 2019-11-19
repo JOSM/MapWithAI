@@ -49,21 +49,42 @@ public class MapWithAIAction extends JosmAction {
                     .collect(Collectors.toList());
             final OsmDataLayer layer = getOsmLayer(osmLayers);
             if (layer != null && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
-                createMessageDialog();
+                Notification notification = createMessageDialog();
+                if (notification != null) {
+                    notification.show();
+                }
             } else if (layer != null && hasLayer) {
                 toggleLayer(layer);
             }
         }
     }
 
-    private static OsmDataLayer getOsmLayer(List<OsmDataLayer> osmLayers) {
-        return osmLayers.size() == 1
-                ? osmLayers.get(0)
-                        : AbstractMergeAction.askTargetLayer(osmLayers.toArray(new OsmDataLayer[0]),
-                                tr("Please select the target layer"), tr("Select target layer"), tr("OK"), "download");
+    /**
+     * Get the osm layer that the user wants to use to get data from (doesn't ask if
+     * user only has one data layer)
+     *
+     * @param osmLayers The list of osm data layers
+     * @return The layer that the user selects
+     */
+    protected static OsmDataLayer getOsmLayer(List<OsmDataLayer> osmLayers) {
+        OsmDataLayer returnLayer = null;
+        if (osmLayers.size() == 1) {
+            returnLayer = osmLayers.get(0);
+        } else if (!osmLayers.isEmpty()) {
+            AbstractMergeAction.askTargetLayer(osmLayers.toArray(new OsmDataLayer[0]),
+                    tr("Please select the target layer"), tr("Select target layer"), tr("OK"), "download");
+        }
+        return returnLayer;
     }
 
-    private static void toggleLayer(Layer toLayer) {
+    /**
+     * Toggle the layer (the toLayer is the layer to switch to, if currently active
+     * it will switch to the MapWithAI layer, if the MapWithAI layer is currently
+     * active it will switch to the layer passed)
+     *
+     * @param toLayer The {@link Layer} to switch to
+     */
+    protected static void toggleLayer(Layer toLayer) {
         final OsmDataLayer mapwithai = MapWithAIDataUtils.getLayer(false);
         final Layer currentLayer = MainApplication.getLayerManager().getActiveLayer();
         if (currentLayer != null) {
@@ -80,10 +101,16 @@ public class MapWithAIAction extends JosmAction {
         setEnabled(getLayerManager().getEditDataSet() != null);
     }
 
-    public void createMessageDialog() {
+    /**
+     * Create a message dialog to notify the user if data is available in their
+     * downloaded region
+     *
+     * @return A Notification to show ({@link Notification#show})
+     */
+    public static Notification createMessageDialog() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        if (layer != null) {
-            final Notification notification = new Notification();
+        final Notification notification = layer == null ? null : new Notification();
+        if (notification != null) {
             final List<Bounds> bounds = new ArrayList<>(layer.getDataSet().getDataSourceBounds());
             if (bounds.isEmpty()) {
                 MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
@@ -110,7 +137,7 @@ public class MapWithAIAction extends JosmAction {
             notification.setContent(message.toString());
             notification.setDuration(Notification.TIME_DEFAULT);
             notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
-            notification.show();
         }
+        return notification;
     }
 }
