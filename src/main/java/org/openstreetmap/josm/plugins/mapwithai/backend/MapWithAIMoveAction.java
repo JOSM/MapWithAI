@@ -32,8 +32,8 @@ public class MapWithAIMoveAction extends JosmAction {
     private transient Notification lastNotification;
 
     public MapWithAIMoveAction() {
-        super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), null, tr("Add data from {0}", MapWithAIPlugin.NAME),
-                obtainShortcut(), true);
+        super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), "mapwithai",
+                tr("Add data from {0}", MapWithAIPlugin.NAME), obtainShortcut(), true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 
@@ -44,9 +44,10 @@ public class MapWithAIMoveAction extends JosmAction {
     private static Shortcut obtainShortcut() {
         int key = KeyEvent.VK_A;
         int modifier = Shortcut.SHIFT;
-        String shortText = "data:mapwithaiadd";
-        Optional<Shortcut> shortCut = Shortcut.findShortcut(key, InputEvent.SHIFT_DOWN_MASK); // Shortcut.SHIFT maps to
-                                                                                              // KeyEvent.SHIFT_DOWN_MASK
+        final String shortText = "data:mapwithaiadd";
+        final Optional<Shortcut> shortCut = Shortcut.findShortcut(key, InputEvent.SHIFT_DOWN_MASK); // Shortcut.SHIFT
+                                                                                                    // maps to
+        // KeyEvent.SHIFT_DOWN_MASK
         if (shortCut.isPresent() && !shortText.equals(shortCut.get().getShortText())) {
             key = KeyEvent.VK_C;
             modifier = Shortcut.ALT;
@@ -94,7 +95,7 @@ public class MapWithAIMoveAction extends JosmAction {
         final Notification notification = new Notification();
         final StringBuilder message = new StringBuilder();
         message.append(MapWithAIPlugin.NAME).append(": ").append(tr("maximum additions per action are "))
-        .append(maxAddition).append(", ").append(tr("tried to add ")).append(triedToAdd).append('.');
+                .append(maxAddition).append(", ").append(tr("tried to add ")).append(triedToAdd).append('.');
         notification.setContent(message.toString());
         notification.setDuration(Notification.TIME_DEFAULT);
         notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
@@ -112,7 +113,7 @@ public class MapWithAIMoveAction extends JosmAction {
 
     @Override
     protected void updateEnabledState(Collection<? extends OsmPrimitive> selection) {
-        if (selection == null || selection.isEmpty()) {
+        if ((selection == null) || selection.isEmpty()) {
             setEnabled(false);
         } else {
             setEnabled(checkIfActionEnabled());
@@ -125,7 +126,7 @@ public class MapWithAIMoveAction extends JosmAction {
         if (active instanceof MapWithAILayer) {
             final MapWithAILayer mapWithAILayer = (MapWithAILayer) active;
             final Collection<OsmPrimitive> selection = mapWithAILayer.getDataSet().getAllSelected();
-            returnValue = selection != null && !selection.isEmpty();
+            returnValue = (selection != null) && !selection.isEmpty();
         }
         return returnValue;
     }

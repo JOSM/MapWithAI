@@ -63,23 +63,22 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     private static void fillReplacementTagDisplayData(List<PrefEntry> list) {
         final Map<String, String> current = new TreeMap<>(MapWithAIPreferenceHelper.getReplacementTags());
         for (final Entry<String, String> entry : current.entrySet()) {
-            list.add(new PrefEntry(entry.getKey(), new StringSetting(entry.getValue()), new StringSetting(null), false));
+            list.add(
+                    new PrefEntry(entry.getKey(), new StringSetting(entry.getValue()), new StringSetting(null), false));
         }
     }
 
     private static void fillMapWithAIURLTableDisplayData(List<DataUrl> list) {
         MapWithAIPreferenceHelper.getMapWithAIURLs()
-        .forEach(
-                entry -> list
-                .add(new DataUrl(entry.get(SOURCE), entry.get("url"),
+                .forEach(entry -> list.add(new DataUrl(entry.get(SOURCE), entry.get("url"),
                         Boolean.valueOf(entry.getOrDefault("enabled", "false")),
                         entry.getOrDefault("parameters", "[]"))));
     }
 
     @Override
     public void addGui(PreferenceTabbedPane gui) {
-        int width = 200;
-        int height = 200;
+        final int width = 200;
+        final int height = 200;
         final JLabel mapWithAIApiUrl = new JLabel(tr("{0} API URLs", MapWithAIPlugin.NAME));
         final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
         final JLabel maximumAddition = new JLabel(tr("Maximum features (add)"));
@@ -104,9 +103,9 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         pane.setAlignmentY(Component.TOP_ALIGNMENT);
         pane.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        GBC first = GBC.std().weight(0, 1).anchor(GridBagConstraints.WEST);
-        GBC second = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
-        GBC buttonInsets = GBC.std().insets(5, 5, 0, 0);
+        final GBC first = GBC.std().weight(0, 1).anchor(GridBagConstraints.WEST);
+        final GBC second = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
+        final GBC buttonInsets = GBC.std().insets(5, 5, 0, 0);
 
         pane.add(mapWithAIApiUrl, first);
 
@@ -116,7 +115,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         scroll1.setPreferredSize(new Dimension(width, height));
 
         pane.add(new JLabel(), first);
-        JPanel replaceAddEditDeleteScroll1 = new JPanel(new GridBagLayout());
+        final JPanel replaceAddEditDeleteScroll1 = new JPanel(new GridBagLayout());
         pane.add(replaceAddEditDeleteScroll1, second);
         final JButton addScroll1 = new JButton(tr("Add"));
         replaceAddEditDeleteScroll1.add(addScroll1, buttonInsets);
@@ -135,7 +134,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         final JButton deleteScroll1 = new JButton(tr("Delete"));
         replaceAddEditDeleteScroll1.add(deleteScroll1, buttonInsets);
         deleteScroll1.addActionListener(e -> {
-            List<DataUrl> toRemove = mapwithaiUrlPreferenceTable.getSelectedItems();
+            final List<DataUrl> toRemove = mapwithaiUrlPreferenceTable.getSelectedItems();
             if (!toRemove.isEmpty()) {
                 mapwithaiurlTableDisplayData.removeAll(toRemove);
             }
@@ -163,13 +162,13 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         scroll2.setPreferredSize(new Dimension(width, height));
 
         pane.add(new JLabel(), first);
-        JPanel replaceAddEditDeleteScroll2 = new JPanel(new GridBagLayout());
+        final JPanel replaceAddEditDeleteScroll2 = new JPanel(new GridBagLayout());
         pane.add(replaceAddEditDeleteScroll2, second);
         final JButton addScroll2 = new JButton(tr("Add"));
         replaceAddEditDeleteScroll2.add(addScroll2, buttonInsets);
         addScroll2.addActionListener(e -> {
             final PrefEntry pe = replacementPreferenceTable.addPreference(gui);
-            if (pe != null && pe.getValue() instanceof StringSetting) {
+            if ((pe != null) && (pe.getValue() instanceof StringSetting)) {
                 replacementTableDisplayData.add(pe);
                 Collections.sort(replacementTableDisplayData);
                 replacementPreferenceTable.fireDataChanged();
@@ -196,18 +195,19 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         });
 
         Arrays.asList(replaceAddEditDeleteScroll2, scroll2, expertHorizontalGlue, replacementTags)
-        .forEach(ExpertToggleAction::addVisibilitySwitcher);
+                .forEach(ExpertToggleAction::addVisibilitySwitcher);
 
-        getTabPreferenceSetting(gui).addSubTab(this, MapWithAIPlugin.NAME, pane);
+        getTabPreferenceSetting(gui).addSubTab(this, MapWithAIPlugin.NAME, pane,
+                tr("{0} preferences", MapWithAIPlugin.NAME));
     }
 
     @Override
     public boolean ok() {
-        ArrayList<DataUrl> tData = new ArrayList<>(
+        final ArrayList<DataUrl> tData = new ArrayList<>(
                 mapwithaiurlTableDisplayData.stream().distinct()
-                .filter(data -> !data.getMap().getOrDefault("url", "http://example.com")
-                        .equalsIgnoreCase(DataUrl.emptyData().getMap().get("url")))
-                .collect(Collectors.toList()));
+                        .filter(data -> !data.getMap().getOrDefault("url", "http://example.com")
+                                .equalsIgnoreCase(DataUrl.emptyData().getMap().get("url")))
+                        .collect(Collectors.toList()));
         mapwithaiurlTableDisplayData.clear();
         mapwithaiurlTableDisplayData.addAll(tData);
         MapWithAIPreferenceHelper.setMapWithAIURLs(convertUrlPrefToMap(mapwithaiurlTableDisplayData));

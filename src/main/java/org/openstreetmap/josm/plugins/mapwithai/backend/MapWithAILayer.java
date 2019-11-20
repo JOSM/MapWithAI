@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import javax.swing.Action;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -27,6 +28,7 @@ import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
+import org.openstreetmap.josm.tools.ImageProvider;
 
 /**
  * @author Taylor Smock
@@ -145,7 +147,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     @Override
     public void activeOrEditLayerChanged(ActiveLayerChangeEvent e) {
         if (checkIfToggleLayer()) {
-            StyleSource style = MapWithAIDataUtils.getMapWithAIPaintStyle();
+            final StyleSource style = MapWithAIDataUtils.getMapWithAIPaintStyle();
             if (style.active != this.equals(MainApplication.getLayerManager().getActiveLayer())) {
                 MapPaintStyles.toggleStyleActive(MapPaintStyles.getStyles().getStyleSources().indexOf(style));
             }
@@ -153,7 +155,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     }
 
     private static boolean checkIfToggleLayer() {
-        List<String> keys = Config.getPref().getKeySet().parallelStream()
+        final List<String> keys = Config.getPref().getKeySet().parallelStream()
                 .filter(string -> string.contains(MapWithAIPlugin.NAME) && string.contains("boolean:toggle_with_layer"))
                 .collect(Collectors.toList());
         boolean toggle = false;
@@ -167,5 +169,10 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     public synchronized void destroy() {
         super.destroy();
         MainApplication.getLayerManager().removeActiveLayerChangeListener(this);
+    }
+
+    @Override
+    public ImageIcon getIcon() {
+        return ImageProvider.get("mapwithai", ImageProvider.ImageSizes.LAYER);
     }
 }

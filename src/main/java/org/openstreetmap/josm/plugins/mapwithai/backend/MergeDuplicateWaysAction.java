@@ -26,9 +26,8 @@ public class MergeDuplicateWaysAction extends JosmAction {
     private static final String DESCRIPTION = "Attempt to merge potential duplicate ways";
 
     public MergeDuplicateWaysAction() {
-        super(tr("{0}: ".concat(DESCRIPTION), MapWithAIPlugin.NAME), null, tr(DESCRIPTION),
-                Shortcut.registerShortcut("data:attemptmergeway",
-                        tr(DESCRIPTION), KeyEvent.VK_EXCLAMATION_MARK,
+        super(tr("{0}: ".concat(DESCRIPTION), MapWithAIPlugin.NAME), "mapwithai", tr(DESCRIPTION),
+                Shortcut.registerShortcut("data:attemptmergeway", tr(DESCRIPTION), KeyEvent.VK_EXCLAMATION_MARK,
                         Shortcut.ALT_CTRL_SHIFT),
                 true);
         setHelpId(ht("Plugin/MapWithAI"));
@@ -37,7 +36,8 @@ public class MergeDuplicateWaysAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (MainApplication.getLayerManager().getActiveDataSet() != null) {
-            final List<Way> ways = new ArrayList<>(MainApplication.getLayerManager().getActiveDataSet().getSelectedWays());
+            final List<Way> ways = new ArrayList<>(
+                    MainApplication.getLayerManager().getActiveDataSet().getSelectedWays());
             Command command = null;
             int i = 0;
             do {
@@ -52,7 +52,7 @@ public class MergeDuplicateWaysAction extends JosmAction {
                     UndoRedoHandler.getInstance().add(command);
                     i++;
                 }
-            } while (command != null && i < 1);
+            } while ((command != null) && (i < 1));
         }
     }
 

@@ -27,15 +27,14 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Shortcut;
 
-
 public class MapWithAIAction extends JosmAction {
     /** UID */
     private static final long serialVersionUID = 8886705479253246588L;
 
     public MapWithAIAction() {
-        super(tr("{0}: Download data", MapWithAIPlugin.NAME), null, tr("Get data from {0}", MapWithAIPlugin.NAME),
-                Shortcut.registerShortcut("data:mapWithAI", tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R,
-                        Shortcut.CTRL),
+        super(tr("{0}: Download data", MapWithAIPlugin.NAME), "mapwithai",
+                tr("Get data from {0}", MapWithAIPlugin.NAME), Shortcut.registerShortcut("data:mapWithAI",
+                        tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R, Shortcut.CTRL),
                 true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
@@ -48,12 +47,12 @@ public class MapWithAIAction extends JosmAction {
                     .stream().filter(layer -> !(layer instanceof MapWithAILayer)).filter(Layer::isVisible)
                     .collect(Collectors.toList());
             final OsmDataLayer layer = getOsmLayer(osmLayers);
-            if (layer != null && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
-                Notification notification = createMessageDialog();
+            if ((layer != null) && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
+                final Notification notification = createMessageDialog();
                 if (notification != null) {
                     notification.show();
                 }
-            } else if (layer != null && hasLayer) {
+            } else if ((layer != null) && hasLayer) {
                 toggleLayer(layer);
             }
         }
@@ -88,9 +87,9 @@ public class MapWithAIAction extends JosmAction {
         final OsmDataLayer mapwithai = MapWithAIDataUtils.getLayer(false);
         final Layer currentLayer = MainApplication.getLayerManager().getActiveLayer();
         if (currentLayer != null) {
-            if (currentLayer.equals(mapwithai) && toLayer != null) {
+            if (currentLayer.equals(mapwithai) && (toLayer != null)) {
                 MainApplication.getLayerManager().setActiveLayer(toLayer);
-            } else if (currentLayer.equals(toLayer) && mapwithai != null) {
+            } else if (currentLayer.equals(toLayer) && (mapwithai != null)) {
                 MainApplication.getLayerManager().setActiveLayer(mapwithai);
             }
         }
@@ -114,8 +113,8 @@ public class MapWithAIAction extends JosmAction {
             final List<Bounds> bounds = new ArrayList<>(layer.getDataSet().getDataSourceBounds());
             if (bounds.isEmpty()) {
                 MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                .map(OsmDataLayer::getDataSet).filter(Objects::nonNull).map(DataSet::getDataSourceBounds)
-                .forEach(bounds::addAll);
+                        .map(OsmDataLayer::getDataSet).filter(Objects::nonNull).map(DataSet::getDataSourceBounds)
+                        .forEach(bounds::addAll);
             }
             final StringBuilder message = new StringBuilder();
             message.append(MapWithAIPlugin.NAME).append(": ");
@@ -123,7 +122,7 @@ public class MapWithAIAction extends JosmAction {
             final Map<String, Boolean> availableTypes = new TreeMap<>();
             for (final Bounds bound : bounds) {
                 availability.getDataTypes(bound.getCenter())
-                .forEach((type, available) -> availableTypes.merge(type, available, Boolean::logicalOr));
+                        .forEach((type, available) -> availableTypes.merge(type, available, Boolean::logicalOr));
             }
             final List<String> types = availableTypes.entrySet().stream().filter(Entry::getValue)
                     .map(entry -> MapWithAIAvailability.getPossibleDataTypesAndMessages().get(entry.getKey()))

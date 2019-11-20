@@ -48,10 +48,11 @@ public class MapWithAIArbitraryAction extends JosmAction {
     private static final String ARBITRARY_DATA_STRING = tr("Get arbitrary data from {0}", MapWithAIPlugin.NAME);
 
     public MapWithAIArbitraryAction() {
-        super(tr("{0}: Download arbitrary data", MapWithAIPlugin.NAME), null, tr(ARBITRARY_DATA_STRING),
+        super(tr("{0}: Download arbitrary data", MapWithAIPlugin.NAME), "mapwithai", tr(ARBITRARY_DATA_STRING),
                 Shortcut.registerShortcut("data:arbitrarymapwithai",
                         tr("Data: Arbitrary {0} Data", tr(ARBITRARY_DATA_STRING)), KeyEvent.VK_R,
-                        Shortcut.ALT_CTRL_SHIFT), true);
+                        Shortcut.ALT_CTRL_SHIFT),
+                true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 
@@ -117,7 +118,7 @@ public class MapWithAIArbitraryAction extends JosmAction {
                 bbox = new BBox();
                 bbox.add(new LatLon(Double.parseDouble(lowerLat.getText()), Double.parseDouble(leftLon.getText())));
                 bbox.add(new LatLon(Double.parseDouble(upperLat.getText()), Double.parseDouble(rightLon.getText())));
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 JOptionPane.showMessageDialog(MainApplication.getMainFrame(),
                         tr("Could not parse Latitude or Longitude. Please check."), tr("Unable to parse Lon/Lat"),
                         JOptionPane.ERROR_MESSAGE);
@@ -126,8 +127,9 @@ public class MapWithAIArbitraryAction extends JosmAction {
         }
 
         if (checkbox.isSelected()) {
-            MainApplication.getLayerManager().addLayer(new GpxLayer(
-                    DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox), DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
+            MainApplication.getLayerManager()
+                    .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox),
+                            DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
         }
 
         MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), bbox);
