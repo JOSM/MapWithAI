@@ -156,7 +156,7 @@ public final class MapWithAIDataUtils {
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
         if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .anyMatch(map -> Boolean.valueOf(map.getOrDefault("enabled", "false")))) {
-            if (realBBoxes.size() < TOO_MANY_BBOXES || ConditionalOptionPaneUtil.showConfirmationDialog(
+            if ((realBBoxes.size() < TOO_MANY_BBOXES) || ConditionalOptionPaneUtil.showConfirmationDialog(
                     MapWithAIPlugin.NAME.concat(".alwaysdownload"), null,
                     tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
                             realBBoxes.size()),
@@ -167,7 +167,7 @@ public final class MapWithAIDataUtils {
                 monitor.close();
             }
         } else {
-            Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIURLs().isEmpty()
+            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIURLs().isEmpty()
                     ? new Notification(tr("There are no defined URLs. To get the defaults, restart JOSM"))
                     : new Notification(tr("No URLS are enabled"));
             noUrls.setDuration(Notification.TIME_DEFAULT);
@@ -287,7 +287,8 @@ public final class MapWithAIDataUtils {
                 final Lock lock = layer.getLock();
                 lock.lock();
                 try {
-                    layer.mergeFrom(newData);
+                    mapWithAISet.mergeFrom(newData);
+                    GetDataRunnable.cleanup(mapWithAISet);
                 } finally {
                     lock.unlock();
                 }
@@ -329,10 +330,11 @@ public final class MapWithAIDataUtils {
     // to >r15483
     private static boolean bboxesAreFunctionallyEqual(BBox bbox1, BBox bbox2, Double maxDifference) {
         final double diff = Optional.ofNullable(maxDifference).orElse(LatLon.MAX_SERVER_PRECISION);
-        return (bbox1 != null && bbox2 != null && Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < diff
-                && Math.abs(bbox1.getBottomRightLon() - bbox2.getBottomRightLon()) < diff
-                && Math.abs(bbox1.getTopLeftLat() - bbox2.getTopLeftLat()) < diff
-                && Math.abs(bbox1.getTopLeftLon() - bbox2.getTopLeftLon()) < diff);
+        return ((bbox1 != null) && (bbox2 != null)
+                && (Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < diff)
+                && (Math.abs(bbox1.getBottomRightLon() - bbox2.getBottomRightLon()) < diff)
+                && (Math.abs(bbox1.getTopLeftLat() - bbox2.getTopLeftLat()) < diff)
+                && (Math.abs(bbox1.getTopLeftLon() - bbox2.getTopLeftLon()) < diff));
     }
 
     private static boolean bboxesShareSide(BBox bbox1, BBox bbox2) {
@@ -372,9 +374,9 @@ public final class MapWithAIDataUtils {
         final double height = getHeight(bbox);
         final Double widthDivisions = width / MAXIMUM_SIDE_DIMENSIONS;
         final Double heightDivisions = height / MAXIMUM_SIDE_DIMENSIONS;
-        final int widthSplits = widthDivisions.intValue() + (widthDivisions - widthDivisions.intValue() > 0 ? 1 : 0);
+        final int widthSplits = widthDivisions.intValue() + ((widthDivisions - widthDivisions.intValue()) > 0 ? 1 : 0);
         final int heightSplits = heightDivisions.intValue()
-                + (heightDivisions - heightDivisions.intValue() > 0 ? 1 : 0);
+                + ((heightDivisions - heightDivisions.intValue()) > 0 ? 1 : 0);
 
         final double newMinWidths = Math.abs(bbox.getTopLeftLon() - bbox.getBottomRightLon()) / widthSplits;
         final double newMinHeights = Math.abs(bbox.getBottomRightLat() - bbox.getTopLeftLat()) / heightSplits;
@@ -383,8 +385,8 @@ public final class MapWithAIDataUtils {
         final double miny = bbox.getBottomRightLat();
         for (int x = 1; x <= widthSplits; x++) {
             for (int y = 1; y <= heightSplits; y++) {
-                final LatLon lowerLeft = new LatLon(miny + newMinHeights * (y - 1), minx + newMinWidths * (x - 1));
-                final LatLon upperRight = new LatLon(miny + newMinHeights * y, minx + newMinWidths * x);
+                final LatLon lowerLeft = new LatLon(miny + (newMinHeights * (y - 1)), minx + (newMinWidths * (x - 1)));
+                final LatLon upperRight = new LatLon(miny + (newMinHeights * y), minx + (newMinWidths * x));
                 returnBounds.add(new BBox(lowerLeft, upperRight));
             }
         }

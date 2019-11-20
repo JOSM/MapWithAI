@@ -125,33 +125,41 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         // This can technically be included in the above block, but it is here so that
         // cancellation is a little faster
         if (!monitor.isCanceled()) {
-            synchronized (LOCK) {
-                /* Microsoft buildings don't have a source, so we add one */
-                MapWithAIDataUtils.addSourceTags(dataSet, "building", "microsoft");
-                replaceTags(dataSet);
-                removeCommonTags(dataSet);
-                mergeNodes(dataSet);
-                cleanupDataSet(dataSet);
-                mergeWays(dataSet);
-                removeAlreadyAddedData(dataSet);
-                dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-                        .forEach(GetDataRunnable::cleanupArtifacts);
-                for (int i = 0; i < 5; i++) {
-                    new MergeDuplicateWays(dataSet).executeCommand();
-                }
-            }
+            cleanup(dataSet);
         }
         monitor.finishTask();
         return dataSet;
     }
 
+    /**
+     * Perform cleanups on a dataset (one dataset at a time)
+     *
+     * @param dataSet The dataset to cleanup
+     */
+    public static void cleanup(DataSet dataSet) {
+        synchronized (LOCK) {
+            /* Microsoft buildings don't have a source, so we add one */
+            MapWithAIDataUtils.addSourceTags(dataSet, "building", "microsoft");
+            replaceTags(dataSet);
+            removeCommonTags(dataSet);
+            mergeNodes(dataSet);
+            cleanupDataSet(dataSet);
+            mergeWays(dataSet);
+            removeAlreadyAddedData(dataSet);
+            new MergeDuplicateWays(dataSet).executeCommand();
+            dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+                    .forEach(GetDataRunnable::cleanupArtifacts);
+        }
+    }
+
     public static void removeAlreadyAddedData(DataSet dataSet) {
-        List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).parallelStream()
-                .map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet)).collect(Collectors.toList());
+        final List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
+                .parallelStream().map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet))
+                .collect(Collectors.toList());
         dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
                 .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
                 .forEach(way -> {
-                    List<Node> nodes = way.getNodes();
+                    final List<Node> nodes = way.getNodes();
                     DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
                     nodes.parallelStream()
                             .filter(node -> !node.isDeleted()
@@ -161,15 +169,15 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     }
 
     private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
-        List<OsmPrimitive> possibleDuplicates = searchDataSet(ds, primitive);
+        final List<OsmPrimitive> possibleDuplicates = searchDataSet(ds, primitive);
         return possibleDuplicates.parallelStream().filter(prim -> !prim.isDeleted())
                 .anyMatch(prim -> checkIfProbableDuplicate(prim, primitive));
     }
 
     private static boolean checkIfProbableDuplicate(OsmPrimitive one, OsmPrimitive two) {
         boolean equivalent = false;
-        TagMap oneMap = one.getKeys();
-        TagMap twoMap = two.getKeys();
+        final TagMap oneMap = one.getKeys();
+        final TagMap twoMap = two.getKeys();
         oneMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
         twoMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
         if (one.getClass().equals(two.getClass()) && oneMap.equals(twoMap)) {
@@ -190,7 +198,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     private static <T extends AbstractPrimitive> List<OsmPrimitive> searchDataSet(DataSet ds, T primitive) {
         List<OsmPrimitive> returnList = Collections.emptyList();
         if (primitive instanceof OsmPrimitive) {
-            BBox tBBox = new BBox();
+            final BBox tBBox = new BBox();
             tBBox.addPrimitive((OsmPrimitive) primitive, 0.001);
             if (primitive instanceof Node) {
                 returnList = new ArrayList<>(ds.searchNodes(tBBox));
@@ -261,12 +269,12 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             bbox.addPrimitive(n1, 0.001);
             final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream().filter(node -> !node.isDeleted()
                     && !node.equals(n1)
-                    && ((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty() || node.getKeys().isEmpty())
-                            && n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
-                                    .getMaxNodeDistance()
-                            || !n1.getKeys().isEmpty() && n1.getKeys().equals(node.getKeys())
-                                    && n1.getCoor().greatCircleDistance(
-                                            node.getCoor()) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))
+                    && (((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty() || node.getKeys().isEmpty())
+                            && (n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
+                                    .getMaxNodeDistance()))
+                            || (!n1.getKeys().isEmpty() && n1.getKeys().equals(node.getKeys())
+                                    && (n1.getCoor().greatCircleDistance(
+                                            node.getCoor()) < (MapWithAIPreferenceHelper.getMaxNodeDistance() * 10)))))
                     .collect(Collectors.toList());
             final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, n1);
             if (mergeCommand != null) {
@@ -293,20 +301,20 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     }
 
     protected static void addMissingElement(Map.Entry<WaySegment, List<WaySegment>> entry) {
-        Way way = entry.getKey().way;
-        Way waySegmentWay = entry.getKey().toWay();
-        Node toAdd = entry.getValue().parallelStream()
+        final Way way = entry.getKey().way;
+        final Way waySegmentWay = entry.getKey().toWay();
+        final Node toAdd = entry.getValue().parallelStream()
                 .flatMap(seg -> Arrays.asList(seg.getFirstNode(), seg.getSecondNode()).parallelStream())
                 .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
-        if (toAdd != null && convertToMeters(
-                Geometry.getDistance(waySegmentWay, toAdd)) < MapWithAIPreferenceHelper.getMaxNodeDistance() * 10) {
+        if ((toAdd != null) && (convertToMeters(
+                Geometry.getDistance(waySegmentWay, toAdd)) < (MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))) {
             way.addNode(entry.getKey().lowerIndex + 1, toAdd);
         }
-        for (int i = 0; i < way.getNodesCount() - 2; i++) {
-            Node node0 = way.getNode(i);
-            Node node3 = way.getNode(i + 2);
+        for (int i = 0; i < (way.getNodesCount() - 2); i++) {
+            final Node node0 = way.getNode(i);
+            final Node node3 = way.getNode(i + 2);
             if (node0.equals(node3)) {
-                List<Node> nodes = way.getNodes();
+                final List<Node> nodes = way.getNodes();
                 nodes.remove(i + 2); // SonarLint doesn't like this (if it was i instead of i + 2, it would be an
                 // issue)
                 way.setNodes(nodes);
@@ -319,19 +327,20 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     }
 
     protected static void cleanupArtifacts(Way way) {
-        for (int i = 0; i < way.getNodesCount() - 2; i++) {
-            Node node0 = way.getNode(i);
-            Node node1 = way.getNode(i + 1);
-            Node node2 = way.getNode(i + 2);
-            double angle = Geometry.getCornerAngle(node0.getEastNorth(), node1.getEastNorth(), node2.getEastNorth());
+        for (int i = 0; i < (way.getNodesCount() - 2); i++) {
+            final Node node0 = way.getNode(i);
+            final Node node1 = way.getNode(i + 1);
+            final Node node2 = way.getNode(i + 2);
+            final double angle = Geometry.getCornerAngle(node0.getEastNorth(), node1.getEastNorth(),
+                    node2.getEastNorth());
             if (angle < ARTIFACT_ANGLE) {
-                List<Node> nodes = way.getNodes();
+                final List<Node> nodes = way.getNodes();
                 nodes.remove(i + 1); // not an issue since I'm adding it back
                 nodes.add(i + 2, node1);
             }
         }
-        if (way.getNodesCount() == 2 && way.getDataSet() != null) {
-            BBox tBBox = new BBox();
+        if ((way.getNodesCount() == 2) && (way.getDataSet() != null)) {
+            final BBox tBBox = new BBox();
             tBBox.addPrimitive(way, 0.001);
             if (way.getDataSet().searchWays(tBBox).parallelStream()
                     .filter(tWay -> !way.equals(tWay) && !tWay.isDeleted())
@@ -358,20 +367,20 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 .map(pair -> WaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
         final Map<WaySegment, List<WaySegment>> partials = new TreeMap<>();
         for (final WaySegment segment1 : waySegments1) {
-            Way waySegment1 = segment1.toWay();
+            final Way waySegment1 = segment1.toWay();
             final List<WaySegment> replacements = waySegments2.parallelStream()
                     .filter(seg2 -> waySegment1.isFirstLastNode(seg2.getFirstNode())
                             || waySegment1.isFirstLastNode(seg2.getSecondNode()))
                     .filter(seg -> {
-                        Node node2 = waySegment1.isFirstLastNode(seg.getFirstNode()) ? seg.getFirstNode()
+                        final Node node2 = waySegment1.isFirstLastNode(seg.getFirstNode()) ? seg.getFirstNode()
                                 : seg.getSecondNode();
-                        Node node1 = node2.equals(seg.getFirstNode()) ? seg.getSecondNode() : seg.getFirstNode();
-                        Node node3 = waySegment1.getNode(0).equals(node2) ? waySegment1.getNode(1)
+                        final Node node1 = node2.equals(seg.getFirstNode()) ? seg.getSecondNode() : seg.getFirstNode();
+                        final Node node3 = waySegment1.getNode(0).equals(node2) ? waySegment1.getNode(1)
                                 : waySegment1.getNode(0);
                         return Math.abs(Geometry.getCornerAngle(node1.getEastNorth(), node2.getEastNorth(),
-                                node3.getEastNorth())) < Math.PI / 4;
+                                node3.getEastNorth())) < (Math.PI / 4);
                     }).collect(Collectors.toList());
-            if (replacements.size() != 2 || replacements.parallelStream()
+            if ((replacements.size() != 2) || replacements.parallelStream()
                     .anyMatch(seg -> waySegment1.getNodes().containsAll(seg.toWay().getNodes()))) {
                 continue;
             }
@@ -389,7 +398,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
         final DataSet dataSet = new DataSet();
-        List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
+        final List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
                 .map(map -> new TreeMap<>(map)).collect(Collectors.toList());
         if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
             urlMaps.forEach(map -> map.put("url", map.get("url").concat("&crop_bbox={crop_bbox}")));
@@ -402,11 +411,12 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         clients = new ArrayList<>();
         urlMaps.parallelStream().forEach(map -> {
             try {
-                HttpClient client = HttpClient.create(new URL(map.get("url").replace("{bbox}", bbox.toStringCSV(","))
-                        .replace("{crop_bbox}", DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","))));
+                final HttpClient client = HttpClient
+                        .create(new URL(map.get("url").replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
+                                DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","))));
                 clients.add(client);
                 clientCall(client, dataSet, map.getOrDefault("source", MapWithAIPlugin.NAME), monitor);
-            } catch (MalformedURLException e1) {
+            } catch (final MalformedURLException e1) {
                 Logging.debug(e1);
             }
         });
@@ -433,11 +443,11 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 addMapWithAISourceTag(mergeData, source);
                 dataSet.mergeFrom(mergeData);
                 response.disconnect();
-            } catch (SocketException e) {
+            } catch (final SocketException e) {
                 if (!monitor.isCanceled()) {
                     Logging.debug(e);
                 }
-            } catch (SSLException e) {
+            } catch (final SSLException e) {
                 Logging.debug(e);
                 new Notification(tr("{0}: Bad SSL Certificate: {1}", MapWithAIPlugin.NAME, client.getURL()))
                         .setDuration(Notification.TIME_DEFAULT).show();
