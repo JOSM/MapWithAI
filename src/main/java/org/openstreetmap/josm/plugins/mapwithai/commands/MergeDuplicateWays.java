@@ -62,10 +62,10 @@ public class MergeDuplicateWays extends Command {
 
     @Override
     public boolean executeCommand() {
-        if (commands.isEmpty() || command == null) {
-            if (way1 == null && way2 == null) {
+        if (commands.isEmpty() || (command == null)) {
+            if ((way1 == null) && (way2 == null)) {
                 filterDataSet(getAffectedDataSet(), commands);
-            } else if (way1 != null && way2 == null) {
+            } else if ((way1 != null) && (way2 == null)) {
                 checkForDuplicateWays(way1, commands);
             } else if (way1 == null) {
                 checkForDuplicateWays(way2, commands);
@@ -76,11 +76,11 @@ public class MergeDuplicateWays extends Command {
                     tCommand.executeCommand();
                 }
             }
-            List<Command> realCommands = commands.stream().filter(Objects::nonNull).distinct()
+            final List<Command> realCommands = commands.stream().filter(Objects::nonNull).distinct()
                     .collect(Collectors.toList());
             commands.clear();
             commands.addAll(realCommands);
-            if (!commands.isEmpty() && commands.size() != 1) {
+            if (!commands.isEmpty() && (commands.size() != 1)) {
                 command = new SequenceCommand(getDescriptionText(), commands);
             } else if (commands.size() == 1) {
                 command = commands.get(0);
@@ -99,9 +99,8 @@ public class MergeDuplicateWays extends Command {
     }
 
     public static void filterDataSet(DataSet dataSet, List<Command> commands) {
-        final List<Way> ways = new ArrayList<>(
-                dataSet.getWays().parallelStream().filter(prim -> !prim.isIncomplete() && !prim.isDeleted())
-                .collect(Collectors.toList()));
+        final List<Way> ways = new ArrayList<>(dataSet.getWays().parallelStream()
+                .filter(prim -> !prim.isIncomplete() && !prim.isDeleted()).collect(Collectors.toList()));
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
             final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).parallelStream()
@@ -163,10 +162,12 @@ public class MergeDuplicateWays extends Command {
         if (compressed.parallelStream().anyMatch(entry -> entry.a.b.isDeleted() || entry.b.b.isDeleted())) {
             Logging.error("Bad node");
         }
-        if (compressed.size() > 1
+        if ((compressed.size() > 1)
                 && duplicateEntrySet.parallelStream().noneMatch(entry -> entry.getValue().size() > 1)) {
-            List<Integer> initial = compressed.stream().map(entry -> entry.a.a).sorted().collect(Collectors.toList());
-            List<Integer> after = compressed.stream().map(entry -> entry.b.a).sorted().collect(Collectors.toList());
+            final List<Integer> initial = compressed.stream().map(entry -> entry.a.a).sorted()
+                    .collect(Collectors.toList());
+            final List<Integer> after = compressed.stream().map(entry -> entry.b.a).sorted()
+                    .collect(Collectors.toList());
             if (sorted(initial) && sorted(after)) {
                 returnCommand = mergeWays(way1, way2, compressed);
             }
@@ -187,7 +188,7 @@ public class MergeDuplicateWays extends Command {
     public static Command mergeWays(Way way1, Way way2,
             Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> compressed) {
         Command command = null;
-        if (compressed.size() > 1 || (way1.hasKey(ORIG_ID) && way1.get(ORIG_ID).equals(way2.get(ORIG_ID)))) {
+        if ((compressed.size() > 1) || (way1.hasKey(ORIG_ID) && way1.get(ORIG_ID).equals(way2.get(ORIG_ID)))) {
             Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> realSet = new LinkedHashSet<>(compressed);
             final boolean sameDirection = checkDirection(realSet);
             final List<Node> way2Nodes = way2.getNodes();
@@ -269,9 +270,6 @@ public class MergeDuplicateWays extends Command {
             final boolean way1Forward = first.a.a < second.a.a;
             final boolean way2Forward = first.b.a < second.b.a;
             returnValue = way1Forward == way2Forward;
-        } else if (compressed.size() == 1) {
-            final Pair<Pair<Integer, Node>, Pair<Integer, Node>> first = iterator.next();
-            returnValue = (first.a.a == 0 && first.b.a != 0) || (first.a.a != 0 && first.b.a == 0);
         }
         return returnValue;
     }
@@ -288,7 +286,7 @@ public class MergeDuplicateWays extends Command {
             Integer last = collection.get(0);
             for (int i = 1; i < collection.size(); i++) {
                 final Integer next = collection.get(i);
-                if (next - last != 1) {
+                if ((next - last) != 1) {
                     returnValue = false;
                     break;
                 }
@@ -312,8 +310,8 @@ public class MergeDuplicateWays extends Command {
             for (int k = 0; k < way2.getNodesCount(); k++) {
                 final Node possDupeNode = way2.getNode(k);
                 if (origNode.equals(possDupeNode)
-                        || origNode.getCoor().greatCircleDistance(possDupeNode.getCoor()) < MapWithAIPreferenceHelper
-                        .getMaxNodeDistance()) {
+                        || (origNode.getCoor().greatCircleDistance(possDupeNode.getCoor()) < MapWithAIPreferenceHelper
+                                .getMaxNodeDistance())) {
                     final Pair<Integer, Node> origNodePair = new Pair<>(j, origNode);
                     final Map<Integer, Node> dupeNodeMap = duplicateNodes.getOrDefault(origNodePair, new HashMap<>());
                     dupeNodeMap.put(k, possDupeNode);
