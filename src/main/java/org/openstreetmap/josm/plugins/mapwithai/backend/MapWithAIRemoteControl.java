@@ -129,7 +129,7 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
             sb.append(tr("We will download data in ")).append(download.toStringCSV(",")).append(br);
         }
         if (crop != null) {
-            sb.append(tr("We will crop the data to")).append(crop.toStringCSV(",")).append(br);
+            sb.append(tr("We will crop the data to ")).append(crop.toStringCSV(",")).append(br);
         }
         sb.append(tr("There is a maximum addition of {0} objects at one time", maxObj));
         return sb.toString();
