@@ -55,7 +55,7 @@ public class DataUrl {
      * @param dataList the dataList to set
      */
     public void setDataList(List<Object> dataList) {
-        if (this.dataList == null || dataList != null && dataList.size() == this.dataList.size()) {
+        if ((this.dataList == null) || ((dataList != null) && (dataList.size() == this.dataList.size()))) {
             this.dataList = dataList;
         }
     }
@@ -65,7 +65,7 @@ public class DataUrl {
     }
 
     public Map<String, String> getMap() {
-        Map<String, String> map = new TreeMap<>();
+        final Map<String, String> map = new TreeMap<>();
         map.put("source", dataList.get(0).toString());
         map.put("url", dataList.get(1).toString());
         map.put("enabled", dataList.get(2).toString());
@@ -75,10 +75,10 @@ public class DataUrl {
 
     public static Map<String, String> addUrlParameters(Map<String, String> map) {
         if (map.containsKey("parameters") && map.containsKey("url")) {
-            JsonArray array = readJsonStringArraySimple(map.get("parameters"));
-            for (Object val : array.toArray()) {
+            final JsonArray array = readJsonStringArraySimple(map.get("parameters"));
+            for (final Object val : array.toArray()) {
                 if (val instanceof JsonObject) {
-                    JsonObject obj = (JsonObject) val;
+                    final JsonObject obj = (JsonObject) val;
                     if (obj.getBoolean("enabled", false)) {
                         map.put("url", map.get("url").concat("&").concat(obj.getString("parameter")));
                     }

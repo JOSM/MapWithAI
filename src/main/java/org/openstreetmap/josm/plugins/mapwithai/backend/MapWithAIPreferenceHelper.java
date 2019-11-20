@@ -14,8 +14,14 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
+    /** This is the default MapWithAI URL */
     public static final String DEFAULT_MAPWITHAI_API = "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}";
-    protected static final String DEFAULT_MAPWITHAI_API_PARAMETERS = "[{\"parameter\": \"result_type=road_building_vector_xml\", \"description\": \"buildings\", \"enabled\": false}]";
+
+    /**
+     * These are the default parameters for
+     * {@link MapWithAIPreferenceHelper#DEFAULT_MAPWITHAI_API}
+     */
+    public static final String DEFAULT_MAPWITHAI_API_PARAMETERS = "[{\"parameter\": \"result_type=road_building_vector_xml\", \"description\": \"buildings\", \"enabled\": false}]";
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
@@ -45,10 +51,10 @@ public final class MapWithAIPreferenceHelper {
      */
     public static List<Map<String, String>> getMapWithAIUrl() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        return layer != null && layer.getMapWithAIUrl() != null
+        return (layer != null) && (layer.getMapWithAIUrl() != null)
                 ? getMapWithAIURLs().parallelStream().filter(map -> layer.getMapWithAIUrl().equals(map.get(URL_STRING)))
                         .collect(Collectors.toList())
-                        : getMapWithAIURLs().stream()
+                : getMapWithAIURLs().stream()
                         .filter(map -> Boolean.valueOf(map.getOrDefault(ENABLED_STRING, Boolean.FALSE.toString())))
                         .collect(Collectors.toList());
     }
@@ -59,21 +65,20 @@ public final class MapWithAIPreferenceHelper {
      * @return The urls for MapWithAI endpoints
      */
     public static List<Map<String, String>> getMapWithAIURLs() {
-        List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>()).stream()
-                .map(map -> new TreeMap<>(map)).collect(Collectors.toList());
+        final List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>())
+                .stream().map(map -> new TreeMap<>(map)).collect(Collectors.toList());
         if (returnMap.isEmpty()) {
-            List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
-            List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty()
-                    ? defaultAPIs
-                            : Config.getPref().getList(API_CONFIG);
+            final List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
+            final List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty() ? defaultAPIs
+                    : Config.getPref().getList(API_CONFIG);
             returnMap.addAll(defaultList.stream().map(string -> {
-                TreeMap<String, String> map = new TreeMap<>();
+                final TreeMap<String, String> map = new TreeMap<>();
                 map.put(URL_STRING, string);
                 return map;
             }).collect(Collectors.toList()));
         }
         returnMap.parallelStream().forEach(map -> {
-            String url = map.get(URL_STRING);
+            final String url = map.get(URL_STRING);
             if (DEFAULT_MAPWITHAI_API.equals(url)) {
                 map.putIfAbsent(SOURCE_STRING, MapWithAIPlugin.NAME);
                 map.putIfAbsent(ENABLED_STRING, "true");
@@ -94,7 +99,7 @@ public final class MapWithAIPreferenceHelper {
     public static int getMaximumAddition() {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
         Integer defaultReturn = Config.getPref().getInt(MAXIMUMSELECTION, getDefaultMaximumAddition());
-        if (mapWithAILayer != null && mapWithAILayer.getMaximumAddition() != null) {
+        if ((mapWithAILayer != null) && (mapWithAILayer.getMaximumAddition() != null)) {
             defaultReturn = mapWithAILayer.getMaximumAddition();
         }
         return defaultReturn;
@@ -114,7 +119,7 @@ public final class MapWithAIPreferenceHelper {
     public static boolean isSwitchLayers() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         boolean returnBoolean = Config.getPref().getBoolean(AUTOSWITCHLAYERS, true);
-        if (layer != null && layer.isSwitchLayers() != null) {
+        if ((layer != null) && (layer.isSwitchLayers() != null)) {
             returnBoolean = layer.isSwitchLayers();
         }
         return returnBoolean;
@@ -131,7 +136,7 @@ public final class MapWithAIPreferenceHelper {
      */
     public static void setMapWithAIUrl(String source, String url, boolean enabled, boolean permanent) {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        String setUrl = url;
+        final String setUrl = url;
 
         final List<Map<String, String>> urls = new ArrayList<>(getMapWithAIURLs());
         Map<String, String> addOrModifyMap = urls.parallelStream()
@@ -147,7 +152,7 @@ public final class MapWithAIPreferenceHelper {
         addOrModifyMap.put(SOURCE_STRING, source);
         addOrModifyMap.put(ENABLED_STRING, Boolean.toString(permanent));
         setMapWithAIURLs(urls);
-        if (layer != null && !permanent && enabled) {
+        if ((layer != null) && !permanent && enabled) {
             layer.setMapWithAIUrl(setUrl);
         }
     }
@@ -159,9 +164,9 @@ public final class MapWithAIPreferenceHelper {
      * @return true if the configuration changed
      */
     public static boolean setMapWithAIURLs(List<Map<String, String>> urls) {
-        List<Map<String, String>> setUrls = urls;
+        final List<Map<String, String>> setUrls = urls;
         if (urls.isEmpty()) {
-            TreeMap<String, String> defaultAPIMap = new TreeMap<>();
+            final TreeMap<String, String> defaultAPIMap = new TreeMap<>();
             defaultAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API);
             defaultAPIMap.put(ENABLED_STRING, Boolean.TRUE.toString());
             defaultAPIMap.put(SOURCE_STRING, MapWithAIPlugin.NAME);

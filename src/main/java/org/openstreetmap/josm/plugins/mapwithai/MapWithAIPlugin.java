@@ -41,7 +41,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     /** The name of the plugin */
     public static final String NAME = "MapWithAI";
 
-    protected static final String PAINTSTYLE_PREEXISTS = NAME.concat(".paintstyleprexists");
+    static final String PAINTSTYLE_PREEXISTS = NAME.concat(".paintstyleprexists");
     private static String versionInfo;
 
     private final PreferenceSetting preferenceSetting;
@@ -63,8 +63,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         for (final Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
-            if (Arrays.asList(dataMenu.getMenuComponents()).parallelStream()
-                    .filter(JMenuItem.class::isInstance).map(JMenuItem.class::cast)
+            if (Arrays.asList(dataMenu.getMenuComponents()).parallelStream().filter(JMenuItem.class::isInstance)
+                    .map(JMenuItem.class::cast)
                     .noneMatch(component -> entry.getKey().equals(component.getAction().getClass()))) {
                 try {
                     MainMenu.add(dataMenu, entry.getKey().getDeclaredConstructor().newInstance(), entry.getValue());
@@ -94,10 +94,10 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         final Optional<MapWithAIObject> possibleMapWithAIObject = destroyables.parallelStream()
                 .filter(MapWithAIObject.class::isInstance).map(MapWithAIObject.class::cast).findFirst();
         final MapWithAIObject mapWithAIObject = possibleMapWithAIObject.orElse(new MapWithAIObject());
-        if (oldFrame != null && oldFrame.statusLine != null) {
+        if ((oldFrame != null) && (oldFrame.statusLine != null)) {
             mapWithAIObject.removeMapStatus(oldFrame.statusLine);
         }
-        if (newFrame != null && newFrame.statusLine != null) {
+        if ((newFrame != null) && (newFrame.statusLine != null)) {
             mapWithAIObject.addMapStatus(newFrame.statusLine);
         }
         if (!destroyables.contains(mapWithAIObject)) {
@@ -140,7 +140,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         }
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
-        .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
+                .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
         if (!Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
             MapWithAIDataUtils.removeMapWithAIPaintStyles();
