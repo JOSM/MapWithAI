@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,7 +32,6 @@ import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -40,12 +40,11 @@ public class MapWithAIDataUtilsTest {
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
-    WireMockServer wireMockServer;
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
+        wireMock.start();
         MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
             map.put("url", getDefaultMapWithAIAPIForTest(
                     map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
@@ -53,12 +52,17 @@ public class MapWithAIDataUtilsTest {
         }).collect(Collectors.toList()));
     }
 
+    @After
+    public void tearDown() {
+        wireMock.stop();
+    }
+
     private String getDefaultMapWithAIAPIForTest(String url) {
         return getDefaultMapWithAIAPIForTest(url, "https://www.facebook.com");
     }
 
     private String getDefaultMapWithAIAPIForTest(String url, String wireMockReplace) {
-        return url.replace(wireMockReplace, wireMockRule.baseUrl());
+        return url.replace(wireMockReplace, wireMock.baseUrl());
     }
 
     /**

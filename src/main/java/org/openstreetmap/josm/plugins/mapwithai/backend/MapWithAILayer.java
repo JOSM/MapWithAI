@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import javax.swing.Action;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -172,7 +172,8 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     }
 
     @Override
-    public ImageIcon getIcon() {
-        return ImageProvider.get("mapwithai", ImageProvider.ImageSizes.LAYER);
+    public Icon getIcon() {
+        return ImageProvider.getIfAvailable("mapwithai") == null ? super.getIcon()
+                : ImageProvider.get("mapwithai", ImageProvider.ImageSizes.LAYER);
     }
 }
