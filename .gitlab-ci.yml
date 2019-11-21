@@ -22,6 +22,7 @@ include:
 sast:
   variables:
     GRADLE_PATH: "./gradlew"
+    FAIL_NEVER: 1
 #    CI_DEBUG_TRACE: "true"
 
 ###############
