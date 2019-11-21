@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +16,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.mapwithai.commands.AddNodeToWayCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -25,12 +26,12 @@ public class AddNodeToWayCommandTest {
     private AddNodeToWayCommand command;
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules();
+    public JOSMTestRules test = new JOSMTestRules().projection();
 
     @Before
     public void setupArea() {
-        toAdd = new Node(new LatLon(0.1, 0.1));
-        way = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(-0.1, -0.1)));
+        toAdd = new Node(new LatLon(0, 0));
+        way = TestUtils.newWay("", new Node(new LatLon(0.1, 0.1)), new Node(new LatLon(-0.1, -0.1)));
         new DataSet(toAdd, way.firstNode(), way.lastNode(), way);
         command = new AddNodeToWayCommand(toAdd, way, way.firstNode(), way.lastNode());
     }
@@ -66,5 +67,26 @@ public class AddNodeToWayCommandTest {
         Assert.assertTrue(deleted.isEmpty());
         Assert.assertTrue(added.isEmpty());
         Assert.assertEquals(2, modified.size());
+    }
+
+    @Test
+    public void testMultiAddConnections() {
+        command.executeCommand();
+        Node tNode = new Node(new LatLon(0.01, 0.01));
+        way.getDataSet().addPrimitive(tNode);
+        command = new AddNodeToWayCommand(tNode, way, way.firstNode(), way.lastNode());
+        command.executeCommand();
+        assertEquals(new LatLon(0.1, 0.1), way.firstNode().getCoor());
+        assertEquals(new LatLon(0.01, 0.01), way.getNode(1).getCoor());
+        assertEquals(new LatLon(0, 0), way.getNode(2).getCoor());
+        assertEquals(new LatLon(-0.1, -0.1), way.lastNode().getCoor());
+        command.undoCommand();
+        tNode.setCoor(new LatLon(-0.01, -0.01));
+        command = new AddNodeToWayCommand(tNode, way, way.firstNode(), way.lastNode());
+        command.executeCommand();
+        assertEquals(new LatLon(0.1, 0.1), way.firstNode().getCoor());
+        assertEquals(new LatLon(0, 0), way.getNode(1).getCoor());
+        assertEquals(new LatLon(-0.01, -0.01), way.getNode(2).getCoor());
+        assertEquals(new LatLon(-0.1, -0.1), way.lastNode().getCoor());
     }
 }

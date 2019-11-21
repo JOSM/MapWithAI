@@ -3,13 +3,19 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.osm.WaySegment;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
+import org.openstreetmap.josm.tools.Geometry;
 
 public class AddNodeToWayCommand extends Command {
     private final Node toAddNode;
@@ -35,9 +41,29 @@ public class AddNodeToWayCommand extends Command {
 
     @Override
     public boolean executeCommand() {
-        final int index = Math.max(getWay().getNodes().indexOf(getFirstNode()),
-                getWay().getNodes().indexOf(getSecondNode()));
-        getWay().addNode(index, getToAddNode());
+        int index = Integer.MIN_VALUE;
+        try {
+            WaySegment.forNodePair(getWay(), getFirstNode(), getSecondNode());
+            index = Math.max(getWay().getNodes().indexOf(getFirstNode()), getWay().getNodes().indexOf(getSecondNode()));
+        } catch (IllegalArgumentException e) {
+            // OK, someone has added a node between the two nodes since calculation
+            Way tWay = new Way();
+            tWay.setNodes(Arrays.asList(getFirstNode(), getSecondNode()));
+            List<Node> relevantNodes = new ArrayList<>(getWay().getNodes().stream()
+                    .filter(node -> Geometry.getDistance(tWay, node) < MapWithAIPreferenceHelper.getMaxNodeDistance())
+                    .collect(Collectors.toList()));
+            for (int i = 0; i < relevantNodes.size() - 1; i++) {
+                Way tWay2 = new Way();
+                tWay2.setNodes(Arrays.asList(relevantNodes.get(i), relevantNodes.get(i + 1)));
+                if (Geometry.getDistance(tWay2, getToAddNode()) < MapWithAIPreferenceHelper.getMaxNodeDistance()) {
+                    index = Math.max(way.getNodes().indexOf(tWay2.firstNode()),
+                            way.getNodes().indexOf(tWay2.lastNode()));
+                }
+            }
+        }
+        if (index != Integer.MIN_VALUE) {
+            getWay().addNode(index, getToAddNode());
+        }
         return true;
     }
 
