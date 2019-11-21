@@ -161,6 +161,8 @@ public class MergeDuplicateWays extends Command {
                 .sorted((pair1, pair2) -> pair1.a.a - pair2.a.a).collect(Collectors.toSet());
         if (compressed.parallelStream().anyMatch(entry -> entry.a.b.isDeleted() || entry.b.b.isDeleted())) {
             Logging.error("Bad node");
+            Logging.error("{0}", way1);
+            Logging.error("{0}", way2);
         }
         if ((compressed.size() > 1)
                 && duplicateEntrySet.parallelStream().noneMatch(entry -> entry.getValue().size() > 1)) {
@@ -218,7 +220,17 @@ public class MergeDuplicateWays extends Command {
             after.forEach(newWay::addNode);
             if (newWay.getNodesCount() > 0) {
                 commands.add(new ChangeCommand(way1, newWay));
+                /*
+                 * This must be executed, otherwise the delete command will believe that way2
+                 * nodes don't belong to anything See Issue #46
+                 */
+                commands.get(commands.size() - 1).executeCommand();
                 commands.add(DeleteCommand.delete(Collections.singleton(way2), true, true));
+                /*
+                 * Just to ensure that the dataset is consistent prior to the "real"
+                 * executeCommand
+                 */
+                commands.get(commands.size() - 2).undoCommand();
             }
             if (commands.contains(null)) {
                 commands = commands.stream().filter(Objects::nonNull).collect(Collectors.toList());

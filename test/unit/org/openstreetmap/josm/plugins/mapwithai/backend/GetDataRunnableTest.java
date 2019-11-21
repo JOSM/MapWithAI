@@ -1,19 +1,27 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
@@ -22,9 +30,36 @@ import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Geometry;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+
 public class GetDataRunnableTest {
     @Rule
     public JOSMTestRules rule = new JOSMTestRules().projection();
+
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
+
+    @Before
+    public void setUp() {
+        wireMock.start();
+        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
+            map.put("url", getDefaultMapWithAIAPIForTest(
+                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
+            return map;
+        }).collect(Collectors.toList()));
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
+    }
+
+    private String getDefaultMapWithAIAPIForTest(String url) {
+        return getDefaultMapWithAIAPIForTest(url, "https://www.facebook.com");
+    }
+
+    private String getDefaultMapWithAIAPIForTest(String url, String wireMockReplace) {
+        return url.replace(wireMockReplace, wireMock.baseUrl());
+    }
 
     @Test
     public void testAddMissingElement() {
@@ -77,4 +112,13 @@ public class GetDataRunnableTest {
         assertEquals(1, ds.getWays().parallelStream().filter(way -> !way.isDeleted()).count());
     }
 
+    @Test
+    public void testRegressionTicket46() {
+        DataSet ds = new DataSet();
+        new GetDataRunnable(Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds,
+                null).fork().join();
+        assertNotNull(ds);
+        assertFalse(ds.isEmpty());
+        assertFalse(ds.allNonDeletedPrimitives().isEmpty());
+    }
 }
