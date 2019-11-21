@@ -4,9 +4,12 @@ package org.openstreetmap.josm.plugins.mapwithai;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +37,8 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelpe
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.spi.preferences.StringSetting;
 import org.openstreetmap.josm.tools.GBC;
+import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.OpenBrowser;
 
 public class MapWithAIPreferences implements SubPreferenceSetting {
     private final JCheckBox switchLayerCheckBox;
@@ -193,6 +198,33 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
             }
             replacementPreferenceTable.fireDataChanged();
         });
+
+        pane.add(Box.createHorizontalGlue(), second);
+
+        JButton kaartLogo = new JButton(ImageProvider.getIfAvailable("kaart") == null ? null
+                : new ImageProvider("kaart").setHeight(ImageProvider.ImageSizes.SETTINGS_TAB.getAdjustedHeight())
+                        .get());
+        kaartLogo.setToolTipText(tr("Link to source code repository"));
+        kaartLogo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                OpenBrowser.displayUrl("https://gitlab.com/gokaart/JOSM_MapWithAI");
+            }
+        });
+        kaartLogo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        pane.add(kaartLogo, GBC.std().anchor(GridBagConstraints.WEST));
+
+        JButton mapWithAILogo = new JButton(ImageProvider.getIfAvailable("mapwithai_text") == null ? null
+                : new ImageProvider("mapwithai_text")
+                        .setHeight(ImageProvider.ImageSizes.SETTINGS_TAB.getAdjustedHeight()).get());
+        mapWithAILogo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        mapWithAILogo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                OpenBrowser.displayUrl("https://mapwith.ai");
+            }
+        });
+        pane.add(mapWithAILogo, GBC.eol().anchor(GridBagConstraints.EAST));
 
         Arrays.asList(replaceAddEditDeleteScroll2, scroll2, expertHorizontalGlue, replacementTags)
                 .forEach(ExpertToggleAction::addVisibilitySwitcher);
