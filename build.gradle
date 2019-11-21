@@ -112,6 +112,7 @@ tasks.processResources {
   from("$projectDir/LICENSE")
   from("$projectDir/README.md")
   from("$projectDir/src/resources")
+  from("$projectDir/src/main/resources")
 }
 
 jacocoTestCoverageVerification {
