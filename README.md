@@ -12,7 +12,7 @@ This plugin brings MapWithAI information into JOSM.
 To use this plugin, [install JOSM](https://josm.openstreetmap.de/wiki/Download) and then [in the preferences menu install the **MapWithAI** plugin](https://josm.openstreetmap.de/wiki/Help/Preferences/Plugins#AutomaticinstallationviaPreferencesmenu)
 
 # How to use the plugin
-See the [wiki page](https://gitlab.com/gokaart/JOSM_MapWithAI/-/wiki_pages/home).
+See the [wiki page](https://josm.openstreetmap.de/wiki/Help/Plugin/MapWithAI).
 
 ## Information
 * [RapiD](https://mapwith.ai/rapid)
