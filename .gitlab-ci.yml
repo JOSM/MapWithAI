@@ -20,6 +20,7 @@ include:
 #  - template: License-Management.gitlab-ci.yml
 
 sast:
+  variables: {}
   variables:
     GRADLE_PATH: "./gradlew"
     FAIL_NEVER: 1
