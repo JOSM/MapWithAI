@@ -6,7 +6,9 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
@@ -85,9 +87,17 @@ public class DuplicateCommand extends AbstractConflationCommand {
     @Override
     public Command getRealCommand() {
         final List<Command> commands = new ArrayList<>();
-        possiblyAffectedPrimitives.stream().filter(Node.class::isInstance).map(Node.class::cast)
-        .filter(node -> node.hasKey(DUPE_KEY))
-        .forEach(node -> commands.addAll(duplicateNode(getAffectedDataSet(), node)));
+        for (Node tNode : possiblyAffectedPrimitives.stream().filter(Node.class::isInstance).map(Node.class::cast)
+                .distinct().filter(node -> node.hasKey(DUPE_KEY)).collect(Collectors.toList())) {
+            List<Command> tCommands = duplicateNode(getAffectedDataSet(), tNode);
+            // We have to execute the command to avoid duplicating the command later. Undo
+            // occurs later, so that the state doesn't actually change.
+            tCommands.forEach(Command::executeCommand);
+            commands.addAll(tCommands);
+        }
+        Collections.reverse(commands);
+        commands.forEach(Command::undoCommand);
+        Collections.reverse(commands);
         Command returnCommand = null;
         if (!commands.isEmpty()) {
             returnCommand = new SequenceCommand(getDescriptionText(), commands);

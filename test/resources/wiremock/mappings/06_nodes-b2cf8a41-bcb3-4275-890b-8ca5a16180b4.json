@@ -1,0 +1,25 @@
+{
+  "id" : "b2cf8a41-bcb3-4275-890b-8ca5a16180b4",
+  "name" : "06_nodes",
+  "request" : {
+    "url" : "/0.6/nodes?nodes=176220609",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm version=\"0.6\" generator=\"CGImap 0.7.5 (31804 thorn-03.openstreetmap.org)\" copyright=\"OpenStreetMap and contributors\" attribution=\"http://www.openstreetmap.org/copyright\" license=\"http://opendatacommons.org/licenses/odbl/1-0/\">\n <node id=\"176220609\" visible=\"true\" version=\"3\" changeset=\"8532383\" timestamp=\"2011-06-24T12:36:19Z\" user=\"nm7s9\" uid=\"12434\" lat=\"39.0339521\" lon=\"-108.4874581\"/>\n</osm>\n",
+    "headers" : {
+      "Date" : "Fri, 22 Nov 2019 15:30:17 GMT",
+      "Server" : "Apache/2.4.29 (Ubuntu)",
+      "Strict-Transport-Security" : [ "max-age=31536000; includeSubDomains; preload", "max-age=31536000; includeSubDomains; preload" ],
+      "Expect-CT" : [ "max-age=0, report-uri=\"https://openstreetmap.report-uri.com/r/d/ct/reportOnly\"", "max-age=0, report-uri=\"https://openstreetmap.report-uri.com/r/d/ct/reportOnly\"" ],
+      "Cache-Control" : "private, max-age=0, must-revalidate",
+      "Content-Type" : "text/xml; charset=utf-8",
+      "Keep-Alive" : "timeout=5, max=98",
+      "Connection" : "Keep-Alive"
+    }
+  },
+  "uuid" : "b2cf8a41-bcb3-4275-890b-8ca5a16180b4",
+  "persistent" : true,
+  "insertionIndex" : 19
+}

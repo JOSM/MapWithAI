@@ -85,11 +85,12 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                 if (lock != null) {
                     lock.lock();
                 }
-                final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI, primitives);
-                final List<OsmPrimitive> allPrimitives = new ArrayList<>();
-                MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
-                final Command createConnectionsCommand = createConnections(editable, allPrimitives);
-                if (command == null) { // needed for undo/redo (don't create a new command)
+                if (command == null) {// needed for undo/redo (don't create a new command)
+                    final List<OsmPrimitive> allPrimitives = new ArrayList<>();
+                    MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
+                    final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI,
+                            primitives);
+                    final Command createConnectionsCommand = createConnections(editable, allPrimitives);
                     command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
                 }
                 command.executeCommand();

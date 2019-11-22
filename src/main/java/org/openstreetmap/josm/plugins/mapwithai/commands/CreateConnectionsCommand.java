@@ -64,11 +64,10 @@ public class CreateConnectionsCommand extends Command {
      *                   connecting to
      * @param collection The primitives with connection information (currently only
      *                   checks Nodes)
-     * @return A {@link SequenceCommand} to create connections with
+     * @return A {@link Command} to create connections with
      */
-    public static SequenceCommand createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
+    public static Command createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
         final List<Command> changedKeyList = new ArrayList<>();
-        SequenceCommand returnSequence = null;
         final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
                 .filter(Objects::nonNull).collect(Collectors.toList());
         for (final Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
@@ -90,9 +89,14 @@ public class CreateConnectionsCommand extends Command {
                 changedKeyList.add(actualCommand);
             }
         }
-        if (!changedKeyList.isEmpty()) {
+
+        Command returnSequence = null;
+        if (changedKeyList.size() == 1) {
+            returnSequence = changedKeyList.get(0);
+        } else if (!changedKeyList.isEmpty()) {
             returnSequence = new SequenceCommand(getRealDescriptionText(), changedKeyList);
         }
+
         return returnSequence;
     }
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -26,7 +27,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Dupl
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -40,12 +41,17 @@ public class CreateConnectionsCommandTest {
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().projection();
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
-        Config.getPref().put("osm-server.url", wireMockRule.baseUrl());
+        wireMock.start();
+        Config.getPref().put("osm-server.url", wireMock.baseUrl());
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
     }
 
     /**
@@ -201,5 +207,4 @@ public class CreateConnectionsCommandTest {
         Assert.assertNotNull(text);
         Assert.assertFalse(text.isEmpty());
     }
-
 }

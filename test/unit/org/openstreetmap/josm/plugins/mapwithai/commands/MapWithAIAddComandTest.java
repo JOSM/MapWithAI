@@ -1,10 +1,15 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.Arrays;
 import java.util.Collections;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -13,9 +18,13 @@ import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -25,6 +34,19 @@ public class MapWithAIAddComandTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().projection();
+
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
+
+    @Before
+    public void setUp() {
+        wireMock.start();
+        Config.getPref().put("osm-server.url", wireMock.baseUrl());
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
+    }
 
     @Test
     public void testMoveCollection() {
@@ -169,5 +191,26 @@ public class MapWithAIAddComandTest {
 
         UndoRedoHandler.getInstance().undo(UndoRedoHandler.getInstance().getUndoCommands().size());
         UndoRedoHandler.getInstance().redo(UndoRedoHandler.getInstance().getRedoCommands().size());
+    }
+
+    /**
+     * https://josm.openstreetmap.de/ticket/18351
+     */
+    @Test
+    public void testRegression18351() {
+        Way way = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe",
+                new Node(new LatLon(39.0339521, -108.4874581)), new Node(new LatLon(39.0292629, -108.4875117)));
+        way.firstNode().put("dupe", "n176220609");
+        way.getNode(way.getNodesCount() - 1).put("dupe", "n176232378");
+        DataSet mapWithAIData = new DataSet();
+        DataSet osmData = new DataSet();
+        way.getNodes().forEach(mapWithAIData::addPrimitive);
+        mapWithAIData.addPrimitive(way);
+        mapWithAIData.addSelected(way);
+        MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
+        command.executeCommand();
+        assertNotNull(osmData.getPrimitiveById(176232378, OsmPrimitiveType.NODE));
+        assertNotNull(osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE));
+        assertNotNull(osmData.getPrimitiveById(way));
     }
 }
