@@ -60,6 +60,11 @@ public final class MapWithAIAvailability {
                         "Sint Maarten", "St. Kitts and Nevis", "St. Lucia", "St. Vincent and the Grenadines",
                         "Turks and Caicos Islands"));
         COUNTRY_NAME_FIX.put("Falkland Islands (Islas Maldivas)", Collections.singleton("Falkland Islands"));
+        COUNTRY_NAME_FIX.put("Laos", Collections.singleton("Lao PDR"));
+        COUNTRY_NAME_FIX.put("East Timor", Collections.singleton("Timor-Leste"));
+        COUNTRY_NAME_FIX.put("Congo", Collections.singleton("Congo, Rep."));
+        COUNTRY_NAME_FIX.put("North Macedonia", Collections.singleton("Macedonia, FYR"));
+        COUNTRY_NAME_FIX.put("Venezuela", Collections.singleton("Venezuela, RB"));
         POSSIBLE_DATA_POINTS.put("roads", "RapiD roads available");
         POSSIBLE_DATA_POINTS.put("buildings", "MS buildings available");
     }
