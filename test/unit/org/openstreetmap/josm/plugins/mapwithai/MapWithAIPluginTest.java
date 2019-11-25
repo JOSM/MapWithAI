@@ -75,11 +75,11 @@ public class MapWithAIPluginTest {
      */
     @Test
     public void testMapWithAIPlugin() {
+        final int addedMenuItems = 3;
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
-        Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
-        MapPaintStyles.getStyles().getStyleSources().forEach(style -> Logging.error(style.toString()));
+        Assert.assertEquals(dataMenuSize + addedMenuItems, dataMenu.getMenuComponentCount());
         Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
                 .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
 
@@ -89,15 +89,15 @@ public class MapWithAIPluginTest {
             plugin.destroy();
             Assert.assertEquals(dataMenuSize, dataMenu.getMenuComponentCount());
             Awaitility.await().atMost(Durations.FIVE_SECONDS)
-            .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+                .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
             Assert.assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                            .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+                    .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
         }
 
         for (int i = 0; i < 3; i++) {
             plugin = new MapWithAIPlugin(info);
-            Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
+            Assert.assertEquals(dataMenuSize + addedMenuItems, dataMenu.getMenuComponentCount());
             Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
                     .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
         }

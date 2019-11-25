@@ -20,6 +20,7 @@ import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -36,6 +37,8 @@ public class MergeDuplicateWays extends Command {
 
     private final List<Command> commands;
     private Command command;
+
+    private Bounds bound;
 
     public MergeDuplicateWays(DataSet data) {
         this(data, null, null);
@@ -64,7 +67,7 @@ public class MergeDuplicateWays extends Command {
     public boolean executeCommand() {
         if (commands.isEmpty() || (command == null)) {
             if ((way1 == null) && (way2 == null)) {
-                filterDataSet(getAffectedDataSet(), commands);
+                filterDataSet(getAffectedDataSet(), commands, bound);
             } else if ((way1 != null) && (way2 == null)) {
                 checkForDuplicateWays(way1, commands);
             } else if (way1 == null) {
@@ -98,8 +101,18 @@ public class MergeDuplicateWays extends Command {
         }
     }
 
-    public static void filterDataSet(DataSet dataSet, List<Command> commands) {
-        final List<Way> ways = new ArrayList<>(dataSet.getWays().parallelStream()
+    /**
+     * Set the bounds for the command. Must be called before execution.
+     *
+     * @param bound The boundary for the command
+     */
+    public void setBounds(Bounds bound) {
+        this.bound = bound;
+    }
+
+    public static void filterDataSet(DataSet dataSet, List<Command> commands, Bounds bound) {
+        final List<Way> ways = new ArrayList<>(
+                (bound == null ? dataSet.getWays() : dataSet.searchWays(bound.toBBox())).parallelStream()
                 .filter(prim -> !prim.isIncomplete() && !prim.isDeleted()).collect(Collectors.toList()));
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);

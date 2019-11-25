@@ -17,15 +17,16 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
+import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
+import org.openstreetmap.josm.gui.download.DownloadDialog;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIAction;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIArbitraryAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
@@ -33,6 +34,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
@@ -46,12 +48,13 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     private final PreferenceSetting preferenceSetting;
 
+    private final MapWithAIDownloadReader mapWithAIDownloadReader;
+
     private final List<Destroyable> destroyables;
 
     private static final Map<Class<? extends JosmAction>, Boolean> MENU_ENTRIES = new LinkedHashMap<>();
     static {
         MENU_ENTRIES.put(MapWithAIAction.class, false);
-        MENU_ENTRIES.put(MapWithAIArbitraryAction.class, true);
         MENU_ENTRIES.put(MapWithAIMoveAction.class, false);
         MENU_ENTRIES.put(MergeDuplicateWaysAction.class, true);
     }
@@ -87,6 +90,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());
+        mapWithAIDownloadReader = new MapWithAIDownloadReader();
+        DownloadDialog.addDownloadSource(mapWithAIDownloadReader);
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));
     }
 
@@ -141,12 +146,15 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         }
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
-                .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
+        .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
         if (!Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
             MapWithAIDataUtils.removeMapWithAIPaintStyles();
         }
 
         destroyables.forEach(Destroyable::destroy);
+        if (Version.getInstance().getVersion() > 15542) {
+            DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
+        }
     }
 }

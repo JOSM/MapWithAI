@@ -47,14 +47,15 @@ public final class MapWithAIPreferenceHelper {
     /**
      * Get the current MapWithAI urls
      *
-     * @return A list of enabled MapWithAI urls
+     * @return A list of enabled MapWithAI urls (maps have source, parameters,
+     *         enabled, and the url)
      */
     public static List<Map<String, String>> getMapWithAIUrl() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         return (layer != null) && (layer.getMapWithAIUrl() != null)
                 ? getMapWithAIURLs().parallelStream().filter(map -> layer.getMapWithAIUrl().equals(map.get(URL_STRING)))
                         .collect(Collectors.toList())
-                : getMapWithAIURLs().stream()
+                        : getMapWithAIURLs().stream()
                         .filter(map -> Boolean.valueOf(map.getOrDefault(ENABLED_STRING, Boolean.FALSE.toString())))
                         .collect(Collectors.toList());
     }
@@ -62,11 +63,12 @@ public final class MapWithAIPreferenceHelper {
     /**
      * Get all of the MapWithAI urls (or the default)
      *
-     * @return The urls for MapWithAI endpoints
+     * @return The urls for MapWithAI endpoints (maps have source, parameters,
+     *         enabled, and the url)
      */
     public static List<Map<String, String>> getMapWithAIURLs() {
         final List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>())
-                .stream().map(map -> new TreeMap<>(map)).collect(Collectors.toList());
+                .stream().map(TreeMap::new).collect(Collectors.toList());
         if (returnMap.isEmpty()) {
             final List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
             final List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty() ? defaultAPIs

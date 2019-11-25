@@ -26,6 +26,7 @@ import javax.net.ssl.SSLException;
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -124,8 +125,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         }
         // This can technically be included in the above block, but it is here so that
         // cancellation is a little faster
-        if (!monitor.isCanceled()) {
-            cleanup(dataSet);
+        if (!monitor.isCanceled() && !bboxes.isEmpty()) {
+            cleanup(dataSet, new Bounds(bboxes.get(0).getBottomRight(), bboxes.get(0).getTopLeft()));
         }
         monitor.finishTask();
         return dataSet;
@@ -135,11 +136,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      * Perform cleanups on a dataset (one dataset at a time)
      *
      * @param dataSet The dataset to cleanup
+     * @param bounds
      */
-    public static void cleanup(DataSet dataSet) {
+    public static void cleanup(DataSet dataSet, Bounds bounds) {
         synchronized (LOCK) {
             /* Microsoft buildings don't have a source, so we add one */
-            MapWithAIDataUtils.addSourceTags(dataSet, "building", "microsoft/BuildingFootprints");
+            // MapWithAIDataUtils.addSourceTags(dataSet, "building",
+            // "microsoft/BuildingFootprints");
+            removeRedundantSource(dataSet);
             replaceTags(dataSet);
             removeCommonTags(dataSet);
             mergeNodes(dataSet);
@@ -147,25 +151,48 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             mergeWays(dataSet);
             removeAlreadyAddedData(dataSet);
             new MergeDuplicateWays(dataSet).executeCommand();
-            dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-                    .forEach(GetDataRunnable::cleanupArtifacts);
+            (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
+                    .filter(way -> !way.isDeleted())
+            .forEach(GetDataRunnable::cleanupArtifacts);
         }
     }
 
+    /**
+     * Remove redudant sources from objects (if source on way and source on node,
+     * and node doesn't have any other tags, then node doesn't need the source)
+     *
+     * @param dataSet The dataset with potential duplicate source tags
+     */
+    public static void removeRedundantSource(DataSet dataSet) {
+        dataSet.getNodes().parallelStream().filter(node -> !node.getReferrers().isEmpty())
+                .filter(node -> node.getKeys().entrySet().parallelStream().map(Entry::getKey)
+                        .allMatch(key -> key.contains("source"))
+                        && node.getKeys().entrySet().parallelStream()
+                                .allMatch(entry -> node.getReferrers().parallelStream()
+                                        .anyMatch(parent -> parent.hasTag(entry.getKey(), entry.getValue()))))
+                .forEach(node -> node.getKeys().entrySet().parallelStream().map(Entry::getKey)
+                        .filter(key -> key.contains("source")).forEach(node::remove));
+    }
+
+    /**
+     * Remove ways that have already been added to an OSM layer
+     *
+     * @param dataSet The dataset with potential duplicate ways (it is modified)
+     */
     public static void removeAlreadyAddedData(DataSet dataSet) {
         final List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
                 .parallelStream().map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet))
                 .collect(Collectors.toList());
         dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-                .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
-                .forEach(way -> {
-                    final List<Node> nodes = way.getNodes();
-                    DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
-                    nodes.parallelStream()
-                            .filter(node -> !node.isDeleted()
-                                    && node.getReferrers().parallelStream().allMatch(OsmPrimitive::isDeleted))
-                            .forEach(node -> node.setDeleted(true));
-                });
+        .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
+        .forEach(way -> {
+            final List<Node> nodes = way.getNodes();
+            DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
+            nodes.parallelStream()
+            .filter(node -> !node.isDeleted()
+                    && node.getReferrers().parallelStream().allMatch(OsmPrimitive::isDeleted))
+            .forEach(node -> node.setDeleted(true));
+        });
     }
 
     private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
@@ -251,7 +278,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     public static void removeCommonTags(DataSet dataSet) {
         dataSet.allPrimitives().parallelStream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
-                .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
+        .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
         dataSet.getNodes().parallelStream().forEach(node -> node.remove(SERVER_ID_KEY));
         final List<Node> emptyNodes = dataSet.getNodes().parallelStream().distinct().filter(node -> !node.isDeleted())
                 .filter(node -> node.getReferrers().isEmpty() && !node.hasKeys()).collect(Collectors.toList());
@@ -296,7 +323,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                     .collect(Collectors.toList());
             way1.getNodePairs(false);
             nearbyWays.parallelStream().flatMap(way2 -> checkWayDuplications(way1, way2).entrySet().parallelStream())
-                    .forEach(GetDataRunnable::addMissingElement);
+            .forEach(GetDataRunnable::addMissingElement);
         }
     }
 
@@ -399,7 +426,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
         final DataSet dataSet = new DataSet();
         final List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
-                .map(map -> new TreeMap<>(map)).collect(Collectors.toList());
+                .map(TreeMap::new).collect(Collectors.toList());
         if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
             urlMaps.forEach(map -> map.put("url", map.get("url").concat("&crop_bbox={crop_bbox}")));
         }
@@ -424,6 +451,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         return dataSet;
     }
 
+    /**
+     * Add information to the user agent and then perform the actual internet call
+     *
+     * @param client  The HttpClient
+     * @param dataSet The dataset to add data to
+     * @param source  The source of the data (added as a tag to "whole" objects)
+     * @param monitor The monitor (so we know when a cancellation has occurred)
+     */
     private static void clientCall(HttpClient client, DataSet dataSet, String source, ProgressMonitor monitor) {
         final StringBuilder defaultUserAgent = new StringBuilder();
         client.setReadTimeout(DEFAULT_TIMEOUT);
@@ -434,23 +469,49 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         defaultUserAgent.append(tr("/ {0} {1}", MapWithAIPlugin.NAME, MapWithAIPlugin.getVersionInfo()));
         client.setHeader("User-Agent", defaultUserAgent.toString());
         if (!monitor.isCanceled()) {
-            InputStream inputStream = null;
-            try {
-                Logging.debug("{0}: Getting {1}", MapWithAIPlugin.NAME, client.getURL().toString());
-                final Response response = client.connect();
-                inputStream = response.getContent();
-                final DataSet mergeData = OsmReaderCustom.parseDataSet(inputStream, null, true);
-                addMapWithAISourceTag(mergeData, source);
-                dataSet.mergeFrom(mergeData);
-                response.disconnect();
-            } catch (final SocketException e) {
-                if (!monitor.isCanceled()) {
+            clientCallInternet(client, dataSet, source, monitor);
+        }
+    }
+
+    /**
+     * Add perform an internet request to add data to a dataset
+     *
+     * @param client  The HttpClient
+     * @param dataSet The dataset to add data to
+     * @param source  The source of the data (added as a tag to "whole" objects)
+     * @param monitor The monitor (so we know when a cancellation has occurred)
+     */
+    private static void clientCallInternet(HttpClient client, DataSet dataSet, String source, ProgressMonitor monitor) {
+        InputStream inputStream = null;
+        try {
+            Logging.debug("{0}: Getting {1}", MapWithAIPlugin.NAME, client.getURL().toString());
+            final Response response = client.connect();
+            inputStream = response.getContent();
+            final DataSet mergeData = OsmReaderCustom.parseDataSet(inputStream, null, true);
+            addMapWithAISourceTag(mergeData, source);
+            dataSet.mergeFrom(mergeData);
+            response.disconnect();
+        } catch (final SocketException e) {
+            if (!monitor.isCanceled()) {
+                Logging.debug(e);
+            }
+        } catch (final SSLException e) {
+            Logging.debug(e);
+            new Notification(tr("{0}: Bad SSL Certificate: {1}", MapWithAIPlugin.NAME, client.getURL()))
+                    .setDuration(Notification.TIME_DEFAULT).show();
+        } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
+            Logging.debug(e);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (final IOException e) {
                     Logging.debug(e);
                 }
             } catch (final SSLException e) {
                 Logging.debug(e);
                 new Notification(tr("{0}: Bad SSL Certificate: {1}", MapWithAIPlugin.NAME, client.getURL()))
-                        .setDuration(Notification.TIME_DEFAULT).show();
+                .setDuration(Notification.TIME_DEFAULT).show();
             } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
                 Logging.debug(e);
             } finally {
@@ -470,13 +531,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      * @param source  The source to associate with the data
      * @return The dataset for easy chaining
      */
-    protected static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
+    public static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
         dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted() && node.getReferrers().isEmpty())
-                .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-                .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         dataSet.getRelations().parallelStream().filter(rel -> !rel.isDeleted())
-                .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         return dataSet;
     }
 
