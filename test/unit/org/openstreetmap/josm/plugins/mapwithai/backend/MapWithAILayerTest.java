@@ -9,12 +9,12 @@ import java.awt.Component;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.awaitility.Durations;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -76,7 +76,7 @@ public class MapWithAILayerTest {
         UndoRedoHandler.getInstance().add(command);
         Assert.assertNotNull(layer.getChangesetSourceTag());
         Assert.assertFalse(layer.getChangesetSourceTag().trim().isEmpty());
-        Assert.assertEquals(layer.getChangesetSourceTag(), MapWithAIPlugin.NAME);
+        Assert.assertEquals(MapWithAIPlugin.NAME, layer.getChangesetSourceTag());
     }
 
     @Test
@@ -144,13 +144,13 @@ public class MapWithAILayerTest {
         osm.unlock();
 
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
-        await().atMost(10, TimeUnit.SECONDS).until(() -> !mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
+        await().atMost(Durations.TEN_SECONDS).until(() -> !mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
         Assert.assertFalse(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
         Assert.assertEquals(1, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "random test"));
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
-        await().atMost(10, TimeUnit.SECONDS).until(
+        await().atMost(Durations.TEN_SECONDS).until(
                 () -> mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count() == 2);
         Assert.assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
 

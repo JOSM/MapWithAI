@@ -5,11 +5,11 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JMenu;
 
 import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -72,8 +72,8 @@ public class MapWithAIPluginTest {
             Config.getPref().putBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS, existed);
             plugin.destroy();
             Assert.assertEquals(dataMenuSize, dataMenu.getMenuComponentCount());
-            Awaitility.await().atMost(5, TimeUnit.SECONDS)
-                    .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+            Awaitility.await().atMost(Durations.FIVE_SECONDS)
+            .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
             Assert.assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
                             .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());

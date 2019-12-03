@@ -4,8 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.awaitility.Awaitility.await;
 
-import java.util.concurrent.TimeUnit;
-
+import org.awaitility.Durations;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,7 +35,7 @@ public class MapWithAIAvailabilityTest {
         Territories.initialize();
         instance = MapWithAIAvailability.getInstance();
         LatLon temp = new LatLon(40, -100);
-        await().atMost(10, TimeUnit.SECONDS).until(() -> Territories.isIso3166Code("US", temp));
+        await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
     }
 
     @Test

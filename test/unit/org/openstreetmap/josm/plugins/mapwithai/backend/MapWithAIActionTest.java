@@ -9,9 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.concurrent.TimeUnit;
-
 import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class MapWithAIActionTest {
 
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "temporary", null));
         action.actionPerformed(null);
-        Awaitility.await().timeout(8, TimeUnit.SECONDS)
+        Awaitility.await().atMost(Durations.TEN_SECONDS)
         .until(() -> 1 == MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
         assertEquals(1, MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
 

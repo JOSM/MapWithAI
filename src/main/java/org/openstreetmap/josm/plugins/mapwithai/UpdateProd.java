@@ -16,7 +16,7 @@ import org.openstreetmap.josm.tools.OpenBrowser;
  *
  * @author Taylor Smock
  */
-public class UpdateProd {
+public final class UpdateProd {
     private UpdateProd() {
         // Hide constructor
     }
