@@ -87,6 +87,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());
+        MainApplication.worker.submit(() -> UpdateProd.doProd(info.mainversion));
     }
 
     @Override
