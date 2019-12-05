@@ -21,7 +21,13 @@ public final class UpdateProd {
         // Hide constructor
     }
 
-    public static void doProd(int nextMinVersion) {
+    /**
+     * Prod user to update JOSM
+     *
+     * @param nextMinVersion The next version of JOSM that is supported by MapWithAI
+     * @return {@code true} if an update is needed
+     */
+    public static boolean doProd(int nextMinVersion) {
         if (nextMinVersion > Version.getInstance().getVersion()) {
             int doUpdate = ConditionalOptionPaneUtil.showOptionDialog(
                     MapWithAIPlugin.NAME.concat(".ignore_next_version"),
@@ -34,10 +40,10 @@ public final class UpdateProd {
             if (doUpdate == 0) {
                 OpenBrowser.displayUrl("https://josm.openstreetmap.de");
             }
-        } else {
-            Config.getPref().put(MapWithAIPlugin.NAME.concat(".ignore_next_version"), null);
-            Config.getPref().put(MapWithAIPlugin.NAME.concat(".ignore_next_version.value"), null);
+            return true;
         }
-
+        Config.getPref().put(MapWithAIPlugin.NAME.concat(".ignore_next_version"), null);
+        Config.getPref().put(MapWithAIPlugin.NAME.concat(".ignore_next_version.value"), null);
+        return false;
     }
 }

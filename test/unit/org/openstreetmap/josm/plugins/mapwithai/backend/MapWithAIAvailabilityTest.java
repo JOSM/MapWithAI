@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.awaitility.Awaitility.await;
 
 import org.awaitility.Durations;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,7 +15,7 @@ import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Territories;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -25,17 +26,22 @@ public class MapWithAIAvailabilityTest {
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().projection();
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
-        MapWithAIAvailability.setReleaseUrl(wireMockRule.baseUrl()
+        wireMock.start();
+        MapWithAIAvailability.setReleaseUrl(wireMock.baseUrl()
                 + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
         Territories.initialize();
         instance = MapWithAIAvailability.getInstance();
         LatLon temp = new LatLon(40, -100);
         await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
     }
 
     @Test

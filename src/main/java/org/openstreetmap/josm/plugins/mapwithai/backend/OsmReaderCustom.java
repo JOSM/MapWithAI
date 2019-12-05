@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.io.InputStream;
 
+import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
@@ -10,6 +11,7 @@ import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmReader;
+import org.openstreetmap.josm.tools.Logging;
 
 /**
  * TODO remove this class in January 2019 (if required patch is pulled)
@@ -36,7 +38,18 @@ public class OsmReaderCustom extends OsmReader {
     @Override
     protected OsmPrimitive buildPrimitive(PrimitiveData pd) {
         final Long serverId = pd.getUniqueId();
-        final OsmPrimitive p = super.buildPrimitive(pd);
+        if (AbstractPrimitive.currentUniqueId() < pd.getUniqueId()) {
+            Logging.error("Current id: {0} (wants {1})", AbstractPrimitive.currentUniqueId(), pd.getUniqueId());
+        }
+        OsmPrimitive p;
+        if (pd.getUniqueId() < AbstractPrimitive.currentUniqueId()) {
+            p = pd.getType().newInstance(pd.getUniqueId(), true);
+        } else {
+            p = pd.getType().newVersionedInstance(pd.getId(), pd.getVersion());
+        }
+        p.setVisible(pd.isVisible());
+        p.load(pd);
+        externalIdMap.put(pd.getPrimitiveId(), p);
         p.put("server_id", Long.toString(serverId));
         return p;
     }

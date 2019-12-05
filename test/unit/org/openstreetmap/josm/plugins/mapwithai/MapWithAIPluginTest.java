@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +12,7 @@ import javax.swing.JMenu;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -20,6 +23,9 @@ import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.Logging;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -35,15 +41,24 @@ public class MapWithAIPluginTest {
     public MapWithAIPlugin plugin;
 
     private static final String VERSION = "no-such-version";
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     /**
      * @throws java.lang.Exception
      */
     @Before
     public void setUp() throws Exception {
+        wireMock.start();
         final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
         info = new PluginInformation(in, "MapWithAI", null);
         info.localversion = VERSION;
+        MapWithAIDataUtils.setPaintStyleUrl(
+                MapWithAIDataUtils.getPaintStyleUrl().replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
     }
 
     /**
@@ -64,6 +79,7 @@ public class MapWithAIPluginTest {
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
         Assert.assertEquals(dataMenuSize + 4, dataMenu.getMenuComponentCount());
+        MapPaintStyles.getStyles().getStyleSources().forEach(style -> Logging.error(style.toString()));
         Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
                 .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
 
