@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,6 +53,8 @@ public class MapWithAIDataUtilsTest {
                     map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
             return map;
         }).collect(Collectors.toList()));
+        MapWithAIDataUtils.setPaintStyleUrl(
+                MapWithAIDataUtils.getPaintStyleUrl().replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
     }
 
     @After
@@ -143,12 +147,12 @@ public class MapWithAIDataUtilsTest {
 
     @Test
     public void testAddPaintStyle() {
+        MapWithAIDataUtils.removeMapWithAIPaintStyles();
+        Awaitility.await().atMost(Durations.FIVE_SECONDS)
+                .until(() -> !MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
         List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
         int initialSize = paintStyles.size();
-        // There are two default paint styles
         Assert.assertEquals(initialSize, paintStyles.size());
-        MapWithAIDataUtils.setPaintStyleUrl(
-                MapWithAIDataUtils.getPaintStyleUrl().replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
         MapWithAIDataUtils.addMapWithAIPaintStyles();
         paintStyles = MapPaintStyles.getStyles().getStyleSources();
         Assert.assertEquals(initialSize + 1, paintStyles.size());
@@ -156,7 +160,6 @@ public class MapWithAIDataUtilsTest {
         paintStyles = MapPaintStyles.getStyles().getStyleSources();
         Assert.assertEquals(initialSize + 1, paintStyles.size());
         MapWithAIDataUtils.addMapWithAIPaintStyles();
-        MapWithAIDataUtils.setPaintStyleUrl(MapWithAIDataUtils.DEFAULT_PAINT_STYLE_RESOURCE_URL);
     }
 
     @Test
