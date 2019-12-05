@@ -12,6 +12,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.stream.Collectors;
 
 import org.awaitility.Durations;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +24,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Utils;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -46,18 +47,23 @@ public class MapWithAIRemoteControlTest {
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().main().projection();
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
+        wireMock.start();
         MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream()
                 .map(map -> {
                     map.put("url",
                             map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                            .replace("https://www.facebook.com", wireMockRule.baseUrl()));
+                                    .replace("https://www.facebook.com", wireMock.baseUrl()));
                     return map;
                 }).collect(Collectors.toList()));
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
     }
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
@@ -141,7 +147,6 @@ public class MapWithAIRemoteControlTest {
 
         await().atMost(Durations.TEN_SECONDS)
         .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
-
         final BBox added = MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().iterator().next().toBBox();
         assertTrue(temp.bounds(added));
 

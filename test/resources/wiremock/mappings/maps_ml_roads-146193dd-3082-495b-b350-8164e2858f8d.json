@@ -1,8 +1,8 @@
 {
-  "id" : "652ba7c2-465d-47df-b2a3-a3388ea825f0",
+  "id" : "146193dd-3082-495b-b350-8164e2858f8d",
   "name" : "maps_ml_roads",
   "request" : {
-    "url" : "/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox=-0.001,-0.001,0.0,0.0",
+    "url" : "/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox=-0.001,-0.001,0.0,0.0&result_type=road_building_vector_xml",
     "method" : "GET"
   },
   "response" : {
@@ -16,13 +16,13 @@
       "X-Frame-Options" : "DENY",
       "X-XSS-Protection" : "0",
       "Access-Control-Allow-Origin" : "https://facebook.com",
-      "X-FB-Debug" : "plFuCEMYK94NKE/73/DZzkeYuySsey+BnVLWWD07YUOCLEjJTjiH5McGU+h41N9bQFwUFI5E8c3in47r1SQ4kA==",
-      "Date" : "Tue, 12 Nov 2019 16:20:36 GMT",
+      "X-FB-Debug" : "qE8O2lKCwh9FH8Ls+TyRrL0PM87qbcaZpFqnNwRft2Iby5lKiXh0YyNGocjYZR9bzNa+DdVLLvdsHqc/jEzI5g==",
+      "Date" : "Thu, 05 Dec 2019 14:38:35 GMT",
       "Alt-Svc" : "h3-23=\":443\"; ma=3600",
       "Connection" : "keep-alive"
     }
   },
-  "uuid" : "652ba7c2-465d-47df-b2a3-a3388ea825f0",
+  "uuid" : "146193dd-3082-495b-b350-8164e2858f8d",
   "persistent" : true,
-  "insertionIndex" : 6
+  "insertionIndex" : 4
 }

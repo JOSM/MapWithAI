@@ -1,0 +1,25 @@
+{
+  "id" : "aa8912c8-d2fc-4c2d-bf5e-f0192dad2bb4",
+  "name" : "06_nodes",
+  "request" : {
+    "url" : "/0.6/nodes?nodes=6146500887",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm version=\"0.6\" generator=\"CGImap 0.7.5 (1483 thorn-02.openstreetmap.org)\" copyright=\"OpenStreetMap and contributors\" attribution=\"http://www.openstreetmap.org/copyright\" license=\"http://opendatacommons.org/licenses/odbl/1-0/\">\n <node id=\"6146500887\" visible=\"true\" version=\"4\" changeset=\"66847511\" timestamp=\"2019-02-02T00:23:35Z\" user=\"vorpalblade\" uid=\"2078753\" lat=\"39.0674124\" lon=\"-108.5592645\">\n  <tag k=\"couplings\" v=\"3\"/>\n  <tag k=\"emergency\" v=\"fire_hydrant\"/>\n  <tag k=\"fire_hydrant:awwa_class\" v=\"AA\"/>\n  <tag k=\"fire_hydrant:position\" v=\"sidewalk\"/>\n  <tag k=\"fire_hydrant:type\" v=\"pillar\"/>\n  <tag k=\"manufacturer\" v=\"Clow Valve Company\"/>\n  <tag k=\"model\" v=\"Iowa\"/>\n </node>\n</osm>\n",
+    "headers" : {
+      "Date" : "Thu, 05 Dec 2019 14:56:35 GMT",
+      "Server" : "Apache/2.4.29 (Ubuntu)",
+      "Strict-Transport-Security" : [ "max-age=31536000; includeSubDomains; preload", "max-age=31536000; includeSubDomains; preload" ],
+      "Expect-CT" : [ "max-age=0, report-uri=\"https://openstreetmap.report-uri.com/r/d/ct/reportOnly\"", "max-age=0, report-uri=\"https://openstreetmap.report-uri.com/r/d/ct/reportOnly\"" ],
+      "Cache-Control" : "private, max-age=0, must-revalidate",
+      "Content-Type" : "text/xml; charset=utf-8",
+      "Keep-Alive" : "timeout=5, max=99",
+      "Connection" : "Keep-Alive"
+    }
+  },
+  "uuid" : "aa8912c8-d2fc-4c2d-bf5e-f0192dad2bb4",
+  "persistent" : true,
+  "insertionIndex" : 12
+}

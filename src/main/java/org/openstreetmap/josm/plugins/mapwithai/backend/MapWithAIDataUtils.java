@@ -50,7 +50,10 @@ public final class MapWithAIDataUtils {
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
-    private static final String PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
+    /** The default url for the MapWithAI paint style */
+    public static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
+
+    private static String paintStyleResourceUrl = DEFAULT_PAINT_STYLE_RESOURCE_URL;
 
     private MapWithAIDataUtils() {
         // Hide the constructor
@@ -69,7 +72,7 @@ public final class MapWithAIDataUtils {
                 .filter(style -> oldUrls.contains(style.url)).forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
-            final MapCSSStyleSource style = new MapCSSStyleSource(PAINT_STYLE_RESOURCE_URL, MapWithAIPlugin.NAME,
+            final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
                     "MapWithAI");
             MapPaintStyles.addStyle(style);
         }
@@ -80,7 +83,7 @@ public final class MapWithAIDataUtils {
      */
     public static boolean checkIfMapWithAIPaintStyleExists() {
         return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
-                .map(MapCSSStyleSource.class::cast).anyMatch(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url));
+                .map(MapCSSStyleSource.class::cast).anyMatch(source -> paintStyleResourceUrl.equals(source.url));
     }
 
     /**
@@ -88,7 +91,7 @@ public final class MapWithAIDataUtils {
      */
     public static void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url))
+                .filter(source -> paintStyleResourceUrl.equals(source.url))
                 .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
     }
 
@@ -97,7 +100,7 @@ public final class MapWithAIDataUtils {
      */
     public static StyleSource getMapWithAIPaintStyle() {
         return MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .filter(source -> PAINT_STYLE_RESOURCE_URL.equals(source.url)).findAny().orElse(null);
+                .filter(source -> paintStyleResourceUrl.equals(source.url)).findAny().orElse(null);
     }
 
     /**
@@ -444,5 +447,23 @@ public final class MapWithAIDataUtils {
         return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
                 .filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
                 .flatMap(com -> com.getSourceTags().stream()).distinct().collect(Collectors.toList());
+    }
+
+    /**
+     * Set the URL for the MapWithAI paint style
+     *
+     * @param paintUrl The paint style for MapWithAI
+     */
+    public static void setPaintStyleUrl(String paintUrl) {
+        paintStyleResourceUrl = paintUrl;
+    }
+
+    /**
+     * Get the url for the paint style for MapWithAI
+     *
+     * @return The url for the paint style
+     */
+    public static String getPaintStyleUrl() {
+        return paintStyleResourceUrl;
     }
 }

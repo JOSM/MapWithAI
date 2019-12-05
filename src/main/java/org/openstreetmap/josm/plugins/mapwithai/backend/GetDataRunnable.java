@@ -139,7 +139,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
     public static void cleanup(DataSet dataSet) {
         synchronized (LOCK) {
             /* Microsoft buildings don't have a source, so we add one */
-            MapWithAIDataUtils.addSourceTags(dataSet, "building", "microsoft");
+            MapWithAIDataUtils.addSourceTags(dataSet, "building", "microsoft/BuildingFootprints");
             replaceTags(dataSet);
             removeCommonTags(dataSet);
             mergeNodes(dataSet);

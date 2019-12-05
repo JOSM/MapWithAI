@@ -21,7 +21,7 @@ public final class MapWithAIPreferenceHelper {
      * These are the default parameters for
      * {@link MapWithAIPreferenceHelper#DEFAULT_MAPWITHAI_API}
      */
-    public static final String DEFAULT_MAPWITHAI_API_PARAMETERS = "[{\"parameter\": \"result_type=road_building_vector_xml\", \"description\": \"buildings\", \"enabled\": false}]";
+    public static final String DEFAULT_MAPWITHAI_API_PARAMETERS = "[{\"parameter\": \"result_type=road_building_vector_xml\", \"description\": \"buildings\", \"enabled\": true}]";
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");

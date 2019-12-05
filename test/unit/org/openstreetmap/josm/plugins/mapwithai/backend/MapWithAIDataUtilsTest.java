@@ -29,6 +29,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -73,7 +74,7 @@ public class MapWithAIDataUtilsTest {
     public void testGetData() {
         final BBox testBBox = getTestBBox();
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(testBBox));
-        Assert.assertEquals(2, ds.getWays().size());
+        Assert.assertEquals(1, ds.getWays().size());
     }
 
     /**
@@ -92,7 +93,7 @@ public class MapWithAIDataUtilsTest {
         final DataSet ds = MapWithAIDataUtils.getData(testBBox);
         Assert.assertEquals(1, ds.getWays().size());
         Assert.assertEquals(3, ds.getNodes().size());
-        Assert.assertEquals(2, originalData.getWays().size());
+        Assert.assertEquals(1, originalData.getWays().size());
         Assert.assertEquals(4, originalData.getNodes().size());
     }
 
@@ -146,6 +147,8 @@ public class MapWithAIDataUtilsTest {
         int initialSize = paintStyles.size();
         // There are two default paint styles
         Assert.assertEquals(initialSize, paintStyles.size());
+        MapWithAIDataUtils.setPaintStyleUrl(
+                MapWithAIDataUtils.getPaintStyleUrl().replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
         MapWithAIDataUtils.addMapWithAIPaintStyles();
         paintStyles = MapPaintStyles.getStyles().getStyleSources();
         Assert.assertEquals(initialSize + 1, paintStyles.size());
@@ -153,6 +156,7 @@ public class MapWithAIDataUtilsTest {
         paintStyles = MapPaintStyles.getStyles().getStyleSources();
         Assert.assertEquals(initialSize + 1, paintStyles.size());
         MapWithAIDataUtils.addMapWithAIPaintStyles();
+        MapWithAIDataUtils.setPaintStyleUrl(MapWithAIDataUtils.DEFAULT_PAINT_STYLE_RESOURCE_URL);
     }
 
     @Test

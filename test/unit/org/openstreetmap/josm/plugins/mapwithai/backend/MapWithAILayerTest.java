@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.awaitility.Durations;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +35,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -47,20 +48,24 @@ public class MapWithAILayerTest {
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
-    @Rule
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public WireMockRule wireMockRule = new WireMockRule(options().usingFilesUnderDirectory("test/resources/wiremock"));
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     MapWithAILayer layer;
 
     @Before
     public void setUp() {
+        wireMock.start();
         MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
             map.put("url", map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                    .replace("https://www.facebook.com", wireMockRule.baseUrl()));
+                    .replace("https://www.facebook.com", wireMock.baseUrl()));
             return map;
         }).collect(Collectors.toList()));
         layer = new MapWithAILayer(new DataSet(), "test", null);
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
     }
 
     @Test

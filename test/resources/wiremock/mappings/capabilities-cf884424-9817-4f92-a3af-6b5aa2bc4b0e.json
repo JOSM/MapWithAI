@@ -1,5 +1,5 @@
 {
-  "id" : "4bf5d84c-f2bd-44c3-b777-06fbdcbff249",
+  "id" : "cf884424-9817-4f92-a3af-6b5aa2bc4b0e",
   "name" : "capabilities",
   "request" : {
     "url" : "/capabilities",
@@ -9,15 +9,15 @@
     "status" : 200,
     "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm version=\"0.6\" generator=\"OpenStreetMap server\" copyright=\"OpenStreetMap and contributors\" attribution=\"http://www.openstreetmap.org/copyright\" license=\"http://opendatacommons.org/licenses/odbl/1-0/\">\n  <api>\n    <version minimum=\"0.6\" maximum=\"0.6\"/>\n    <area maximum=\"0.25\"/>\n    <note_area maximum=\"25\"/>\n    <tracepoints per_page=\"5000\"/>\n    <waynodes maximum=\"2000\"/>\n    <changesets maximum_elements=\"10000\"/>\n    <timeout seconds=\"300\"/>\n    <status database=\"online\" api=\"online\" gpx=\"online\"/>\n  </api>\n  <policy>\n    <imagery>\n      <blacklist regex=\".*\\.google(apis)?\\..*/(vt|kh)[\\?/].*([xyz]=.*){3}.*\"/>\n      <blacklist regex=\"http://xdworld\\.vworld\\.kr:8080/.*\"/>\n      <blacklist regex=\".*\\.here\\.com[/:].*\"/>\n    </imagery>\n  </policy>\n</osm>\n",
     "headers" : {
-      "Date" : "Fri, 22 Nov 2019 15:30:17 GMT",
+      "Date" : "Thu, 05 Dec 2019 14:51:56 GMT",
       "Server" : "Apache/2.4.29 (Ubuntu)",
       "Cache-Control" : "max-age=0, private, must-revalidate",
       "Vary" : "Origin,Accept-Encoding",
       "X-Permitted-Cross-Domain-Policies" : "none",
       "X-XSS-Protection" : "1; mode=block",
-      "X-Request-Id" : "Xdf-Cf9mfoQXu7q7IFuX2gAAAUU",
+      "X-Request-Id" : "XekZjNRQE5fxVSCmvZ8wYAAAAMM",
       "X-Download-Options" : "noopen",
-      "X-Runtime" : "0.011692",
+      "X-Runtime" : "0.011898",
       "X-Frame-Options" : "sameorigin",
       "X-Content-Type-Options" : "nosniff",
       "Content-Security-Policy" : "default-src 'self'; child-src 'self'; connect-src 'self' piwik.openstreetmap.org; font-src 'none'; form-action 'self'; frame-ancestors 'self'; frame-src 'self'; img-src 'self' data: www.gravatar.com *.wp.com *.tile.openstreetmap.org *.tile.thunderforest.com *.openstreetmap.fr piwik.openstreetmap.org https://openstreetmap-user-avatars.s3.dualstack.eu-west-1.amazonaws.com; manifest-src 'self'; media-src 'none'; object-src 'self'; script-src 'self' piwik.openstreetmap.org; style-src 'self'; worker-src 'none'",
@@ -32,7 +32,7 @@
       "Content-Type" : "application/xml; charset=utf-8"
     }
   },
-  "uuid" : "4bf5d84c-f2bd-44c3-b777-06fbdcbff249",
+  "uuid" : "cf884424-9817-4f92-a3af-6b5aa2bc4b0e",
   "persistent" : true,
-  "insertionIndex" : 17
+  "insertionIndex" : 8
 }
