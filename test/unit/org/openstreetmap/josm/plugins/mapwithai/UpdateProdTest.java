@@ -1,8 +1,11 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.awt.GraphicsEnvironment;
 
 import javax.swing.JOptionPane;
 
@@ -22,6 +25,7 @@ public class UpdateProdTest {
 
     @Test
     public void testDoProd() {
+        assumeFalse(GraphicsEnvironment.isHeadless());
         String booleanKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version"));
         String intKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version")).concat(".value"); // "message.MapWithAI.ignore_next_version.value";
         Config.getPref().putBoolean(booleanKey, false);
