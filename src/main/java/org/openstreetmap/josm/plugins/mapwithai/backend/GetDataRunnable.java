@@ -152,8 +152,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             removeAlreadyAddedData(dataSet);
             new MergeDuplicateWays(dataSet).executeCommand();
             (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
-                    .filter(way -> !way.isDeleted())
-            .forEach(GetDataRunnable::cleanupArtifacts);
+                    .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
         }
     }
 
@@ -184,15 +183,15 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 .parallelStream().map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet))
                 .collect(Collectors.toList());
         dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-        .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
-        .forEach(way -> {
-            final List<Node> nodes = way.getNodes();
-            DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
-            nodes.parallelStream()
-            .filter(node -> !node.isDeleted()
-                    && node.getReferrers().parallelStream().allMatch(OsmPrimitive::isDeleted))
-            .forEach(node -> node.setDeleted(true));
-        });
+                .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
+                .forEach(way -> {
+                    final List<Node> nodes = way.getNodes();
+                    DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
+                    nodes.parallelStream()
+                            .filter(node -> !node.isDeleted()
+                                    && node.getReferrers().parallelStream().allMatch(OsmPrimitive::isDeleted))
+                            .forEach(node -> node.setDeleted(true));
+                });
     }
 
     private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
@@ -216,7 +215,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 equivalent = ((Way) one).getNodes().parallelStream().allMatch(node1 -> ((Way) two).getNodes()
                         .parallelStream().anyMatch(node2 -> node1.getCoor().equalsEpsilon(node2.getCoor())));
             } else if (one instanceof Relation) {
-                // TODO (do I really need to do this?)
+                equivalent = ((Relation) one).getMembers().parallelStream()
+                        .allMatch(member1 -> ((Relation) two).getMembers().parallelStream()
+                                .anyMatch(member2 -> member1.getRole().equals(member2.getRole())
+                                        && checkIfProbableDuplicate(member1.getMember(), member2.getMember())));
             }
         }
         return equivalent;
@@ -278,7 +280,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     public static void removeCommonTags(DataSet dataSet) {
         dataSet.allPrimitives().parallelStream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
-        .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
+                .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
         dataSet.getNodes().parallelStream().forEach(node -> node.remove(SERVER_ID_KEY));
         final List<Node> emptyNodes = dataSet.getNodes().parallelStream().distinct().filter(node -> !node.isDeleted())
                 .filter(node -> node.getReferrers().isEmpty() && !node.hasKeys()).collect(Collectors.toList());
@@ -323,7 +325,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                     .collect(Collectors.toList());
             way1.getNodePairs(false);
             nearbyWays.parallelStream().flatMap(way2 -> checkWayDuplications(way1, way2).entrySet().parallelStream())
-            .forEach(GetDataRunnable::addMissingElement);
+                    .forEach(GetDataRunnable::addMissingElement);
         }
     }
 
@@ -342,8 +344,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             final Node node3 = way.getNode(i + 2);
             if (node0.equals(node3)) {
                 final List<Node> nodes = way.getNodes();
-                nodes.remove(i + 2); // SonarLint doesn't like this (if it was i instead of i + 2, it would be an
-                // issue)
+                nodes.remove(i + 2); // NOSONAR SonarLint doesn't like this (if it was i instead of i + 2, it would
+                // be an issue)
                 way.setNodes(nodes);
             }
         }
@@ -362,7 +364,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                     node2.getEastNorth());
             if (angle < ARTIFACT_ANGLE) {
                 final List<Node> nodes = way.getNodes();
-                nodes.remove(i + 1); // not an issue since I'm adding it back
+                nodes.remove(i + 1); // NOSONAR not an issue since I'm adding it back
                 nodes.add(i + 2, node1);
             }
         }
@@ -425,8 +427,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
         final DataSet dataSet = new DataSet();
-        final List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
-                .map(TreeMap::new).collect(Collectors.toList());
+        final List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream().map(TreeMap::new)
+                .collect(Collectors.toList());
         if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
             urlMaps.forEach(map -> map.put("url", map.get("url").concat("&crop_bbox={crop_bbox}")));
         }
@@ -508,22 +510,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
                 } catch (final IOException e) {
                     Logging.debug(e);
                 }
-            } catch (final SSLException e) {
-                Logging.debug(e);
-                new Notification(tr("{0}: Bad SSL Certificate: {1}", MapWithAIPlugin.NAME, client.getURL()))
-                .setDuration(Notification.TIME_DEFAULT).show();
-            } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-                Logging.debug(e);
-            } finally {
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                    } catch (final IOException e) {
-                        Logging.debug(e);
-                    }
-                }
             }
         }
+
     }
 
     /**
@@ -533,11 +522,11 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     public static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
         dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted() && node.getReferrers().isEmpty())
-        .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+                .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
-        .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+                .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         dataSet.getRelations().parallelStream().filter(rel -> !rel.isDeleted())
-        .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+                .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         return dataSet;
     }
 
