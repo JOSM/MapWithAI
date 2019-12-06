@@ -14,7 +14,6 @@ import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
- * TODO remove this class in January 2019 (if required patch is pulled)
  * Parser for the Osm API (XML output). Read from an input stream and construct a dataset out of it.
  *
  * For each xml element, there is a dedicated method.
@@ -25,16 +24,11 @@ public class OsmReaderCustom extends OsmReader {
     boolean temporaryConvertUknownToTags;
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
-        super();
-        // TODO when we update to r15470 this.convertUnknownToTags
-        temporaryConvertUknownToTags = convertUnknownToTags;
+        super(convertUnknownToTags);
     }
 
-    // TODO remove with update to r15470
-    protected boolean isConvertUknownToTags() {
-        return temporaryConvertUknownToTags;
-    }
-
+    // check every so often to see if I can keep original negative ids
+    // See https://josm.openstreetmap.de/ticket/18258 (TODO)
     @Override
     protected OsmPrimitive buildPrimitive(PrimitiveData pd) {
         final Long serverId = pd.getUniqueId();

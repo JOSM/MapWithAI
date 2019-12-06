@@ -59,7 +59,7 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         });
     }
 
-    private String getUrl(Map<String, String> urlInformation) {
+    private static String getUrl(Map<String, String> urlInformation) {
         StringBuilder sb = new StringBuilder();
         if (urlInformation.containsKey("url")) {
             sb.append(urlInformation.get("url"));

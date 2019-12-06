@@ -56,7 +56,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         MainApplication.getLayerManager().addActiveLayerChangeListener(this);
     }
 
-    // @Override TODO remove comment on 2020-01-01
+    @Override
     public String getChangesetSourceTag() {
         return MapWithAIDataUtils.getAddedObjects() > 0 ? String.join("; ", MapWithAIDataUtils.getAddedObjectsSource())
                 : null;

@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
@@ -92,8 +91,8 @@ public final class MapWithAIDataUtils {
      */
     public static void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(source -> paintStyleResourceUrl.equals(source.url))
-                .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
+        .filter(source -> paintStyleResourceUrl.equals(source.url))
+        .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
     }
 
     /**
@@ -319,26 +318,16 @@ public final class MapWithAIDataUtils {
         } while (aDRSize != alreadyDownloadedReduced.size());
         for (final BBox bbox : wantToDownload) {
             for (final BBox downloaded : alreadyDownloaded) {
-                if (bboxesAreFunctionallyEqual(bbox, downloaded, null)) {
-                    Logging.debug("YEP");
+                if (downloaded.bboxIsFunctionallyEqual(downloaded, null)) {
+                    Logging.debug("{0}: It looks like we already downloaded {1}", MapWithAIPlugin.NAME,
+                            bbox.toStringCSV(","));
                 }
             }
         }
         return wantToDownload.parallelStream()
                 .filter(bbox1 -> alreadyDownloadedReduced.parallelStream()
-                        .noneMatch(bbox2 -> bboxesAreFunctionallyEqual(bbox1, bbox2, 0.000_02)))
+                        .noneMatch(bbox2 -> bbox2.bboxIsFunctionallyEqual(bbox1, 0.000_02)))
                 .collect(Collectors.toList());
-    }
-
-    // TODO replace with {@link BBox.bboxesAreFunctionallyEqual} when version bumped
-    // to >r15483
-    private static boolean bboxesAreFunctionallyEqual(BBox bbox1, BBox bbox2, Double maxDifference) {
-        final double diff = Optional.ofNullable(maxDifference).orElse(LatLon.MAX_SERVER_PRECISION);
-        return ((bbox1 != null) && (bbox2 != null)
-                && (Math.abs(bbox1.getBottomRightLat() - bbox2.getBottomRightLat()) < diff)
-                && (Math.abs(bbox1.getBottomRightLon() - bbox2.getBottomRightLon()) < diff)
-                && (Math.abs(bbox1.getTopLeftLat() - bbox2.getTopLeftLat()) < diff)
-                && (Math.abs(bbox1.getTopLeftLon() - bbox2.getTopLeftLon()) < diff));
     }
 
     private static boolean bboxesShareSide(BBox bbox1, BBox bbox2) {
