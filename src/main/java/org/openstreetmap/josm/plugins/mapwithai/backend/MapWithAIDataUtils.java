@@ -196,13 +196,18 @@ public final class MapWithAIDataUtils {
         return forkJoinPool;
     }
 
+    /**
+     * Get the height of a bbox
+     *
+     * @param bbox The bbox with lat/lon information
+     * @return The height in meters (see {@link LatLon#greatCircleDistance})
+     */
     public static double getHeight(BBox bbox) {
         final LatLon bottomRight = bbox.getBottomRight();
         final LatLon topLeft = bbox.getTopLeft();
         final double minx = topLeft.getX();
         final double miny = bottomRight.getY();
         final LatLon bottomLeft = new LatLon(miny, minx);
-        // TODO handle poles
         return topLeft.greatCircleDistance(bottomLeft);
     }
 
@@ -309,13 +314,17 @@ public final class MapWithAIDataUtils {
                 final BBox bbox1 = alreadyDownloadedReduced.get(i);
                 for (int j = 0; j < alreadyDownloadedReduced.size(); j++) {
                     final BBox bbox2 = alreadyDownloadedReduced.get(j);
-                    if (!bbox1.equals(bbox2) && bboxesShareSide(bbox1, bbox2)) {
+                    if (!bbox1.bboxIsFunctionallyEqual(bbox2, null) && bboxesShareSide(bbox1, bbox2)) {
                         bbox1.add(bbox2);
                         alreadyDownloadedReduced.remove(bbox2);
                     }
                 }
             }
         } while (aDRSize != alreadyDownloadedReduced.size());
+        return removeDuplicateBBoxes(wantToDownload, alreadyDownloadedReduced);
+    }
+
+    private static List<BBox> removeDuplicateBBoxes(List<BBox> wantToDownload, List<BBox> alreadyDownloaded) {
         for (final BBox bbox : wantToDownload) {
             for (final BBox downloaded : alreadyDownloaded) {
                 if (downloaded.bboxIsFunctionallyEqual(downloaded, null)) {
@@ -325,9 +334,10 @@ public final class MapWithAIDataUtils {
             }
         }
         return wantToDownload.parallelStream()
-                .filter(bbox1 -> alreadyDownloadedReduced.parallelStream()
+                .filter(bbox1 -> alreadyDownloaded.parallelStream()
                         .noneMatch(bbox2 -> bbox2.bboxIsFunctionallyEqual(bbox1, 0.000_02)))
                 .collect(Collectors.toList());
+
     }
 
     private static boolean bboxesShareSide(BBox bbox1, BBox bbox2) {
@@ -352,7 +362,6 @@ public final class MapWithAIDataUtils {
         final double maxy = topLeft.getY();
         final LatLon bottomLeft = new LatLon(miny, minx);
         final LatLon topRight = new LatLon(maxy, maxx);
-        // TODO handle meridian
         return Math.max(bottomRight.greatCircleDistance(bottomLeft), topRight.greatCircleDistance(topLeft));
     }
 

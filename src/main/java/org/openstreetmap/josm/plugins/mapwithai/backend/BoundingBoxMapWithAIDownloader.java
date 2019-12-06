@@ -31,6 +31,18 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 + (crop ? "crop_bbox=" + lon1 + ',' + lat1 + ',' + lon2 + ',' + lat2 : "");
     }
 
+    @Override
+    protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
+        DataSet ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
+        GetDataRunnable.addMapWithAISourceTag(ds,
+                MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
+                        .filter(map -> map.getOrDefault("url", "no-url").equals(url))
+                .map(map -> map.getOrDefault("source", MapWithAIPlugin.NAME)).findFirst()
+                .orElse(MapWithAIPlugin.NAME));
+        GetDataRunnable.cleanup(ds, downloadArea);
+        return ds;
+    }
+
     /**
      * Returns the name of the download task to be displayed in the
      * {@link ProgressMonitor}.

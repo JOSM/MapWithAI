@@ -126,7 +126,6 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         @Override
         public MapWithAIDownloadData getData() {
             Consumer<Collection<Object>> errorReporter = errors -> {
-                boolean onlyNoDataError = errors.size() == 1 && errors.contains("No data found in this area.");
             };
             return new MapWithAIDownloadData(MapWithAIPreferenceHelper.getMapWithAIUrl(), errorReporter);
         }

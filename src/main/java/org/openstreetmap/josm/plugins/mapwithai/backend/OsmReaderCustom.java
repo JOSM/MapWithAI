@@ -28,7 +28,7 @@ public class OsmReaderCustom extends OsmReader {
     }
 
     // check every so often to see if I can keep original negative ids
-    // See https://josm.openstreetmap.de/ticket/18258 (TODO)
+    // See https://josm.openstreetmap.de/ticket/18258 (TODO) // NOSONAR
     @Override
     protected OsmPrimitive buildPrimitive(PrimitiveData pd) {
         final Long serverId = pd.getUniqueId();
