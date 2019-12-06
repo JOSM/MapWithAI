@@ -21,7 +21,6 @@ import org.openstreetmap.josm.tools.Logging;
  * entered, and it must point to the end of the same element, when it is exited.
  */
 public class OsmReaderCustom extends OsmReader {
-    boolean temporaryConvertUknownToTags;
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
         super(convertUnknownToTags);

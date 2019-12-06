@@ -140,9 +140,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      */
     public static void cleanup(DataSet dataSet, Bounds bounds) {
         synchronized (LOCK) {
-            /* Microsoft buildings don't have a source, so we add one */
-            // MapWithAIDataUtils.addSourceTags(dataSet, "building",
-            // "microsoft/BuildingFootprints");
             removeRedundantSource(dataSet);
             replaceTags(dataSet);
             removeCommonTags(dataSet);
@@ -297,7 +294,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
             final BBox bbox = new BBox();
             bbox.addPrimitive(n1, 0.001);
             final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream().filter(node -> !node.isDeleted()
-                    && !node.equals(n1)
+                    && !node.equals(n1) && node.getReferrers().parallelStream().allMatch(prim -> prim.hasKey("highway"))
                     && (((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty() || node.getKeys().isEmpty())
                             && (n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
                                     .getMaxNodeDistance()))
