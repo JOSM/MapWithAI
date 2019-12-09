@@ -1,3 +1,12 @@
 <ivy-module version="2.0">
   <info organisation="org.openstreetmap.josm.plugins" module="mapwithai"/>
+  <configurations>
+    <conf name="compile" />
+    <conf name="runtime" extends="compile" />
+    <conf name="test" extends="runtime" />
+  </configurations>
+  <dependencies>
+    <dependency org="org.junit.jupiter" name="junit-jupiter" rev="5.5.2" conf="test->default" />
+    <dependency org="org.awaitility" name="awaitility" rev="4.0.1" conf="test->default" />
+  </dependencies>
 </ivy-module>
