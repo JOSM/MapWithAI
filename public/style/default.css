@@ -23,7 +23,7 @@ h1 {
 h2 {
   font-size:1.5em;
 }
-.container {
+.container, .mapwithaisourcetable {
   text-align: center;
 }
 ul {
@@ -42,9 +42,32 @@ ul li {
   box-shadow: 0 0 0 #36af6d;
   transition:.25s ease box-shadow, .5s ease border-color, .5s ease color, 1.5s ease background;
 }
+
 a:hover {
   color:#fff;
   border-color: #36af6d;
   box-shadow: 0 0 8px #36af6d;
-  background: rgba(54,175,109,.2)
+  background: rgba(54,175,109,.2);
+}
+
+h1 a:visited {
+  color: lightgrey;
+}
+
+.container h1 a {
+  border: none;
+}
+
+table {
+  width: 75%;
+  border: 1px solid black;
+  border-collapse: collapse;
+  overflow-x: auto;
+  word-wrap: break-word;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+td {
+  max-width: 200px;
 }

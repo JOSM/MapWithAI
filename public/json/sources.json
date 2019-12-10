@@ -1,0 +1,11 @@
+{
+    "MapWithAI": {
+        "url": "https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}",
+        "provides": ["highway", "building"],
+        "parameters": [{"parameter": "result_type=road_building_vector_xml", "description": "buildings", "enabled": true}],
+        "countries": ["PR", "HN", "PY", "HR", "HT", "HU", "ID", "AF", "IN", "AG", "ZA", "AI", "AL", "AO", "AR", "ZM", "RO", "ZW", "BA", "BB", "RS", "BD", "JM", "BF", "BG", "RW", "BI", "BJ", "BL", "BN", "BO", "BR", "BS", "SD", "BT", "SG", "BW", "BZ", "SL", "KE", "SN", "SO", "KH", "CA", "SR", "SS", "CD", "ST", "CF", "KN", "SV", "CG", "SX", "CI", "SZ", "CL", "CM", "NL-BQ2", "NL-BQ3", "CO", "KY", "CR", "TC", "TD", "CU", "TG", "LA", "LC", "TL", "TN", "TR", "LK", "TT", "DJ", "LR", "TZ", "LS", "DM", "DO", "LY", "UG", "MA", "DZ", "MD", "ME", "MF", "MG", "EC", "MK", "US", "ML", "MM", "EG", "EH", "MQ", "UY", "MR", "MS", "MW", "MX", "MY", "ER", "MZ", "VC", "ET", "VE", "VG", "NA", "NE", "VN", "NG", "NI", "NP", "FK", "GA", "GD", "GF", "GH", "GM", "GN", "GP", "GQ", "GR", "GT", "GW", "PA", "GY", "PE", "PH", "PK"],
+        "license": "ODBL",
+        "osm_compatible": "yes",
+        "permission_url": "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/wiki/FAQ"
+    }
+}
