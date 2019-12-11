@@ -27,6 +27,7 @@ import org.openstreetmap.josm.tools.Pair;
 
 public abstract class AbstractConflationCommand extends Command {
     Collection<OsmPrimitive> possiblyAffectedPrimitives;
+
     public AbstractConflationCommand(DataSet data) {
         super(data);
     }

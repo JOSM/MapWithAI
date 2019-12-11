@@ -55,7 +55,7 @@ public final class MapWithAIPreferenceHelper {
         return (layer != null) && (layer.getMapWithAIUrl() != null)
                 ? getMapWithAIURLs().parallelStream().filter(map -> layer.getMapWithAIUrl().equals(map.get(URL_STRING)))
                         .collect(Collectors.toList())
-                        : getMapWithAIURLs().stream()
+                : getMapWithAIURLs().stream()
                         .filter(map -> Boolean.valueOf(map.getOrDefault(ENABLED_STRING, Boolean.FALSE.toString())))
                         .collect(Collectors.toList());
     }

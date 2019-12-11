@@ -38,11 +38,10 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
             if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream().anyMatch(
                     map -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(map.get("url")))) {
                 sb.append(";url=")
-                        .append(String.join(";url=",
-                        MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                        .filter(map -> map.containsKey("url")).map(map -> map.get("url"))
-                        .filter(url -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(url))
-                        .collect(Collectors.toList())));
+                        .append(String.join(";url=", MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                                .filter(map -> map.containsKey("url")).map(map -> map.get("url"))
+                                .filter(url -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(url))
+                                .collect(Collectors.toList())));
             }
             tags.put("mapwithai:options", sb.toString());
         }

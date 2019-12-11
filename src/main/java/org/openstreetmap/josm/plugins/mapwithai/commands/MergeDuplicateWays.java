@@ -113,7 +113,7 @@ public class MergeDuplicateWays extends Command {
     public static void filterDataSet(DataSet dataSet, List<Command> commands, Bounds bound) {
         final List<Way> ways = new ArrayList<>(
                 (bound == null ? dataSet.getWays() : dataSet.searchWays(bound.toBBox())).parallelStream()
-                .filter(prim -> !prim.isIncomplete() && !prim.isDeleted()).collect(Collectors.toList()));
+                        .filter(prim -> !prim.isIncomplete() && !prim.isDeleted()).collect(Collectors.toList()));
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
             final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).parallelStream()

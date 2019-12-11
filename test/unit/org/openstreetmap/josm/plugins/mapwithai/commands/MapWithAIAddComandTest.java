@@ -102,8 +102,8 @@ public class MapWithAIAddComandTest {
                 new Node(new LatLon(0.05, 0.2)));
         way2.firstNode().put("conn",
                 "w".concat(Long.toString(way1.getUniqueId())).concat(",n")
-                .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
-                .concat(Long.toString(way1.lastNode().getUniqueId())));
+                        .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
+                        .concat(Long.toString(way1.lastNode().getUniqueId())));
         way1.getNodes().forEach(node -> ds1.addPrimitive(node));
         way2.getNodes().forEach(node -> ds1.addPrimitive(node));
         ds1.addPrimitive(way2);

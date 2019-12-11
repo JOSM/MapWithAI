@@ -29,11 +29,9 @@ public class UpdateProdTest {
         String booleanKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version"));
         String intKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version")).concat(".value"); // "message.MapWithAI.ignore_next_version.value";
         Config.getPref().putBoolean(booleanKey, false);
-        Config.getPref().putInt(intKey,
-                JOptionPane.YES_OPTION);
+        Config.getPref().putInt(intKey, JOptionPane.YES_OPTION);
         assertTrue(UpdateProd.doProd(Integer.MAX_VALUE));
-        Config.getPref().putInt(intKey,
-                JOptionPane.NO_OPTION);
+        Config.getPref().putInt(intKey, JOptionPane.NO_OPTION);
         assertTrue(UpdateProd.doProd(Integer.MAX_VALUE));
         assertFalse(UpdateProd.doProd(0));
     }

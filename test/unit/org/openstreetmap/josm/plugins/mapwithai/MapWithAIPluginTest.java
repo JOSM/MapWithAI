@@ -88,10 +88,10 @@ public class MapWithAIPluginTest {
             plugin.destroy();
             Assert.assertEquals(dataMenuSize, dataMenu.getMenuComponentCount());
             Awaitility.await().atMost(Durations.FIVE_SECONDS)
-                .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+                    .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
             Assert.assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                    .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+                            .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
         }
 
         for (int i = 0; i < 3; i++) {

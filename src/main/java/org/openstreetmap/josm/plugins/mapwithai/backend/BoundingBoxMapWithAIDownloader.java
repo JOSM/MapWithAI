@@ -34,11 +34,9 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     @Override
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
-        GetDataRunnable.addMapWithAISourceTag(ds,
-                MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
-                        .filter(map -> map.getOrDefault("url", "no-url").equals(url))
-                .map(map -> map.getOrDefault("source", MapWithAIPlugin.NAME)).findFirst()
-                .orElse(MapWithAIPlugin.NAME));
+        GetDataRunnable.addMapWithAISourceTag(ds, MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
+                .filter(map -> map.getOrDefault("url", "no-url").equals(url))
+                .map(map -> map.getOrDefault("source", MapWithAIPlugin.NAME)).findFirst().orElse(MapWithAIPlugin.NAME));
         GetDataRunnable.cleanup(ds, downloadArea);
         return ds;
     }

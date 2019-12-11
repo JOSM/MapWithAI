@@ -65,8 +65,9 @@ public class DetectTaskingManagerUtilsTest {
         Assert.assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer());
 
         final BBox bbox = new BBox(0, 0, 1, 1);
-        MainApplication.getLayerManager().addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox),
-                DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
+        MainApplication.getLayerManager()
+                .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox),
+                        DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
 
         Assert.assertTrue(DetectTaskingManagerUtils.hasTaskingManagerLayer());
         Assert.assertTrue(DetectTaskingManagerUtils.getTaskingManagerBBox().bounds(bbox));

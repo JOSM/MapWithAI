@@ -87,8 +87,9 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     @Override
     protected void handleRequest() throws RequestHandlerErrorException, RequestHandlerBadRequestException {
         if (crop != null && crop.isInWorld()) {
-            MainApplication.getLayerManager().addLayer(new GpxLayer(
-                    DetectTaskingManagerUtils.createTaskingManagerGpxData(crop), DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
+            MainApplication.getLayerManager()
+                    .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(crop),
+                            DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
         }
 
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
@@ -120,7 +121,7 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         final String br = "<br />";
         final StringBuilder sb = new StringBuilder();
         sb.append(tr("Remote Control has been asked to load data from the API.")).append(" (").append(url).append(')')
-        .append(br).append(tr("{0} will ", MapWithAIPlugin.NAME));
+                .append(br).append(tr("{0} will ", MapWithAIPlugin.NAME));
         if (Boolean.FALSE.equals(switchLayer)) {
             sb.append(tr("not "));
         }
@@ -162,6 +163,6 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
                 "/mapwithai?url=https://www.facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}",
                 "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&max_obj=1",
                 "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&switch_layer=false",
-        "/mapwithai?crop_bbox=-108.4625421,39.0621223,-108.4594728,39.0633059" };
+                "/mapwithai?crop_bbox=-108.4625421,39.0621223,-108.4594728,39.0633059" };
     }
 }

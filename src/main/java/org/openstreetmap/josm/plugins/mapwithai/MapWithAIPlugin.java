@@ -146,7 +146,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         }
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
-        .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
+                .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
         if (!Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
             MapWithAIDataUtils.removeMapWithAIPaintStyles();

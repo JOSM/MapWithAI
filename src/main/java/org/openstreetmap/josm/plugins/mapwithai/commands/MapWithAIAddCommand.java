@@ -41,7 +41,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      * @param editLayer      The OSM layer
      * @param selection      The primitives to add from MapWithAI
      */
-    public MapWithAIAddCommand(MapWithAILayer mapWithAILayer, OsmDataLayer editLayer, Collection<OsmPrimitive> selection) {
+    public MapWithAIAddCommand(MapWithAILayer mapWithAILayer, OsmDataLayer editLayer,
+            Collection<OsmPrimitive> selection) {
         this(mapWithAILayer.getDataSet(), editLayer.getDataSet(), selection);
         lock = mapWithAILayer.getLock();
     }
@@ -76,8 +77,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     @Override
     public void run() {
         if (mapWithAI.equals(editable)) {
-            Logging.error("{0}: DataSet mapWithAI ({1}) should not be the same as DataSet editable ({2})", MapWithAIPlugin.NAME,
-                    mapWithAI, editable);
+            Logging.error("{0}: DataSet mapWithAI ({1}) should not be the same as DataSet editable ({2})",
+                    MapWithAIPlugin.NAME, mapWithAI, editable);
             throw new IllegalArgumentException();
         }
         synchronized (this) {
@@ -91,7 +92,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                     final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI,
                             primitives);
                     final Command createConnectionsCommand = createConnections(editable, allPrimitives);
-                    command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
+                    command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand,
+                            createConnectionsCommand);
                 }
                 command.executeCommand();
             } finally {

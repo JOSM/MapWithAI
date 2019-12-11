@@ -79,7 +79,7 @@ public class MapWithAIDownloadReaderTest {
         Awaitility.await().atMost(Durations.TEN_SECONDS).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         assertNotNull(MapWithAIDataUtils.getLayer(false));
         Awaitility.await().atMost(Durations.TEN_SECONDS)
-        .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
+                .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
         assertFalse(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
         assertTrue(settings.getDownloadBounds().get().toBBox().bboxIsFunctionallyEqual(
                 MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().get(0).toBBox(), 0.0001));

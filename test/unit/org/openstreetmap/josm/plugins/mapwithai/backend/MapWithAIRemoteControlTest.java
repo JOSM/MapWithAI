@@ -52,13 +52,11 @@ public class MapWithAIRemoteControlTest {
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream()
-                .map(map -> {
-                    map.put("url",
-                            map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                                    .replace("https://www.facebook.com", wireMock.baseUrl()));
-                    return map;
-                }).collect(Collectors.toList()));
+        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
+            map.put("url", map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
+                    .replace("https://www.facebook.com", wireMock.baseUrl()));
+            return map;
+        }).collect(Collectors.toList()));
     }
 
     @After
@@ -76,6 +74,7 @@ public class MapWithAIRemoteControlTest {
 
     /**
      * Unit test for bad request - invalid URL.
+     * 
      * @throws Exception if any error occurs
      */
     @Test
@@ -134,9 +133,8 @@ public class MapWithAIRemoteControlTest {
 
         thrown.expect(RequestHandlerBadRequestException.class);
         thrown.expectMessage("NumberFormatException (For input string: \"BAD_VALUE\")");
-        newHandler(
-                "http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE")
-        .handle();
+        newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE")
+                .handle();
     }
 
     @Test
@@ -146,8 +144,9 @@ public class MapWithAIRemoteControlTest {
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         await().atMost(Durations.TEN_SECONDS)
-        .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
-        final BBox added = MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().iterator().next().toBBox();
+                .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
+        final BBox added = MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().iterator().next()
+                .toBBox();
         assertTrue(temp.bounds(added));
 
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));

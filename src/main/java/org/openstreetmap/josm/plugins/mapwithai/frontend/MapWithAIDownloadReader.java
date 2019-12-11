@@ -41,7 +41,6 @@ import org.openstreetmap.josm.tools.ImageProvider;
 
 public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownloadReader.MapWithAIDownloadData> {
 
-
     @Override
     public AbstractDownloadSourcePanel<MapWithAIDownloadData> createPanel(DownloadDialog dialog) {
         return new MapWithAIDownloadPanel(this);
@@ -65,8 +64,7 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
             sb.append(urlInformation.get("url"));
             if (urlInformation.containsKey("parameters")) {
                 List<String> parameters = DataUrl.readJsonStringArraySimple(urlInformation.get("parameters"))
-                        .parallelStream()
-                        .filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
+                        .parallelStream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
                         .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
                         .map(map -> map.getString("parameter")).collect(Collectors.toList());
                 if (!parameters.isEmpty()) {
