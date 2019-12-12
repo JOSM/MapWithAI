@@ -67,8 +67,11 @@ public class MapWithAIDownloadReaderTest {
     @Test
     public void testDoDownload() {
         MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
-        DownloadSettings settings = new DownloadSettings(
-                new Bounds(39.0239848, -108.4522247, 39.1066201, -108.3368683), false, false);
+        // TODO revert commit that adds these lines as soon as MapWithAI fixes timeout
+        // issue see
+        // https://facebook.com/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox=-108.4522247,39.0239848,-108.3368683,39.1066201&result_type=road_building_vector_xml
+        DownloadSettings settings = new DownloadSettings(new Bounds(39.095376, -108.4495519, 39.0987811, -108.4422314),
+                false, false);
         MapWithAIDownloadReader.MapWithAIDownloadData data = new MapWithAIDownloadReader.MapWithAIDownloadData(
                 MapWithAIPreferenceHelper.getMapWithAIUrl(), errors -> {
                 });
