@@ -4,10 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.SocketException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,13 +11,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
-
-import javax.net.ssl.SSLException;
 
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
@@ -40,18 +33,14 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
-import org.openstreetmap.josm.gui.progress.ProgressMonitor.CancelListener;
-import org.openstreetmap.josm.io.IllegalDataException;
+import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
 import org.openstreetmap.josm.tools.Geometry;
-import org.openstreetmap.josm.tools.HttpClient;
-import org.openstreetmap.josm.tools.HttpClient.Response;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
@@ -60,10 +49,9 @@ import org.openstreetmap.josm.tools.Pair;
  *
  * @author Taylor Smock
  */
-public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelListener {
+public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static final long serialVersionUID = 258423685658089715L;
     private final List<BBox> bbox;
-    private static List<HttpClient> clients;
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
 
@@ -98,7 +86,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         this.bbox = bbox.stream().distinct().collect(Collectors.toList());
         this.dataSet = dataSet;
         this.monitor = Optional.ofNullable(monitor).orElse(NullProgressMonitor.INSTANCE);
-        this.monitor.addCancelListener(this);
     }
 
     @Override
@@ -160,14 +147,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
      * @param dataSet The dataset with potential duplicate source tags
      */
     public static void removeRedundantSource(DataSet dataSet) {
-        dataSet.getNodes().parallelStream().filter(node -> !node.getReferrers().isEmpty())
-                .filter(node -> node.getKeys().entrySet().parallelStream().map(Entry::getKey)
-                        .allMatch(key -> key.contains("source"))
-                        && node.getKeys().entrySet().parallelStream()
-                                .allMatch(entry -> node.getReferrers().parallelStream()
-                                        .anyMatch(parent -> parent.hasTag(entry.getKey(), entry.getValue()))))
-                .forEach(node -> node.getKeys().entrySet().parallelStream().map(Entry::getKey)
-                        .filter(key -> key.contains("source")).forEach(node::remove));
+        synchronized (GetDataRunnable.class) {
+            dataSet.getNodes().stream().filter(node -> !node.getReferrers().isEmpty())
+                    .filter(node -> node.getKeys().entrySet().parallelStream().map(Entry::getKey)
+                            .allMatch(key -> key.contains("source"))
+                            && node.getKeys().entrySet().parallelStream()
+                                    .allMatch(entry -> node.getReferrers().parallelStream()
+                                            .anyMatch(parent -> parent.hasTag(entry.getKey(), entry.getValue()))))
+                    .forEach(node -> node.getKeys().entrySet().stream().map(Entry::getKey)
+                            .filter(key -> key.contains("source")).forEach(node::remove));
+        }
     }
 
     /**
@@ -434,82 +423,19 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
 
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
-        clients = new ArrayList<>();
         urlMaps.parallelStream().forEach(map -> {
             try {
-                final HttpClient client = HttpClient
-                        .create(new URL(map.get("url").replace("{bbox}", bbox.toStringCSV(",")).replace("{crop_bbox}",
-                                DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","))));
-                clients.add(client);
-                clientCall(client, dataSet, map.getOrDefault("source", MapWithAIPlugin.NAME), monitor);
-            } catch (final MalformedURLException e1) {
+                Bounds bound = new Bounds(bbox.getBottomRight());
+                bound.extend(bbox.getTopLeft());
+                BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, map.get("url"),
+                        DetectTaskingManagerUtils.hasTaskingManagerLayer());
+                dataSet.mergeFrom(downloader.parseOsm(monitor));
+            } catch (OsmTransferException e1) {
                 Logging.debug(e1);
             }
         });
         dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
         return dataSet;
-    }
-
-    /**
-     * Add information to the user agent and then perform the actual internet call
-     *
-     * @param client  The HttpClient
-     * @param dataSet The dataset to add data to
-     * @param source  The source of the data (added as a tag to "whole" objects)
-     * @param monitor The monitor (so we know when a cancellation has occurred)
-     */
-    private static void clientCall(HttpClient client, DataSet dataSet, String source, ProgressMonitor monitor) {
-        final StringBuilder defaultUserAgent = new StringBuilder();
-        client.setReadTimeout(DEFAULT_TIMEOUT);
-        defaultUserAgent.append(client.getHeaders().get("User-Agent"));
-        if (defaultUserAgent.toString().trim().length() == 0) {
-            defaultUserAgent.append("JOSM");
-        }
-        defaultUserAgent.append(tr("/ {0} {1}", MapWithAIPlugin.NAME, MapWithAIPlugin.getVersionInfo()));
-        client.setHeader("User-Agent", defaultUserAgent.toString());
-        if (!monitor.isCanceled()) {
-            clientCallInternet(client, dataSet, source, monitor);
-        }
-    }
-
-    /**
-     * Add perform an internet request to add data to a dataset
-     *
-     * @param client  The HttpClient
-     * @param dataSet The dataset to add data to
-     * @param source  The source of the data (added as a tag to "whole" objects)
-     * @param monitor The monitor (so we know when a cancellation has occurred)
-     */
-    private static void clientCallInternet(HttpClient client, DataSet dataSet, String source, ProgressMonitor monitor) {
-        InputStream inputStream = null;
-        try {
-            Logging.debug("{0}: Getting {1}", MapWithAIPlugin.NAME, client.getURL().toString());
-            final Response response = client.connect();
-            inputStream = response.getContent();
-            final DataSet mergeData = OsmReaderCustom.parseDataSet(inputStream, null, true);
-            addMapWithAISourceTag(mergeData, source);
-            dataSet.mergeFrom(mergeData);
-            response.disconnect();
-        } catch (final SocketException e) {
-            if (!monitor.isCanceled()) {
-                Logging.debug(e);
-            }
-        } catch (final SSLException e) {
-            Logging.debug(e);
-            new Notification(tr("{0}: Bad SSL Certificate: {1}", MapWithAIPlugin.NAME, client.getURL()))
-                    .setDuration(Notification.TIME_DEFAULT).show();
-        } catch (UnsupportedOperationException | IllegalDataException | IOException e) {
-            Logging.debug(e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (final IOException e) {
-                    Logging.debug(e);
-                }
-            }
-        }
-
     }
 
     /**
@@ -525,13 +451,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> implements CancelLis
         dataSet.getRelations().parallelStream().filter(rel -> !rel.isDeleted())
                 .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         return dataSet;
-    }
-
-    @Override
-    public void operationCanceled() {
-        if (clients != null) {
-            clients.parallelStream().filter(Objects::nonNull).forEach(HttpClient::disconnect);
-        }
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws IOException {

@@ -1,0 +1,28 @@
+{
+  "id" : "580f7b5b-cb9a-4092-8a39-bf8b714e6efe",
+  "name" : "maps_ml_roads",
+  "request" : {
+    "url" : "/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox=-108.5715723,39.0734162,-108.5707107,39.0738791&result_type=road_building_vector_xml&crop_bbox=-108.5711561,39.0735205,-108.5708568,39.0736682",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm generator=\"NS_ROADS_SERVICE\" version=\"0.6\"><bounds maxlat=\"39.0738691\" maxlon=\"-108.57072358101\" minlat=\"39.0734262\" minlon=\"-108.57155941899\"/><node id=\"-2976339053870190188\" lon=\"-108.5708568\" lat=\"39.073597910501\" visible=\"true\"/><way id=\"-4444230471161502072\" orig_id=\"-1203473873173507\" visible=\"true\" action=\"modify\"><tag k=\"highway\" v=\"residential\"/><tag k=\"source\" v=\"digitalglobe\"/><nd ref=\"-710999622096597555\"/><nd ref=\"-373066400259132\"/><nd ref=\"-2976339053870190188\"/></way><node action=\"modify\" id=\"-710999622096597555\" lat=\"39.0736112\" lon=\"-108.5710852\" visible=\"true\"><tag k=\"dupe\" v=\"n6815623346\"/></node><node action=\"modify\" id=\"-373066400259132\" lat=\"39.0735933\" lon=\"-108.5709927\" visible=\"true\"/></osm>\n",
+    "headers" : {
+      "Content-Type" : "text/xml; charset=UTF-8",
+      "Strict-Transport-Security" : "max-age=15552000; preload",
+      "Vary" : "Accept-Encoding",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-XSS-Protection" : "0",
+      "Access-Control-Allow-Origin" : "https://facebook.com",
+      "X-FB-Debug" : "KVSWyv0yjs/bb9oG3tIz+ORdsb/MOp21ZqyqZ4PYVMtcBatm9nD9St1AD+4Y940a7kRKNpcGGjRzWAFf7D8Z2A==",
+      "Date" : "Tue, 17 Dec 2019 21:56:59 GMT",
+      "Alt-Svc" : "h3-24=\":443\"; ma=3600",
+      "Connection" : "keep-alive"
+    }
+  },
+  "uuid" : "580f7b5b-cb9a-4092-8a39-bf8b714e6efe",
+  "persistent" : true,
+  "insertionIndex" : 17
+}

@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
+import javax.json.JsonObject;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -34,7 +36,9 @@ import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
+import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
@@ -157,6 +161,8 @@ public final class MapWithAIDataUtils {
     public static DataSet getData(List<BBox> bbox) {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
+        final List<Bounds> realBounds = realBBoxes.stream().map(MapWithAIDataUtils::bboxToBounds)
+                .collect(Collectors.toList());
         if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .anyMatch(map -> Boolean.valueOf(map.getOrDefault("enabled", "false")))) {
             if ((realBBoxes.size() < TOO_MANY_BBOXES) || ConditionalOptionPaneUtil.showConfirmationDialog(
@@ -165,7 +171,21 @@ public final class MapWithAIDataUtils {
                             realBBoxes.size()),
                     null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
-                getForkJoinPool().invoke(new GetDataRunnable(realBBoxes, dataSet, monitor));
+                realBounds.parallelStream()
+                        .forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                                .filter(map -> map.containsKey("url")).map(MapWithAIDataUtils::getUrl)
+                                .filter(string -> !string.trim().isEmpty()).forEach(url -> {
+                                    BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
+                                            bound, url, DetectTaskingManagerUtils.hasTaskingManagerLayer());
+                                    try {
+                                        DataSet ds = downloader.parseOsm(monitor);
+                                        synchronized (MapWithAIDataUtils.class) {
+                                            dataSet.mergeFrom(ds);
+                                        }
+                                    } catch (OsmTransferException e) {
+                                        Logging.error(e);
+                                    }
+                                }));
                 monitor.finishTask();
                 monitor.close();
             }
@@ -183,6 +203,29 @@ public final class MapWithAIDataUtils {
             }
         }
         return dataSet;
+    }
+
+    private static String getUrl(Map<String, String> urlInformation) {
+        StringBuilder sb = new StringBuilder();
+        if (urlInformation.containsKey("url")) {
+            sb.append(urlInformation.get("url"));
+            if (urlInformation.containsKey("parameters")) {
+                List<String> parameters = DataUrl.readJsonStringArraySimple(urlInformation.get("parameters"))
+                        .parallelStream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
+                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
+                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
+                if (!parameters.isEmpty()) {
+                    sb.append('&').append(String.join("&", parameters));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private static Bounds bboxToBounds(BBox bbox) {
+        Bounds bound = new Bounds(bbox.getBottomRight());
+        bound.extend(bbox.getTopLeft());
+        return bound;
     }
 
     /**
