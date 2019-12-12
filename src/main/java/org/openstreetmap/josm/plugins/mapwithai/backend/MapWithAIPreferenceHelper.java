@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
@@ -69,6 +70,14 @@ public final class MapWithAIPreferenceHelper {
     public static List<Map<String, String>> getMapWithAIURLs() {
         final List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>())
                 .stream().map(TreeMap::new).collect(Collectors.toList());
+        if (MapWithAIDataUtils.getLayer(false) != null) {
+            TreeMap<String, String> layerMap = new TreeMap<>();
+            layerMap.put("url", MapWithAIDataUtils.getLayer(false).getMapWithAIUrl());
+            if (layerMap.get("url") != null && !layerMap.get("url").trim().isEmpty() && returnMap.parallelStream()
+                    .noneMatch(map -> map.getOrDefault("url", "").equals(layerMap.get("url")))) {
+                returnMap.add(layerMap);
+            }
+        }
         if (returnMap.isEmpty()) {
             final List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
             final List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty() ? defaultAPIs
@@ -137,24 +146,29 @@ public final class MapWithAIPreferenceHelper {
      *                  sessions
      */
     public static void setMapWithAIUrl(String source, String url, boolean enabled, boolean permanent) {
-        final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        final String setUrl = url;
+        setMapWithAIUrl(new DataUrl(source, url, permanent), enabled, permanent);
+    }
 
-        final List<Map<String, String>> urls = new ArrayList<>(getMapWithAIURLs());
-        Map<String, String> addOrModifyMap = urls.parallelStream()
-                .filter(map -> map.getOrDefault(URL_STRING, "").equals(url)).findFirst().orElse(new TreeMap<>());
-        if (addOrModifyMap.isEmpty()) {
-            urls.add(addOrModifyMap);
-        } else {
-            urls.remove(addOrModifyMap);
-            addOrModifyMap = new TreeMap<>(addOrModifyMap);
-            urls.add(addOrModifyMap);
+    public static void setMapWithAIUrl(DataUrl dataUrl, boolean enabled, boolean permanent) {
+        final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+        final String setUrl = dataUrl.getMap().getOrDefault("url", DEFAULT_MAPWITHAI_API);
+
+        if (permanent) {
+            final List<Map<String, String>> urls = new ArrayList<>(getMapWithAIURLs());
+            Map<String, String> addOrModifyMap = urls.parallelStream()
+                    .filter(map -> map.getOrDefault(URL_STRING, "").equals(setUrl)).findFirst().orElse(new TreeMap<>());
+            if (addOrModifyMap.isEmpty()) {
+                urls.add(addOrModifyMap);
+            } else {
+                urls.remove(addOrModifyMap);
+                addOrModifyMap = new TreeMap<>(addOrModifyMap);
+                urls.add(addOrModifyMap);
+            }
+            addOrModifyMap.putAll(dataUrl.getMap());
+            addOrModifyMap.put(ENABLED_STRING, Boolean.toString(enabled));
+            setMapWithAIURLs(urls);
         }
-        addOrModifyMap.put(URL_STRING, url);
-        addOrModifyMap.put(SOURCE_STRING, source);
-        addOrModifyMap.put(ENABLED_STRING, Boolean.toString(permanent));
-        setMapWithAIURLs(urls);
-        if ((layer != null) && !permanent && enabled) {
+        if (layer != null && !permanent && enabled) {
             layer.setMapWithAIUrl(setUrl);
         }
     }

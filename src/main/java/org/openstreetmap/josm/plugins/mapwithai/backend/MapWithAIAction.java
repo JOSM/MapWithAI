@@ -9,7 +9,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -118,19 +117,16 @@ public class MapWithAIAction extends JosmAction {
             }
             final StringBuilder message = new StringBuilder();
             message.append(MapWithAIPlugin.NAME).append(": ");
-            final MapWithAIAvailability availability = MapWithAIAvailability.getInstance();
+            DataAvailability.getInstance(); // force initialization, if it hasn't already occured
             final Map<String, Boolean> availableTypes = new TreeMap<>();
             for (final Bounds bound : bounds) {
-                availability.getDataTypes(bound.getCenter())
+                DataAvailability.getDataTypes(bound.getCenter())
                         .forEach((type, available) -> availableTypes.merge(type, available, Boolean::logicalOr));
             }
-            final List<String> types = availableTypes.entrySet().stream().filter(Entry::getValue)
-                    .map(entry -> MapWithAIAvailability.getPossibleDataTypesAndMessages().get(entry.getKey()))
-                    .collect(Collectors.toList());
-            if (types.isEmpty()) {
+            if (availableTypes.isEmpty()) {
                 message.append(tr("No data available"));
             } else {
-                message.append("Data available: ").append(String.join(", ", types));
+                message.append("Data available: ").append(String.join(", ", availableTypes.keySet()));
             }
 
             notification.setContent(message.toString());

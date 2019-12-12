@@ -22,6 +22,7 @@ import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -35,6 +36,7 @@ public class MapWithAIActionTest {
     @Before
     public void setUp() {
         action = new MapWithAIAction();
+        Territories.initialize();
     }
 
     @Test

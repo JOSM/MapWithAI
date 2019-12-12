@@ -4,12 +4,10 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -22,8 +20,6 @@ import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 
-import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.io.CachedFile;
@@ -31,17 +27,10 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
-public final class MapWithAIAvailability {
+public final class MapWithAIAvailability extends DataAvailability {
     private static String rapidReleases = "https://raw.githubusercontent.com/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson";
-    /** A map of country to a map of available types */
-    private static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
-    private static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
     /** Original country, replacement countries */
     private static final Map<String, Collection<String>> COUNTRY_NAME_FIX = new HashMap<>();
-
-    private static class InstanceHelper {
-        static MapWithAIAvailability instance = new MapWithAIAvailability();
-    }
 
     static {
         COUNTRY_NAME_FIX.put("Egypt", Collections.singleton("Egypt, Arab Rep."));
@@ -65,11 +54,12 @@ public final class MapWithAIAvailability {
         COUNTRY_NAME_FIX.put("Congo", Collections.singleton("Congo, Rep."));
         COUNTRY_NAME_FIX.put("North Macedonia", Collections.singleton("Macedonia, FYR"));
         COUNTRY_NAME_FIX.put("Venezuela", Collections.singleton("Venezuela, RB"));
-        POSSIBLE_DATA_POINTS.put("roads", "RapiD roads available");
-        POSSIBLE_DATA_POINTS.put("buildings", "MS buildings available");
+        POSSIBLE_DATA_POINTS.put("highway", "RapiD roads available");
+        POSSIBLE_DATA_POINTS.put("building", "MS buildings available");
     }
 
-    private MapWithAIAvailability() {
+    public MapWithAIAvailability() {
+        super();
         try (CachedFile cachedRapidReleases = new CachedFile(rapidReleases);
                 JsonParser parser = Json.createParser(cachedRapidReleases.getContentReader())) {
             cachedRapidReleases.setMaxAge(604_800);
@@ -93,16 +83,6 @@ public final class MapWithAIAvailability {
         } catch (IOException e) {
             Logging.debug(e);
         }
-    }
-
-    /**
-     * @return the unique instance
-     */
-    public static MapWithAIAvailability getInstance() {
-        if (COUNTRIES.isEmpty()) {
-            InstanceHelper.instance = new MapWithAIAvailability();
-        }
-        return InstanceHelper.instance;
     }
 
     private static Map<String, Map<String, Boolean>> parseForCountries(JsonArray countries) {
@@ -147,58 +127,14 @@ public final class MapWithAIAvailability {
     }
 
     /**
-     * @param bbox An area that may have data
-     * @return True if one of the corners of the {@code bbox} is in a country with
-     *         available data.
-     */
-    public boolean hasData(BBox bbox) {
-        final List<LatLon> corners = new ArrayList<>();
-        corners.add(bbox.getBottomRight());
-        corners.add(new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon()));
-        corners.add(bbox.getTopLeft());
-        corners.add(new LatLon(bbox.getTopLeftLat(), bbox.getBottomRightLon()));
-        return corners.parallelStream().anyMatch(this::hasData);
-    }
-
-    /**
-     * @param latLon A point that may have data from MapWithAI
-     * @return true if it is in an ares with data from MapWithAI
-     */
-    public boolean hasData(LatLon latLon) {
-        boolean returnBoolean = false;
-        for (final Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
-            Logging.debug(entry.getKey());
-            if (Territories.isIso3166Code(entry.getKey(), latLon)) {
-                returnBoolean = entry.getValue().entrySet().parallelStream().anyMatch(Entry::getValue);
-                break;
-            }
-        }
-
-        return returnBoolean;
-    }
-
-    /**
-     * Get data types that may be visible around a point
-     *
-     * @param latLon The point of interest
-     * @return A map that may have available data types (or be empty)
-     */
-    public Map<String, Boolean> getDataTypes(LatLon latLon) {
-        return COUNTRIES.entrySet().parallelStream().filter(entry -> Territories.isIso3166Code(entry.getKey(), latLon))
-                .map(Entry::getValue).findFirst().orElse(Collections.emptyMap());
-    }
-
-    /**
-     * @return A map of possible data types with their messages
-     */
-    public static Map<String, String> getPossibleDataTypesAndMessages() {
-        return POSSIBLE_DATA_POINTS;
-    }
-
-    /**
      * @param url The URL where the MapWithAI data releases are.
      */
     public static void setReleaseUrl(String url) {
         rapidReleases = url;
+    }
+
+    @Override
+    public String getUrl() {
+        return MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API;
     }
 }

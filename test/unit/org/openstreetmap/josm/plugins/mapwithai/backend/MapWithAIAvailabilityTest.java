@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class MapWithAIAvailabilityTest {
-    private MapWithAIAvailability instance;
+    private DataAvailability instance;
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
@@ -34,7 +34,7 @@ public class MapWithAIAvailabilityTest {
         MapWithAIAvailability.setReleaseUrl(
                 wireMock.baseUrl() + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
         Territories.initialize();
-        instance = MapWithAIAvailability.getInstance();
+        instance = DataAvailability.getInstance();
         LatLon temp = new LatLon(40, -100);
         await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
     }
@@ -60,12 +60,16 @@ public class MapWithAIAvailabilityTest {
 
     @Test
     public void testgetDataLatLon() {
-        Assert.assertTrue(instance.getDataTypes(new LatLon(0, 0)).isEmpty());
-        Assert.assertTrue(instance.getDataTypes(new LatLon(40, -100)).get("roads"));
-        Assert.assertTrue(instance.getDataTypes(new LatLon(40, -100)).get("buildings"));
-        Assert.assertFalse(instance.getDataTypes(new LatLon(45.424722, -75.695)).get("roads"));
-        Assert.assertTrue(instance.getDataTypes(new LatLon(45.424722, -75.695)).get("buildings"));
-        Assert.assertTrue(instance.getDataTypes(new LatLon(19.433333, -99.133333)).get("roads"));
-        Assert.assertFalse(instance.getDataTypes(new LatLon(19.433333, -99.133333)).get("buildings"));
+        Assert.assertTrue(DataAvailability.getDataTypes(new LatLon(0, 0)).isEmpty());
+        Assert.assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("highway", false));
+        Assert.assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("building", false));
+        Assert.assertFalse(
+                DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("highway", false));
+        Assert.assertTrue(
+                DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("building", false));
+        Assert.assertTrue(
+                DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("highway", false));
+        Assert.assertFalse(
+                DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("building", false));
     }
 }
