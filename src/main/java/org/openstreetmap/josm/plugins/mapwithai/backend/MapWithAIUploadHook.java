@@ -40,8 +40,8 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
                 sb.append(";url=")
                         .append(String.join(";url=", MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                                 .filter(map -> map.containsKey("url")).map(map -> map.get("url"))
-                                .filter(url -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(url))
-                                .collect(Collectors.toList())));
+                                .map(url -> url.replace(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, "DEFAULT_URL"))
+                                .filter(url -> !"DEFAULT_URL".equals(url)).collect(Collectors.toList())));
             }
             String mapwithaiOptions = sb.toString();
             tags.put("mapwithai:options",
