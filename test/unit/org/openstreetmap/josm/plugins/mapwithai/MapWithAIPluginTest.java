@@ -2,6 +2,8 @@
 package org.openstreetmap.josm.plugins.mapwithai;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -13,7 +15,6 @@ import javax.swing.JMenu;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,7 +67,8 @@ public class MapWithAIPluginTest {
     @Test
     public void testGetPreferenceSetting() {
         plugin = new MapWithAIPlugin(info);
-        Assert.assertTrue(plugin.getPreferenceSetting() instanceof MapWithAIPreferences);
+        assertTrue(plugin.getPreferenceSetting() instanceof MapWithAIPreferences,
+                "We didn't get the expected Preference class");
     }
 
     /**
@@ -78,27 +80,34 @@ public class MapWithAIPluginTest {
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
-        Assert.assertEquals(dataMenuSize + addedMenuItems, dataMenu.getMenuComponentCount());
-        Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+        assertEquals(dataMenuSize + addedMenuItems, dataMenu.getMenuComponentCount(), "Menu items were not added");
+        assertEquals(1,
+                MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                        .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
+                "The paint style was not added");
 
         for (boolean existed : Arrays.asList(false, true)) { // false, true order is important
             plugin = new MapWithAIPlugin(info);
             Config.getPref().putBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS, existed);
             plugin.destroy();
-            Assert.assertEquals(dataMenuSize, dataMenu.getMenuComponentCount());
+            assertEquals(dataMenuSize, dataMenu.getMenuComponentCount(),
+                    "Menu items were added after they were already added");
             Awaitility.await().atMost(Durations.FIVE_SECONDS)
                     .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
-            Assert.assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
+            assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                            .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+                            .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
+                    "The paint style was added multiple times");
         }
 
         for (int i = 0; i < 3; i++) {
             plugin = new MapWithAIPlugin(info);
-            Assert.assertEquals(dataMenuSize + addedMenuItems, dataMenu.getMenuComponentCount());
-            Assert.assertEquals(1, MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                    .filter(source -> source.url != null && source.name.contains("MapWithAI")).count());
+            assertEquals(dataMenuSize + addedMenuItems, dataMenu.getMenuComponentCount(),
+                    "The menu items were added multiple times");
+            assertEquals(1,
+                    MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                            .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
+                    "The paint style was added multiple times");
         }
     }
 
@@ -108,7 +117,7 @@ public class MapWithAIPluginTest {
     @Test
     public void testGetVersionInfo() {
         plugin = new MapWithAIPlugin(info); // needs to be called for version info to be initialized.
-        Assert.assertEquals(VERSION, MapWithAIPlugin.getVersionInfo());
+        assertEquals(VERSION, MapWithAIPlugin.getVersionInfo(), "We didn't get the expected version");
     }
 
 }

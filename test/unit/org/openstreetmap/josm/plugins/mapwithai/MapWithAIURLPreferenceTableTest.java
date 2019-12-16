@@ -34,20 +34,20 @@ public class MapWithAIURLPreferenceTableTest {
     public void testMapWithAIURLPreferenceTable() {
         List<DataUrl> dataUrls = new ArrayList<>(Arrays.asList(DataUrl.emptyData()));
         MapWithAIURLPreferenceTable table = new MapWithAIURLPreferenceTable(dataUrls);
-        assertEquals(4, table.getModel().getColumnCount());
-        assertEquals(1, table.getModel().getRowCount());
-        assertFalse(dataUrls.isEmpty());
-        assertSame(dataUrls.get(0).getMap().getOrDefault("source", "no-source-here"),
-                table.getModel().getValueAt(0, 0));
+        assertEquals(4, table.getModel().getColumnCount(), "There should be four columns");
+        assertEquals(1, table.getModel().getRowCount(), "There is only one entry");
+        assertFalse(dataUrls.isEmpty(), "The backing list should not be empty");
+        assertSame(dataUrls.get(0).getMap().getOrDefault("source", "no-source-here"), table.getModel().getValueAt(0, 0),
+                "The backing map and the table should have the same entries");
 
         dataUrls.add(0, new DataUrl("no-source", "no-url", true));
 
         table.fireDataChanged();
-        assertEquals(4, table.getModel().getColumnCount());
-        assertEquals(2, table.getModel().getRowCount());
-        assertFalse(dataUrls.isEmpty());
-        assertSame(dataUrls.get(0).getMap().getOrDefault("source", "no-source-here"),
-                table.getModel().getValueAt(0, 0));
+        assertEquals(4, table.getModel().getColumnCount(), "The column count should not change");
+        assertEquals(2, table.getModel().getRowCount(), "An additional DataUrl was added");
+        assertFalse(dataUrls.isEmpty(), "The backing list should not be empty");
+        assertSame(dataUrls.get(0).getMap().getOrDefault("source", "no-source-here"), table.getModel().getValueAt(0, 0),
+                "The backing map and table should have the same entries");
     }
 
     /**
@@ -61,10 +61,10 @@ public class MapWithAIURLPreferenceTableTest {
         map.put("timeout", Integer.toString(50));
         map.put("maxnodedistance", Double.toString(1.2));
         Map<String, Object> objectifiedMap = MapWithAIURLPreferenceTable.objectify(map);
-        assertTrue(objectifiedMap.get("source") instanceof String);
-        assertTrue(objectifiedMap.get("enabled") instanceof Boolean);
-        assertTrue(objectifiedMap.get("timeout") instanceof Integer);
-        assertTrue(objectifiedMap.get("maxnodedistance") instanceof Double);
+        assertTrue(objectifiedMap.get("source") instanceof String, "Source should be a string");
+        assertTrue(objectifiedMap.get("enabled") instanceof Boolean, "Enabled should be a boolean");
+        assertTrue(objectifiedMap.get("timeout") instanceof Integer, "Timeout should be an integer");
+        assertTrue(objectifiedMap.get("maxnodedistance") instanceof Double, "Maxnodedistance should be a double");
     }
 
     /**
@@ -75,8 +75,9 @@ public class MapWithAIURLPreferenceTableTest {
         List<DataUrl> dataUrls = new ArrayList<>(Arrays.asList(DataUrl.emptyData()));
         MapWithAIURLPreferenceTable table = new MapWithAIURLPreferenceTable(dataUrls);
         table.addRowSelectionInterval(0, 0);
-        assertTrue(table.getSelectedItems().parallelStream().allMatch(dataUrls::contains));
-        assertEquals(1, table.getSelectedItems().size());
+        assertTrue(table.getSelectedItems().parallelStream().allMatch(dataUrls::contains),
+                "All selected objects should be in dataUrls");
+        assertEquals(1, table.getSelectedItems().size(), "There should only be one selected item");
     }
 
     /**
@@ -88,7 +89,8 @@ public class MapWithAIURLPreferenceTableTest {
         List<DataUrl> dataUrls = new ArrayList<>(Arrays.asList(DataUrl.emptyData()));
         MapWithAIURLPreferenceTable table = new MapWithAIURLPreferenceTable(dataUrls);
         for (int i = 0; i < dataUrls.get(0).getDataList().size(); i++) {
-            assertEquals(dataUrls.get(0).getDataList().get(i).getClass(), table.getModel().getColumnClass(i));
+            assertEquals(dataUrls.get(0).getDataList().get(i).getClass(), table.getModel().getColumnClass(i),
+                    "The classes should match");
         }
     }
 
@@ -103,9 +105,10 @@ public class MapWithAIURLPreferenceTableTest {
         DataUrl initial = DataUrl.emptyData(); // Don't need to clone the "current" first entry
         dataUrls.add(initial);
         table.setValueAt("New Source", 0, 0);
-        assertEquals("New Source", dataUrls.get(0).getDataList().get(0));
-        assertEquals(2, dataUrls.size());
+        assertEquals("New Source", dataUrls.get(0).getDataList().get(0),
+                "The source should be set and passed through to the dataUrls");
+        assertEquals(2, dataUrls.size(), "There should be two entries still");
         table.setValueAt("", 0, 0);
-        assertSame(initial, dataUrls.get(0));
+        assertSame(initial, dataUrls.get(0), "The \"initial\" dataUrl should be sorted to be first");
     }
 }

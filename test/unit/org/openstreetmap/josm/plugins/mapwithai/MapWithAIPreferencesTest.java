@@ -1,6 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import javax.swing.SpinnerNumberModel;
 
 import org.junit.Assert;
@@ -43,32 +47,39 @@ public class MapWithAIPreferencesTest {
 
         preferences.addGui(pane);
 
-        Assert.assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount());
-        Assert.assertEquals(pane.getPluginPreference(), preferences.getTabPreferenceSetting(pane));
+        assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount(), "Preferences wasn't added");
+        assertEquals(pane.getPluginPreference(), preferences.getTabPreferenceSetting(pane),
+                "The expected parent of the settings panel was different");
 
         final boolean switchLayers = MapWithAIPreferenceHelper.isSwitchLayers();
 
-        Assert.assertEquals(switchLayers, preferences.getSwitchLayerCheckBox().isSelected());
+        assertEquals(switchLayers, preferences.getSwitchLayerCheckBox().isSelected(),
+                "The default for switching layers is true");
         preferences.ok();
-        Assert.assertEquals(switchLayers, MapWithAIPreferenceHelper.isSwitchLayers());
+        assertEquals(switchLayers, MapWithAIPreferenceHelper.isSwitchLayers(),
+                "The default for switching layers is true");
 
         preferences.getSwitchLayerCheckBox().setSelected(!switchLayers);
-        Assert.assertNotEquals(!switchLayers, MapWithAIPreferenceHelper.isSwitchLayers());
+        assertNotEquals(!switchLayers, MapWithAIPreferenceHelper.isSwitchLayers(), "OK hasn't been selected yet");
         preferences.ok();
-        Assert.assertEquals(!switchLayers, MapWithAIPreferenceHelper.isSwitchLayers());
+        assertEquals(!switchLayers, MapWithAIPreferenceHelper.isSwitchLayers(),
+                "We deselected switchLayers, so it should be off");
 
         final Object tmp = preferences.getMaximumAdditionSpinner().getModel();
         SpinnerNumberModel spinnerModel = null;
         if (tmp instanceof SpinnerNumberModel) {
             spinnerModel = (SpinnerNumberModel) tmp;
         }
-        Assert.assertNotNull(spinnerModel);
+        assertNotNull(spinnerModel, "The spinner model should be a SpinnerNumberModel");
         final Number currentNumber = MapWithAIPreferenceHelper.getMaximumAddition();
-        Assert.assertEquals(currentNumber.intValue(), spinnerModel.getNumber().intValue());
+        assertEquals(currentNumber.intValue(), spinnerModel.getNumber().intValue(),
+                "The default additions should be the current setting");
         spinnerModel.setValue(currentNumber.intValue() + 3);
-        Assert.assertNotEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
+        assertNotEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition(),
+                "We've increased the max add by three, but have not selected OK, so it should still be the default");
         preferences.ok();
-        Assert.assertEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
+        assertEquals(spinnerModel.getNumber().intValue(), MapWithAIPreferenceHelper.getMaximumAddition(),
+                "OK has been selected, so the max adds have been updated");
     }
 
     /**
