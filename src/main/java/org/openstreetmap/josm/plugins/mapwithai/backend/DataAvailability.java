@@ -29,7 +29,7 @@ public class DataAvailability {
     /** This points to a list of default sources that can be used with MapWithAI */
     public static final String DEFAULT_SERVER_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
     /** A map of tag -&gt; message of possible data types */
-    protected static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
+    static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
     private static final String PROVIDES = "provides";
 
@@ -50,7 +50,7 @@ public class DataAvailability {
      * A map of countries to a map of available types
      * ({@code Map<Country, Map<Type, IsAvailable>>}
      */
-    protected static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
+    static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
 
     private static class InstanceHelper {
         static DataAvailability instance = new DataAvailability();

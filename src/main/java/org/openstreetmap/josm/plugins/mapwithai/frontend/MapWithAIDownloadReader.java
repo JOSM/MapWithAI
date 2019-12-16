@@ -68,7 +68,7 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
                         .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
                         .map(map -> map.getString("parameter")).collect(Collectors.toList());
                 if (!parameters.isEmpty()) {
-                    sb.append("&").append(String.join("&", parameters));
+                    sb.append('&').append(String.join("&", parameters));
                 }
             }
         }
