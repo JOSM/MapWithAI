@@ -1,7 +1,12 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import org.junit.Assert;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -10,7 +15,6 @@ import org.openstreetmap.josm.data.gpx.WayPoint;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
-import org.openstreetmap.josm.plugins.mapwithai.backend.DetectTaskingManagerUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -28,48 +32,50 @@ public class DetectTaskingManagerUtilsTest {
 
     @Test
     public void testHasTaskingManagerLayer() {
-        Assert.assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer());
+        assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "No TM layer exists yet");
         MainApplication.getLayerManager().addLayer(new GpxLayer(new GpxData()));
-        Assert.assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer());
+        assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "No TM layer exists yet");
         MainApplication.getLayerManager().addLayer(new GpxLayer(new GpxData(), LAYER_NAME));
-        Assert.assertTrue(DetectTaskingManagerUtils.hasTaskingManagerLayer());
+        assertTrue(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "A TM layer exists yet");
     }
 
     @Test
     public void testGetTaskingManagerLayer() {
-        Assert.assertNull(DetectTaskingManagerUtils.getTaskingManagerLayer());
+        assertNull(DetectTaskingManagerUtils.getTaskingManagerLayer(), "No TM layer exists yet");
         final GpxLayer layer = new GpxLayer(new GpxData(), LAYER_NAME);
         MainApplication.getLayerManager().addLayer(layer);
-        Assert.assertSame(layer, DetectTaskingManagerUtils.getTaskingManagerLayer());
+        assertSame(layer, DetectTaskingManagerUtils.getTaskingManagerLayer(), "The TM layer was added");
     }
 
     @Test
     public void testGetTaskingManagerBounds() {
-        Assert.assertFalse(DetectTaskingManagerUtils.getTaskingManagerBBox().isInWorld());
+        assertFalse(DetectTaskingManagerUtils.getTaskingManagerBBox().isInWorld(), "No TM layer exists yet");
 
         final GpxLayer layer = new GpxLayer(new GpxData(), LAYER_NAME);
         layer.data.addWaypoint(new WayPoint(new LatLon(0, 0)));
         MainApplication.getLayerManager().addLayer(layer);
-        Assert.assertEquals(0, DetectTaskingManagerUtils.getTaskingManagerBBox().height(), 0.000001);
-        Assert.assertEquals(0, DetectTaskingManagerUtils.getTaskingManagerBBox().width(), 0.000001);
+        assertEquals(0, DetectTaskingManagerUtils.getTaskingManagerBBox().height(), 0.000001,
+                "The TM layer only has one point");
+        assertEquals(0, DetectTaskingManagerUtils.getTaskingManagerBBox().width(), 0.000001,
+                "The TM layer only has one point");
 
         layer.data.addWaypoint(new WayPoint(new LatLon(1, 1)));
         final BBox bbox = DetectTaskingManagerUtils.getTaskingManagerBBox();
-        Assert.assertTrue(bbox.isInWorld());
-        Assert.assertTrue(bbox.getBottomRight().equalsEpsilon(new LatLon(0, 1)));
-        Assert.assertTrue(bbox.getTopLeft().equalsEpsilon(new LatLon(1, 0)));
+        assertTrue(bbox.isInWorld(), "A TM layer exists");
+        assertTrue(bbox.getBottomRight().equalsEpsilon(new LatLon(0, 1)), "The bottom right should be at (0, 1)");
+        assertTrue(bbox.getTopLeft().equalsEpsilon(new LatLon(1, 0)), "The top left should be at (1, 0)");
     }
 
     @Test
     public void testCreateTaskingManagerGpxBounds() {
-        Assert.assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer());
+        assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "No TM layer exists yet");
 
         final BBox bbox = new BBox(0, 0, 1, 1);
         MainApplication.getLayerManager()
                 .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(bbox),
                         DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
 
-        Assert.assertTrue(DetectTaskingManagerUtils.hasTaskingManagerLayer());
-        Assert.assertTrue(DetectTaskingManagerUtils.getTaskingManagerBBox().bounds(bbox));
+        assertTrue(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "A TM layer exists");
+        assertTrue(DetectTaskingManagerUtils.getTaskingManagerBBox().bounds(bbox), "The TM layer should bound itself");
     }
 }

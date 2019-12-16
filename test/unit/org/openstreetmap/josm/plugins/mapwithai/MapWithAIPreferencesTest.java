@@ -2,12 +2,12 @@
 package org.openstreetmap.josm.plugins.mapwithai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import javax.swing.SpinnerNumberModel;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -87,6 +87,6 @@ public class MapWithAIPreferencesTest {
      */
     @Test
     public void testIsExpert() {
-        Assert.assertFalse(preferences.isExpert());
+        assertFalse(preferences.isExpert(), "This is not an expert only preference panel");
     }
 }

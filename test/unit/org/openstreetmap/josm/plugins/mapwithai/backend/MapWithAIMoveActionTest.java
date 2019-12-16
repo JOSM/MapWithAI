@@ -1,7 +1,12 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import org.junit.Assert;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,10 +59,11 @@ public class MapWithAIMoveActionTest {
     public void testMoveAction() {
         mapWithAIData.addSelected(way1);
         moveAction.actionPerformed(null);
-        Assert.assertEquals(osmLayer, MainApplication.getLayerManager().getActiveLayer());
-        Assert.assertNotNull(osmLayer.getDataSet().getPrimitiveById(way1));
+        assertEquals(osmLayer, MainApplication.getLayerManager().getActiveLayer(),
+                "Current layer should be the OMS layer");
+        assertNotNull(osmLayer.getDataSet().getPrimitiveById(way1), "way1 should have been added to the OSM layer");
         UndoRedoHandler.getInstance().undo();
-        Assert.assertNull(osmLayer.getDataSet().getPrimitiveById(way1));
+        assertNull(osmLayer.getDataSet().getPrimitiveById(way1), "way1 should have been removed from the OSM layer");
     }
 
     @Test
@@ -69,14 +75,16 @@ public class MapWithAIMoveActionTest {
         final DataSet ds = osmLayer.getDataSet();
 
         moveAction.actionPerformed(null);
-        Assert.assertTrue(
-                ((Way) ds.getPrimitiveById(way1)).lastNode().equals(((Way) ds.getPrimitiveById(way2)).lastNode()));
-        Assert.assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.DUPE_KEY));
-        Assert.assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(DuplicateCommand.DUPE_KEY));
+        assertTrue(((Way) ds.getPrimitiveById(way1)).lastNode().equals(((Way) ds.getPrimitiveById(way2)).lastNode()),
+                "The duplicate node should have been replaced");
+        assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.DUPE_KEY),
+                "The dupe key should no longer exist");
+        assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(DuplicateCommand.DUPE_KEY),
+                "The dupe key should no longer exist");
 
         UndoRedoHandler.getInstance().undo();
-        Assert.assertFalse(way2.lastNode().hasKey(DuplicateCommand.DUPE_KEY));
-        Assert.assertTrue(way1.lastNode().hasKey(DuplicateCommand.DUPE_KEY));
+        assertFalse(way2.lastNode().hasKey(DuplicateCommand.DUPE_KEY), "The dupe key should no longer exist");
+        assertTrue(way1.lastNode().hasKey(DuplicateCommand.DUPE_KEY), "The dupe key should no longer exist");
     }
 
     @Test
@@ -88,14 +96,14 @@ public class MapWithAIMoveActionTest {
         mapWithAIData.addSelected(way1);
 
         moveAction.actionPerformed(null);
-        Assert.assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY));
-        Assert.assertFalse(way2.firstNode().hasKey(ConnectedCommand.CONN_KEY));
-        Assert.assertFalse(way2.getNode(1).hasKey(ConnectedCommand.CONN_KEY));
-        Assert.assertTrue(way1.lastNode().isDeleted());
+        assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
+        assertFalse(way2.firstNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
+        assertFalse(way2.getNode(1).hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
+        assertTrue(way1.lastNode().isDeleted(), "way1 should be deleted when added");
 
         UndoRedoHandler.getInstance().undo();
-        Assert.assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY));
-        Assert.assertTrue(way1.lastNode().hasKey(ConnectedCommand.CONN_KEY));
-        Assert.assertFalse(way1.lastNode().isDeleted());
+        assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key shouldn't exist");
+        assertTrue(way1.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should exist");
+        assertFalse(way1.lastNode().isDeleted(), "way1 should no longer be deleted");
     }
 }

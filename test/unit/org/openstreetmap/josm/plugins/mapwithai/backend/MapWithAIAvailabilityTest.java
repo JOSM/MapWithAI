@@ -3,10 +3,11 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.awaitility.Durations;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,30 +47,32 @@ public class MapWithAIAvailabilityTest {
 
     @Test
     public void testHasDataBBox() {
-        Assert.assertFalse(instance.hasData(new BBox(0, 0, 0.1, 0.1)));
-        Assert.assertTrue(instance.hasData(new BBox(-99.9, 39.9, 100.1, 40.1)));
+        assertFalse(instance.hasData(new BBox(0, 0, 0.1, 0.1)), "There shouldn't be data in the ocean");
+        assertTrue(instance.hasData(new BBox(-99.9, 39.9, 100.1, 40.1)), "There should be data in the US");
     }
 
     @Test
     public void testHasDataLatLon() {
-        Assert.assertFalse(instance.hasData(new LatLon(0, 0)));
-        Assert.assertTrue(instance.hasData(new LatLon(40, -100)));
-        Assert.assertTrue(instance.hasData(new LatLon(45.424722, -75.695)));
-        Assert.assertTrue(instance.hasData(new LatLon(19.433333, -99.133333)));
+        assertFalse(instance.hasData(new LatLon(0, 0)), "There should not be data in the ocean");
+        assertTrue(instance.hasData(new LatLon(40, -100)), "There should be data in the US");
+        assertTrue(instance.hasData(new LatLon(45.424722, -75.695)), "There should be data in Canada");
+        assertTrue(instance.hasData(new LatLon(19.433333, -99.133333)), "There should be data in Mexico");
     }
 
     @Test
     public void testgetDataLatLon() {
-        Assert.assertTrue(DataAvailability.getDataTypes(new LatLon(0, 0)).isEmpty());
-        Assert.assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("highway", false));
-        Assert.assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("building", false));
-        Assert.assertFalse(
-                DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("highway", false));
-        Assert.assertTrue(
-                DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("building", false));
-        Assert.assertTrue(
-                DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("highway", false));
-        Assert.assertFalse(
-                DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("building", false));
+        assertTrue(DataAvailability.getDataTypes(new LatLon(0, 0)).isEmpty(), "There should not be data in the ocean");
+        assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("highway", false),
+                "The US should have highway data");
+        assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("building", false),
+                "The US should have building data");
+        assertFalse(DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("highway", false),
+                "Canada does not yet have highway data");
+        assertTrue(DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("building", false),
+                "Canada does have building data");
+        assertTrue(DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("highway", false),
+                "Mexico has highway data");
+        assertFalse(DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("building", false),
+                "Mexico does not yet have building data");
     }
 }

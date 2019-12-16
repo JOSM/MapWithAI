@@ -3,6 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
@@ -16,7 +22,6 @@ import javax.swing.JPanel;
 
 import org.awaitility.Durations;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,7 +75,7 @@ public class MapWithAILayerTest {
 
     @Test
     public void testGetSource() {
-        Assert.assertNull(layer.getChangesetSourceTag());
+        assertNull(layer.getChangesetSourceTag(), "The source tag should be null");
         DataSet to = new DataSet();
         DataSet from = new DataSet();
         Way way = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
@@ -79,23 +84,25 @@ public class MapWithAILayerTest {
         way.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, MapWithAIPlugin.NAME);
         MapWithAIAddCommand command = new MapWithAIAddCommand(from, to, Collections.singleton(way));
         UndoRedoHandler.getInstance().add(command);
-        Assert.assertNotNull(layer.getChangesetSourceTag());
-        Assert.assertFalse(layer.getChangesetSourceTag().trim().isEmpty());
-        Assert.assertEquals(MapWithAIPlugin.NAME, layer.getChangesetSourceTag());
+        assertNotNull(layer.getChangesetSourceTag(), "The source tag should not be null");
+        assertFalse(layer.getChangesetSourceTag().trim().isEmpty(), "The source tag should not be an empty string");
+        assertEquals(MapWithAIPlugin.NAME, layer.getChangesetSourceTag(),
+                "The source tag should be the plugin name (by default)");
     }
 
     @Test
     public void testGetInfoComponent() {
         final Object tObject = layer.getInfoComponent();
-        Assert.assertTrue(tObject instanceof JPanel);
+        assertTrue(tObject instanceof JPanel, "The info component should be a JPanel instead of a string");
 
         JPanel jPanel = (JPanel) tObject;
         final List<Component> startComponents = Arrays.asList(jPanel.getComponents());
         for (final Component comp : startComponents) {
             final JLabel label = (JLabel) comp;
-            Assert.assertFalse(label.getText().contains("URL"));
-            Assert.assertFalse(label.getText().contains("Maximum Additions"));
-            Assert.assertFalse(label.getText().contains("Switch Layers"));
+            assertFalse(label.getText().contains("URL"), "The layer doesn't have a custom URL");
+            assertFalse(label.getText().contains("Maximum Additions"), "The layer doesn't have its own max additions");
+            assertFalse(label.getText().contains("Switch Layers"),
+                    "The layer doesn't have its own switchlayer boolean");
         }
 
         layer.setMapWithAIUrl("bad_url");
@@ -108,11 +115,13 @@ public class MapWithAILayerTest {
         for (final Component comp : currentComponents) {
             final JLabel label = (JLabel) comp;
             if (label.getText().contains("URL")) {
-                Assert.assertEquals(tr("URL: {0}", "bad_url"), label.getText());
+                assertEquals(tr("URL: {0}", "bad_url"), label.getText(), "The layer should have the bad_url set");
             } else if (label.getText().contains("Maximum Additions")) {
-                Assert.assertEquals(tr("Maximum Additions: {0}", 0), label.getText());
+                assertEquals(tr("Maximum Additions: {0}", 0), label.getText(),
+                        "The layer should have max additions set");
             } else if (label.getText().contains("Switch Layers")) {
-                Assert.assertEquals(tr("Switch Layers: {0}", false), label.getText());
+                assertEquals(tr("Switch Layers: {0}", false), label.getText(),
+                        "The layer should have switchlayers set");
             }
         }
     }
@@ -120,16 +129,16 @@ public class MapWithAILayerTest {
     @Test
     public void testGetLayer() {
         Layer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
-        Assert.assertNull(mapWithAILayer);
+        assertNull(mapWithAILayer, "There should be no MapWithAI layer yet");
 
         mapWithAILayer = MapWithAIDataUtils.getLayer(true);
-        Assert.assertEquals(MapWithAILayer.class, mapWithAILayer.getClass());
+        assertEquals(MapWithAILayer.class, mapWithAILayer.getClass(),
+                "The MapWithAI layer should be of the MapWithAILayer.class");
 
-        Layer tMapWithAI = MapWithAIDataUtils.getLayer(false);
-        Assert.assertSame(mapWithAILayer, tMapWithAI);
-
-        tMapWithAI = MapWithAIDataUtils.getLayer(true);
-        Assert.assertSame(mapWithAILayer, tMapWithAI);
+        for (Boolean create : Arrays.asList(Boolean.FALSE, Boolean.TRUE)) {
+            Layer tMapWithAI = MapWithAIDataUtils.getLayer(create);
+            assertSame(mapWithAILayer, tMapWithAI, "getLayer should always return the same layer");
+        }
     }
 
     @Test
@@ -139,27 +148,31 @@ public class MapWithAILayerTest {
         MainApplication.getLayerManager().addLayer(osm);
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer, osm);
 
-        Assert.assertTrue(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
+        assertTrue(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty(), "There should be no data source yet");
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(0, 0, 0.001, 0.001), "random test"));
 
         osm.lock();
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
-        Assert.assertTrue(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
+        assertTrue(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty(),
+                "There should be no data due to the lock");
         osm.unlock();
 
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
         await().atMost(Durations.TEN_SECONDS).until(() -> !mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
-        Assert.assertFalse(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
-        Assert.assertEquals(1, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
+        assertFalse(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty(), "There should be a data source");
+        assertEquals(1, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
+                "There should only be one data source");
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "random test"));
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
         await().atMost(Durations.TEN_SECONDS).until(
                 () -> mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count() == 2);
-        Assert.assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
+        assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
+                "There should be two data sources");
 
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
-        Assert.assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count());
+        assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
+                "There should be two data sources");
     }
 }

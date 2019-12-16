@@ -3,6 +3,9 @@
  */
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -64,19 +66,20 @@ public class MapWithAIUploadHookTest {
         aiLayer.getDataSet().addPrimitive(way2);
 
         Map<String, String> tags = new TreeMap<>();
-        Assert.assertTrue(tags.isEmpty());
         hook.modifyChangesetTags(tags);
-        Assert.assertTrue(tags.isEmpty());
+        assertTrue(tags.isEmpty(), "Tags should be empty due to no primitives being added");
 
         aiLayer.getDataSet().setSelected(way1);
         MapWithAIMoveAction action = new MapWithAIMoveAction();
         action.actionPerformed(null);
 
         hook.modifyChangesetTags(tags);
-        Assert.assertEquals(2, tags.size());
-        Assert.assertEquals(Integer.toString(1), tags.get("mapwithai"));
-        Assert.assertTrue(
-                Arrays.asList(tags.get("mapwithai:options").split(";")).contains("version=".concat(info.localversion)));
+        assertEquals(2, tags.size(), "Tags should not be empty due to adding primitives");
+        assertEquals(Integer.toString(1), tags.get("mapwithai"),
+                "mapwithai should equal 1, due to adding one primitive");
+        assertTrue(
+                Arrays.asList(tags.get("mapwithai:options").split(";")).contains("version=".concat(info.localversion)),
+                "The version should be the localversion");
 
         MapWithAIPreferenceHelper.setMapWithAIUrl("False URL", "false-url", true, true);
 
@@ -86,21 +89,21 @@ public class MapWithAIUploadHookTest {
         action.actionPerformed(null);
         hook.modifyChangesetTags(tags);
 
-        Assert.assertEquals(Integer.toString(2), tags.get("mapwithai"));
-        Assert.assertEquals(2, tags.size());
+        assertEquals(Integer.toString(2), tags.get("mapwithai"), "Two objects have been added");
+        assertEquals(2, tags.size(), "Tags should not be empty due to adding primitives");
         List<String> split = Arrays.asList(tags.get("mapwithai:options").split(";"));
-        Assert.assertEquals(2, split.size());
-        Assert.assertTrue(split.contains("version=".concat(info.localversion)));
-        Assert.assertTrue(split.contains("url=false-url"));
+        assertEquals(2, split.size(), "There should be another option in mapwithai:options");
+        assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
+        assertTrue(split.contains("url=false-url"), "The false-url should be shown in the changeset tag");
 
         MapWithAIPreferenceHelper.setMaximumAddition(20, false);
         tags.clear();
         hook.modifyChangesetTags(tags);
         split = Arrays.asList(tags.get("mapwithai:options").split(";"));
-        Assert.assertEquals(3, split.size());
-        Assert.assertTrue(split.contains("version=".concat(info.localversion)));
-        Assert.assertTrue(split.contains("url=false-url"));
-        Assert.assertTrue(split.contains("maxadd=20"));
+        assertEquals(3, split.size(), "There should be three ; in mapwithai:options");
+        assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
+        assertTrue(split.contains("url=false-url"), "The false-url should be shown in the changeset tag");
+        assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
 
         BBox tBBox = new BBox(1, 0, 0, 1);
         MainApplication.getLayerManager()
@@ -110,10 +113,11 @@ public class MapWithAIUploadHookTest {
         tags.clear();
         hook.modifyChangesetTags(tags);
         split = Arrays.asList(tags.get("mapwithai:options").split(";"));
-        Assert.assertEquals(4, split.size());
-        Assert.assertTrue(split.contains("version=".concat(info.localversion)));
-        Assert.assertTrue(split.contains("url=false-url"));
-        Assert.assertTrue(split.contains("maxadd=20"));
-        Assert.assertTrue(split.contains("task=".concat(tBBox.toStringCSV(","))));
+        assertEquals(4, split.size(), "There should be four ; in mapwithai:options");
+        assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
+        assertTrue(split.contains("url=false-url"), "The false-url should be shown in the changeset tag");
+        assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
+        assertTrue(split.contains("task=".concat(tBBox.toStringCSV(","))),
+                "There should be a task in the mapwithai:options");
     }
 }

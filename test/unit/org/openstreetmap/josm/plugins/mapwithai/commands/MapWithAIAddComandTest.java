@@ -2,13 +2,17 @@
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,28 +73,27 @@ public class MapWithAIAddComandTest {
         }
         MapWithAIAddCommand command = new MapWithAIAddCommand(ds1, ds2, Arrays.asList(way1, way2));
         command.executeCommand();
-        Assert.assertNotNull(ds2.getPrimitiveById(way1));
-        Assert.assertNotNull(ds2.getPrimitiveById(way1.firstNode()));
-        Assert.assertNotNull(ds2.getPrimitiveById(way1.lastNode()));
-        Assert.assertTrue(way1.isDeleted());
-        Assert.assertNotNull(ds2.getPrimitiveById(way2));
-        Assert.assertNotNull(ds2.getPrimitiveById(way2.firstNode()));
-        Assert.assertNotNull(ds2.getPrimitiveById(way2.lastNode()));
-        Assert.assertTrue(way2.isDeleted());
+        for (Way way : Arrays.asList(way1, way2)) {
+            assertNotNull(ds2.getPrimitiveById(way), "DataSet should still contain object");
+            assertNotNull(ds2.getPrimitiveById(way.firstNode()), "DataSet should still contain object");
+            assertNotNull(ds2.getPrimitiveById(way.lastNode()), "DataSet should still contain object");
+            assertTrue(way.isDeleted(), "The way should be deleted");
+        }
 
-        Assert.assertNull(ds2.getPrimitiveById(way3));
+        assertNull(ds2.getPrimitiveById(way3), "DataSet should not yet have way3");
         command = new MapWithAIAddCommand(ds1, ds2, Arrays.asList(way3));
         command.executeCommand();
-        Assert.assertNotNull(ds2.getPrimitiveById(way3));
-        Assert.assertNotNull(ds2.getPrimitiveById(way3.firstNode()));
-        Assert.assertNotNull(ds2.getPrimitiveById(way3.lastNode()));
-        Assert.assertTrue(way3.isDeleted());
+        assertNotNull(ds2.getPrimitiveById(way3), "DataSet should still contain object");
+        assertNotNull(ds2.getPrimitiveById(way3.firstNode()), "DataSet should still contain object");
+        assertNotNull(ds2.getPrimitiveById(way3.lastNode()), "DataSet should still contain object");
+        assertTrue(way3.isDeleted(), "The way should be deleted");
 
         command.undoCommand();
-        Assert.assertNull(ds2.getPrimitiveById(way3));
-        Assert.assertNull(ds2.getPrimitiveById(way3.firstNode()));
-        Assert.assertNull(ds2.getPrimitiveById(way3.lastNode()));
-        Assert.assertFalse(ds1.getPrimitiveById(way3).isDeleted());
+        assertNull(ds2.getPrimitiveById(way3), "DataSet should no longer contain object");
+        assertNull(ds2.getPrimitiveById(way3.firstNode()), "DataSet should no longer contain object");
+        assertNull(ds2.getPrimitiveById(way3.lastNode()), "DataSet should no longer contain object");
+        assertFalse(ds1.getPrimitiveById(way3).isDeleted(),
+                "The way should no longer be deleted in its original DataSet");
     }
 
     @Test
@@ -109,8 +112,8 @@ public class MapWithAIAddComandTest {
         ds1.addPrimitive(way2);
         ds1.addPrimitive(way1);
         MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode())).executeCommand();
-        Assert.assertEquals(3, way1.getNodesCount());
-        Assert.assertFalse(way1.isFirstLastNode(way2.firstNode()));
+        assertEquals(3, way1.getNodesCount(), "The way should now have three nodes");
+        assertFalse(way1.isFirstLastNode(way2.firstNode()), "The ways should be connected");
 
         final Way way3 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
                 new Node(new LatLon(-0.1, -0.1)));
@@ -119,9 +122,9 @@ public class MapWithAIAddComandTest {
         ds1.addPrimitive(way3);
         final Node way3Node1 = way3.firstNode();
         MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way3.firstNode())).executeCommand();
-        Assert.assertNotEquals(way3Node1, way3.firstNode());
-        Assert.assertEquals(way1.firstNode(), way3.firstNode());
-        Assert.assertTrue(way3Node1.isDeleted());
+        assertNotEquals(way3Node1, way3.firstNode(), "The original first node should no longer be the first node");
+        assertEquals(way1.firstNode(), way3.firstNode(), "way1 and way3 should have the same first nodes");
+        assertTrue(way3Node1.isDeleted(), "way3 should be deleted");
     }
 
     @Test
@@ -138,28 +141,27 @@ public class MapWithAIAddComandTest {
         mapWithAIData.addPrimitive(way1);
         mapWithAIData.setSelected(way1);
 
-        Assert.assertEquals(3, osmData.allNonDeletedPrimitives().size());
-        Assert.assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size());
-
         MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
-        Assert.assertEquals(6, osmData.allNonDeletedPrimitives().size());
-        Assert.assertTrue(mapWithAIData.allNonDeletedPrimitives().isEmpty());
+        assertEquals(6, osmData.allNonDeletedPrimitives().size(), "All primitives should now be in osmData");
+        assertTrue(mapWithAIData.allNonDeletedPrimitives().isEmpty(),
+                "There should be no remaining non-deleted primitives");
 
         command.undoCommand();
-        Assert.assertEquals(3, osmData.allNonDeletedPrimitives().size());
-        Assert.assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size());
+        assertEquals(3, osmData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
+        assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
 
         final Tag dupe = new Tag("dupe", "n".concat(Long.toString(way2.lastNode().getUniqueId())));
         way1.lastNode().put(dupe);
         command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
-        Assert.assertEquals(5, osmData.allNonDeletedPrimitives().size());
-        Assert.assertTrue(mapWithAIData.allNonDeletedPrimitives().isEmpty());
+        assertEquals(5, osmData.allNonDeletedPrimitives().size(), "All primitives should now be in osmData");
+        assertTrue(mapWithAIData.allNonDeletedPrimitives().isEmpty(),
+                "There should be no remaining non-deleted primitives");
 
         command.undoCommand();
-        Assert.assertEquals(3, osmData.allNonDeletedPrimitives().size());
-        Assert.assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size());
+        assertEquals(3, osmData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
+        assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
     }
 
     @Test
@@ -178,12 +180,12 @@ public class MapWithAIAddComandTest {
 
         UndoRedoHandler.getInstance().add(new MoveCommand(tNode, LatLon.ZERO));
 
-        Assert.assertTrue(UndoRedoHandler.getInstance().getRedoCommands().isEmpty());
-        Assert.assertEquals(2, UndoRedoHandler.getInstance().getUndoCommands().size());
+        assertTrue(UndoRedoHandler.getInstance().getRedoCommands().isEmpty(), "There shouldn't be any redo commands");
+        assertEquals(2, UndoRedoHandler.getInstance().getUndoCommands().size(), "There should be two undo commands");
 
         UndoRedoHandler.getInstance().undo(UndoRedoHandler.getInstance().getUndoCommands().size());
-        Assert.assertTrue(UndoRedoHandler.getInstance().getUndoCommands().isEmpty());
-        Assert.assertEquals(2, UndoRedoHandler.getInstance().getRedoCommands().size());
+        assertTrue(UndoRedoHandler.getInstance().getUndoCommands().isEmpty(), "There should be no undo commands");
+        assertEquals(2, UndoRedoHandler.getInstance().getRedoCommands().size(), "There should be two redo commands");
         UndoRedoHandler.getInstance().redo(UndoRedoHandler.getInstance().getRedoCommands().size());
 
         UndoRedoHandler.getInstance().undo(UndoRedoHandler.getInstance().getUndoCommands().size());

@@ -2,11 +2,12 @@
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,23 +40,23 @@ public class AddNodeToWayCommandTest {
     @Test
     public void testAddNodeToWay() {
         command.executeCommand();
-        Assert.assertEquals(3, way.getNodesCount());
+        assertEquals(3, way.getNodesCount(), "A node should have been added to the way");
 
         command.undoCommand();
-        Assert.assertEquals(2, way.getNodesCount());
+        assertEquals(2, way.getNodesCount(), "The way should no longer be modified");
 
         command = new AddNodeToWayCommand(toAdd, way, way.lastNode(), way.firstNode());
 
         command.executeCommand();
-        Assert.assertEquals(3, way.getNodesCount());
+        assertEquals(3, way.getNodesCount(), "A node should have been added to the way");
 
         command.undoCommand();
-        Assert.assertEquals(2, way.getNodesCount());
+        assertEquals(2, way.getNodesCount(), "The way should no longer be modified");
     }
 
     @Test
     public void testDescription() {
-        Assert.assertNotNull(command.getDescriptionText());
+        assertNotNull(command.getDescriptionText(), "The command should have a description");
     }
 
     @Test
@@ -64,9 +65,9 @@ public class AddNodeToWayCommandTest {
         final List<OsmPrimitive> modified = new ArrayList<>();
         final List<OsmPrimitive> deleted = new ArrayList<>();
         command.fillModifiedData(modified, deleted, added);
-        Assert.assertTrue(deleted.isEmpty());
-        Assert.assertTrue(added.isEmpty());
-        Assert.assertEquals(2, modified.size());
+        assertTrue(deleted.isEmpty(), "Nothing should have been deleted");
+        assertTrue(added.isEmpty(), "Nothing should have been added");
+        assertEquals(2, modified.size(), "The way should have been modified, node is included in count");
     }
 
     @Test

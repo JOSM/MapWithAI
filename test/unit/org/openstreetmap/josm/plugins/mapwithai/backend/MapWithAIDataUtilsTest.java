@@ -2,8 +2,12 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +18,6 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,7 +81,7 @@ public class MapWithAIDataUtilsTest {
     public void testGetData() {
         final BBox testBBox = getTestBBox();
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(testBBox));
-        Assert.assertEquals(1, ds.getWays().size());
+        assertEquals(1, ds.getWays().size(), "There should only be one way in the testBBox");
     }
 
     /**
@@ -95,10 +98,10 @@ public class MapWithAIDataUtilsTest {
         final DataSet originalData = MapWithAIDataUtils.getData(testBBox);
         MainApplication.getLayerManager().addLayer(gpx);
         final DataSet ds = MapWithAIDataUtils.getData(testBBox);
-        Assert.assertEquals(1, ds.getWays().size());
-        Assert.assertEquals(3, ds.getNodes().size());
-        Assert.assertEquals(1, originalData.getWays().size());
-        Assert.assertEquals(4, originalData.getNodes().size());
+        assertEquals(1, ds.getWays().size(), "There should only be one way in the cropped testBBox");
+        assertEquals(3, ds.getNodes().size(), "There should be three nodes in the cropped testBBox");
+        assertEquals(1, originalData.getWays().size(), "There should be one way in the testBBox");
+        assertEquals(4, originalData.getNodes().size(), "There should be four nodes in the testBBox");
     }
 
     @Test
@@ -108,9 +111,9 @@ public class MapWithAIDataUtilsTest {
         final DataSet ds = new DataSet(way1.firstNode(), way1.lastNode(), way1);
         final String source = "random source";
 
-        Assert.assertNull(way1.get("source"));
+        assertNull(way1.get("source"), "The source for the data should not be null");
         MapWithAIDataUtils.addSourceTags(ds, "highway", source);
-        Assert.assertEquals(source, way1.get("source"));
+        assertEquals(source, way1.get("source"), "The source for the data should be the specified source");
     }
 
     public static BBox getTestBBox() {
@@ -125,9 +128,8 @@ public class MapWithAIDataUtilsTest {
         final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0, 0.1)));
         final Collection<OsmPrimitive> collection = new TreeSet<>();
-        Assert.assertEquals(0, collection.size());
         MapWithAIDataUtils.addPrimitivesToCollection(collection, Collections.singletonList(way1));
-        Assert.assertEquals(3, collection.size());
+        assertEquals(3, collection.size(), "The way has two child primitives, for a total of three primitives");
     }
 
     @Test
@@ -140,9 +142,9 @@ public class MapWithAIDataUtilsTest {
         }
         ds1.addPrimitive(way1);
 
-        Assert.assertEquals(3, ds1.allPrimitives().size());
+        assertEquals(3, ds1.allPrimitives().size(), "The DataSet should have three primitives");
         MapWithAIDataUtils.removePrimitivesFromDataSet(Collections.singleton(way1));
-        Assert.assertEquals(0, ds1.allPrimitives().size());
+        assertEquals(0, ds1.allPrimitives().size(), "All of the primitives should have been removed from the DataSet");
     }
 
     @Test
@@ -152,64 +154,53 @@ public class MapWithAIDataUtilsTest {
                 .until(() -> !MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
         List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
         int initialSize = paintStyles.size();
-        Assert.assertEquals(initialSize, paintStyles.size());
-        MapWithAIDataUtils.addMapWithAIPaintStyles();
-        paintStyles = MapPaintStyles.getStyles().getStyleSources();
-        Assert.assertEquals(initialSize + 1, paintStyles.size());
-        MapWithAIDataUtils.addMapWithAIPaintStyles();
-        paintStyles = MapPaintStyles.getStyles().getStyleSources();
-        Assert.assertEquals(initialSize + 1, paintStyles.size());
-        MapWithAIDataUtils.addMapWithAIPaintStyles();
+        for (int i = 0; i < 10; i++) {
+            MapWithAIDataUtils.addMapWithAIPaintStyles();
+            paintStyles = MapPaintStyles.getStyles().getStyleSources();
+            assertEquals(initialSize + 1, paintStyles.size(),
+                    "The paintstyle should have been added, but only one of it");
+        }
     }
 
     @Test
     public void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
-        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .noneMatch(map -> fakeUrl.equals(map.get("url"))));
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream().noneMatch(
+                map -> fakeUrl.equals(map.get("url"))), "fakeUrl shouldn't be in the current MapWithAI urls");
         MapWithAIPreferenceHelper.setMapWithAIUrl("Fake", fakeUrl, true, true);
-        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> fakeUrl.equals(map.get("url"))));
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> fakeUrl.equals(map.get("url"))), "fakeUrl should have been added");
         final List<Map<String, String>> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIURLs());
-        Assert.assertEquals(2, urls.size());
+        assertEquals(2, urls.size(), "There should be two urls (fakeUrl and the default)");
         MapWithAIPreferenceHelper.setMapWithAIUrl("MapWithAI", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, true,
                 true);
-        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equals(map.get("url"))));
+        assertTrue(
+                MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                        .anyMatch(map -> MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equals(map.get("url"))),
+                "The default URL should exist");
         MapWithAIPreferenceHelper.setMapWithAIUrl("Fake2", fakeUrl, true, true);
-        Assert.assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .filter(map -> fakeUrl.equals(map.get("url"))).count());
+        assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .filter(map -> fakeUrl.equals(map.get("url"))).count(), "There should only be one fakeUrl");
         MapWithAIPreferenceHelper.setMapWithAIURLs(urls.parallelStream()
                 .filter(map -> !fakeUrl.equalsIgnoreCase(map.getOrDefault("url", ""))).collect(Collectors.toList()));
-        Assert.assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().size());
-        Assert.assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+        assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().size(),
+                "The MapWithAI URLs should have been reset (essentially)");
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .anyMatch(map -> getDefaultMapWithAIAPIForTest(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                        .equals(map.get("url"))));
+                        .equals(map.get("url"))),
+                "The MapWithAI URLs should have been reset");
     }
 
     @Test
     public void testSplitBounds() {
         final BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
-        List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
-        checkInBBox(bbox, bboxes);
-
-        bbox.add(0.001, 0.001);
-        bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
-        checkInBBox(bbox, bboxes);
-
-        bbox.add(0.01, 0.01);
-        bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
-        checkInBBox(bbox, bboxes);
-        checkBBoxesConnect(bbox, bboxes);
-
-        bbox.add(0.1, 0.1);
-        bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-        Assert.assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size());
-        checkInBBox(bbox, bboxes);
-        checkBBoxesConnect(bbox, bboxes);
+        for (Double i : Arrays.asList(0.0001, 0.001, 0.01, 0.1)) {
+            bbox.add(i, i);
+            List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
+            assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size(), "The bbox should be appropriately reduced");
+            checkInBBox(bbox, bboxes);
+            checkBBoxesConnect(bbox, bboxes);
+        }
     }
 
     private static int getExpectedNumberOfBBoxes(BBox bbox) {
@@ -222,7 +213,7 @@ public class MapWithAIDataUtilsTest {
 
     private static void checkInBBox(BBox bbox, Collection<BBox> bboxes) {
         for (final BBox tBBox : bboxes) {
-            Assert.assertTrue(bbox.bounds(tBBox));
+            assertTrue(bbox.bounds(tBBox), "The bboxes should all be inside the original bbox");
         }
     }
 
@@ -240,7 +231,7 @@ public class MapWithAIDataUtilsTest {
             if (!bboxFoundConnections) {
                 bboxFoundConnections = bboxCheckConnections(bbox1, originalBBox);
             }
-            Assert.assertTrue(bboxFoundConnections);
+            assertTrue(bboxFoundConnections, "The bbox should connect to other bboxes");
         }
     }
 
