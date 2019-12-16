@@ -43,7 +43,9 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
                                 .filter(url -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(url))
                                 .collect(Collectors.toList())));
             }
-            tags.put("mapwithai:options", sb.toString());
+            String mapwithaiOptions = sb.toString();
+            tags.put("mapwithai:options",
+                    mapwithaiOptions.length() > 255 ? mapwithaiOptions.substring(0, 255) : mapwithaiOptions);
         }
     }
 
