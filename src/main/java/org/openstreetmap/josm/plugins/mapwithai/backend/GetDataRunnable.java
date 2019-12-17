@@ -59,7 +59,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
     private static final String SERVER_ID_KEY = "server_id";
-    private static final int DEFAULT_TIMEOUT = 50_000; // 50 seconds
 
     private static final double ARTIFACT_ANGLE = 0.1745; // 10 degrees in radians
 

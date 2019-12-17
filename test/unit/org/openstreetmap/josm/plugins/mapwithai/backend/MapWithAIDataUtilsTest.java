@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
 import org.openstreetmap.josm.data.gpx.WayPoint;
@@ -117,10 +118,13 @@ public class MapWithAIDataUtilsTest {
     }
 
     public static BBox getTestBBox() {
-        final BBox testBBox = new BBox();
-        testBBox.add(new LatLon(39.0734162, -108.5707107));
-        testBBox.add(new LatLon(39.0738791, -108.5715723));
-        return testBBox;
+        return getTestBounds().toBBox();
+    }
+
+    public static Bounds getTestBounds() {
+        Bounds bound = new Bounds(39.0734162, -108.5707107);
+        bound.extend(39.0738791, -108.5715723);
+        return bound;
     }
 
     @Test

@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,6 +28,8 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Geometry;
 
@@ -42,7 +45,7 @@ public class GetDataRunnableTest {
     public void setUp() {
         wireMock.start();
         MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
-            map.put("url", getDefaultMapWithAIAPIForTest(
+            map.put("url", getDefaultMapWithAIAPIForTest(wireMock,
                     map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
             return map;
         }).collect(Collectors.toList()));
@@ -53,11 +56,11 @@ public class GetDataRunnableTest {
         wireMock.stop();
     }
 
-    private String getDefaultMapWithAIAPIForTest(String url) {
-        return getDefaultMapWithAIAPIForTest(url, "https://www.facebook.com");
+    public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
+        return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.facebook.com");
     }
 
-    private String getDefaultMapWithAIAPIForTest(String url, String wireMockReplace) {
+    public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url, String wireMockReplace) {
         return url.replace(wireMockReplace, wireMock.baseUrl());
     }
 
@@ -120,5 +123,30 @@ public class GetDataRunnableTest {
         assertNotNull(ds);
         assertFalse(ds.isEmpty());
         assertFalse(ds.allNonDeletedPrimitives().isEmpty());
+    }
+
+    @Test
+    public void testAlreadyAddedElements() {
+        Way addedWay = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
+        Way duplicateWay = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
+        Way nonDuplicateWay = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 2)));
+
+        DataSet osm = new DataSet();
+        addedWay.getNodes().forEach(osm::addPrimitive);
+        osm.addPrimitive(addedWay);
+
+        DataSet conflationDs = new DataSet();
+        for (Way way : Arrays.asList(duplicateWay, nonDuplicateWay)) {
+            way.getNodes().forEach(conflationDs::addPrimitive);
+            conflationDs.addPrimitive(way);
+        }
+
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(osm, "OSM Layer", null));
+        GetDataRunnable.removeAlreadyAddedData(conflationDs);
+
+        assertAll(() -> assertTrue(duplicateWay.isDeleted(), "The duplicate way should be deleted"),
+                () -> duplicateWay.getNodes()
+                        .forEach(node -> assertTrue(node.isDeleted(), "The duplicate way nodes should be deleted")),
+                () -> assertFalse(nonDuplicateWay.isDeleted(), "The non-duplicate way should not be deleted"));
     }
 }
