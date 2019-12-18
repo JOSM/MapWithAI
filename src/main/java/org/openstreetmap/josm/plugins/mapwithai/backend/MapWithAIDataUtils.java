@@ -171,6 +171,7 @@ public final class MapWithAIDataUtils {
                             realBBoxes.size()),
                     null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
+                monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
                 realBounds.parallelStream()
                         .forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                                 .filter(map -> map.containsKey("url")).map(MapWithAIDataUtils::getUrl)
@@ -178,7 +179,7 @@ public final class MapWithAIDataUtils {
                                     BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
                                             bound, url, DetectTaskingManagerUtils.hasTaskingManagerLayer());
                                     try {
-                                        DataSet ds = downloader.parseOsm(monitor);
+                                        DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
                                         synchronized (MapWithAIDataUtils.class) {
                                             dataSet.mergeFrom(ds);
                                         }

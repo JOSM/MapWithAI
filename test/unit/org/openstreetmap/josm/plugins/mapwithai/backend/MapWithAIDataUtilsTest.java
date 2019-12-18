@@ -86,6 +86,17 @@ public class MapWithAIDataUtilsTest {
     }
 
     /**
+     * Test that getting multiple bboxes does not create an exception
+     */
+    @Test
+    public void testGetDataMultiple() {
+        final BBox testBBox = getTestBBox();
+        final BBox testBBox2 = new BBox(-108.4495519, 39.095376, -108.4422314, 39.0987811);
+        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBBox, testBBox2)));
+        assertEquals(2, ds.getDataSourceBounds().size());
+    }
+
+    /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to
      * OSM.
      */
