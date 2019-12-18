@@ -33,7 +33,7 @@ public class OsmReaderCustom extends OsmReader {
     protected OsmPrimitive buildPrimitive(PrimitiveData pd) {
         final Long serverId = pd.getUniqueId();
         if (AbstractPrimitive.currentUniqueId() < pd.getUniqueId()) {
-            Logging.error("Current id: {0} (wants {1})", AbstractPrimitive.currentUniqueId(), pd.getUniqueId());
+            Logging.trace("Current id: {0} (wants {1})", AbstractPrimitive.currentUniqueId(), pd.getUniqueId());
         }
         OsmPrimitive p;
         if (pd.getUniqueId() < AbstractPrimitive.currentUniqueId()) {
