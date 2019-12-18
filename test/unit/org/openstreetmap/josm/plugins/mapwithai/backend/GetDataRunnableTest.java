@@ -37,7 +37,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 public class GetDataRunnableTest {
     @Rule
-    public JOSMTestRules rule = new JOSMTestRules().projection();
+    public JOSMTestRules rule = new JOSMTestRules().projection().fakeAPI();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 

@@ -122,7 +122,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     public static Bounds getTestBounds() {
-        Bounds bound = new Bounds(39.0734162, -108.5707107);
+        Bounds bound = new Bounds(new LatLon(39.0734162, -108.5707107));
         bound.extend(39.0738791, -108.5715723);
         return bound;
     }
