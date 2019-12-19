@@ -18,6 +18,7 @@ import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Version;
+import org.openstreetmap.josm.data.validation.OsmValidator;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
@@ -34,6 +35,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIslandsTest;
 import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
@@ -77,6 +79,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
                 }
             }
         }
+
+        OsmValidator.addTest(RoutingIslandsTest.class);
 
         if (!Config.getPref().getKeySet().contains(PAINTSTYLE_PREEXISTS)) {
             Config.getPref().putBoolean(PAINTSTYLE_PREEXISTS, MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
