@@ -144,24 +144,22 @@ public class RoutingIslandsTest extends Test {
      */
     private static void findConnectedWays(String currentTransportMode, Collection<Way> potentialWays,
             Collection<Way> incomingWays, Collection<Way> outgoingWays) {
-        for (Way way : potentialWays) {
-            if (way.isUsable() && way.isOutsideDownloadArea()) {
-                Node firstNode = firstNode(way, currentTransportMode);
-                Node lastNode = lastNode(way, currentTransportMode);
-                if (isOneway(way, currentTransportMode) != 0 && firstNode != null
-                        && firstNode.isOutsideDownloadArea()) {
-                    incomingWays.add(way);
-                }
-                if (isOneway(way, currentTransportMode) != 0 && lastNode != null && lastNode.isOutsideDownloadArea()) {
-                    outgoingWays.add(way);
-                }
-                if (isOneway(way, currentTransportMode) == 0 && firstNode != null // Don't need to test lastNode
-                        && (way.firstNode().isOutsideDownloadArea() || way.lastNode().isOutsideDownloadArea())) {
-                    incomingWays.add(way);
-                    outgoingWays.add(way);
-                }
+        potentialWays.stream().filter(Way::isUsable).filter(Way::isOutsideDownloadArea).forEach(way -> {
+            Node firstNode = firstNode(way, currentTransportMode);
+            Node lastNode = lastNode(way, currentTransportMode);
+            Integer isOneway = isOneway(way, currentTransportMode);
+            if (firstNode != null && firstNode.isOutsideDownloadArea()) {
+                incomingWays.add(way);
             }
-        }
+            if (lastNode != null && lastNode.isOutsideDownloadArea()) {
+                outgoingWays.add(way);
+            }
+            if (isOneway == 0 && firstNode != null && lastNode != null
+                    && (firstNode.isOutsideDownloadArea() || lastNode.isOutsideDownloadArea())) {
+                incomingWays.add(way);
+                outgoingWays.add(way);
+            }
+        });
     }
 
     /**
