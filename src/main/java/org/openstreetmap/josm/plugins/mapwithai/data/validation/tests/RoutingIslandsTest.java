@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
+import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
@@ -97,7 +98,8 @@ public class RoutingIslandsTest extends Test {
                             .allMatch(way::equals)
                     && way.getNodes().parallelStream().noneMatch(Node::isOutsideDownloadArea)) {
                 errors.add(TestError.builder(this, SEVERITY_MAP.get(LONELY_WAY), LONELY_WAY).primitives(way)
-                        .message(tr("Routable way not connected to other ways")).build());
+                        .message(tr("MapWithAI (experimental)"), marktr("Routable way not connected to other ways"))
+                        .build());
             } else if ((ValidatorPrefHelper.PREF_OTHER.get() || ValidatorPrefHelper.PREF_OTHER_UPLOAD.get()
                     || !Severity.OTHER.equals(SEVERITY_MAP.get(ROUTING_ISLAND)))) {
                 if (way.hasKey(HIGHWAY)) {
@@ -126,8 +128,10 @@ public class RoutingIslandsTest extends Test {
                 .filter(way -> !incomingWays.contains(way) || !outgoingWays.contains(way))
                 .filter(way -> Access.getPositiveAccessValues().contains(
                         getDefaultAccessTags(way).getOrDefault(currentTransportMode, Access.AccessTags.NO.getKey())))
-                .collect(Collectors.toSet())).parallelStream()
-                        .map(way -> new Pair<>((incomingWays.containsAll(way) ? "outgoing" : "incoming"), way))
+                .collect(Collectors.toSet()))
+                        .parallelStream()
+                        .map(way -> new Pair<>(
+                                (incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
                         .collect(Collectors.toList());
         createErrors(problematic, currentTransportMode);
     }
@@ -210,7 +214,8 @@ public class RoutingIslandsTest extends Test {
         for (Pair<String, Set<Way>> ways : problematic) {
             errors.add(
                     TestError.builder(this, SEVERITY_MAP.getOrDefault(ROUTING_ISLAND, Severity.OTHER), ROUTING_ISLAND)
-                            .message(tr("Routing island"), "{1}: {0}", tr(ways.a), mode == null ? "default" : mode)
+                            .message(tr("MapWithAI (experimental)"), marktr("Routing island"), "{1}: {0}", tr(ways.a),
+                                    mode == null ? marktr("default") : mode)
                             .primitives(ways.b).build());
         }
     }
