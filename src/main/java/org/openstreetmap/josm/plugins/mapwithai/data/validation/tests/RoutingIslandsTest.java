@@ -129,7 +129,7 @@ public class RoutingIslandsTest extends Test {
                 .collect(Collectors.toSet())).parallelStream()
                         .map(way -> new Pair<>((incomingWays.containsAll(way) ? "outgoing" : "incoming"), way))
                         .collect(Collectors.toList());
-        createErrors(problematic, currentTransportMode, potentialWays);
+        createErrors(problematic, currentTransportMode);
     }
 
     /**
@@ -200,7 +200,15 @@ public class RoutingIslandsTest extends Test {
                 .collect(Collectors.toSet()));
     }
 
-    private void createErrors(List<Pair<String, Set<Way>>> problematic, String mode, Collection<Way> potentialWays) {
+    /**
+     * Create errors for a problematic way
+     *
+     * @param problematic The set of problematic ways (Pairs are
+     *                    &lt;incoming/outgoing, Set&lt;Connected ways with same
+     *                    issue&gt;&gt;)
+     * @param mode        The transport mode
+     */
+    private void createErrors(List<Pair<String, Set<Way>>> problematic, String mode) {
         for (Pair<String, Set<Way>> ways : problematic) {
             errors.add(
                     TestError.builder(this, SEVERITY_MAP.getOrDefault(ROUTING_ISLAND, Severity.OTHER), ROUTING_ISLAND)
@@ -312,7 +320,7 @@ public class RoutingIslandsTest extends Test {
         String backward = transportType.concat(":backward");
         boolean possibleForward = "yes".equals(way.get(forward)) || (!way.hasKey(forward) && way.isOneway() != -1);
         boolean possibleBackward = "yes".equals(way.get(backward)) || (!way.hasKey(backward) && way.isOneway() != 1);
-        if (transportType.equals(Access.AccessTags.FOOT.getKey()) && !"footway".equals(way.get("highway"))
+        if (transportType.equals(Access.AccessTags.FOOT.getKey()) && !"footway".equals(way.get(HIGHWAY))
                 && !way.hasTag("foot:forward") && !way.hasTag("foot:backward")) {
             return 0; // Foot is almost never oneway, especially on generic road types. There are some
             // cases on mountain paths.
