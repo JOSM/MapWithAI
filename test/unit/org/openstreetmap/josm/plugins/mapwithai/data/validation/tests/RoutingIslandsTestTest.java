@@ -41,7 +41,7 @@ public class RoutingIslandsTestTest {
      */
     @Rule
     @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().projection().preferences();
+    public JOSMTestRules rule = new JOSMTestRules().projection().preferences().timeout(30000);
 
     /**
      * Test method for {@link RoutingIslandsTest#RoutingIslandsTest()} and the
