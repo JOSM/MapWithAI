@@ -65,7 +65,7 @@ public class RoutingIslandsTest extends Test {
      * Constructs a new {@code RightAngleBuildingTest} test.
      */
     public RoutingIslandsTest() {
-        super(tr("Routing islands"), tr("Checks for roads that cannot be reached or left."));
+        super(tr("Routing islands (MapWithAI)"), tr("Checks for roads that cannot be reached or left."));
         super.setPartialSelection(false);
     }
 
@@ -115,6 +115,45 @@ public class RoutingIslandsTest extends Test {
         Set<Way> incomingWays = new HashSet<>();
         Set<Way> outgoingWays = new HashSet<>();
         findConnectedWays(currentTransportMode, potentialWays, incomingWays, outgoingWays);
+        Collection<Way> realPotentialWays = (incomingWays.isEmpty() || outgoingWays.isEmpty())
+                ? expandNetwork(currentTransportMode, potentialWays)
+                : potentialWays;
+
+        if (incomingWays.isEmpty() || outgoingWays.isEmpty()) {
+            findConnectedWays(currentTransportMode, realPotentialWays, incomingWays, outgoingWays);
+        }
+        runGenericTest(currentTransportMode, realPotentialWays, incomingWays, outgoingWays);
+
+    }
+
+    /**
+     * Expand a network from an initial selection
+     *
+     * @param currentTransportMode The current transport mode
+     * @param initial              The initial collection of ways
+     * @return An expanded collection of ways, which should be all connected ways
+     *         that allow the current transport mode.
+     */
+    private static Collection<Way> expandNetwork(String currentTransportMode, Collection<Way> initial) {
+        Collection<Way> connected = initial.parallelStream().flatMap(way -> way.getNodes().parallelStream())
+                .flatMap(node -> node.getReferrers().parallelStream()).filter(Way.class::isInstance)
+                .map(Way.class::cast).distinct().collect(Collectors.toSet());
+        if (connected.containsAll(initial) && initial.containsAll(connected)) {
+            return connected;
+        }
+        return expandNetwork(currentTransportMode, connected);
+    }
+
+    /**
+     * This test is run when there are known incoming/outgoing ways
+     *
+     * @param currentTransportMode The current transport mode
+     * @param potentialWays        The ways to check
+     * @param incomingWays         The incoming ways
+     * @param outgoingWays         The outgoing ways
+     */
+    private void runGenericTest(String currentTransportMode, Collection<Way> potentialWays,
+            Collection<Way> incomingWays, Collection<Way> outgoingWays) {
         Set<Way> toIgnore = potentialWays.parallelStream()
                 .filter(way -> incomingWays.contains(way) || outgoingWays.contains(way))
                 .filter(way -> !Access.getPositiveAccessValues().contains(
@@ -186,8 +225,11 @@ public class RoutingIslandsTest extends Test {
                 loopCounter++;
             }
             if (listOfWays.removeAll(connected)) {
-                i--; // NOSONAR not an issue -- this ensures that everything is accounted for, only
-                // triggers when ways removed
+                /*
+                 * Not an issue -- this ensures that everything is accounted for, only triggers
+                 * when ways removed
+                 */
+                i--; // NOSONAR
             }
             collected.add(connected);
         }
@@ -325,8 +367,11 @@ public class RoutingIslandsTest extends Test {
         boolean possibleBackward = "yes".equals(way.get(backward)) || (!way.hasKey(backward) && way.isOneway() != 1);
         if (transportType.equals(Access.AccessTags.FOOT.getKey()) && !"footway".equals(way.get(HIGHWAY))
                 && !way.hasTag("foot:forward") && !way.hasTag("foot:backward")) {
-            return 0; // Foot is almost never oneway, especially on generic road types. There are some
-            // cases on mountain paths.
+            /*
+             * Foot is almost never oneway, especially on generic road types. There are some
+             * cases on mountain paths.
+             */
+            return 0;
         }
         if (possibleForward && !possibleBackward) {
             return 1;
