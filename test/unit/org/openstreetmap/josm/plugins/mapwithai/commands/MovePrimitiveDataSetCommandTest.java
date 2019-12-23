@@ -17,7 +17,6 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.mapwithai.commands.MovePrimitiveDataSetCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -46,7 +45,7 @@ public class MovePrimitiveDataSetCommandTest {
 
         move.executeCommand();
         move.fillModifiedData(modified, deleted, added);
-        Assert.assertEquals(3, deleted.size());
+        Assert.assertEquals(0, deleted.size());
         Assert.assertEquals(0, added.size()); // the JOSM Add command doesn't add to this list
         Assert.assertEquals(0, modified.size());
         Assert.assertEquals(1, from.allNonDeletedPrimitives().size());
@@ -83,7 +82,7 @@ public class MovePrimitiveDataSetCommandTest {
         deleted.clear();
         move.executeCommand();
         move.fillModifiedData(modified, deleted, added);
-        Assert.assertEquals(3, deleted.size());
+        Assert.assertEquals(0, deleted.size());
         Assert.assertEquals(0, added.size()); // the JOSM Add command doesn't add to this list
         Assert.assertEquals(0, modified.size());
         Assert.assertEquals(1, from.allNonDeletedPrimitives().size());
@@ -135,9 +134,11 @@ public class MovePrimitiveDataSetCommandTest {
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 
+        final Node way1Node1 = way1.firstNode();
+
         UndoRedoHandler.getInstance().add(new MovePrimitiveDataSetCommand(to, from, Collections.singleton(way1)));
 
-        final Node tNode = (Node) to.getPrimitiveById(way1.firstNode());
+        final Node tNode = (Node) to.getPrimitiveById(way1Node1);
 
         UndoRedoHandler.getInstance().add(new MoveCommand(tNode, LatLon.ZERO));
 
@@ -158,7 +159,9 @@ public class MovePrimitiveDataSetCommandTest {
 
     @Test
     public void testDescription() {
-        Assert.assertNotNull(new MovePrimitiveDataSetCommand(new DataSet(), new DataSet(), Collections.emptyList())
+        Node tNode = new Node(new LatLon(0, 0));
+        DataSet from = new DataSet(tNode);
+        Assert.assertNotNull(new MovePrimitiveDataSetCommand(new DataSet(), from, Collections.singleton(tNode))
                 .getDescriptionText());
     }
 }

@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -17,6 +18,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.actions.SaveAction;
 import org.openstreetmap.josm.command.MoveCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -25,6 +27,10 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.validation.tests.SharpAngles;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -75,8 +81,6 @@ public class MapWithAIAddComandTest {
         command.executeCommand();
         for (Way way : Arrays.asList(way1, way2)) {
             assertNotNull(ds2.getPrimitiveById(way), "DataSet should still contain object");
-            assertNotNull(ds2.getPrimitiveById(way.firstNode()), "DataSet should still contain object");
-            assertNotNull(ds2.getPrimitiveById(way.lastNode()), "DataSet should still contain object");
             assertTrue(way.isDeleted(), "The way should be deleted");
         }
 
@@ -84,14 +88,10 @@ public class MapWithAIAddComandTest {
         command = new MapWithAIAddCommand(ds1, ds2, Arrays.asList(way3));
         command.executeCommand();
         assertNotNull(ds2.getPrimitiveById(way3), "DataSet should still contain object");
-        assertNotNull(ds2.getPrimitiveById(way3.firstNode()), "DataSet should still contain object");
-        assertNotNull(ds2.getPrimitiveById(way3.lastNode()), "DataSet should still contain object");
         assertTrue(way3.isDeleted(), "The way should be deleted");
 
         command.undoCommand();
         assertNull(ds2.getPrimitiveById(way3), "DataSet should no longer contain object");
-        assertNull(ds2.getPrimitiveById(way3.firstNode()), "DataSet should no longer contain object");
-        assertNull(ds2.getPrimitiveById(way3.lastNode()), "DataSet should no longer contain object");
         assertFalse(ds1.getPrimitiveById(way3).isDeleted(),
                 "The way should no longer be deleted in its original DataSet");
     }
@@ -174,9 +174,11 @@ public class MapWithAIAddComandTest {
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 
+        final Node way1FirstNode = way1.firstNode();
+
         UndoRedoHandler.getInstance().add(new MapWithAIAddCommand(from, to, Collections.singleton(way1)));
 
-        final Node tNode = (Node) to.getPrimitiveById(way1.firstNode());
+        final Node tNode = (Node) to.getPrimitiveById(way1FirstNode);
 
         UndoRedoHandler.getInstance().add(new MoveCommand(tNode, LatLon.ZERO));
 
@@ -215,4 +217,51 @@ public class MapWithAIAddComandTest {
         assertNotNull(osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(way));
     }
+
+    @Test
+    public void testMultiConnectionsSimultaneous() {
+        SharpAngles test = new SharpAngles();
+        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(3.4186753, 102.0559126)),
+                new Node(new LatLon(3.4185682, 102.0555264)));
+        Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(3.4186271, 102.0559502)),
+                new Node(new LatLon(3.4188681, 102.0562935)));
+        Way original = TestUtils.newWay("highway=tertiary", new Node(new LatLon(3.4185368, 102.0560268)),
+                new Node(new LatLon(3.4187717, 102.0558451)));
+        String connectedValue = "w" + Long.toString(original.getUniqueId()) + ",n"
+                + Long.toString(original.firstNode().getUniqueId()) + ",n"
+                + Long.toString(original.lastNode().getUniqueId());
+        way1.firstNode().put(ConnectedCommand.CONN_KEY, connectedValue);
+        way2.firstNode().put(ConnectedCommand.CONN_KEY, connectedValue);
+
+        DataSet ds = new DataSet();
+        DataSet osmData = new DataSet();
+        OsmDataLayer layer = new OsmDataLayer(osmData, "Test Layer", null);
+        for (Way way : Arrays.asList(way1, way2)) {
+            way.getNodes().parallelStream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
+            if (way.getDataSet() == null) {
+                ds.addPrimitive(way);
+            }
+        }
+        original.getNodes().forEach(osmData::addPrimitive);
+        osmData.addPrimitive(original);
+
+        MapWithAIAddCommand connectionsCommand = new MapWithAIAddCommand(ds, osmData, ds.allPrimitives());
+        connectionsCommand.executeCommand();
+        test.startTest(NullProgressMonitor.INSTANCE);
+        test.visit(ds.allPrimitives());
+        test.endTest();
+        assertTrue(test.getErrors().isEmpty());
+
+        SaveAction.doSave(layer, new File("post_command1.osm"), false);
+        connectionsCommand.undoCommand();
+
+        connectionsCommand = new MapWithAIAddCommand(ds, osmData, ds.allPrimitives());
+        connectionsCommand.executeCommand();
+        test.startTest(NullProgressMonitor.INSTANCE);
+        test.visit(osmData.allPrimitives());
+        test.endTest();
+        assertTrue(test.getErrors().isEmpty());
+        SaveAction.doSave(layer, new File("post_command2.osm"), false);
+    }
+
 }

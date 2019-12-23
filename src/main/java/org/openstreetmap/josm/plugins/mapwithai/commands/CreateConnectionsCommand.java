@@ -7,8 +7,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -27,7 +29,7 @@ import org.openstreetmap.josm.tools.Utils;
 public class CreateConnectionsCommand extends Command {
     private final Collection<OsmPrimitive> primitives;
     private Command command;
-    private static final List<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new ArrayList<>();
+    private static final LinkedHashSet<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new LinkedHashSet<>();
     static {
         CONFLATION_COMMANDS.add(ConnectedCommand.class);
         CONFLATION_COMMANDS.add(DuplicateCommand.class);
@@ -125,7 +127,15 @@ public class CreateConnectionsCommand extends Command {
     /**
      * @return A set of commands to run when copying data from the MapWithAI layer
      */
-    public static List<Class<? extends AbstractConflationCommand>> getConflationCommands() {
-        return Collections.unmodifiableList(CONFLATION_COMMANDS);
+    public static Set<Class<? extends AbstractConflationCommand>> getConflationCommands() {
+        return Collections.unmodifiableSet(CONFLATION_COMMANDS);
+    }
+
+    /**
+     * @return {@code true} if the conflation command was removed and was present
+     * @see List#remove
+     */
+    public static boolean removeConflationCommand(Class<? extends AbstractConflationCommand> command) {
+        return CONFLATION_COMMANDS.remove(command);
     }
 }

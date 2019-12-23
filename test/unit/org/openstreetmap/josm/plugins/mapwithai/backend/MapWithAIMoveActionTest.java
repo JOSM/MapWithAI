@@ -99,7 +99,7 @@ public class MapWithAIMoveActionTest {
         assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
         assertFalse(way2.firstNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
         assertFalse(way2.getNode(1).hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
-        assertTrue(way1.lastNode().isDeleted(), "way1 should be deleted when added");
+        assertTrue(way1.isDeleted(), "way1 should be deleted when added");
 
         UndoRedoHandler.getInstance().undo();
         assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key shouldn't exist");

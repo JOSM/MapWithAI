@@ -4,13 +4,18 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.AddPrimitivesCommand;
+import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -18,6 +23,7 @@ import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -68,7 +74,22 @@ public class MovePrimitiveDataSetCommand extends Command {
 
         commands.add(new AddPrimitivesCommand(primitiveAddData,
                 selection.stream().map(OsmPrimitive::save).collect(Collectors.toList()), to));
-        commands.add(new DeletePrimitivesCommand(from, selection, true));
+        List<Command> removeKeyCommand = new ArrayList<>();
+        Set<OsmPrimitive> fullSelection = new HashSet<>();
+        MapWithAIDataUtils.addPrimitivesToCollection(fullSelection, selection);
+        CreateConnectionsCommand.getConflationCommands().forEach(clazz -> {
+            try {
+                removeKeyCommand.add(new ChangePropertyCommand(fullSelection,
+                        clazz.getConstructor(DataSet.class).newInstance(from).getKey(), null));
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                Logging.error(e);
+            }
+        });
+        SequenceCommand sequence = new SequenceCommand("Temporary Command", removeKeyCommand);
+        sequence.executeCommand(); // This *must* be executed for the delete command to get everything.
+        commands.add(DeleteCommand.delete(selection, true, true));
+        sequence.undoCommand();
 
         return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
                 "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
