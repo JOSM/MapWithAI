@@ -80,7 +80,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
             }
         }
 
-        OsmValidator.addTest(RoutingIslandsTest.class);
+        if (!OsmValidator.getAllAvailableTestClasses().contains(RoutingIslandsTest.class)) {
+            OsmValidator.addTest(RoutingIslandsTest.class);
+        }
 
         if (!Config.getPref().getKeySet().contains(PAINTSTYLE_PREEXISTS)) {
             Config.getPref().putBoolean(PAINTSTYLE_PREEXISTS, MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
@@ -157,8 +159,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         }
 
         destroyables.forEach(Destroyable::destroy);
-        if (Version.getInstance().getVersion() > 15542) {
-            DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
+        DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
+        if (Version.getInstance().getVersion() >= 15603) {
+            OsmValidator.removeTest(RoutingIslandsTest.class);
         }
     }
 }
