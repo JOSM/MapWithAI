@@ -94,9 +94,7 @@ public class MapWithAIDataUtilsTest {
         final BBox testBBox = getTestBBox();
         final BBox testBBox2 = new BBox(-108.4495519, 39.095376, -108.4422314, 39.0987811);
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBBox, testBBox2)));
-        // TODO https://josm.openstreetmap.de/ticket/18436 replace 20_000 with
-        // appropriate version number when merged
-        int expectedBounds = Version.getInstance().getVersion() > 20_000 ? 2 : 4;
+        int expectedBounds = Version.getInstance().getVersion() >= 15_609 ? 2 : 4;
         assertEquals(expectedBounds, ds.getDataSourceBounds().size(), "There should be two data sources");
     }
 
