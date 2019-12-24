@@ -54,7 +54,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     public MapWithAIPreferences() {
         switchLayerCheckBox = new JCheckBox();
         maximumAdditionSpinner = new JSpinner(
-                new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 100, 1));
+                new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 50, 1));
         mergeBuildingAddressCheckBox = new JCheckBox();
         replacementTableDisplayData = new ArrayList<>();
         fillReplacementTagDisplayData(replacementTableDisplayData);

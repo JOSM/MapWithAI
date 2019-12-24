@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
+import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -46,7 +47,7 @@ public class MapWithAIMoveAction extends JosmAction {
         int modifier = Shortcut.SHIFT;
         final String shortText = "data:mapwithaiadd";
         final Optional<Shortcut> shortCut = Shortcut.findShortcut(key, InputEvent.SHIFT_DOWN_MASK); // Shortcut.SHIFT
-                                                                                                    // maps to
+        // maps to
         // KeyEvent.SHIFT_DOWN_MASK
         if (shortCut.isPresent() && !shortText.equals(shortCut.get().getShortText())) {
             key = KeyEvent.VK_C;
@@ -70,7 +71,7 @@ public class MapWithAIMoveAction extends JosmAction {
             }
             final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
             final OsmDataLayer editLayer = getOsmDataLayer();
-            if (editLayer != null) {
+            if (editLayer != null && !selected.isEmpty()) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
                 if (MapWithAIPreferenceHelper.isSwitchLayers()) {
@@ -81,7 +82,9 @@ public class MapWithAIMoveAction extends JosmAction {
     }
 
     private static Collection<OsmPrimitive> limitCollection(DataSet ds, int maxSize) {
-        return maxSize > 0 ? ds.getSelected().stream().limit(maxSize).collect(Collectors.toList()) : ds.getSelected();
+        return (maxSize > 0 || !ExpertToggleAction.isExpert())
+                ? ds.getSelected().stream().limit(maxSize).collect(Collectors.toList())
+                : ds.getSelected();
     }
 
     private static OsmDataLayer getOsmDataLayer() {
