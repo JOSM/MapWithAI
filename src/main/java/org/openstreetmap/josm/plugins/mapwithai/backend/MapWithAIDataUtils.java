@@ -344,6 +344,7 @@ public final class MapWithAIDataUtils {
                 } finally {
                     lock.unlock();
                 }
+                toDownload.stream().map(MapWithAIDataUtils::bboxToBounds).forEach(layer::onPostDownloadFromServer);
             });
         }
         return !toDownload.isEmpty();
