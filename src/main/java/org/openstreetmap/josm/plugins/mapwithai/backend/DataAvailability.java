@@ -79,7 +79,7 @@ public class DataAvailability {
                             false, entry.getValue().asJsonObject().getJsonArray("parameters").toString());
                     MapWithAIPreferenceHelper.setMapWithAIUrl(url, false, true);
                 }
-                Logging.error("{0}: {1}", entry.getKey(), entry.getValue());
+                Logging.debug("{0}: {1}", entry.getKey(), entry.getValue());
                 if (JsonValue.ValueType.OBJECT.equals(entry.getValue().getValueType())
                         && entry.getValue().asJsonObject().containsKey("countries")) {
                     JsonValue countries = entry.getValue().asJsonObject().get("countries");

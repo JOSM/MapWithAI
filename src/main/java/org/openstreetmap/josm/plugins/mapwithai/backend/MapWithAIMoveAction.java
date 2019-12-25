@@ -32,6 +32,9 @@ public class MapWithAIMoveAction extends JosmAction {
     private static final long serialVersionUID = 319374598;
     private transient Notification lastNotification;
 
+    /** The maximum number of objects is this times the maximum add */
+    public static final int MAX_ADD_MULTIPLIER = 10;
+
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), "mapwithai",
                 tr("Add data from {0}", MapWithAIPlugin.NAME), obtainShortcut(), true);
@@ -71,14 +74,27 @@ public class MapWithAIMoveAction extends JosmAction {
             }
             final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
             final OsmDataLayer editLayer = getOsmDataLayer();
-            if (editLayer != null && !selected.isEmpty()) {
+            if (editLayer != null && !selected.isEmpty()
+                    && MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
                 if (MapWithAIPreferenceHelper.isSwitchLayers()) {
                     MainApplication.getLayerManager().setActiveLayer(editLayer);
                 }
+            } else if (MapWithAIDataUtils.getAddedObjects() >= maxAddition * MAX_ADD_MULTIPLIER) {
+                createTooManyAdditionsNotification(maxAddition);
             }
         }
+    }
+
+    private void createTooManyAdditionsNotification(int maxAddition) {
+        Notification tooMany = new Notification();
+        tooMany.setIcon(JOptionPane.WARNING_MESSAGE);
+        tooMany.setDuration(Notification.TIME_DEFAULT);
+        tooMany.setContent(
+                tr("There is a soft cap of {0} objects before uploading. Please verify everything before uploading.",
+                        maxAddition * MAX_ADD_MULTIPLIER));
+        tooMany.show();
     }
 
     private static Collection<OsmPrimitive> limitCollection(DataSet ds, int maxSize) {
