@@ -59,7 +59,7 @@ public class MergeAddressBuildingsTest {
         Node address = TestUtils.newNode("addr:street=None addr:housenumber=2");
         building.getNodes().forEach(ds::addPrimitive);
         MainApplication.getLayerManager()
-        .addLayer(new OsmDataLayer(ds, "required for ReplaceGeometry in utilsplugin2", null));
+                .addLayer(new OsmDataLayer(ds, "required for ReplaceGeometry in utilsplugin2", null));
         ds.addPrimitive(building);
         ds.addPrimitive(address);
 

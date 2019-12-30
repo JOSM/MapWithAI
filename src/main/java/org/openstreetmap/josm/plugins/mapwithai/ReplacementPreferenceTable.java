@@ -52,7 +52,7 @@ public class ReplacementPreferenceTable extends PreferencesTable {
 
         return askAddSetting(gui, p)
                 ? new PrefEntry(tkey.getText(), new StringSetting(tValue.getText()), new StringSetting(null), false)
-                        : null;
+                : null;
     }
 
     private static boolean askAddSetting(JComponent gui, JPanel p) {

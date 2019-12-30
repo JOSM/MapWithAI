@@ -87,7 +87,7 @@ public class ConnectedCommand extends AbstractConflationCommand {
     public Command getRealCommand() {
         final List<Command> commands = new ArrayList<>();
         possiblyAffectedPrimitives.stream().filter(Node.class::isInstance).map(Node.class::cast)
-        .forEach(node -> commands.addAll(connectedCommand(getAffectedDataSet(), node)));
+                .forEach(node -> commands.addAll(connectedCommand(getAffectedDataSet(), node)));
         Command returnCommand = null;
         if (!commands.isEmpty()) {
             returnCommand = new SequenceCommand(getDescriptionText(), commands);

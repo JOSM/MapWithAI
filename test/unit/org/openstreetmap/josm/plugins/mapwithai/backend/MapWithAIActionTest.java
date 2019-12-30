@@ -53,7 +53,7 @@ public class MapWithAIActionTest {
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "temporary", null));
         action.actionPerformed(null);
         Awaitility.await().atMost(Durations.TEN_SECONDS)
-        .until(() -> 1 == MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
+                .until(() -> 1 == MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
         assertEquals(1, MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
 
         assertSame(MapWithAIDataUtils.getLayer(false), MainApplication.getLayerManager().getActiveLayer());

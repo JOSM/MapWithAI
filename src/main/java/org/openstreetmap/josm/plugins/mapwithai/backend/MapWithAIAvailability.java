@@ -75,8 +75,8 @@ public final class MapWithAIAvailability {
             cachedRapidReleases.setMaxAge(604_800);
             parser.next();
             final Stream<Entry<String, JsonValue>> entries = parser.getObjectStream();
-            final Optional<Entry<String, JsonValue>> objects = entries
-                    .filter(entry -> "objects".equals(entry.getKey())).findFirst();
+            final Optional<Entry<String, JsonValue>> objects = entries.filter(entry -> "objects".equals(entry.getKey()))
+                    .findFirst();
             if (objects.isPresent()) {
                 final JsonObject value = objects.get().getValue().asJsonObject();
                 if (value != null) {
@@ -120,8 +120,7 @@ public final class MapWithAIAvailability {
                             .orElse(Optional.ofNullable(countryLoop.get("ISO3166-2")).orElse(""));
                     if ("".equals(key)) {
                         Logging.error("{0}: {1} does not have a \"ISO3166-1:alpha2\" or \"ISO3166-2\" key. {2}",
-                                MapWithAIPlugin.NAME,
-                                countryLoop, countryLoop.getInterestingTags());
+                                MapWithAIPlugin.NAME, countryLoop, countryLoop.getInterestingTags());
                     } else {
                         Logging.trace("{0}: {1} has a country code of {2}", MapWithAIPlugin.NAME,
                                 countryLoop.get("name:en"), key);

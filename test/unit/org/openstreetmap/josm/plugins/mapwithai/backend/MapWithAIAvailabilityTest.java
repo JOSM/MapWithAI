@@ -31,8 +31,8 @@ public class MapWithAIAvailabilityTest {
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIAvailability.setReleaseUrl(wireMock.baseUrl()
-                + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
+        MapWithAIAvailability.setReleaseUrl(
+                wireMock.baseUrl() + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
         Territories.initialize();
         instance = MapWithAIAvailability.getInstance();
         LatLon temp = new LatLon(40, -100);

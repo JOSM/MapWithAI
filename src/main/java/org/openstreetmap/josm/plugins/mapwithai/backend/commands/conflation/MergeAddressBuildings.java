@@ -47,12 +47,12 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
         List<Command> commands = new ArrayList<>();
         if (MapWithAIPreferenceHelper.isMergeBuildingAddress()) {
             possiblyAffectedPrimitives.stream().filter(Way.class::isInstance).map(Way.class::cast)
-            .filter(way -> way.hasKey(BUILDING_KEY)).filter(Way::isClosed)
-            .forEach(way -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), way)));
+                    .filter(way -> way.hasKey(BUILDING_KEY)).filter(Way::isClosed)
+                    .forEach(way -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), way)));
 
             possiblyAffectedPrimitives.stream().filter(Relation.class::isInstance).map(Relation.class::cast)
-            .filter(rel -> rel.hasKey(BUILDING_KEY)).filter(Relation::isMultipolygon)
-            .forEach(rel -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), rel)));
+                    .filter(rel -> rel.hasKey(BUILDING_KEY)).filter(Relation::isMultipolygon)
+                    .forEach(rel -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), rel)));
         }
 
         Command returnCommand = null;

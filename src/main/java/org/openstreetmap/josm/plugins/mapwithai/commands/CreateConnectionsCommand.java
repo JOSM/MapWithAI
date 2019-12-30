@@ -81,7 +81,7 @@ public class CreateConnectionsCommand extends Command {
             }
             final Collection<OsmPrimitive> tPrimitives = new TreeSet<>();
             abstractCommand.getInterestedTypes()
-            .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));
+                    .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));
 
             final Command actualCommand = abstractCommand.getCommand(tPrimitives.stream()
                     .filter(prim -> prim.hasKey(abstractCommand.getKey())).collect(Collectors.toList()));

@@ -35,8 +35,7 @@ public class MapWithAIMoveActionTest {
         moveAction = new MapWithAIMoveAction();
         final DataSet osmData = new DataSet();
         mapWithAIData = new DataSet();
-        way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
-                new Node(new LatLon(0.1, 0.1)));
+        way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(0.1, 0.1)));
         way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.1)),
                 new Node(new LatLon(0.1, 0.1)));
         way1.getNodes().forEach(node -> mapWithAIData.addPrimitive(node));
@@ -45,8 +44,7 @@ public class MapWithAIMoveActionTest {
         mapWithAIData.addPrimitive(way1);
 
         osmLayer = new OsmDataLayer(osmData, "osm", null);
-        final MapWithAILayer mapWithAILayer = new MapWithAILayer(mapWithAIData, "MapWithAI",
-                null);
+        final MapWithAILayer mapWithAILayer = new MapWithAILayer(mapWithAIData, "MapWithAI", null);
         MainApplication.getLayerManager().addLayer(osmLayer);
         MainApplication.getLayerManager().addLayer(mapWithAILayer);
         MainApplication.getLayerManager().setActiveLayer(mapWithAILayer);
