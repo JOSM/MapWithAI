@@ -16,6 +16,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import org.openstreetmap.josm.actions.ExpertToggleAction;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
@@ -175,5 +177,26 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     public Icon getIcon() {
         return ImageProvider.getIfAvailable("mapwithai") == null ? super.getIcon()
                 : ImageProvider.get("mapwithai", ImageProvider.ImageSizes.LAYER);
+    }
+
+    /**
+     * Call after download from server
+     *
+     * @param bounds The newly added bounds
+     */
+    public void onPostDownloadFromServer(Bounds bounds) {
+        super.onPostDownloadFromServer();
+        GetDataRunnable.cleanup(data);
+    }
+
+    @Override
+    public void selectionChanged(SelectionChangeEvent event) {
+        final int maximumAdditionSelection = MapWithAIPreferenceHelper.getMaximumAddition();
+        if (maximumAdditionSelection < event.getSelection().size()
+                && (MapWithAIPreferenceHelper.getMaximumAddition() != 0 || !ExpertToggleAction.isExpert())) {
+            getDataSet().setSelected(event.getSelection().stream().distinct().limit(maximumAdditionSelection)
+                    .collect(Collectors.toList()));
+        }
+        super.selectionChanged(event);
     }
 }

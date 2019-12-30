@@ -102,7 +102,7 @@ public final class MapWithAIPreferenceHelper {
         if ((mapWithAILayer != null) && (mapWithAILayer.getMaximumAddition() != null)) {
             defaultReturn = mapWithAILayer.getMaximumAddition();
         }
-        return defaultReturn;
+        return defaultReturn > DEFAULT_MAXIMUM_ADDITION * 10 ? DEFAULT_MAXIMUM_ADDITION * 10 : defaultReturn;
     }
 
     /**
