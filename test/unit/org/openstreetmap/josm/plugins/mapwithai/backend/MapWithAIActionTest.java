@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,11 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
@@ -23,6 +27,8 @@ import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Territories;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -33,10 +39,22 @@ public class MapWithAIActionTest {
 
     private MapWithAIAction action;
 
+    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
+
     @Before
     public void setUp() {
         action = new MapWithAIAction();
+        wireMock.start(); // This is required to avoid failing a test in MapWithAIAvailabilityTest
+        MapWithAIAvailability.setReleaseUrl(
+                wireMock.baseUrl() + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
         Territories.initialize();
+        LatLon temp = new LatLon(40, -100);
+        await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
+    }
+
+    @After
+    public void tearDown() {
+        wireMock.stop();
     }
 
     @Test
