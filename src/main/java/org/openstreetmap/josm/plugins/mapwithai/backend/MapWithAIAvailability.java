@@ -54,6 +54,10 @@ public final class MapWithAIAvailability extends DataAvailability {
         COUNTRY_NAME_FIX.put("Congo", Collections.singleton("Congo, Rep."));
         COUNTRY_NAME_FIX.put("North Macedonia", Collections.singleton("Macedonia, FYR"));
         COUNTRY_NAME_FIX.put("Venezuela", Collections.singleton("Venezuela, RB"));
+        COUNTRY_NAME_FIX.put("South Korea", Collections.singleton("Korea, Rep."));
+        COUNTRY_NAME_FIX.put("Kyrgyzstan", Collections.singleton("Kyrgyz Republic"));
+        COUNTRY_NAME_FIX.put("Northern Cyprus", Collections.singleton("Cyprus"));
+        COUNTRY_NAME_FIX.put("Yemen", Collections.singleton("Yemen, Rep."));
         POSSIBLE_DATA_POINTS.put("highway", "RapiD roads available");
         POSSIBLE_DATA_POINTS.put("building", "MS buildings available");
     }
