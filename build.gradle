@@ -127,7 +127,7 @@ jacocoTestCoverageVerification {
 
 josm {
   manifest {
-    oldVersionDownloadLink 15233, "v0.2.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v0.2.7/mapwithai.jar")
+    oldVersionDownloadLink 15233, "v0.2.9", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v0.2.9/mapwithai.jar")
   }
   i18n {
     pathTransformer = getPathTransformer("gitlab.com/${gitlabGroup}/${gitlabRepositoryName}/blob")
