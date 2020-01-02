@@ -192,10 +192,13 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     @Override
     public void selectionChanged(SelectionChangeEvent event) {
         final int maximumAdditionSelection = MapWithAIPreferenceHelper.getMaximumAddition();
-        if (maximumAdditionSelection < event.getSelection().size()
+        if ((event.getSelection().size() - event.getOldSelection().size() > 1
+                || maximumAdditionSelection < event.getSelection().size())
                 && (MapWithAIPreferenceHelper.getMaximumAddition() != 0 || !ExpertToggleAction.isExpert())) {
-            getDataSet().setSelected(event.getSelection().stream().distinct().limit(maximumAdditionSelection)
-                    .collect(Collectors.toList()));
+            MainApplication.worker.execute(() -> {
+                getDataSet().setSelected(event.getSelection().stream().distinct().limit(maximumAdditionSelection)
+                        .limit(event.getOldSelection().size() + 1L).collect(Collectors.toList()));
+            });
         }
         super.selectionChanged(event);
     }
