@@ -73,7 +73,7 @@ public final class MapWithAIDataUtils {
                 "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss",
                 "resource://styles/standard/mapwithai.mapcss");
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(style -> oldUrls.contains(style.url)).forEach(MapPaintStyles::removeStyle);
+        .filter(style -> oldUrls.contains(style.url)).forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
             final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
@@ -95,8 +95,8 @@ public final class MapWithAIDataUtils {
      */
     public static void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(source -> paintStyleResourceUrl.equals(source.url))
-                .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
+        .filter(source -> paintStyleResourceUrl.equals(source.url))
+        .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
     }
 
     /**
@@ -161,7 +161,9 @@ public final class MapWithAIDataUtils {
     public static DataSet getData(List<BBox> bbox) {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
-        final List<Bounds> realBounds = realBBoxes.stream().map(MapWithAIDataUtils::bboxToBounds)
+        final List<Bounds> realBounds = realBBoxes.stream()
+                .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox).stream())
+                .map(MapWithAIDataUtils::bboxToBounds)
                 .collect(Collectors.toList());
         if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .anyMatch(map -> Boolean.valueOf(map.getOrDefault("enabled", "false")))) {
@@ -173,35 +175,35 @@ public final class MapWithAIDataUtils {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
                 realBounds.parallelStream()
-                        .forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                                .filter(map -> map.containsKey("url")).map(MapWithAIDataUtils::getUrl)
-                                .filter(string -> !string.trim().isEmpty()).forEach(url -> {
-                                    BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
-                                            bound, url, DetectTaskingManagerUtils.hasTaskingManagerLayer());
-                                    try {
-                                        DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
-                                        synchronized (MapWithAIDataUtils.class) {
-                                            dataSet.mergeFrom(ds);
-                                        }
-                                    } catch (OsmTransferException e) {
-                                        Logging.error(e);
-                                    }
-                                }));
+                .forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                        .filter(map -> map.containsKey("url")).map(MapWithAIDataUtils::getUrl)
+                        .filter(string -> !string.trim().isEmpty()).forEach(url -> {
+                            BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
+                                    bound, url, DetectTaskingManagerUtils.hasTaskingManagerLayer());
+                            try {
+                                DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
+                                synchronized (MapWithAIDataUtils.class) {
+                                    dataSet.mergeFrom(ds);
+                                }
+                            } catch (OsmTransferException e) {
+                                Logging.error(e);
+                            }
+                        }));
                 monitor.finishTask();
                 monitor.close();
             }
         } else {
             final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIURLs().isEmpty()
                     ? new Notification(tr("There are no defined URLs. To get the defaults, restart JOSM"))
-                    : new Notification(tr("No URLS are enabled"));
-            noUrls.setDuration(Notification.TIME_DEFAULT);
-            noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
-            noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
-            if (SwingUtilities.isEventDispatchThread()) {
-                noUrls.show();
-            } else {
-                SwingUtilities.invokeLater(noUrls::show);
-            }
+                            : new Notification(tr("No URLS are enabled"));
+                    noUrls.setDuration(Notification.TIME_DEFAULT);
+                    noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
+                    noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
+                    if (SwingUtilities.isEventDispatchThread()) {
+                        noUrls.show();
+                    } else {
+                        SwingUtilities.invokeLater(noUrls::show);
+                    }
         }
         return dataSet;
     }
