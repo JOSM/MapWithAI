@@ -247,8 +247,8 @@ publish to / GitLab.com packages:
     name: GitLab.com / ${CI_PROJECT_NAME} packages
     url: ${CI_PROJECT_URL}/-/packages
   script:
-  - ./gradlew publishAllPublicationsToGitlabRepository --stacktrace
-  - ./gradlew releaseToGitlab --stacktrace --info
+  - ./gradlew publishAllPublicationsToGitlabRepository
+  - ./gradlew releaseToGitlab
   dependencies:
   - build
   only:

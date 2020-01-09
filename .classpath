@@ -25,5 +25,15 @@
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/JOSM"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JOSM-utilsplugin2"/>
+	<classpathentry kind="lib" path="/JOSM/test/lib/wiremock-standalone-2.20.0.jar">
+		<attributes>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/JOSM/tools/spotbugs/spotbugs-annotations.jar">
+		<attributes>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="build/classes/java/main"/>
 </classpath>
