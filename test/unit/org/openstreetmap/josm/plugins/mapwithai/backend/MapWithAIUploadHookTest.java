@@ -38,7 +38,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIUploadHookTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection();
+    public JOSMTestRules test = new JOSMTestRules().main().projection().preferences();
 
     /**
      * Test method for {@link MapWithAIUploadHook#modifyChangesetTags(Map)}.
