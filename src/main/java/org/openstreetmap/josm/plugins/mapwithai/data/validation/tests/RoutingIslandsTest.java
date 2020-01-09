@@ -100,8 +100,8 @@ public class RoutingIslandsTest extends Test {
                 errors.add(TestError.builder(this, SEVERITY_MAP.get(LONELY_WAY), LONELY_WAY).primitives(way)
                         .message(tr("MapWithAI (experimental)"), marktr("Routable way not connected to other ways"))
                         .build());
-            } else if ((ValidatorPrefHelper.PREF_OTHER.get() || ValidatorPrefHelper.PREF_OTHER_UPLOAD.get()
-                    || !Severity.OTHER.equals(SEVERITY_MAP.get(ROUTING_ISLAND)))) {
+            } else if (((ValidatorPrefHelper.PREF_OTHER.get() || ValidatorPrefHelper.PREF_OTHER_UPLOAD.get()
+                    || !Severity.OTHER.equals(SEVERITY_MAP.get(ROUTING_ISLAND)))) && !isBeforeUpload) {
                 if (way.hasKey(HIGHWAY)) {
                     potentialHighways.add(way);
                 } else if (way.hasKey(WATERWAY)) {
