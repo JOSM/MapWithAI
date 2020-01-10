@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
+import org.openstreetmap.josm.tools.Utils;
 
 public class DataAvailability {
     /** This points to a list of default sources that can be used with MapWithAI */
@@ -243,5 +245,57 @@ public class DataAvailability {
      */
     public String getUrl() {
         return null;
+    }
+
+    /**
+     * Get the Terms Of Use Url
+     *
+     * @return The url or ""
+     */
+    public String getTermsOfUseUrl() {
+        return "";
+    }
+
+    /**
+     * Get the Terms Of Use Url
+     *
+     * @return The url or ""
+     */
+    public String getPrivacyPolicyUrl() {
+        return "";
+    }
+
+    /**
+     * Get the terms of use for all specially handled URL's
+     *
+     * @return List of terms of use urls
+     */
+    public static final List<String> getTermsOfUse() {
+        return DATA_SOURCES.stream().map(clazz -> {
+            try {
+                return clazz.getConstructor().newInstance().getTermsOfUseUrl();
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                Logging.debug(e);
+            }
+            return "";
+        }).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).collect(Collectors.toList());
+    }
+
+    /**
+     * Get the privacy policy for all specially handled URL's
+     *
+     * @return List of privacy policy urls
+     */
+    public static final List<String> getPrivacyPolicy() {
+        return DATA_SOURCES.stream().map(clazz -> {
+            try {
+                return clazz.getConstructor().newInstance().getPrivacyPolicyUrl();
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                Logging.debug(e);
+            }
+            return "";
+        }).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).collect(Collectors.toList());
     }
 }

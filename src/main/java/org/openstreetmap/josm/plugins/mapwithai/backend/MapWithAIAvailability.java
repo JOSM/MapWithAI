@@ -141,4 +141,14 @@ public final class MapWithAIAvailability extends DataAvailability {
     public String getUrl() {
         return MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API;
     }
+
+    @Override
+    public String getTermsOfUseUrl() {
+        return "https://mapwith.ai/doc/license/MapWithAILicense.pdf";
+    }
+
+    @Override
+    public String getPrivacyPolicyUrl() {
+        return "https://mapwith.ai/doc/license/MapWithAIPrivacyPolicy.pdf#page=3";
+    }
 }
