@@ -24,7 +24,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIPreferencesTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().timeout(100_000);
 
     private MapWithAIPreferences preferences;
 
