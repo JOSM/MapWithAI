@@ -74,7 +74,7 @@ public class MapWithAIRemoteControlTest {
 
     /**
      * Unit test for bad request - invalid URL.
-     * 
+     *
      * @throws Exception if any error occurs
      */
     @Test

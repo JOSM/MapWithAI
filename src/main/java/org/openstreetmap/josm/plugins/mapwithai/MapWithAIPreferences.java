@@ -306,7 +306,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
      * @return A scroll pane with sources
      */
     public JScrollPane legalInformation(JPanel pane) {
-        GBC line = GBC.eol().fill(GBC.HORIZONTAL);
+        GBC line = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
         JPanel termsOfUse = new JPanel(new GridBagLayout());
         termsOfUse.add(new JLabel(tr("Server Terms Of Use")), line);
         DataAvailability.getTermsOfUse().stream().map(MapWithAIPreferences::convertUrlToTextWithAction)

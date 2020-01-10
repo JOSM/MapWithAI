@@ -18,7 +18,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
-import org.openstreetmap.josm.actions.SaveAction;
+import org.openstreetmap.josm.actions.SaveActionBase;
 import org.openstreetmap.josm.command.MoveCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -252,7 +252,7 @@ public class MapWithAIAddComandTest {
         test.endTest();
         assertTrue(test.getErrors().isEmpty());
 
-        SaveAction.doSave(layer, new File("post_command1.osm"), false);
+        SaveActionBase.doSave(layer, new File("post_command1.osm"), false);
         connectionsCommand.undoCommand();
 
         connectionsCommand = new MapWithAIAddCommand(ds, osmData, ds.allPrimitives());
@@ -261,7 +261,7 @@ public class MapWithAIAddComandTest {
         test.visit(osmData.allPrimitives());
         test.endTest();
         assertTrue(test.getErrors().isEmpty());
-        SaveAction.doSave(layer, new File("post_command2.osm"), false);
+        SaveActionBase.doSave(layer, new File("post_command2.osm"), false);
     }
 
 }
