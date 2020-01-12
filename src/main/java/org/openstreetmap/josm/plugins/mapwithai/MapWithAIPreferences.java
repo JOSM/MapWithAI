@@ -205,7 +205,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
         pane.add(Box.createHorizontalGlue(), second);
 
-        legalInformation(pane);
+        // TODO check implementation legalInformation(pane);
 
         JButton kaartLogo = new JButton(ImageProvider.getIfAvailable("kaart") == null ? null
                 : new ImageProvider("kaart").setHeight(ImageProvider.ImageSizes.SETTINGS_TAB.getAdjustedHeight())
