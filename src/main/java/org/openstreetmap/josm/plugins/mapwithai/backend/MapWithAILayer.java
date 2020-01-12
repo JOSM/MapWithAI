@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +21,7 @@ import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
@@ -31,6 +33,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.Logging;
 
 /**
  * @author Taylor Smock
@@ -191,15 +194,24 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public void selectionChanged(SelectionChangeEvent event) {
+        super.selectionChanged(event);
         final int maximumAdditionSelection = MapWithAIPreferenceHelper.getMaximumAddition();
         if ((event.getSelection().size() - event.getOldSelection().size() > 1
                 || maximumAdditionSelection < event.getSelection().size())
                 && (MapWithAIPreferenceHelper.getMaximumAddition() != 0 || !ExpertToggleAction.isExpert())) {
+            Collection<OsmPrimitive> selection = event.getSelection().stream().distinct()
+                    .limit(maximumAdditionSelection).limit(event.getOldSelection().size() + 1L)
+                    .collect(Collectors.toList());
             MainApplication.worker.execute(() -> {
-                getDataSet().setSelected(event.getSelection().stream().distinct().limit(maximumAdditionSelection)
-                        .limit(event.getOldSelection().size() + 1L).collect(Collectors.toList()));
+                synchronized (this) {
+                    try {
+                        wait(10);
+                    } catch (InterruptedException e) {
+                        Logging.error(e);
+                    }
+                    getDataSet().setSelected(selection);
+                }
             });
         }
-        super.selectionChanged(event);
     }
 }
