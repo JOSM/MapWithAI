@@ -16,6 +16,7 @@ import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
@@ -33,7 +34,6 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
-import org.openstreetmap.josm.tools.Logging;
 
 /**
  * @author Taylor Smock
@@ -202,16 +202,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
             Collection<OsmPrimitive> selection = event.getSelection().stream().distinct()
                     .limit(maximumAdditionSelection).limit(event.getOldSelection().size() + 1L)
                     .collect(Collectors.toList());
-            MainApplication.worker.execute(() -> {
-                synchronized (this) {
-                    try {
-                        wait(10);
-                    } catch (InterruptedException e) {
-                        Logging.error(e);
-                    }
-                    getDataSet().setSelected(selection);
-                }
-            });
+            SwingUtilities.invokeLater(() -> getDataSet().setSelected(selection));
         }
     }
 }
