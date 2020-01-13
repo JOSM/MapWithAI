@@ -4,7 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -278,16 +277,9 @@ public final class MapWithAIDataUtils {
         }
 
         final MapWithAILayer tLayer = layer;
-        if (SwingUtilities.isEventDispatchThread() && create) {
+        if (create && !MainApplication.getLayerManager().containsLayer(tLayer)) {
             MainApplication.getLayerManager().addLayer(tLayer);
-        } else if (create) {
-            try {
-                SwingUtilities.invokeAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
-            } catch (InvocationTargetException | InterruptedException e) {
-                Logging.error(e);
-            }
         }
-
         return layer;
     }
 
