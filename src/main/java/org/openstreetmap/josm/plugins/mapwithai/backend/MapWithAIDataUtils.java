@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +51,7 @@ import org.openstreetmap.josm.tools.Utils;
 public final class MapWithAIDataUtils {
     /** THe maximum dimensions for MapWithAI data (in kilometers) */
     public static final int MAXIMUM_SIDE_DIMENSIONS = 5_000; // RapiD is about 1km, max is 10km, but 10km causes
-                                                             // timeouts
+    // timeouts
     private static final int TOO_MANY_BBOXES = 4;
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
@@ -271,11 +272,22 @@ public final class MapWithAIDataUtils {
         synchronized (LAYER_LOCK) {
             if (mapWithAILayers.isEmpty() && create) {
                 layer = new MapWithAILayer(new DataSet(), MapWithAIPlugin.NAME, null);
-                MainApplication.getLayerManager().addLayer(layer);
             } else if (!mapWithAILayers.isEmpty()) {
                 layer = mapWithAILayers.get(0);
             }
         }
+
+        final MapWithAILayer tLayer = layer;
+        if (SwingUtilities.isEventDispatchThread() && create) {
+            MainApplication.getLayerManager().addLayer(tLayer);
+        } else if (create) {
+            try {
+                SwingUtilities.invokeAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
+            } catch (InvocationTargetException | InterruptedException e) {
+                Logging.error(e);
+            }
+        }
+
         return layer;
     }
 
