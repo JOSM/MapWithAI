@@ -167,7 +167,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         final List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
                 .parallelStream().map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet))
                 .collect(Collectors.toList());
-        dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+        dataSet.getWays().parallelStream().filter(way -> !way.isDeleted() && way.getOsmId() <= 0)
                 .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
                 .forEach(way -> {
                     final List<Node> nodes = way.getNodes();
@@ -279,23 +279,50 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 .collect(Collectors.toList());
         for (int i = 0; i < nodes.size(); i++) {
             final Node n1 = nodes.get(i);
-            final BBox bbox = new BBox();
-            bbox.addPrimitive(n1, 0.001);
-            final List<Node> nearbyNodes = dataSet.searchNodes(bbox).parallelStream().filter(node -> !node.isDeleted()
-                    && !node.equals(n1) && node.getReferrers().parallelStream().allMatch(prim -> prim.hasKey("highway"))
-                    && (((n1.getKeys().equals(node.getKeys()) || n1.getKeys().isEmpty() || node.getKeys().isEmpty())
-                            && (n1.getCoor().greatCircleDistance(node.getCoor()) < MapWithAIPreferenceHelper
-                                    .getMaxNodeDistance()))
-                            || (!n1.getKeys().isEmpty() && n1.getKeys().equals(node.getKeys())
-                                    && (n1.getCoor().greatCircleDistance(
-                                            node.getCoor()) < (MapWithAIPreferenceHelper.getMaxNodeDistance() * 10)))))
-                    .collect(Collectors.toList());
+            final List<Node> nearbyNodes = nearbyNodes(dataSet, n1);
             final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, n1);
             if (mergeCommand != null) {
                 mergeCommand.executeCommand();
                 nodes.removeAll(nearbyNodes);
             }
         }
+    }
+
+    private static List<Node> nearbyNodes(DataSet ds, Node nearNode) {
+        final BBox bbox = new BBox();
+        bbox.addPrimitive(nearNode, 0.001);
+        return ds.searchNodes(bbox).parallelStream().filter(node -> usableNode(nearNode, node))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean usableNode(Node nearNode, Node node) {
+        return basicNodeChecks(nearNode, node) && onlyHasHighwayParents(node)
+                && ((keyCheck(nearNode, node)
+                        && distanceCheck(nearNode, node, MapWithAIPreferenceHelper.getMaxNodeDistance()))
+                        || (!nearNode.getKeys().isEmpty() && nearNode.getKeys().equals(node.getKeys())
+                                && distanceCheck(nearNode, node, MapWithAIPreferenceHelper.getMaxNodeDistance() * 10)));
+    }
+
+    private static boolean distanceCheck(Node nearNode, Node node, Double distance) {
+        try {
+            return nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
+        } catch (Exception e) {
+            Logging.error(e);
+            return false;
+        }
+    }
+
+    private static boolean keyCheck(Node nearNode, Node node) {
+        return nearNode.getKeys().equals(node.getKeys()) || nearNode.getKeys().isEmpty() || node.getKeys().isEmpty();
+    }
+
+    private static boolean onlyHasHighwayParents(Node node) {
+        return node.getReferrers().parallelStream().allMatch(prim -> prim.hasKey("highway"));
+    }
+
+    private static boolean basicNodeChecks(Node nearNode, Node node) {
+        return node != null && nearNode != null && !node.isDeleted() && !nearNode.isDeleted() && !nearNode.equals(node)
+                && node.isLatLonKnown() && nearNode.isLatLonKnown();
     }
 
     private static void mergeWays(DataSet dataSet) {
