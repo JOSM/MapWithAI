@@ -112,7 +112,6 @@ compile against min JOSM:
   - ./gradlew compileJava_minJosm
   dependencies:
   - assemble
-  allow_failure: true
 
 compile against latest JOSM:
   stage: test

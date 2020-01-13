@@ -17,7 +17,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.data.validation.OsmValidator;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
@@ -27,6 +26,7 @@ import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
+import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadListener;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
@@ -160,8 +160,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         destroyables.forEach(Destroyable::destroy);
         DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
-        if (Version.getInstance().getVersion() >= 15603) {
-            OsmValidator.removeTest(RoutingIslandsTest.class);
-        }
+        OsmValidator.removeTest(RoutingIslandsTest.class);
+        DownloadListener.destroyAll();
     }
 }

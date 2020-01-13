@@ -3,7 +3,10 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -11,8 +14,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -25,6 +30,7 @@ import org.openstreetmap.josm.data.osm.DownloadPolicy;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListener;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -43,6 +49,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     private Integer maximumAddition;
     private String url;
     private Boolean switchLayers;
+    private boolean continuousDownload;
     private final Lock lock;
 
     /**
@@ -114,7 +121,12 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     public Action[] getMenuEntries() {
         final List<Action> actions = Arrays.asList(super.getMenuEntries()).stream()
                 .filter(action -> !(action instanceof LayerSaveAction) && !(action instanceof LayerSaveAsAction))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (actions.isEmpty()) {
+            actions.add(new ContinuousDownloadAction(this));
+        } else {
+            actions.add(actions.size() - 2, new ContinuousDownloadAction(this));
+        }
         return actions.toArray(new Action[0]);
     }
 
@@ -204,5 +216,42 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
                     .collect(Collectors.toList());
             SwingUtilities.invokeLater(() -> getDataSet().setSelected(selection));
         }
+    }
+
+    /**
+     * @return {@code true} indicates that we should attempt to keep it in sync with
+     *         the data layer(s)
+     */
+    public boolean downloadContinuous() {
+        return continuousDownload;
+    }
+
+    private class ContinuousDownloadAction extends AbstractAction implements LayerAction {
+        private static final long serialVersionUID = -3528632887550700527L;
+        private final MapWithAILayer layer;
+
+        public ContinuousDownloadAction(MapWithAILayer layer) {
+            super(tr("Continuous download"));
+            new ImageProvider("download").getResource().attachImageIcon(this, true);
+            this.layer = layer;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            layer.continuousDownload = !layer.continuousDownload;
+        }
+
+        @Override
+        public boolean supportLayers(List<Layer> layers) {
+            return layers.stream().allMatch(MapWithAILayer.class::isInstance);
+        }
+
+        @Override
+        public Component createMenuComponent() {
+            JCheckBoxMenuItem item = new JCheckBoxMenuItem(this);
+            item.setSelected(layer.continuousDownload);
+            return item;
+        }
+
     }
 }
