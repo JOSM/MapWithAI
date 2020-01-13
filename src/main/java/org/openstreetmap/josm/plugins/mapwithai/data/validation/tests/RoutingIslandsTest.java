@@ -50,6 +50,7 @@ public class RoutingIslandsTest extends Test {
 
     private static final String HIGHWAY = "highway";
     private static final String WATERWAY = "waterway";
+    private static final List<String> IGNORE_TAGS = Arrays.asList("services", "rest_area");
 
     /**
      * This is mostly as a sanity check, and to avoid infinite recursion (shouldn't
@@ -91,8 +92,9 @@ public class RoutingIslandsTest extends Test {
 
     @Override
     public void visit(Way way) {
-        if (way.isUsable() && way.getNodes().parallelStream().anyMatch(node -> way.getDataSet().getDataSourceBounds()
-                .parallelStream().anyMatch(source -> source.contains(node.getCoor())))) {
+        if (way.isUsable() && !IGNORE_TAGS.contains(way.get("highway")) && !IGNORE_TAGS.contains(way.get("waterway"))
+                && way.getNodes().parallelStream().anyMatch(node -> way.getDataSet().getDataSourceBounds()
+                        .parallelStream().anyMatch(source -> source.contains(node.getCoor())))) {
             if ((way.hasKey(HIGHWAY) || way.hasKey(WATERWAY))
                     && way.getNodes().parallelStream().flatMap(node -> node.getReferrers().parallelStream()).distinct()
                             .allMatch(way::equals)
