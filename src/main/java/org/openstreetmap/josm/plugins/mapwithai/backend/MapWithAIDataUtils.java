@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -167,11 +168,7 @@ public final class MapWithAIDataUtils {
                 .map(MapWithAIDataUtils::bboxToBounds).collect(Collectors.toList());
         if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .anyMatch(map -> Boolean.valueOf(map.getOrDefault("enabled", "false")))) {
-            if ((realBBoxes.size() < TOO_MANY_BBOXES) || ConditionalOptionPaneUtil.showConfirmationDialog(
-                    MapWithAIPlugin.NAME.concat(".alwaysdownload"), null,
-                    tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
-                            realBBoxes.size()),
-                    null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION)) {
+            if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
                 realBounds.parallelStream()
@@ -206,6 +203,41 @@ public final class MapWithAIDataUtils {
             }
         }
         return dataSet;
+    }
+
+    private static boolean confirmBigDownload(List<BBox> realBBoxes) {
+        ConfirmBigDownload confirmation = new ConfirmBigDownload(realBBoxes);
+        try {
+            SwingUtilities.invokeAndWait(confirmation);
+        } catch (InterruptedException e) {
+            Logging.error(e);
+            Thread.currentThread().interrupt();
+        } catch (InvocationTargetException e) {
+            Logging.error(e);
+        }
+        return confirmation.confirmed();
+    }
+
+    private static class ConfirmBigDownload implements Runnable {
+        Boolean bool;
+        List<BBox> realBBoxes;
+
+        public ConfirmBigDownload(List<BBox> realBBoxes) {
+            this.realBBoxes = realBBoxes;
+        }
+
+        @Override
+        public void run() {
+            bool = ConditionalOptionPaneUtil.showConfirmationDialog(MapWithAIPlugin.NAME.concat(".alwaysdownload"),
+                    null,
+                    tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
+                            realBBoxes.size()),
+                    null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION);
+        }
+
+        public boolean confirmed() {
+            return bool;
+        }
     }
 
     private static String getUrl(Map<String, String> urlInformation) {
