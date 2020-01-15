@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 
 import javax.swing.JMenu;
 
@@ -73,10 +75,18 @@ public class MapWithAIPluginTest {
 
     /**
      * Test method for {@link MapWithAIPlugin#MapWithAIPlugin(PluginInformation)}.
+     *
+     * @throws SecurityException        see {@link java.lang.Class#getDeclaredField}
+     * @throws NoSuchFieldException     see {@link java.lang.Class#getDeclaredField}
+     * @throws IllegalAccessException   see {@link java.lang.reflect.Field#get}
+     * @throws IllegalArgumentException see {@link java.lang.reflect.Field#get}
      */
     @Test
-    public void testMapWithAIPlugin() {
-        final int addedMenuItems = 3;
+    public void testMapWithAIPlugin()
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        Field menuEntries = MapWithAIPlugin.class.getDeclaredField("MENU_ENTRIES");
+        menuEntries.setAccessible(true);
+        final int addedMenuItems = ((Map<?, ?>) menuEntries.get(plugin)).size();
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
