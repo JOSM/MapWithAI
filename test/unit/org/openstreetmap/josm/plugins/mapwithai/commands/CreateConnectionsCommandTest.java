@@ -82,13 +82,13 @@ public class CreateConnectionsCommandTest {
         createConnections.undoCommand();
         assertFalse(dataSet.isModified(), "DataSet shouldn't be modified yet");
 
-        node3.put(ConnectedCommand.CONN_KEY,
+        node3.put(ConnectedCommand.KEY,
                 "w" + way.getUniqueId() + ",n" + node1.getUniqueId() + ",n" + node2.getUniqueId());
         createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(node3));
         createConnections.executeCommand();
         assertTrue(dataSet.isModified(), "DataSet should be modified");
         assertEquals(3, way.getNodesCount(), "The way should have three nodes");
-        assertFalse(node3.hasKey(ConnectedCommand.CONN_KEY), "There should be no conn key");
+        assertFalse(node3.hasKey(ConnectedCommand.KEY), "There should be no conn key");
         createConnections.fillModifiedData(modified, deleted, added);
         assertEquals(3, modified.size(),
                 "There should be three modifications (the connecting way, the node, and the node again for key removal)");
@@ -97,22 +97,22 @@ public class CreateConnectionsCommandTest {
         createConnections.undoCommand();
         assertFalse(dataSet.isModified(), "DataSet is no longer modified");
         assertEquals(2, way.getNodesCount(), "The way should have two nodes again");
-        assertTrue(node3.hasKey(ConnectedCommand.CONN_KEY), "The conn key should exist again");
+        assertTrue(node3.hasKey(ConnectedCommand.KEY), "The conn key should exist again");
 
-        dupe.put(DuplicateCommand.DUPE_KEY, "n" + node1.getUniqueId());
+        dupe.put(DuplicateCommand.KEY, "n" + node1.getUniqueId());
         createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(dupe));
         createConnections.executeCommand();
         assertTrue(dataSet.isModified(), "The DataSet should be modified");
         assertEquals(2, way.getNodesCount(), "The way should have two nodes");
-        assertFalse(node1.hasKey(DuplicateCommand.DUPE_KEY), "There should no longer be a dupe key");
+        assertFalse(node1.hasKey(DuplicateCommand.KEY), "There should no longer be a dupe key");
         modified.clear();
         createConnections.fillModifiedData(modified, deleted, added);
         assertEquals(2, modified.size(), "We removed a node and modified a way");
         assertTrue(deleted.isEmpty(), "Nothing was truly deleted (the dupe node doesn't count)");
         assertTrue(added.isEmpty(), "Nothing was added");
         createConnections.undoCommand();
-        assertFalse(node1.hasKey(DuplicateCommand.DUPE_KEY), "The original node should not have the dupe key");
-        assertTrue(dupe.hasKey(DuplicateCommand.DUPE_KEY), "The dupe node should have the dupe key");
+        assertFalse(node1.hasKey(DuplicateCommand.KEY), "The original node should not have the dupe key");
+        assertTrue(dupe.hasKey(DuplicateCommand.KEY), "The dupe node should have the dupe key");
         assertFalse(dataSet.isModified(), "The DataSet is no longer modified");
         assertEquals(2, way.getNodesCount(), "The way still has two nodes");
     }
@@ -177,7 +177,7 @@ public class CreateConnectionsCommandTest {
     public void testGetMissingPrimitives() {
         final Node node1 = new Node(new LatLon(39.0674124, -108.5592645));
         final DataSet dataSet = new DataSet(node1);
-        node1.put(DuplicateCommand.DUPE_KEY, "n6146500887");
+        node1.put(DuplicateCommand.KEY, "n6146500887");
         Command replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1));
 
         replaceNodeCommand.executeCommand();
@@ -191,7 +191,7 @@ public class CreateConnectionsCommandTest {
                 "We don't roll back downloaded data");
 
         node1.setCoor(new LatLon(39.067399, -108.5608433));
-        node1.put(DuplicateCommand.DUPE_KEY, "n6151680832");
+        node1.put(DuplicateCommand.KEY, "n6151680832");
         final OsmDataLayer layer = new OsmDataLayer(dataSet, "temp layer", null);
         MainApplication.getLayerManager().addLayer(layer);
 

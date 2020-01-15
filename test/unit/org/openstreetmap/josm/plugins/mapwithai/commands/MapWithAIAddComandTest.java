@@ -230,8 +230,8 @@ public class MapWithAIAddComandTest {
         String connectedValue = "w" + Long.toString(original.getUniqueId()) + ",n"
                 + Long.toString(original.firstNode().getUniqueId()) + ",n"
                 + Long.toString(original.lastNode().getUniqueId());
-        way1.firstNode().put(ConnectedCommand.CONN_KEY, connectedValue);
-        way2.firstNode().put(ConnectedCommand.CONN_KEY, connectedValue);
+        way1.firstNode().put(ConnectedCommand.KEY, connectedValue);
+        way2.firstNode().put(ConnectedCommand.KEY, connectedValue);
 
         DataSet ds = new DataSet();
         DataSet osmData = new DataSet();

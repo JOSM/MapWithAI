@@ -21,17 +21,17 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
 
 public class DuplicateCommand extends AbstractConflationCommand {
-    public static final String DUPE_KEY = "dupe";
+    public static final String KEY = "dupe";
 
     public DuplicateCommand(DataSet data) {
         super(data);
     }
 
     private static List<Command> duplicateNode(DataSet dataSet, Node node) {
-        final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(DUPE_KEY));
+        final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(KEY));
         if (primitiveConnections.length != 1) {
             Logging.error("{0}: {3} connection connected to more than one node? ({3}={1})", MapWithAIPlugin.NAME,
-                    node.get(DUPE_KEY), DUPE_KEY);
+                    node.get(KEY), KEY);
         }
 
         final List<Command> commands = new ArrayList<>();
@@ -40,13 +40,13 @@ public class DuplicateCommand extends AbstractConflationCommand {
             final Command tCommand = replaceNode(node, replaceNode);
             if (tCommand != null) {
                 commands.add(tCommand);
-                if (replaceNode.hasKey(DUPE_KEY)) {
-                    final String key = replaceNode.get(DUPE_KEY);
-                    commands.add(new ChangePropertyCommand(replaceNode, DUPE_KEY, key));
+                if (replaceNode.hasKey(KEY)) {
+                    final String key = replaceNode.get(KEY);
+                    commands.add(new ChangePropertyCommand(replaceNode, KEY, key));
                 } else {
-                    replaceNode.put(DUPE_KEY, "empty_value"); // This is needed to actually have a command.
-                    commands.add(new ChangePropertyCommand(replaceNode, DUPE_KEY, null));
-                    replaceNode.remove(DUPE_KEY);
+                    replaceNode.put(KEY, "empty_value"); // This is needed to actually have a command.
+                    commands.add(new ChangePropertyCommand(replaceNode, KEY, null));
+                    replaceNode.remove(KEY);
                 }
             }
         }
@@ -81,14 +81,14 @@ public class DuplicateCommand extends AbstractConflationCommand {
 
     @Override
     public String getKey() {
-        return DUPE_KEY;
+        return KEY;
     }
 
     @Override
     public Command getRealCommand() {
         final List<Command> commands = new ArrayList<>();
         for (Node tNode : possiblyAffectedPrimitives.stream().filter(Node.class::isInstance).map(Node.class::cast)
-                .distinct().filter(node -> node.hasKey(DUPE_KEY)).collect(Collectors.toList())) {
+                .distinct().filter(node -> node.hasKey(KEY)).collect(Collectors.toList())) {
             List<Command> tCommands = duplicateNode(getAffectedDataSet(), tNode);
             // We have to execute the command to avoid duplicating the command later. Undo
             // occurs later, so that the state doesn't actually change.

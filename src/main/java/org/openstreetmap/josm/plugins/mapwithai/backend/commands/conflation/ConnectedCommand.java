@@ -20,7 +20,7 @@ import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 
 public class ConnectedCommand extends AbstractConflationCommand {
-    public static final String CONN_KEY = "conn";
+    public static final String KEY = "conn";
 
     public ConnectedCommand(DataSet data) {
         super(data);
@@ -55,7 +55,7 @@ public class ConnectedCommand extends AbstractConflationCommand {
 
     private static List<Command> connectedCommand(DataSet dataSet, Node node) {
         final List<Command> commands = new ArrayList<>();
-        final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(CONN_KEY));
+        final OsmPrimitive[] primitiveConnections = getPrimitives(dataSet, node.get(KEY));
         for (int i = 0; i < primitiveConnections.length / 3; i++) {
             if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
                     && primitiveConnections[i + 2] instanceof Node) {
@@ -69,7 +69,7 @@ public class ConnectedCommand extends AbstractConflationCommand {
                         primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
             }
         }
-        commands.add(new ChangePropertyCommand(node, CONN_KEY, null));
+        commands.add(new ChangePropertyCommand(node, KEY, null));
         return commands;
     }
 
@@ -80,7 +80,7 @@ public class ConnectedCommand extends AbstractConflationCommand {
 
     @Override
     public String getKey() {
-        return CONN_KEY;
+        return KEY;
     }
 
     @Override

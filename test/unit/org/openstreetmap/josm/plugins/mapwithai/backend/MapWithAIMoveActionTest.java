@@ -69,7 +69,7 @@ public class MapWithAIMoveActionTest {
     @Test
     public void testConflationDupeKeyRemoval() {
         mapWithAIData.unlock();
-        way1.lastNode().put(DuplicateCommand.DUPE_KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
+        way1.lastNode().put(DuplicateCommand.KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
         mapWithAIData.lock();
         mapWithAIData.addSelected(way1);
         final DataSet ds = osmLayer.getDataSet();
@@ -77,33 +77,33 @@ public class MapWithAIMoveActionTest {
         moveAction.actionPerformed(null);
         assertTrue(((Way) ds.getPrimitiveById(way1)).lastNode().equals(((Way) ds.getPrimitiveById(way2)).lastNode()),
                 "The duplicate node should have been replaced");
-        assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.DUPE_KEY),
+        assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY),
                 "The dupe key should no longer exist");
-        assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(DuplicateCommand.DUPE_KEY),
+        assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(DuplicateCommand.KEY),
                 "The dupe key should no longer exist");
 
         UndoRedoHandler.getInstance().undo();
-        assertFalse(way2.lastNode().hasKey(DuplicateCommand.DUPE_KEY), "The dupe key should no longer exist");
-        assertTrue(way1.lastNode().hasKey(DuplicateCommand.DUPE_KEY), "The dupe key should no longer exist");
+        assertFalse(way2.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
+        assertTrue(way1.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
     }
 
     @Test
     public void testConflationConnKeyRemoval() {
         mapWithAIData.unlock();
-        way1.lastNode().put(ConnectedCommand.CONN_KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
+        way1.lastNode().put(ConnectedCommand.KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
                 + Long.toString(way2.lastNode().getUniqueId()) + ",n" + Long.toString(way2.firstNode().getUniqueId()));
         mapWithAIData.lock();
         mapWithAIData.addSelected(way1);
 
         moveAction.actionPerformed(null);
-        assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
-        assertFalse(way2.firstNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
-        assertFalse(way2.getNode(1).hasKey(ConnectedCommand.CONN_KEY), "The conn key should have been removed");
+        assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
+        assertFalse(way2.firstNode().hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
+        assertFalse(way2.getNode(1).hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
         assertTrue(way1.isDeleted(), "way1 should be deleted when added");
 
         UndoRedoHandler.getInstance().undo();
-        assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key shouldn't exist");
-        assertTrue(way1.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should exist");
+        assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key shouldn't exist");
+        assertTrue(way1.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should exist");
         assertFalse(way1.lastNode().isDeleted(), "way1 should no longer be deleted");
     }
 }

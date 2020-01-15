@@ -1,8 +1,9 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,17 +38,22 @@ public class ConnectingNodeInformationTestTest {
         test.startTest(null);
         test.visit(ds.allPrimitives());
         assertTrue(test.getErrors().isEmpty());
-        way.firstNode().put(DuplicateCommand.DUPE_KEY, "n123");
+        way.firstNode().put(DuplicateCommand.KEY, "n123");
         test.visit(ds.allPrimitives());
         assertEquals(1, test.getErrors().size());
         assertEquals(way.firstNode(), test.getErrors().get(0).getPrimitives().iterator().next());
+        test.getErrors().get(0).getFix().executeCommand();
+        assertFalse(way.firstNode().hasKey(DuplicateCommand.KEY));
         test.clear();
 
-        way.firstNode().put(DuplicateCommand.DUPE_KEY, null);
-        way.put(ConnectedCommand.CONN_KEY, "w1,w2,n123");
+        way.firstNode().put(DuplicateCommand.KEY, null);
+        way.put(ConnectedCommand.KEY, "w1,w2,n123");
         test.visit(ds.allPrimitives());
         assertEquals(1, test.getErrors().size());
         assertEquals(way, test.getErrors().get(0).getPrimitives().iterator().next());
+        test.getErrors().get(0).getFix().executeCommand();
+        assertFalse(way.hasKey(ConnectedCommand.KEY));
+        assertTrue(way.hasKeys());
     }
 
 }
