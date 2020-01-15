@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,7 +18,9 @@ import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
@@ -58,7 +61,11 @@ public class MapWithAIAddCommand extends Command implements Runnable {
         super(mapWithAI);
         this.mapWithAI = mapWithAI;
         this.editable = editable;
-        this.primitives = selection;
+        Collection<Way> nodeReferrers = selection.parallelStream().filter(Node.class::isInstance).map(Node.class::cast)
+                .map(Node::getReferrers).flatMap(List::stream).filter(Way.class::isInstance).map(Way.class::cast)
+                .collect(Collectors.toList());
+        this.primitives = new HashSet<>(selection);
+        this.primitives.addAll(nodeReferrers);
         sources = selection.parallelStream()
                 .map(prim -> new Pair<OsmPrimitive, String>(prim, prim.get(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY)))
                 .filter(pair -> pair.b != null).collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));

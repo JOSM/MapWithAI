@@ -69,13 +69,14 @@ public class MapWithAIMoveAction extends JosmAction {
                     .collect(Collectors.toList());
             ds.clearSelection(nodes);
             nodes.stream().map(Node::getReferrers).forEach(ds::addSelected);
-            if (ds.getSelected().size() > maxAddition) {
+            if (ds.getSelected().size() > maxAddition && !(maxAddition == 0 && ExpertToggleAction.isExpert())) {
                 createMaxAddedDialog(maxAddition, ds.getSelected().size());
             }
             final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
             final OsmDataLayer editLayer = getOsmDataLayer();
             if (editLayer != null && !selected.isEmpty()
-                    && MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER) {
+                    && (MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER)
+                    || (maxAddition == 0 && ExpertToggleAction.isExpert())) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
                 if (MapWithAIPreferenceHelper.isSwitchLayers()) {
@@ -103,7 +104,12 @@ public class MapWithAIMoveAction extends JosmAction {
                 : ds.getSelected();
     }
 
-    private static OsmDataLayer getOsmDataLayer() {
+    /**
+     * Get the OSM Data Layer to add MapWithAI data to
+     *
+     * @return An OSM data layer that data can be added to
+     */
+    public static OsmDataLayer getOsmDataLayer() {
         return MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
                 .filter(OsmDataLayer::isVisible).filter(OsmDataLayer::isUploadable)
                 .filter(osmLayer -> !osmLayer.isLocked() && osmLayer.getClass().equals(OsmDataLayer.class)).findFirst()
