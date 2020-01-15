@@ -35,6 +35,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.ConnectingNodeInformationTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIslandsTest;
 import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -82,6 +83,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         if (!OsmValidator.getAllAvailableTestClasses().contains(RoutingIslandsTest.class)) {
             OsmValidator.addTest(RoutingIslandsTest.class);
+        }
+        if (!OsmValidator.getAllAvailableTestClasses().contains(ConnectingNodeInformationTest.class)) {
+            OsmValidator.addTest(ConnectingNodeInformationTest.class);
         }
 
         if (!Config.getPref().getKeySet().contains(PAINTSTYLE_PREEXISTS)) {
@@ -161,6 +165,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         destroyables.forEach(Destroyable::destroy);
         DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
         OsmValidator.removeTest(RoutingIslandsTest.class);
+        OsmValidator.removeTest(ConnectingNodeInformationTest.class);
         DownloadListener.destroyAll();
     }
 }
