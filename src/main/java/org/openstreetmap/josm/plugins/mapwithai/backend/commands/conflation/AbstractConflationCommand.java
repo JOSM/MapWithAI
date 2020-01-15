@@ -138,4 +138,10 @@ public abstract class AbstractConflationCommand extends Command {
      *         undo/redo lists
      */
     public abstract boolean allowUndo();
+
+    /**
+     * @return {@code true} if the key should not exist in OpenStreetMap
+     * @return
+     */
+    public abstract boolean keyShouldNotExistInOSM();
 }

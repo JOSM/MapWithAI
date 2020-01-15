@@ -21,6 +21,7 @@ import org.openstreetmap.josm.data.validation.Severity;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.data.validation.TestError;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
 import org.openstreetmap.josm.plugins.mapwithai.commands.CreateConnectionsCommand;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -44,7 +45,10 @@ public class ConnectingNodeInformationTest extends Test {
         badTags = new HashMap<>();
         CreateConnectionsCommand.getConflationCommands().forEach(clazz -> {
             try {
-                badTags.put(clazz.getConstructor(DataSet.class).newInstance(new DataSet()).getKey(), null);
+                AbstractConflationCommand command = clazz.getConstructor(DataSet.class).newInstance(new DataSet());
+                if (command.keyShouldNotExistInOSM()) {
+                    badTags.put(command.getKey(), null);
+                }
             } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                     | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                 Logging.error(e);

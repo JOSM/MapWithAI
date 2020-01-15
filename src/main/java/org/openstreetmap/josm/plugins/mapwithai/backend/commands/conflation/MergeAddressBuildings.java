@@ -111,4 +111,9 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
     public boolean allowUndo() {
         return true;
     }
+
+    @Override
+    public boolean keyShouldNotExistInOSM() {
+        return false;
+    }
 }

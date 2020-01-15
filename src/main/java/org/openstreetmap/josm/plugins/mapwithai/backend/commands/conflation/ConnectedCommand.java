@@ -99,4 +99,9 @@ public class ConnectedCommand extends AbstractConflationCommand {
     public boolean allowUndo() {
         return false;
     }
+
+    @Override
+    public boolean keyShouldNotExistInOSM() {
+        return true;
+    }
 }

@@ -131,4 +131,9 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
         return true;
     }
 
+    @Override
+    public boolean keyShouldNotExistInOSM() {
+        return false;
+    }
+
 }
