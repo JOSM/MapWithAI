@@ -104,4 +104,9 @@ public class DuplicateCommand extends AbstractConflationCommand {
         }
         return returnCommand;
     }
+
+    @Override
+    public boolean allowUndo() {
+        return false;
+    }
 }

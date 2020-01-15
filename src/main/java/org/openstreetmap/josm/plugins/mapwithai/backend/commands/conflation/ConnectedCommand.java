@@ -94,4 +94,9 @@ public class ConnectedCommand extends AbstractConflationCommand {
         }
         return returnCommand;
     }
+
+    @Override
+    public boolean allowUndo() {
+        return false;
+    }
 }

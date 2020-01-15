@@ -132,4 +132,10 @@ public abstract class AbstractConflationCommand extends Command {
             }
         }
     }
+
+    /**
+     * @return true if the command should show as a separate command in the
+     *         undo/redo lists
+     */
+    public abstract boolean allowUndo();
 }

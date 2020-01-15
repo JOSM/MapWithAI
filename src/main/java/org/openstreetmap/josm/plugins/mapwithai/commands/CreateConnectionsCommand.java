@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -14,8 +15,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import javax.swing.SwingUtilities;
+
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
@@ -23,17 +27,20 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Abst
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeAddressBuildings;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeBuildingAddress;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 public class CreateConnectionsCommand extends Command {
     private final Collection<OsmPrimitive> primitives;
     private Command command;
+    private Command undoCommands;
     private static final LinkedHashSet<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new LinkedHashSet<>();
     static {
         CONFLATION_COMMANDS.add(ConnectedCommand.class);
         CONFLATION_COMMANDS.add(DuplicateCommand.class);
         CONFLATION_COMMANDS.add(MergeAddressBuildings.class);
+        CONFLATION_COMMANDS.add(MergeBuildingAddress.class);
     }
 
     public CreateConnectionsCommand(DataSet data, Collection<OsmPrimitive> primitives) {
@@ -44,10 +51,16 @@ public class CreateConnectionsCommand extends Command {
     @Override
     public boolean executeCommand() {
         if (command == null) {
-            command = createConnections(getAffectedDataSet(), primitives);
+            List<Command> commands = createConnections(getAffectedDataSet(), primitives);
+            command = commands.get(0);
+            undoCommands = commands.get(1);
         }
         if (command != null) {
             command.executeCommand();
+        }
+        if (undoCommands != null) {
+            undoCommands.executeCommand();
+            SwingUtilities.invokeLater(() -> UndoRedoHandler.getInstance().add(undoCommands, false));
         }
         return true;
     }
@@ -66,10 +79,13 @@ public class CreateConnectionsCommand extends Command {
      *                   connecting to
      * @param collection The primitives with connection information (currently only
      *                   checks Nodes)
-     * @return A {@link Command} to create connections with
+     * @return A list {@link Command} to create connections with (first is one that
+     *         can be folded into other commands, second is one that should be
+     *         undoable individually)
      */
-    public static Command createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
-        final List<Command> changedKeyList = new ArrayList<>();
+    public static List<Command> createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
+        final List<Command> permanent = new ArrayList<>();
+        final List<Command> undoable = new ArrayList<>();
         final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
                 .filter(Objects::nonNull).collect(Collectors.toList());
         for (final Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
@@ -88,18 +104,29 @@ public class CreateConnectionsCommand extends Command {
             final Command actualCommand = abstractCommand.getCommand(tPrimitives.stream()
                     .filter(prim -> prim.hasKey(abstractCommand.getKey())).collect(Collectors.toList()));
             if (Objects.nonNull(actualCommand)) {
-                changedKeyList.add(actualCommand);
+                if (abstractCommand.allowUndo()) {
+                    undoable.add(actualCommand);
+                } else {
+                    permanent.add(actualCommand);
+                }
             }
         }
 
-        Command returnSequence = null;
-        if (changedKeyList.size() == 1) {
-            returnSequence = changedKeyList.get(0);
-        } else if (!changedKeyList.isEmpty()) {
-            returnSequence = new SequenceCommand(getRealDescriptionText(), changedKeyList);
+        Command permanentCommand = null;
+        if (permanent.size() == 1) {
+            permanentCommand = permanent.get(0);
+        } else if (!permanent.isEmpty()) {
+            permanentCommand = new SequenceCommand(getRealDescriptionText(), permanent);
         }
 
-        return returnSequence;
+        Command undoCommand = null;
+        if (undoable.size() == 1) {
+            undoCommand = undoable.get(0);
+        } else if (!undoable.isEmpty()) {
+            undoCommand = new SequenceCommand(getRealDescriptionText(), undoable);
+        }
+
+        return Arrays.asList(permanentCommand, undoCommand);
     }
 
     @Override

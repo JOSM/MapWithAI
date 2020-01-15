@@ -1,12 +1,16 @@
+// License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -19,9 +23,10 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import org.openstreetmap.josm.tools.Geometry;
+import org.openstreetmap.josm.tools.Logging;
 
 public class MergeAddressBuildings extends AbstractConflationCommand {
-    private static final String BUILDING_KEY = "building";
+    public static final String KEY = "building";
 
     public MergeAddressBuildings(DataSet data) {
         super(data);
@@ -39,7 +44,7 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
 
     @Override
     public String getKey() {
-        return BUILDING_KEY;
+        return KEY;
     }
 
     @Override
@@ -47,16 +52,18 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
         List<Command> commands = new ArrayList<>();
         if (MapWithAIPreferenceHelper.isMergeBuildingAddress()) {
             possiblyAffectedPrimitives.stream().filter(Way.class::isInstance).map(Way.class::cast)
-                    .filter(way -> way.hasKey(BUILDING_KEY)).filter(Way::isClosed)
+                    .filter(way -> way.hasKey(KEY)).filter(Way::isClosed)
                     .forEach(way -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), way)));
 
             possiblyAffectedPrimitives.stream().filter(Relation.class::isInstance).map(Relation.class::cast)
-                    .filter(rel -> rel.hasKey(BUILDING_KEY)).filter(Relation::isMultipolygon)
+                    .filter(rel -> rel.hasKey(KEY)).filter(Relation::isMultipolygon)
                     .forEach(rel -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), rel)));
         }
 
         Command returnCommand = null;
-        if (!commands.isEmpty()) {
+        if (commands.size() == 1) {
+            returnCommand = commands.get(0);
+        } else if (!commands.isEmpty()) {
             returnCommand = new SequenceCommand(getDescriptionText(), commands);
         }
         return returnCommand;
@@ -83,15 +90,25 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
             String currentKey = null;
             try {
                 // Remove the key to avoid the popup from utilsplugin2
-                currentKey = object.get(BUILDING_KEY);
-                object.remove(BUILDING_KEY);
-                commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object));
+                currentKey = object.get(KEY);
+                object.remove(KEY);
+                try {
+                    SwingUtilities.invokeAndWait(() -> commandList
+                            .add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object)));
+                } catch (InvocationTargetException | InterruptedException e) {
+                    Logging.error(e);
+                }
             } finally {
                 if (currentKey != null) {
-                    object.put(BUILDING_KEY, currentKey);
+                    object.put(KEY, currentKey);
                 }
             }
         }
         return commandList;
+    }
+
+    @Override
+    public boolean allowUndo() {
+        return true;
     }
 }

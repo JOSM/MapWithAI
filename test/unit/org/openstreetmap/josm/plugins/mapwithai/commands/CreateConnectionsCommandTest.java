@@ -178,7 +178,8 @@ public class CreateConnectionsCommandTest {
         final Node node1 = new Node(new LatLon(39.0674124, -108.5592645));
         final DataSet dataSet = new DataSet(node1);
         node1.put(DuplicateCommand.KEY, "n6146500887");
-        Command replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1));
+        Command replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1))
+                .get(0);
 
         replaceNodeCommand.executeCommand();
         assertEquals(1, dataSet.allNonDeletedPrimitives().size(), "There should be one primitive left");
@@ -195,7 +196,7 @@ public class CreateConnectionsCommandTest {
         final OsmDataLayer layer = new OsmDataLayer(dataSet, "temp layer", null);
         MainApplication.getLayerManager().addLayer(layer);
 
-        replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1));
+        replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1)).get(0);
         replaceNodeCommand.executeCommand();
         assertEquals(2, dataSet.allNonDeletedPrimitives().size(), "The dupe node no longer matches with the OSM node");
         assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE), "The OSM node should still exist");
