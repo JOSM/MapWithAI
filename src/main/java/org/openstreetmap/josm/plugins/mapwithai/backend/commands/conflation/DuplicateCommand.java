@@ -35,7 +35,7 @@ public class DuplicateCommand extends AbstractConflationCommand {
         }
 
         final List<Command> commands = new ArrayList<>();
-        if (primitiveConnections[0] instanceof Node) {
+        if (primitiveConnections[0] instanceof Node && !primitiveConnections[0].isDeleted()) {
             final Node replaceNode = (Node) primitiveConnections[0];
             final Command tCommand = replaceNode(node, replaceNode);
             if (tCommand != null) {
@@ -49,6 +49,9 @@ public class DuplicateCommand extends AbstractConflationCommand {
                     replaceNode.remove(KEY);
                 }
             }
+        }
+        if (commands.isEmpty()) {
+            commands.add(new ChangePropertyCommand(node, KEY, null));
         }
         return commands;
     }
@@ -92,9 +95,6 @@ public class DuplicateCommand extends AbstractConflationCommand {
             List<Command> tCommands = duplicateNode(getAffectedDataSet(), tNode);
             // We have to execute the command to avoid duplicating the command later. Undo
             // occurs later, so that the state doesn't actually change.
-            if (tCommands.isEmpty()) {
-                tCommands.add(new ChangePropertyCommand(tNode, KEY, null));
-            }
             tCommands.forEach(Command::executeCommand);
             commands.addAll(tCommands);
         }

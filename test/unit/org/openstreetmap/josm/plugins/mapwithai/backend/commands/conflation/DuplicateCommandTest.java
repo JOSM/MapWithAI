@@ -10,6 +10,7 @@ import java.util.Collections;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -48,6 +49,19 @@ public class DuplicateCommandTest {
         assertFalse(dupe1.isDeleted());
         assertTrue(dupe1.hasKey(dupe.getKey()));
         assertFalse(dupe2.hasKey(dupe.getKey()));
+
+        Command deleteDupe2 = DeleteCommand.delete(Collections.singleton(dupe2));
+        deleteDupe2.executeCommand();
+        command = dupe.getCommand(Collections.singleton(dupe1));
+        command.executeCommand();
+        assertFalse(dupe1.isDeleted());
+        assertTrue(dupe2.isDeleted());
+        assertFalse(dupe1.hasKey(dupe.getKey()));
+        command.undoCommand();
+        assertFalse(dupe1.isDeleted());
+        assertTrue(dupe1.hasKey(dupe.getKey()));
+        assertFalse(dupe2.hasKey(dupe.getKey()));
+        deleteDupe2.undoCommand();
 
         dupe1.setCoor(new LatLon(1, 1));
 
