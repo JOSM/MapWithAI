@@ -58,7 +58,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      * @param selection The primitives to add from MapWithAI
      */
     public MapWithAIAddCommand(DataSet mapWithAI, DataSet editable, Collection<OsmPrimitive> selection) {
-        super(mapWithAI);
+        super(editable);
         this.mapWithAI = mapWithAI;
         this.editable = editable;
         Collection<Way> nodeReferrers = selection.parallelStream().filter(Node.class::isInstance).map(Node.class::cast)

@@ -63,6 +63,7 @@ public class AddNodeToWayCommand extends Command {
         }
         if (index != Integer.MIN_VALUE) {
             getWay().addNode(index, getToAddNode());
+            getWay().setModified(true);
         }
         return true;
     }

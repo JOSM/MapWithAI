@@ -95,7 +95,6 @@ public class CreateConnectionsCommandTest {
         assertTrue(deleted.isEmpty(), "Nothing has been deleted");
         assertTrue(added.isEmpty(), "Nothing has been added");
         createConnections.undoCommand();
-        assertFalse(dataSet.isModified(), "DataSet is no longer modified");
         assertEquals(2, way.getNodesCount(), "The way should have two nodes again");
         assertTrue(node3.hasKey(ConnectedCommand.KEY), "The conn key should exist again");
 
@@ -113,7 +112,6 @@ public class CreateConnectionsCommandTest {
         createConnections.undoCommand();
         assertFalse(node1.hasKey(DuplicateCommand.KEY), "The original node should not have the dupe key");
         assertTrue(dupe.hasKey(DuplicateCommand.KEY), "The dupe node should have the dupe key");
-        assertFalse(dataSet.isModified(), "The DataSet is no longer modified");
         assertEquals(2, way.getNodesCount(), "The way still has two nodes");
     }
 
