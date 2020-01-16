@@ -1,3 +1,4 @@
+// License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public abstract class AbstractConflationCommand extends Command {
      * @param primitives The primitives to run the command on
      * @return The command that will be run (may be {@code null})
      */
-    public Command getCommand(List<OsmPrimitive> primitives) {
+    public Command getCommand(Collection<OsmPrimitive> primitives) {
         possiblyAffectedPrimitives = primitives.stream().distinct().collect(Collectors.toList());
         return getRealCommand();
     }
@@ -71,6 +72,8 @@ public abstract class AbstractConflationCommand extends Command {
      * @return The primitives that the ids point to, if in the dataset.
      */
     public static OsmPrimitive[] getPrimitives(DataSet dataSet, String ids) {
+        Objects.requireNonNull(dataSet, tr("DataSet cannot be null"));
+        Objects.requireNonNull(ids, tr("The ids string cannot be null"));
         final Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives = new TreeMap<>();
         final String[] connections = ids.split(",", -1);
         final OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];

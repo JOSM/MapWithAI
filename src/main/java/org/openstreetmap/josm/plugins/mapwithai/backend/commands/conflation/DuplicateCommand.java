@@ -92,6 +92,9 @@ public class DuplicateCommand extends AbstractConflationCommand {
             List<Command> tCommands = duplicateNode(getAffectedDataSet(), tNode);
             // We have to execute the command to avoid duplicating the command later. Undo
             // occurs later, so that the state doesn't actually change.
+            if (tCommands.isEmpty()) {
+                tCommands.add(new ChangePropertyCommand(tNode, KEY, null));
+            }
             tCommands.forEach(Command::executeCommand);
             commands.addAll(tCommands);
         }
@@ -99,7 +102,9 @@ public class DuplicateCommand extends AbstractConflationCommand {
         commands.forEach(Command::undoCommand);
         Collections.reverse(commands);
         Command returnCommand = null;
-        if (!commands.isEmpty()) {
+        if (commands.size() == 1) {
+            returnCommand = commands.get(0);
+        } else if (!commands.isEmpty()) {
             returnCommand = new SequenceCommand(getDescriptionText(), commands);
         }
         return returnCommand;
