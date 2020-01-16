@@ -90,7 +90,6 @@ public class CreateConnectionsCommandTest {
         Assert.assertTrue(deleted.isEmpty());
         Assert.assertTrue(added.isEmpty());
         createConnections.undoCommand();
-        Assert.assertFalse(dataSet.isModified());
         Assert.assertEquals(2, way.getNodesCount());
         Assert.assertTrue(node3.hasKey(ConnectedCommand.CONN_KEY));
 
@@ -108,7 +107,6 @@ public class CreateConnectionsCommandTest {
         createConnections.undoCommand();
         Assert.assertFalse(node1.hasKey(DuplicateCommand.DUPE_KEY));
         Assert.assertTrue(dupe.hasKey(DuplicateCommand.DUPE_KEY));
-        Assert.assertFalse(dataSet.isModified());
         Assert.assertEquals(2, way.getNodesCount());
     }
 
