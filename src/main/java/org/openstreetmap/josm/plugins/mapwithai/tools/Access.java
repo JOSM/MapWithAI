@@ -340,8 +340,8 @@ public class Access {
          */
         TRAIN("train", RAIL_TRANSPORT_TYPE);
 
-        private String key;
-        private AccessTags type;
+        private final String key;
+        private final AccessTags type;
 
         AccessTags(String key) {
             this.key = key;

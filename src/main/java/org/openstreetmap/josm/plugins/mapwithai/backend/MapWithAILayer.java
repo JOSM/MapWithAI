@@ -226,7 +226,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         return continuousDownload;
     }
 
-    private class ContinuousDownloadAction extends AbstractAction implements LayerAction {
+    private static class ContinuousDownloadAction extends AbstractAction implements LayerAction {
         private static final long serialVersionUID = -3528632887550700527L;
         private final MapWithAILayer layer;
 

@@ -74,8 +74,8 @@ public class MapWithAIMoveAction extends JosmAction {
             }
             final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
             final OsmDataLayer editLayer = getOsmDataLayer();
-            if (editLayer != null && !selected.isEmpty()
-                    && (MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER)
+            if ((editLayer != null && !selected.isEmpty()
+                    && (MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER))
                     || (maxAddition == 0 && ExpertToggleAction.isExpert())) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
                 UndoRedoHandler.getInstance().add(command);
@@ -88,7 +88,7 @@ public class MapWithAIMoveAction extends JosmAction {
         }
     }
 
-    private void createTooManyAdditionsNotification(int maxAddition) {
+    private static void createTooManyAdditionsNotification(int maxAddition) {
         Notification tooMany = new Notification();
         tooMany.setIcon(JOptionPane.WARNING_MESSAGE);
         tooMany.setDuration(Notification.TIME_DEFAULT);
