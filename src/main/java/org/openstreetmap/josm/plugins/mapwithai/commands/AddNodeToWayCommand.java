@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -22,6 +23,7 @@ public class AddNodeToWayCommand extends Command {
     private final Way way;
     private final Node firstNode;
     private final Node secondNode;
+    private Command changeCommand;
 
     /**
      * Add a node to a way in an undoable manner
@@ -61,16 +63,22 @@ public class AddNodeToWayCommand extends Command {
                 }
             }
         }
-        if (index != Integer.MIN_VALUE) {
-            getWay().addNode(index, getToAddNode());
-            getWay().setModified(true);
+        if (index != Integer.MIN_VALUE && changeCommand == null) {
+            Way tWay = new Way(getWay());
+            tWay.addNode(index, getToAddNode());
+            changeCommand = new ChangeCommand(getWay(), tWay);
+        }
+        if (changeCommand != null) {
+            changeCommand.executeCommand();
         }
         return true;
     }
 
     @Override
     public void undoCommand() {
-        getWay().removeNode(getToAddNode());
+        if (changeCommand != null) {
+            changeCommand.undoCommand();
+        }
     }
 
     @Override
