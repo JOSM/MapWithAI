@@ -18,6 +18,7 @@ import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.validation.OsmValidator;
+import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
@@ -37,6 +38,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.ConnectingNodeInformationTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIslandsTest;
+import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StubEndsTest;
 import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
@@ -62,6 +64,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MENU_ENTRIES.put(MergeDuplicateWaysAction.class, true);
     }
 
+    private final static List<Class<? extends Test>> VALIDATORS = Arrays.asList(RoutingIslandsTest.class,
+            ConnectingNodeInformationTest.class, StubEndsTest.class);
+
     public MapWithAIPlugin(PluginInformation info) {
         super(info);
 
@@ -81,12 +86,11 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
             }
         }
 
-        if (!OsmValidator.getAllAvailableTestClasses().contains(RoutingIslandsTest.class)) {
-            OsmValidator.addTest(RoutingIslandsTest.class);
-        }
-        if (!OsmValidator.getAllAvailableTestClasses().contains(ConnectingNodeInformationTest.class)) {
-            OsmValidator.addTest(ConnectingNodeInformationTest.class);
-        }
+        VALIDATORS.forEach(clazz -> {
+            if (!OsmValidator.getAllAvailableTestClasses().contains(clazz)) {
+                OsmValidator.addTest(clazz);
+            }
+        });
 
         if (!Config.getPref().getKeySet().contains(PAINTSTYLE_PREEXISTS)) {
             Config.getPref().putBoolean(PAINTSTYLE_PREEXISTS, MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
@@ -164,8 +168,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         destroyables.forEach(Destroyable::destroy);
         DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
-        OsmValidator.removeTest(RoutingIslandsTest.class);
-        OsmValidator.removeTest(ConnectingNodeInformationTest.class);
+        VALIDATORS.forEach(OsmValidator::removeTest);
         DownloadListener.destroyAll();
     }
 }
