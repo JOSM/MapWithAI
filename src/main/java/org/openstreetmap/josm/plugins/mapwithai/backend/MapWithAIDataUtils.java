@@ -309,13 +309,15 @@ public final class MapWithAIDataUtils {
         }
 
         final MapWithAILayer tLayer = layer;
-        if (SwingUtilities.isEventDispatchThread() && create) {
-            MainApplication.getLayerManager().addLayer(tLayer);
-        } else if (create) {
-            try {
-                SwingUtilities.invokeAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
-            } catch (InvocationTargetException | InterruptedException e) {
-                Logging.error(e);
+        if (!MainApplication.getLayerManager().getLayers().contains(tLayer)) {
+            if (SwingUtilities.isEventDispatchThread() && create) {
+                MainApplication.getLayerManager().addLayer(tLayer);
+            } else if (create) {
+                try {
+                    SwingUtilities.invokeAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
+                } catch (InvocationTargetException | InterruptedException e) {
+                    Logging.error(e);
+                }
             }
         }
 

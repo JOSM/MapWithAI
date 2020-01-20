@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,6 +39,7 @@ import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.Logging;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
@@ -218,6 +220,16 @@ public class MapWithAIDataUtilsTest {
             checkInBBox(bbox, bboxes);
             checkBBoxesConnect(bbox, bboxes);
         }
+    }
+
+    @Test
+    public void testDoubleAddLayer() {
+        Logging.clearLastErrorAndWarnings();
+        assertNull(MapWithAIDataUtils.getLayer(false));
+        assertNotNull(MapWithAIDataUtils.getLayer(true));
+        assertNotNull(MapWithAIDataUtils.getLayer(true));
+        assertTrue(Logging.getLastErrorAndWarnings().stream().filter(str -> !str.contains("Failed to locate image"))
+                .collect(Collectors.toList()).isEmpty());
     }
 
     private static int getExpectedNumberOfBBoxes(BBox bbox) {
