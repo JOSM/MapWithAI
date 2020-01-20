@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -15,6 +17,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.plugins.mapwithai.commands.AddNodeToWayCommand;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
@@ -39,18 +42,28 @@ public class ConnectedCommand extends AbstractConflationCommand {
      * @param first     The first node in a waysegment (the node is between this and
      *                  the second node)
      * @param second    The second node in a waysegment
-     * @return Command to add a node to a way, or null if it won't be done
+     * @return Commands to add a node to a way, or null if it won't be done
      */
-    public static Command addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
-        Command tCommand = null;
+    public static List<Command> addNodesToWay(Node toAddNode, Way way, Node first, Node second) {
+        List<Command> tCommands = new ArrayList<>();
         final Way tWay = new Way();
+        final List<Way> ways = toAddNode.getReferrers().stream().filter(w -> !w.equals(way))
+                .filter(Way.class::isInstance).map(Way.class::cast).collect(Collectors.toList());
         tWay.addNode(first);
         tWay.addNode(second);
         final double distance = Geometry.getDistanceWayNode(tWay, toAddNode);
         if (distance < 5) {
-            tCommand = new AddNodeToWayCommand(toAddNode, way, first, second);
+            if (!ways.isEmpty()) {
+                int index = ways.get(0).getNodes().indexOf(toAddNode);
+                final Node node4 = index == 0 ? ways.get(0).getNode(1) : ways.get(0).getNode(index - 1);
+                final Node tNode = new Node(toAddNode);
+                tNode.setCoor(ProjectionRegistry.getProjection().eastNorth2latlon(Geometry.getLineLineIntersection(
+                        first.getEastNorth(), second.getEastNorth(), toAddNode.getEastNorth(), node4.getEastNorth())));
+                tCommands.add(new ChangeCommand(toAddNode, tNode));
+            }
+            tCommands.add(new AddNodeToWayCommand(toAddNode, way, first, second));
         }
-        return tCommand;
+        return tCommands;
     }
 
     private static List<Command> connectedCommand(DataSet dataSet, Node node) {
@@ -59,11 +72,9 @@ public class ConnectedCommand extends AbstractConflationCommand {
         for (int i = 0; i < primitiveConnections.length / 3; i++) {
             if (primitiveConnections[i] instanceof Way && primitiveConnections[i + 1] instanceof Node
                     && primitiveConnections[i + 2] instanceof Node) {
-                final Command addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
+                final List<Command> addNodesToWayCommand = addNodesToWay(node, (Way) primitiveConnections[i],
                         (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]);
-                if (addNodesToWayCommand != null) {
-                    commands.add(addNodesToWayCommand);
-                }
+                commands.addAll(addNodesToWayCommand);
             } else {
                 Logging.error("{0}: {1}, {2}: {3}, {4}: {5}", i, primitiveConnections[i].getClass(), i + 1,
                         primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
