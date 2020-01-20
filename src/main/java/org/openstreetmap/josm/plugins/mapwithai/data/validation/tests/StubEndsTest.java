@@ -18,7 +18,6 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.Severity;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.data.validation.TestError;
-import org.openstreetmap.josm.data.validation.TestError.Builder;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -60,7 +59,7 @@ public class StubEndsTest extends Test {
     }
 
     private TestError createError(Way way, List<Node> nodes, double distance) {
-        Builder error = TestError.builder(this, Severity.ERROR, 333300239)
+        TestError.Builder error = TestError.builder(this, Severity.ERROR, 333300239)
                 .message(MapWithAIPlugin.NAME, marktr("Stub end ({0}m)"), distance).primitives(way).highlight(nodes);
         if (way.isNew()) {
             Way tWay = new Way(way);
