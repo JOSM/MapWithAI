@@ -231,7 +231,7 @@ public class RoutingIslandsTest extends Test {
                  * Not an issue -- this ensures that everything is accounted for, only triggers
                  * when ways removed
                  */
-                i--; // NOSONAR
+                i--; // NOSONAR NOPMD
             }
             collected.add(connected);
         }

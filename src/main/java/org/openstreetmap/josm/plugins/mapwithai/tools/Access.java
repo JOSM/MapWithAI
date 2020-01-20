@@ -25,7 +25,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
  * @author Taylor Smock
  * @since xxx
  */
-public class Access {
+public final class Access {
     /**
      * Holds access tags to avoid typos
      */

@@ -26,8 +26,9 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
     private static final Collection<DownloadListener> LISTENERS = new HashSet<>();
 
     public DownloadListener(DataSet dataSet) {
-        ds = new WeakReference<>(Objects.requireNonNull(dataSet, "DataSet cannot be null"));
-        ds.get().addDataSourceListener(this);
+        Objects.requireNonNull(dataSet, "DataSet cannot be null");
+        ds = new WeakReference<>(dataSet);
+        dataSet.addDataSourceListener(this);
         LISTENERS.add(this);
     }
 
@@ -48,9 +49,10 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
 
     @Override
     public void destroy() {
-        if (ds.get() != null) {
+        DataSet realDs = ds.get();
+        if (realDs != null) {
             // Should be added, so no exception should be thrown
-            ds.get().removeDataSourceListener(this);
+            realDs.removeDataSourceListener(this);
             ds.clear();
             LISTENERS.remove(this);
         }
