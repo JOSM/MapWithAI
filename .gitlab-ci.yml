@@ -207,7 +207,7 @@ release:
   dependencies:
   - build
   rules:
-    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
       when: manual
 
 release hotfix:
@@ -225,8 +225,8 @@ release hotfix:
   dependencies:
   - build
   rules:
-    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: manual
+    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
+      when: always
 
 publish master update site:
   stage: deploy
@@ -262,4 +262,4 @@ publish to / GitLab.com packages:
   - build
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
-      when: manual
+      when: always
