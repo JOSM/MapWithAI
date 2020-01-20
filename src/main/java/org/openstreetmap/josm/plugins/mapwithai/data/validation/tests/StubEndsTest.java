@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
+import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
@@ -59,8 +60,8 @@ public class StubEndsTest extends Test {
     }
 
     private TestError createError(Way way, List<Node> nodes, double distance) {
-        Builder error = TestError.builder(this, Severity.ERROR, 333300239).message(tr("Stub end ({0}m)", distance))
-                .primitives(way).highlight(nodes);
+        Builder error = TestError.builder(this, Severity.ERROR, 333300239)
+                .message(MapWithAIPlugin.NAME, marktr("Stub end ({0}m)"), distance).primitives(way).highlight(nodes);
         if (way.isNew()) {
             Way tWay = new Way(way);
             List<Node> tNodes = tWay.getNodes();
@@ -100,18 +101,21 @@ public class StubEndsTest extends Test {
     private static double distanceToConnection(Way way, List<Node> nodesToConnection, List<Node> nodeOrder) {
         double distance = 0;
         Node previous = nodeOrder.get(0);
-        for (Node node : nodeOrder) {
-            List<Way> connectingWays = previous.getReferrers().parallelStream().filter(Way.class::isInstance)
-                    .map(Way.class::cast).filter(tWay -> !tWay.equals(way))
-                    .filter(tWay -> tWay.hasTag(HIGHWAY) && !BAD_HIGHWAYS.contains(tWay.get(HIGHWAY)))
-                    .collect(Collectors.toList());
-            if (!node.equals(previous) && connectingWays.isEmpty()) {
-                nodesToConnection.add(previous);
-                distance += node.getCoor().greatCircleDistance(previous.getCoor());
-                previous = node;
-            }
-            if (!connectingWays.isEmpty()) {
-                break;
+        // isOutsideDownloadArea returns false if new or undeleted as well
+        if (!previous.isOutsideDownloadArea()) {
+            for (Node node : nodeOrder) {
+                List<Way> connectingWays = previous.getReferrers().parallelStream().filter(Way.class::isInstance)
+                        .map(Way.class::cast).filter(tWay -> !tWay.equals(way))
+                        .filter(tWay -> tWay.hasTag(HIGHWAY) && !BAD_HIGHWAYS.contains(tWay.get(HIGHWAY)))
+                        .collect(Collectors.toList());
+                if (!node.equals(previous) && connectingWays.isEmpty()) {
+                    nodesToConnection.add(previous);
+                    distance += node.getCoor().greatCircleDistance(previous.getCoor());
+                    previous = node;
+                }
+                if (!connectingWays.isEmpty()) {
+                    break;
+                }
             }
         }
         return distance;
