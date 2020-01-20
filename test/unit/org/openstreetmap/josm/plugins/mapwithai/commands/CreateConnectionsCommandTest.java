@@ -18,6 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -126,7 +127,8 @@ public class CreateConnectionsCommandTest {
         final Node toAddNode = new Node(new LatLon(0.5, 0));
         final Way way = TestUtils.newWay("highway=residential", wayNode1, wayNode2);
         new DataSet(wayNode1, wayNode2, toAddNode, way);
-        Command addNodeToWayCommand = ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2);
+        Command addNodeToWayCommand = new SequenceCommand("",
+                ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2));
         assertEquals(2, way.getNodesCount(), "The way should still have 2 nodes");
         addNodeToWayCommand.executeCommand();
         assertEquals(3, way.getNodesCount(), "The way should now have 3 nodes");
@@ -134,15 +136,16 @@ public class CreateConnectionsCommandTest {
         assertEquals(2, way.getNodesCount(), "The way should be back to having 2 nodes");
 
         wayNode2.setCoor(new LatLon(1, 0.1));
-        addNodeToWayCommand = ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2);
-        assertNull(addNodeToWayCommand, "There shouldn't be a command to for a node that is a fair distance away");
+        assertTrue(ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2).isEmpty(),
+                "There shouldn't be a command to for a node that is a fair distance away");
 
         wayNode2.setCoor(new LatLon(1, 0.01));
-        addNodeToWayCommand = ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2);
-        assertNull(addNodeToWayCommand, "There shouldn't be a command to for a node that is a fair distance away");
+        assertTrue(ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2).isEmpty(),
+                "There shouldn't be a command to for a node that is a fair distance away");
 
         wayNode2.setCoor(new LatLon(1, 0.00008));
-        addNodeToWayCommand = ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2);
+        addNodeToWayCommand = new SequenceCommand("",
+                ConnectedCommand.addNodesToWay(toAddNode, way, wayNode1, wayNode2));
         addNodeToWayCommand.executeCommand();
         assertEquals(3, way.getNodesCount(), "The way should have 3 nodes now");
         addNodeToWayCommand.undoCommand();
