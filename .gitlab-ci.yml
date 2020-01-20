@@ -249,7 +249,7 @@ publish master update site:
   - build
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
+      when: always
 
 publish to / GitLab.com packages:
   stage: deploy
