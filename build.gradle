@@ -127,8 +127,8 @@ jacocoTestCoverageVerification {
 
 josm {
   manifest {
-    oldVersionDownloadLink 15609, "v1.1.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.1.6/mapwithai.jar")
-    oldVersionDownloadLink 15542, "v1.0.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.0.4/mapwithai.jar")
+    oldVersionDownloadLink 15609, "v1.1.8", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.1.8/mapwithai.jar")
+    oldVersionDownloadLink 15542, "v1.0.5", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.0.5/mapwithai.jar")
     oldVersionDownloadLink 15233, "v0.2.10", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v0.2.10/mapwithai.jar")
   }
   i18n {
