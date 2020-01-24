@@ -43,6 +43,16 @@ public class MovePrimitiveDataSetCommand extends Command {
         }
     }
 
+    public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives,
+            Collection<PrimitiveData> primitiveData) {
+        super(to);
+        if (from == null || to.isLocked() || from.isLocked() || to.equals(from)) {
+            Logging.error("{0}: Cannot move primitives from {1} to {2}", MapWithAIPlugin.NAME, from, to);
+        } else {
+            command = moveCollection(from, to, primitives, primitiveData);
+        }
+    }
+
     @Override
     public boolean executeCommand() {
         if (command != null) {
@@ -60,6 +70,21 @@ public class MovePrimitiveDataSetCommand extends Command {
      * @return The command that does the actual move
      */
     public static SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
+        return moveCollection(from, to, selection, new HashSet<>());
+    }
+
+    /**
+     * Move primitives from one dataset to another
+     *
+     * @param to            The receiving dataset
+     * @param from          The sending dataset
+     * @param selection     The primitives to move
+     * @param primitiveData A collection to be add the primitive data to (important
+     *                      if any positive ids are available)
+     * @return The command that does the actual move
+     */
+    public static SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection,
+            Collection<PrimitiveData> primitiveData) {
         final List<Command> commands = new ArrayList<>();
 
         final Collection<OsmPrimitive> selected = from.getAllSelected();
@@ -70,7 +95,14 @@ public class MovePrimitiveDataSetCommand extends Command {
 
         final List<PrimitiveData> primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save)
                 .collect(Collectors.toList());
-        primitiveAddData.parallelStream().forEach(data -> data.remove(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY));
+        primitiveAddData.parallelStream().map(data -> {
+            if (data.getUniqueId() > 0) {
+                // Don't do this with conn data?
+                data.clearOsmMetadata();
+            }
+            return data;
+        }).forEach(data -> data.remove(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY));
+        primitiveData.addAll(primitiveAddData);
 
         commands.add(new AddPrimitivesCommand(primitiveAddData,
                 selection.stream().map(OsmPrimitive::save).collect(Collectors.toList()), to));

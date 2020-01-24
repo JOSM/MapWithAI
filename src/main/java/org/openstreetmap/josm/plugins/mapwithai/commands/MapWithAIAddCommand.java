@@ -20,6 +20,7 @@ import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
@@ -96,9 +97,10 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                 if (command == null) {// needed for undo/redo (don't create a new command)
                     final List<OsmPrimitive> allPrimitives = new ArrayList<>();
                     MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
+                    Collection<PrimitiveData> primitiveData = new HashSet<>();
                     final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI,
-                            primitives);
-                    final Command createConnectionsCommand = createConnections(editable, allPrimitives);
+                            primitives, primitiveData);
+                    final Command createConnectionsCommand = createConnections(editable, primitiveData);
                     command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand,
                             createConnectionsCommand);
                 }
@@ -120,7 +122,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      *                   checks Nodes)
      * @return A Command to create connections from the collection
      */
-    public static Command createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
+    public static Command createConnections(DataSet dataSet, Collection<PrimitiveData> collection) {
         return new CreateConnectionsCommand(dataSet, collection);
     }
 
@@ -171,7 +173,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     public Collection<String> getSourceTags() {
         return sources.entrySet().parallelStream()
                 .filter(entry -> editable.getPrimitiveById(entry.getKey()) != null
-                        && !editable.getPrimitiveById(entry.getKey()).isDeleted())
+                && !editable.getPrimitiveById(entry.getKey()).isDeleted())
                 .map(Entry::getValue).filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
     }
 

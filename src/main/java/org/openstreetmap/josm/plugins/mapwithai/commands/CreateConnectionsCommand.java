@@ -22,6 +22,7 @@ import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
@@ -32,7 +33,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 public class CreateConnectionsCommand extends Command {
-    private final Collection<OsmPrimitive> primitives;
+    private final Collection<PrimitiveData> primitives;
     private Command command;
     private Command undoCommands;
     private static final LinkedHashSet<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new LinkedHashSet<>();
@@ -43,7 +44,7 @@ public class CreateConnectionsCommand extends Command {
         CONFLATION_COMMANDS.add(MergeBuildingAddress.class);
     }
 
-    public CreateConnectionsCommand(DataSet data, Collection<OsmPrimitive> primitives) {
+    public CreateConnectionsCommand(DataSet data, Collection<PrimitiveData> primitives) {
         super(data);
         this.primitives = primitives;
     }
@@ -83,7 +84,7 @@ public class CreateConnectionsCommand extends Command {
      *         can be folded into other commands, second is one that should be
      *         undoable individually)
      */
-    public static List<Command> createConnections(DataSet dataSet, Collection<OsmPrimitive> collection) {
+    public static List<Command> createConnections(DataSet dataSet, Collection<PrimitiveData> collection) {
         final List<Command> permanent = new ArrayList<>();
         final List<Command> undoable = new ArrayList<>();
         final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
@@ -99,7 +100,7 @@ public class CreateConnectionsCommand extends Command {
             }
             final Collection<OsmPrimitive> tPrimitives = new TreeSet<>();
             abstractCommand.getInterestedTypes()
-                    .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));
+            .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));
 
             final Command actualCommand = abstractCommand.getCommand(tPrimitives.stream()
                     .filter(prim -> prim.hasKey(abstractCommand.getKey())).collect(Collectors.toList()));
