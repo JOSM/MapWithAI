@@ -76,7 +76,7 @@ public class CreateConnectionsCommandTest {
         final DataSet dataSet = new DataSet(node1, node2, node3, dupe, way);
 
         CreateConnectionsCommand createConnections = new CreateConnectionsCommand(dataSet,
-                Collections.singleton(node3));
+                Collections.singleton(node3.save()));
         createConnections.executeCommand();
 
         assertFalse(dataSet.isModified(), "DataSet shouldn't be modified yet");
@@ -85,7 +85,7 @@ public class CreateConnectionsCommandTest {
 
         node3.put(ConnectedCommand.KEY,
                 "w" + way.getUniqueId() + ",n" + node1.getUniqueId() + ",n" + node2.getUniqueId());
-        createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(node3));
+        createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(node3.save()));
         createConnections.executeCommand();
         assertTrue(dataSet.isModified(), "DataSet should be modified");
         assertEquals(3, way.getNodesCount(), "The way should have three nodes");
@@ -100,7 +100,7 @@ public class CreateConnectionsCommandTest {
         assertTrue(node3.hasKey(ConnectedCommand.KEY), "The conn key should exist again");
 
         dupe.put(DuplicateCommand.KEY, "n" + node1.getUniqueId());
-        createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(dupe));
+        createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(dupe.save()));
         createConnections.executeCommand();
         assertTrue(dataSet.isModified(), "The DataSet should be modified");
         assertEquals(2, way.getNodesCount(), "The way should have two nodes");
@@ -179,8 +179,8 @@ public class CreateConnectionsCommandTest {
         final Node node1 = new Node(new LatLon(39.0674124, -108.5592645));
         final DataSet dataSet = new DataSet(node1);
         node1.put(DuplicateCommand.KEY, "n6146500887");
-        Command replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1))
-                .get(0);
+        Command replaceNodeCommand = CreateConnectionsCommand
+                .createConnections(dataSet, Collections.singleton(node1.save())).get(0);
 
         replaceNodeCommand.executeCommand();
         assertEquals(1, dataSet.allNonDeletedPrimitives().size(), "There should be one primitive left");
@@ -197,7 +197,8 @@ public class CreateConnectionsCommandTest {
         final OsmDataLayer layer = new OsmDataLayer(dataSet, "temp layer", null);
         MainApplication.getLayerManager().addLayer(layer);
 
-        replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1)).get(0);
+        replaceNodeCommand = CreateConnectionsCommand.createConnections(dataSet, Collections.singleton(node1.save()))
+                .get(0);
         replaceNodeCommand.executeCommand();
         assertEquals(2, dataSet.allNonDeletedPrimitives().size(), "The dupe node no longer matches with the OSM node");
         assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE), "The OSM node should still exist");

@@ -111,7 +111,7 @@ public class MapWithAIAddComandTest {
         way2.getNodes().forEach(node -> ds1.addPrimitive(node));
         ds1.addPrimitive(way2);
         ds1.addPrimitive(way1);
-        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode())).executeCommand();
+        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode().save())).executeCommand();
         assertEquals(3, way1.getNodesCount(), "The way should now have three nodes");
         assertFalse(way1.isFirstLastNode(way2.firstNode()), "The ways should be connected");
 
@@ -121,7 +121,7 @@ public class MapWithAIAddComandTest {
         way3.getNodes().forEach(node -> ds1.addPrimitive(node));
         ds1.addPrimitive(way3);
         final Node way3Node1 = way3.firstNode();
-        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way3.firstNode())).executeCommand();
+        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way3.firstNode().save())).executeCommand();
         assertNotEquals(way3Node1, way3.firstNode(), "The original first node should no longer be the first node");
         assertEquals(way1.firstNode(), way3.firstNode(), "way1 and way3 should have the same first nodes");
         assertTrue(way3Node1.isDeleted(), "way3 should be deleted");
