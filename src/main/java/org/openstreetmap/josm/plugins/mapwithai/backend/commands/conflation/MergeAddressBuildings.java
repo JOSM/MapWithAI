@@ -72,15 +72,7 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
     private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, OsmPrimitive object) {
         final List<IPrimitive> toCheck = new ArrayList<>();
         toCheck.addAll(affectedDataSet.searchNodes(object.getBBox()));
-        final Collection<IPrimitive> nodesInside;
-
-        if (object instanceof Way) {
-            nodesInside = Geometry.filterInsidePolygon(toCheck, (Way) object);
-        } else if (object instanceof Relation) {
-            nodesInside = Geometry.filterInsideMultipolygon(toCheck, (Relation) object);
-        } else {
-            throw new IllegalArgumentException("The method needs a way or a relation");
-        }
+        final Collection<IPrimitive> nodesInside = Geometry.filterInsideAnyPolygon(toCheck, object);
 
         final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
                 .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());

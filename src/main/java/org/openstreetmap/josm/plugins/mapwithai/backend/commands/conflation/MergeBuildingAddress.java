@@ -95,19 +95,9 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
     }
 
     private static Collection<Node> getAddressPoints(OsmPrimitive prim) {
-        if (prim instanceof Way && ((Way) prim).isClosed()) {
-            return Geometry
-                    .filterInsidePolygon(new ArrayList<>(prim.getDataSet().allNonDeletedPrimitives()), (Way) prim)
-                    .parallelStream().filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasTag(KEY))
-                    .collect(Collectors.toList());
-        } else if (prim instanceof Relation) {
-            return Geometry
-                    .filterInsideMultipolygon(new ArrayList<>(prim.getDataSet().allNonDeletedPrimitives()),
-                            (Relation) prim)
-                    .parallelStream().filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasKey(KEY))
-                    .collect(Collectors.toList());
-        }
-        return Collections.emptyList();
+        return Geometry.filterInsideAnyPolygon(new ArrayList<>(prim.getDataSet().allNonDeletedPrimitives()), prim)
+                .parallelStream().filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasTag(KEY))
+                .collect(Collectors.toList());
     }
 
     /**
