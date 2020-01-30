@@ -173,7 +173,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     public Collection<String> getSourceTags() {
         return sources.entrySet().parallelStream()
                 .filter(entry -> editable.getPrimitiveById(entry.getKey()) != null
-                && !editable.getPrimitiveById(entry.getKey()).isDeleted())
+                        && !editable.getPrimitiveById(entry.getKey()).isDeleted())
                 .map(Entry::getValue).filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
     }
 
