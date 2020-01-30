@@ -3,12 +3,15 @@ package org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
@@ -22,6 +25,7 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.tools.Geometry;
+import org.openstreetmap.josm.tools.Logging;
 
 public class MergeBuildingAddress extends AbstractConflationCommand {
     public static final String KEY = "addr:housenumber";
@@ -66,9 +70,18 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
     private static Collection<Command> mergeBuildingAddress(DataSet affectedDataSet, Node node) {
         final List<OsmPrimitive> toCheck = new ArrayList<>();
         final BBox bbox = new BBox(node.getCoor().getX(), node.getCoor().getY(), 0.001);
-        toCheck.addAll(affectedDataSet.searchWays(bbox));
-        toCheck.addAll(affectedDataSet.searchRelations(bbox));
-        toCheck.addAll(affectedDataSet.searchNodes(bbox));
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                toCheck.addAll(affectedDataSet.searchWays(bbox));
+                toCheck.addAll(affectedDataSet.searchRelations(bbox));
+                toCheck.addAll(affectedDataSet.searchNodes(bbox));
+            });
+        } catch (InvocationTargetException e) {
+            Logging.debug(e);
+        } catch (InterruptedException e) {
+            Logging.debug(e);
+            Thread.currentThread().interrupt();
+        }
         List<OsmPrimitive> possibleDuplicates = toCheck.parallelStream().filter(prim -> prim.hasTag(KEY))
                 .filter(prim -> prim.get(KEY).equals(node.get(KEY))).filter(prim -> !prim.equals(node))
                 .collect(Collectors.toList());

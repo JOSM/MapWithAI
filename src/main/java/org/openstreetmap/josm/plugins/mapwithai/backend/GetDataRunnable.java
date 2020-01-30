@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,6 +16,8 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
@@ -125,17 +128,26 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param bounds
      */
     public static void cleanup(DataSet dataSet, Bounds bounds) {
-        synchronized (LOCK) {
-            removeRedundantSource(dataSet);
-            replaceTags(dataSet);
-            removeCommonTags(dataSet);
-            mergeNodes(dataSet);
-            cleanupDataSet(dataSet);
-            mergeWays(dataSet);
-            removeAlreadyAddedData(dataSet);
-            new MergeDuplicateWays(dataSet).executeCommand();
-            (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
-                    .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                synchronized (LOCK) {
+                    removeRedundantSource(dataSet);
+                    replaceTags(dataSet);
+                    removeCommonTags(dataSet);
+                    mergeNodes(dataSet);
+                    cleanupDataSet(dataSet);
+                    mergeWays(dataSet);
+                    removeAlreadyAddedData(dataSet);
+                    new MergeDuplicateWays(dataSet).executeCommand();
+                    (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
+                            .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
+                }
+            });
+        } catch (InterruptedException e) {
+            Logging.debug(e);
+            Thread.currentThread().interrupt();
+        } catch (InvocationTargetException e) {
+            Logging.debug(e);
         }
     }
 
