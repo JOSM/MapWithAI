@@ -86,11 +86,19 @@ public class StreetAddressOrderTest {
     @Test
     public void testCreateError() {
         StreetAddressOrder test = new StreetAddressOrder();
-        test.createError(new Node(new LatLon(0, 0)).save());
+        test.createError(new Node(new LatLon(0, 0)).save(), Collections.emptyList());
         assertTrue(test.getErrors().isEmpty());
 
-        test.createError(new Node(new LatLon(0, 0)));
+        test.createError(new Node(new LatLon(0, 0)), Collections.emptyList());
         assertEquals(1, test.getErrors().size());
+
+        test.clear();
+        test.createError(new Node(new LatLon(0, 0)), Collections.singleton(new Node(new LatLon(1, 1))));
+        assertEquals(1, test.getErrors().get(0).getHighlighted().size());
+
+        test.clear();
+        test.createError(new Node(new LatLon(0, 0)), Collections.singleton(new Node(new LatLon(1, 1)).save()));
+        assertTrue(test.getErrors().get(0).getHighlighted().isEmpty());
     }
 
     @Test
@@ -155,6 +163,31 @@ public class StreetAddressOrderTest {
         relation1.removeMember(0);
         relation1.addMember(new RelationMember("outer", way1));
         assertEquals(way1Centroid, StreetAddressOrder.getCentroid(relation1).getEastNorth());
+    }
+
+    @Test
+    public void testGetNeighbors() {
+        List<IPrimitive> primitives = new ArrayList<>();
+        primitives.add(new Node(new LatLon(0, 0)));
+        assertTrue(StreetAddressOrder.getNeighbors(primitives.get(0), primitives).isEmpty());
+
+        primitives.add(new Node(new LatLon(1, 1)));
+        assertSame(primitives.get(1), StreetAddressOrder.getNeighbors(primitives.get(0), primitives).get(0));
+        assertEquals(1, StreetAddressOrder.getNeighbors(primitives.get(1), primitives).size());
+
+        assertSame(primitives.get(0), StreetAddressOrder.getNeighbors(primitives.get(1), primitives).get(0));
+        assertEquals(1, StreetAddressOrder.getNeighbors(primitives.get(1), primitives).size());
+
+        primitives.add(new Node(new LatLon(2, 2)));
+        assertSame(primitives.get(1), StreetAddressOrder.getNeighbors(primitives.get(0), primitives).get(0));
+        assertEquals(1, StreetAddressOrder.getNeighbors(primitives.get(0), primitives).size());
+
+        assertSame(primitives.get(0), StreetAddressOrder.getNeighbors(primitives.get(1), primitives).get(0));
+        assertSame(primitives.get(2), StreetAddressOrder.getNeighbors(primitives.get(1), primitives).get(1));
+        assertEquals(2, StreetAddressOrder.getNeighbors(primitives.get(1), primitives).size());
+
+        assertSame(primitives.get(1), StreetAddressOrder.getNeighbors(primitives.get(2), primitives).get(0));
+        assertEquals(1, StreetAddressOrder.getNeighbors(primitives.get(2), primitives).size());
     }
 
 }

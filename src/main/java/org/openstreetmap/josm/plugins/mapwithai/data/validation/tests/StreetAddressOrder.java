@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,7 @@ import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Pair;
 
 public class StreetAddressOrder extends Test {
     private static final SharpAngles ANGLES_TEST = new SharpAngles();
@@ -45,8 +48,8 @@ public class StreetAddressOrder extends Test {
                     .collect(Collectors.toList());
             List<IPrimitive> leftAddresses = getAddressesInDirection(true, addresses, way);
             List<IPrimitive> rightAddresses = getAddressesInDirection(false, addresses, way);
-            List<IPrimitive> potentialBadAddresses = new ArrayList<>(checkOrdering(leftAddresses));
-            potentialBadAddresses.addAll(checkOrdering(rightAddresses));
+            Map<IPrimitive, List<IPrimitive>> potentialBadAddresses = new HashMap<>(checkOrdering(leftAddresses));
+            potentialBadAddresses.putAll(checkOrdering(rightAddresses));
             potentialBadAddresses.forEach(this::createError);
         }
     }
@@ -81,9 +84,11 @@ public class StreetAddressOrder extends Test {
         return number;
     }
 
-    public void createError(IPrimitive potentialBadAddress) {
+    public void createError(IPrimitive potentialBadAddress, Collection<IPrimitive> surroundingAddresses) {
         if (potentialBadAddress instanceof OsmPrimitive) {
             errors.add(TestError.builder(this, Severity.OTHER, 58542100).primitives((OsmPrimitive) potentialBadAddress)
+                    .highlight(surroundingAddresses.stream().filter(OsmPrimitive.class::isInstance)
+                            .map(OsmPrimitive.class::cast).collect(Collectors.toSet()))
                     .message(MapWithAIPlugin.NAME, marktr("Potential bad address")).build());
         }
     }
@@ -96,9 +101,9 @@ public class StreetAddressOrder extends Test {
      * @return Primitives that are out of order
      * @see SharpAngles
      */
-    public static <T extends IPrimitive> List<T> checkOrdering(List<T> primitives) {
+    public static <T extends IPrimitive> Map<T, List<T>> checkOrdering(List<T> primitives) {
         if (primitives.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
         List<Node> centroids = primitives.stream().map(StreetAddressOrder::getCentroid).filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -132,7 +137,32 @@ public class StreetAddressOrder extends Test {
                 .filter(Node.class::isInstance).map(Node.class::cast).collect(Collectors.toList());
         ANGLES_TEST.clear();
         way.setNodes(Collections.emptyList());
-        return issueCentroids.stream().map(centroids::indexOf).map(primitives::get).collect(Collectors.toList());
+        List<T> badPrimitives = issueCentroids.stream().map(centroids::indexOf).map(primitives::get)
+                .collect(Collectors.toList());
+        Map<T, List<T>> badPrimitivesNeighborMap = badPrimitives.stream()
+                .map(p -> new Pair<T, List<T>>(p, getNeighbors(p, primitives)))
+                .collect(Collectors.toMap(p -> p.a, p -> p.b));
+        return badPrimitivesNeighborMap;
+    }
+
+    /**
+     * Get the neighbors of a primitive from a list
+     *
+     * @param <T>              The type of the primitive
+     * @param p                The primitive to get neighbors for
+     * @param orderedNeighbors The ordered list of primitives of which p is part of
+     * @return The primitive before/after p
+     */
+    public static <T extends IPrimitive> List<T> getNeighbors(T p, List<T> orderedNeighbors) {
+        int index = orderedNeighbors.indexOf(p);
+        List<T> neighbors = new ArrayList<>();
+        if (index > 0) {
+            neighbors.add(orderedNeighbors.get(index - 1));
+        }
+        if (index < orderedNeighbors.size() - 1) {
+            neighbors.add(orderedNeighbors.get(index + 1));
+        }
+        return neighbors;
     }
 
     /**
