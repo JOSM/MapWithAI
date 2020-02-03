@@ -38,6 +38,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.ConnectingNodeInformationTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIslandsTest;
+import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressOrder;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StubEndsTest;
 import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader;
@@ -66,7 +67,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     }
 
     private final static List<Class<? extends Test>> VALIDATORS = Arrays.asList(RoutingIslandsTest.class,
-            ConnectingNodeInformationTest.class, StubEndsTest.class, StreetAddressTest.class);
+            ConnectingNodeInformationTest.class, StubEndsTest.class, StreetAddressTest.class, StreetAddressOrder.class);
 
     public MapWithAIPlugin(PluginInformation info) {
         super(info);
