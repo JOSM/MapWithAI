@@ -60,7 +60,8 @@ public class StubEndsTest extends Test {
 
     private TestError createError(Way way, List<Node> nodes, double distance) {
         TestError.Builder error = TestError.builder(this, Severity.ERROR, 333300239)
-                .message(MapWithAIPlugin.NAME, marktr("Stub end ({0}m)"), distance).primitives(way).highlight(nodes);
+                .message(tr("{0} (experimental)", MapWithAIPlugin.NAME), marktr("Stub end ({0}m)"), distance)
+                .primitives(way).highlight(nodes);
         if (way.isNew()) {
             Way tWay = new Way(way);
             List<Node> tNodes = tWay.getNodes();

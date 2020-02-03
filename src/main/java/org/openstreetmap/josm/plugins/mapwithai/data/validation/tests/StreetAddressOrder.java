@@ -89,7 +89,7 @@ public class StreetAddressOrder extends Test {
             errors.add(TestError.builder(this, Severity.OTHER, 58542100).primitives((OsmPrimitive) potentialBadAddress)
                     .highlight(surroundingAddresses.stream().filter(OsmPrimitive.class::isInstance)
                             .map(OsmPrimitive.class::cast).collect(Collectors.toSet()))
-                    .message(MapWithAIPlugin.NAME, marktr("Potential bad address")).build());
+                    .message(tr("{0} (experimental)", MapWithAIPlugin.NAME), marktr("Potential bad address")).build());
         }
     }
 

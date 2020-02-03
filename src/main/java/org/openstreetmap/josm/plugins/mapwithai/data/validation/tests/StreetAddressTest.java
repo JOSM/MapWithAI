@@ -62,12 +62,12 @@ public class StreetAddressTest extends Test {
         TestError.Builder error = null;
         if (name == null) {
             error = TestError.builder(this, Severity.WARNING, 65446500);
-            error.message(tr(MapWithAIPlugin.NAME),
+            error.message(tr("{0} (experimental)", MapWithAIPlugin.NAME),
                     marktr("Street with no name with {0} tags nearby, name possibly {1}"), ADDR_STREET, likelyNames)
                     .highlight(getAddressPOI(likelyNames, addresses));
         } else if (!likelyNames.contains(name)) {
             error = TestError.builder(this, Severity.WARNING, 65446501);
-            error.message(tr(MapWithAIPlugin.NAME),
+            error.message(tr("{0} (experimental)", MapWithAIPlugin.NAME),
                     marktr("Street name does not match most likely name, name possibly {0}"), likelyNames)
                     .highlight(getAddressPOI(likelyNames, addresses));
         }
