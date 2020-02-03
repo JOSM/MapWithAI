@@ -193,8 +193,8 @@ release:
     longVersion=`git describe --always --long --dirty`
     commitMessage="Release version $longVersion"
   - |
-    mkdir -pv "pages/public/dist/$version"
-    cp -v "build/dist/"* "build/tmp/jar/MANIFEST.MF" "pages/public/dist/$version"
+    #mkdir -pv "pages/public/dist/$version"
+    #cp -v "build/dist/"* "build/tmp/jar/MANIFEST.MF" "pages/public/dist/$version"
     rm -fv "pages/public/dist/latest"
     ln -s "./$version" "pages/public/dist/latest"
   - &push_pages_branch |
