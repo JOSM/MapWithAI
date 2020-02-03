@@ -97,6 +97,7 @@ public class StreetAddressOrder extends Test {
      * Check the ordering of primitives by creating nodes at their centroids and
      * checking to see if a sharp angle is created.
      *
+     * @param <T>        The type of the primitive
      * @param primitives The primitives to check the order of
      * @return Primitives that are out of order
      * @see SharpAngles
@@ -166,6 +167,7 @@ public class StreetAddressOrder extends Test {
     /**
      * Get addresses on different sides of the road
      *
+     * @param <T>       The type of the primitive
      * @param left      If {@code true}, get addresses on the "left" side of the
      *                  road
      * @param addresses Addresses to filter for the side on the road

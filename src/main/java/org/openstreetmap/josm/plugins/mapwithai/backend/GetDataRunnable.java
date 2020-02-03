@@ -123,7 +123,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * Perform cleanups on a dataset (one dataset at a time)
      *
      * @param dataSet The dataset to cleanup
-     * @param bounds
+     * @param bounds  The newly added bounds to the dataset. May be {@code null}.
      */
     public static void cleanup(DataSet dataSet, Bounds bounds) {
         if (SwingUtilities.isEventDispatchThread()) {

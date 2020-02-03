@@ -160,6 +160,7 @@ public class CreateConnectionsCommand extends Command {
     }
 
     /**
+     * @param command The command class to remove
      * @return {@code true} if the conflation command was removed and was present
      * @see List#remove
      */

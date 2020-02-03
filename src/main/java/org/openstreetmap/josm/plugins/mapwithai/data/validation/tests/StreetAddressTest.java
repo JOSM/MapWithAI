@@ -175,7 +175,8 @@ public class StreetAddressTest extends Test {
      *
      * @param way  The way to get a distance to
      * @param prim The primitive to get a distance from
-     * @return A Pair<Way, Double> of the distance from the primitive to the way
+     * @return A Pair&lt;Way, Double&gt; of the distance from the primitive to the
+     *         way
      */
     public static Pair<Way, Double> distanceToWay(Way way, OsmPrimitive prim) {
         return new Pair<>(way, Geometry.getDistance(way, prim));

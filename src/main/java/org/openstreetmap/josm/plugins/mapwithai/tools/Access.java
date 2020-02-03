@@ -438,7 +438,9 @@ public final class Access {
      * ,"minibus","share_taxi","hov","car_sharing","emergency","hazmat","disabled"
      */).stream().map(AccessTags::getKey).collect(Collectors.toSet()));
 
-    /** Map<Access Method, Map<Parent/Child, List<Access Methods>> */
+    /**
+     * Map&lt;Access Method, Map&lt;Parent/Child, List&lt;Access Methods&gt;&gt;&gt;
+     */
     private static final Map<String, Map<String, List<String>>> accessMethods = new HashMap<>();
     static {
         RESTRICTION_VALUES.addAll(POSITIVE_ACCESS);
