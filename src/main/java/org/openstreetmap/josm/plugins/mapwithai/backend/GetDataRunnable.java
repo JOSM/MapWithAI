@@ -128,27 +128,33 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param bounds
      */
     public static void cleanup(DataSet dataSet, Bounds bounds) {
-        try {
-            SwingUtilities.invokeAndWait(() -> {
-                synchronized (LOCK) {
-                    removeRedundantSource(dataSet);
-                    replaceTags(dataSet);
-                    removeCommonTags(dataSet);
-                    mergeNodes(dataSet);
-                    cleanupDataSet(dataSet);
-                    mergeWays(dataSet);
-                    removeAlreadyAddedData(dataSet);
-                    new MergeDuplicateWays(dataSet).executeCommand();
-                    (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
-                            .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
-                }
-            });
-        } catch (InterruptedException e) {
-            Logging.debug(e);
-            Thread.currentThread().interrupt();
-        } catch (InvocationTargetException e) {
-            Logging.debug(e);
+        if (SwingUtilities.isEventDispatchThread()) {
+            realCleanup(dataSet, bounds);
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    realCleanup(dataSet, bounds);
+                });
+            } catch (InterruptedException e) {
+                Logging.debug(e);
+                Thread.currentThread().interrupt();
+            } catch (InvocationTargetException e) {
+                Logging.debug(e);
+            }
         }
+    }
+
+    private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {
+        removeRedundantSource(dataSet);
+        replaceTags(dataSet);
+        removeCommonTags(dataSet);
+        mergeNodes(dataSet);
+        cleanupDataSet(dataSet);
+        mergeWays(dataSet);
+        removeAlreadyAddedData(dataSet);
+        new MergeDuplicateWays(dataSet).executeCommand();
+        (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
+                .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
     }
 
     /**
