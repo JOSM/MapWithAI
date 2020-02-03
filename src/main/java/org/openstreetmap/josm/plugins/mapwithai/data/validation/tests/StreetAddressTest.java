@@ -7,6 +7,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -30,16 +31,16 @@ import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Pair;
 
 public class StreetAddressTest extends Test {
-    private static double BBOX_EXPANSION = 0.001;
-    private static String ADDR_STREET = "addr:street";
+    private static final double BBOX_EXPANSION = 0.001;
+    private static final String ADDR_STREET = "addr:street";
     /**
      * Classified highways in order of importance
      *
      * Copied from {@link org.openstreetmap.josm.data.validation.tests.Highways}
      */
-    public static final List<String> CLASSIFIED_HIGHWAYS = Arrays.asList("motorway", "motorway_link", "trunk",
-            "trunk_link", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-            "unclassified", "residential", "living_street");
+    public static final List<String> CLASSIFIED_HIGHWAYS = Collections.unmodifiableList(
+            Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary",
+                    "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street"));
 
     public StreetAddressTest() {
         super(tr("Mismatched street/street addresses ({0})", MapWithAIPlugin.NAME),
@@ -93,7 +94,7 @@ public class StreetAddressTest extends Test {
                 max = entry.getValue();
                 likelyNames.clear();
                 likelyNames.add(entry.getKey());
-            } else if (entry.getValue() == max) {
+            } else if (max.equals(entry.getValue())) {
                 likelyNames.add(entry.getKey());
             }
         }
@@ -143,10 +144,8 @@ public class StreetAddressTest extends Test {
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
         List<Relation> addrRelations = way.getDataSet().searchRelations(bbox).parallelStream()
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
-        List<IPrimitive> nearbyAddresses = Stream.of(addrNodes, addrWays, addrRelations).flatMap(List::parallelStream)
+        return Stream.of(addrNodes, addrWays, addrRelations).flatMap(List::parallelStream)
                 .filter(prim -> StreetAddressTest.isNearestRoad(way, prim)).collect(Collectors.toList());
-
-        return nearbyAddresses;
     }
 
     /**

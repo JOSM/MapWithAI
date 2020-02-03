@@ -58,8 +58,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
 
-    private static final Object LOCK = new Object();
-
     private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
     private static final String SERVER_ID_KEY = "server_id";
 

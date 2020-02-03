@@ -139,10 +139,8 @@ public class StreetAddressOrder extends Test {
         way.setNodes(Collections.emptyList());
         List<T> badPrimitives = issueCentroids.stream().map(centroids::indexOf).map(primitives::get)
                 .collect(Collectors.toList());
-        Map<T, List<T>> badPrimitivesNeighborMap = badPrimitives.stream()
-                .map(p -> new Pair<T, List<T>>(p, getNeighbors(p, primitives)))
+        return badPrimitives.stream().map(p -> new Pair<T, List<T>>(p, getNeighbors(p, primitives)))
                 .collect(Collectors.toMap(p -> p.a, p -> p.b));
-        return badPrimitivesNeighborMap;
     }
 
     /**
