@@ -1,3 +1,4 @@
+// License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
@@ -36,7 +37,7 @@ public class StreetAddressTest extends Test {
      *
      * Copied from {@link org.openstreetmap.josm.data.validation.tests.Highways}
      */
-    private static final List<String> CLASSIFIED_HIGHWAYS = Arrays.asList("motorway", "motorway_link", "trunk",
+    public static final List<String> CLASSIFIED_HIGHWAYS = Arrays.asList("motorway", "motorway_link", "trunk",
             "trunk_link", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
             "unclassified", "residential", "living_street");
 

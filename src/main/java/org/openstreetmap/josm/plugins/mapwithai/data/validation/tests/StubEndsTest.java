@@ -28,7 +28,7 @@ public class StubEndsTest extends Test {
     private double max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", 10);
 
     public StubEndsTest() {
-        super(tr("Stub Ends"), tr("Look for short ends on ways"));
+        super(tr("Stub Ends ({0})", MapWithAIPlugin.NAME), tr("Look for short ends on ways"));
     }
 
     @Override
