@@ -3,7 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.io.InputStream;
 
-import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
@@ -32,11 +31,11 @@ public class OsmReaderCustom extends OsmReader {
     @Override
     protected OsmPrimitive buildPrimitive(PrimitiveData pd) {
         final Long serverId = pd.getUniqueId();
-        if (AbstractPrimitive.currentUniqueId() < pd.getUniqueId()) {
-            Logging.trace("Current id: {0} (wants {1})", AbstractPrimitive.currentUniqueId(), pd.getUniqueId());
+        if (pd.getIdGenerator().currentUniqueId() < pd.getUniqueId()) {
+            Logging.trace("Current id: {0} (wants {1})", pd.getIdGenerator().currentUniqueId(), pd.getUniqueId());
         }
         OsmPrimitive p;
-        if (pd.getUniqueId() < AbstractPrimitive.currentUniqueId()) {
+        if (pd.getUniqueId() < pd.getIdGenerator().currentUniqueId()) {
             p = pd.getType().newInstance(pd.getUniqueId(), true);
         } else {
             p = pd.getType().newVersionedInstance(pd.getId(), pd.getVersion());
