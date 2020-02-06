@@ -165,16 +165,19 @@ public class MapWithAIAddCommand extends Command implements Runnable {
             returnLong = Long.valueOf(primitives.size());
         } else {
             returnLong = primitives.stream().map(editable::getPrimitiveById).filter(Objects::nonNull)
-                    .filter(prim -> !prim.isDeleted()).count();
+                    .filter(MapWithAIAddCommand::validPrimitive).count();
         }
         return returnLong;
     }
 
     public Collection<String> getSourceTags() {
         return sources.entrySet().parallelStream()
-                .filter(entry -> editable.getPrimitiveById(entry.getKey()) != null
-                        && !editable.getPrimitiveById(entry.getKey()).isDeleted())
-                .map(Entry::getValue).filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
+                .filter(entry -> validPrimitive(editable.getPrimitiveById(entry.getKey()))).map(Entry::getValue)
+                .filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
+    }
+
+    private static boolean validPrimitive(OsmPrimitive prim) {
+        return prim != null && (!prim.isDeleted() || prim instanceof Node);
     }
 
     @Override
