@@ -25,7 +25,7 @@ import org.openstreetmap.josm.spi.preferences.Config;
 public class StubEndsTest extends Test {
     private static final String HIGHWAY = "highway";
     private static final List<String> BAD_HIGHWAYS = Arrays.asList("services", "rest_area");
-    private double max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", 10);
+    private double max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", 5);
 
     public StubEndsTest() {
         super(tr("Stub Ends ({0})", MapWithAIPlugin.NAME), tr("Look for short ends on ways"));
@@ -101,6 +101,9 @@ public class StubEndsTest extends Test {
     private static double distanceToConnection(Way way, List<Node> nodesToConnection, List<Node> nodeOrder) {
         double distance = 0;
         Node previous = nodeOrder.get(0);
+        if (previous.hasTag("noexit")) {
+            return Double.NaN;
+        }
         // isOutsideDownloadArea returns false if new or undeleted as well
         if (!previous.isOutsideDownloadArea()) {
             for (Node node : nodeOrder) {
