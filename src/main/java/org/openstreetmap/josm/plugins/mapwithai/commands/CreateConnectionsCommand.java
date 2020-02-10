@@ -60,8 +60,18 @@ public class CreateConnectionsCommand extends Command {
             command.executeCommand();
         }
         if (undoCommands != null) {
-            undoCommands.executeCommand();
-            SwingUtilities.invokeLater(() -> UndoRedoHandler.getInstance().add(undoCommands, false));
+            try {
+                SwingUtilities.invokeAndWait(() -> undoCommands.executeCommand());
+            } catch (InvocationTargetException e) {
+                undoCommands.executeCommand();
+                Logging.debug(e);
+            } catch (InterruptedException e) {
+                undoCommands.executeCommand();
+                Logging.debug(e);
+                Thread.currentThread().interrupt();
+            } finally {
+                SwingUtilities.invokeLater(() -> UndoRedoHandler.getInstance().add(undoCommands, false));
+            }
         }
         return true;
     }
