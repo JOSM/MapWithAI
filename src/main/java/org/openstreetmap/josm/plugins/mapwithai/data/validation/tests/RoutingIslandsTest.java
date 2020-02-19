@@ -50,7 +50,8 @@ public class RoutingIslandsTest extends Test {
 
     private static final String HIGHWAY = "highway";
     private static final String WATERWAY = "waterway";
-    private static final List<String> IGNORE_TAGS = Arrays.asList("services", "rest_area");
+    private static final List<String> IGNORE_TAGS_HIGHWAY = Arrays.asList("services", "rest_area");
+    private static final List<String> IGNORE_TAGS_WATERWAY = Arrays.asList("services", "rest_area", "dam");
 
     /**
      * This is mostly as a sanity check, and to avoid infinite recursion (shouldn't
@@ -92,7 +93,9 @@ public class RoutingIslandsTest extends Test {
 
     @Override
     public void visit(Way way) {
-        if (way.isUsable() && !IGNORE_TAGS.contains(way.get("highway")) && !IGNORE_TAGS.contains(way.get("waterway"))
+        if (way.isUsable()
+                && ((way.hasKey(HIGHWAY) && !IGNORE_TAGS_HIGHWAY.contains(way.get(HIGHWAY)))
+                        || (way.hasKey(WATERWAY) && !IGNORE_TAGS_WATERWAY.contains(way.get(WATERWAY))))
                 && way.getNodes().parallelStream().anyMatch(node -> way.getDataSet().getDataSourceBounds()
                         .parallelStream().anyMatch(source -> source.contains(node.getCoor())))) {
             if ((way.hasKey(HIGHWAY) || way.hasKey(WATERWAY))
@@ -104,9 +107,10 @@ public class RoutingIslandsTest extends Test {
                         .build());
             } else if ((ValidatorPrefHelper.PREF_OTHER.get() || ValidatorPrefHelper.PREF_OTHER_UPLOAD.get()
                     || !Severity.OTHER.equals(SEVERITY_MAP.get(ROUTING_ISLAND))) && !isBeforeUpload) {
-                if (way.hasKey(HIGHWAY)) {
+                if (way.hasKey(HIGHWAY) && !IGNORE_TAGS_HIGHWAY.contains(way.get(HIGHWAY))) {
                     potentialHighways.add(way);
-                } else if (way.hasKey(WATERWAY)) {
+                }
+                if (way.hasKey(WATERWAY) && !IGNORE_TAGS_WATERWAY.contains(way.get(WATERWAY))) {
                     potentialWaterways.add(way);
                 }
             }
