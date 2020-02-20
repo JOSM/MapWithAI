@@ -25,7 +25,8 @@ import org.openstreetmap.josm.spi.preferences.Config;
 public class StubEndsTest extends Test {
     private static final String HIGHWAY = "highway";
     private static final List<String> BAD_HIGHWAYS = Arrays.asList("services", "rest_area");
-    private double max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", 5);
+    private static final double DEFAULT_MAX_LENGTH = 5.0;
+    private double max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
 
     public StubEndsTest() {
         super(tr("Stub Ends ({0})", MapWithAIPlugin.NAME), tr("Look for short ends on ways"));
@@ -34,7 +35,7 @@ public class StubEndsTest extends Test {
     @Override
     public void startTest(ProgressMonitor monitor) {
         super.startTest(monitor);
-        max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", 10);
+        max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
     }
 
     @Override
@@ -60,7 +61,8 @@ public class StubEndsTest extends Test {
 
     private TestError createError(Way way, List<Node> nodes, double distance) {
         TestError.Builder error = TestError.builder(this, Severity.ERROR, 333300239)
-                .message(tr("{0} (experimental)", MapWithAIPlugin.NAME), marktr("Stub end ({0}m)"), distance)
+                .message(tr("{0} (experimental)", MapWithAIPlugin.NAME), marktr("Stub end ({0}m)"),
+                        Math.round(distance))
                 .primitives(way).highlight(nodes);
         if (way.isNew()) {
             Way tWay = new Way(way);
