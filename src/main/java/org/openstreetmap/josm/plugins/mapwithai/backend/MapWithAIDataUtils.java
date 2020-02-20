@@ -245,16 +245,26 @@ public final class MapWithAIDataUtils {
         if (urlInformation.containsKey("url")) {
             sb.append(urlInformation.get("url"));
             if (urlInformation.containsKey("parameters")) {
-                List<String> parameters = DataUrl.readJsonStringArraySimple(urlInformation.get("parameters"))
-                        .parallelStream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
-                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
-                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
+                List<String> parameters = parseParameters(urlInformation.get("parameters"));
                 if (!parameters.isEmpty()) {
                     sb.append('&').append(String.join("&", parameters));
                 }
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Parse a parameters string and return relevant parameters
+     *
+     * @param parameters A JSON string of parameters
+     * @return Enabled parameters (list thereof)
+     */
+    public static List<String> parseParameters(String parameters) {
+        return DataUrl.readJsonStringArraySimple(parameters).parallelStream().filter(JsonObject.class::isInstance)
+                .map(JsonObject.class::cast).filter(map -> map.getBoolean("enabled", false))
+                .filter(map -> map.containsKey("parameter")).map(map -> map.getString("parameter"))
+                .collect(Collectors.toList());
     }
 
     private static Bounds bboxToBounds(BBox bbox) {

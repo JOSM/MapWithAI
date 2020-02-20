@@ -4,6 +4,9 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -37,11 +40,27 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     @Override
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
-        GetDataRunnable.addMapWithAISourceTag(ds, MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
-                .filter(map -> map.getOrDefault("url", "no-url").equals(url))
-                .map(map -> map.getOrDefault("source", MapWithAIPlugin.NAME)).findFirst().orElse(MapWithAIPlugin.NAME));
+        if (url != null) {
+            GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(url));
+        }
         GetDataRunnable.cleanup(ds, downloadArea);
         return ds;
+    }
+
+    private static String getSourceTag(String url) {
+        List<Map<String, String>> possible = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
+                .filter(map -> url.contains(map.getOrDefault("url", null))).collect(Collectors.toList());
+        Map<String, String> probable = null;
+        long max = 0;
+        for (Map<String, String> check : possible) {
+            List<String> parameters = MapWithAIDataUtils.parseParameters(check.get("parameters"));
+            long count = parameters.parallelStream().filter(url::contains).count();
+            if (count > max || probable == null) {
+                max = count;
+                probable = check;
+            }
+        }
+        return probable == null ? MapWithAIPlugin.NAME : probable.getOrDefault("source", MapWithAIPlugin.NAME);
     }
 
     /**
