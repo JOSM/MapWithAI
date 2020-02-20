@@ -143,7 +143,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {
-        removeRedundantSource(dataSet);
         replaceTags(dataSet);
         removeCommonTags(dataSet);
         mergeNodes(dataSet);
@@ -153,25 +152,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         new MergeDuplicateWays(dataSet).executeCommand();
         (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
                 .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
-    }
-
-    /**
-     * Remove redudant sources from objects (if source on way and source on node,
-     * and node doesn't have any other tags, then node doesn't need the source)
-     *
-     * @param dataSet The dataset with potential duplicate source tags
-     */
-    public static void removeRedundantSource(DataSet dataSet) {
-        synchronized (GetDataRunnable.class) {
-            dataSet.getNodes().stream().filter(node -> !node.getReferrers().isEmpty())
-                    .filter(node -> node.getKeys().entrySet().parallelStream().map(Entry::getKey)
-                            .allMatch(key -> key.contains("source"))
-                            && node.getKeys().entrySet().parallelStream()
-                                    .allMatch(entry -> node.getReferrers().parallelStream()
-                                            .anyMatch(parent -> parent.hasTag(entry.getKey(), entry.getValue()))))
-                    .forEach(node -> node.getKeys().entrySet().stream().map(Entry::getKey)
-                            .filter(key -> key.contains("source")).forEach(node::remove));
-        }
     }
 
     /**
@@ -486,13 +466,18 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @return The dataset for easy chaining
      */
     public static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
-        dataSet.getNodes().parallelStream().filter(node -> !node.isDeleted() && node.getReferrers().isEmpty())
+        dataSet.getNodes().parallelStream().filter(GetDataRunnable::checkIfMapWithAISourceShouldBeAdded)
+                .filter(node -> node.getReferrers().isEmpty())
                 .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
-        dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
+        dataSet.getWays().parallelStream().filter(GetDataRunnable::checkIfMapWithAISourceShouldBeAdded)
                 .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
-        dataSet.getRelations().parallelStream().filter(rel -> !rel.isDeleted())
+        dataSet.getRelations().parallelStream().filter(GetDataRunnable::checkIfMapWithAISourceShouldBeAdded)
                 .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
         return dataSet;
+    }
+
+    private static boolean checkIfMapWithAISourceShouldBeAdded(OsmPrimitive prim) {
+        return !prim.isDeleted() && !prim.hasTag(MAPWITHAI_SOURCE_TAG_KEY);
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws IOException {
