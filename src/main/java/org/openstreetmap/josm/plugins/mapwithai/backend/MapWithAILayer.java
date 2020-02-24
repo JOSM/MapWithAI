@@ -226,7 +226,13 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         return continuousDownload;
     }
 
-    private static class ContinuousDownloadAction extends AbstractAction implements LayerAction {
+    /**
+     * Allow continuous download of data (for the layer that MapWithAI is clamped
+     * to).
+     *
+     * @author Taylor Smock
+     */
+    public static class ContinuousDownloadAction extends AbstractAction implements LayerAction {
         private static final long serialVersionUID = -3528632887550700527L;
         private final MapWithAILayer layer;
 

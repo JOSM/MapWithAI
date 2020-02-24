@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -37,6 +38,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.ContinuousDownloadAction;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -174,5 +176,13 @@ public class MapWithAILayerTest {
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
         assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
                 "There should be two data sources");
+    }
+
+    @Test
+    public void testGetMenuEntries() {
+        Layer layer = MapWithAIDataUtils.getLayer(true);
+        Action[] actions = layer.getMenuEntries();
+        assertTrue(actions.length > 0);
+        assertEquals(ContinuousDownloadAction.class, layer.getMenuEntries()[actions.length - 3].getClass());
     }
 }
