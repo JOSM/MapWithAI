@@ -17,6 +17,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
+import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.data.validation.OsmValidator;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -107,8 +108,10 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         new MapWithAIRemoteControl(); // instantiate to get action into Remote Control Preferences
         destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
-        destroyables.add(new CycleLayerDownAction()); // TODO remove/put in if block when JOSM-18638 is fixed
-        destroyables.add(new CycleLayerUpAction()); // TODO see above
+        if (Version.getInstance().getVersion() < 15923) {
+            destroyables.add(new CycleLayerDownAction()); // TODO remove/put in if block when JOSM-18638 is fixed
+            destroyables.add(new CycleLayerUpAction()); // TODO see above
+        }
         mapFrameInitialized(null, MainApplication.getMap());
         mapWithAIDownloadReader = new MapWithAIDownloadReader();
         DownloadDialog.addDownloadSource(mapWithAIDownloadReader);
