@@ -300,12 +300,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean distanceCheck(Node nearNode, Node node, Double distance) {
-        try {
-            return nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
-        } catch (Exception e) {
-            Logging.error(e);
-            return false;
-        }
+        return nearNode == null || node == null ? false
+                : nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
     }
 
     private static boolean keyCheck(Node nearNode, Node node) {

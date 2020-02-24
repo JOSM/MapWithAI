@@ -11,6 +11,7 @@ import org.openstreetmap.josm.tools.OpenBrowser;
 import mockit.Mock;
 import mockit.MockUp;
 
+/** TODO Remove if #18766 is merged */
 public class OpenBrowserMocker extends MockUp<OpenBrowser> {
     @Mock
     public static String displayUrl(URI uri) {

@@ -180,7 +180,7 @@ public final class MapWithAIPreferenceHelper {
      * @return true if the configuration changed
      */
     public static boolean setMapWithAIURLs(List<Map<String, String>> urls) {
-        final List<Map<String, String>> setUrls = urls;
+        final List<Map<String, String>> setUrls = urls.isEmpty() ? new ArrayList<>() : urls;
         if (urls.isEmpty()) {
             final TreeMap<String, String> defaultAPIMap = new TreeMap<>();
             defaultAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API);

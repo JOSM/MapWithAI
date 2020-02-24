@@ -191,7 +191,8 @@ public class DataAvailability {
      * @return the unique instance
      */
     public static DataAvailability getInstance() {
-        if (InstanceHelper.instance == null || COUNTRIES.isEmpty()) {
+        if (InstanceHelper.instance == null || COUNTRIES.isEmpty()
+                || MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
             InstanceHelper.instance = new DataAvailability();
         }
         return InstanceHelper.instance;

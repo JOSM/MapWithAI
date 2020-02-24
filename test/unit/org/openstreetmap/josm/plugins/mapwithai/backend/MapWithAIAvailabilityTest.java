@@ -3,8 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Collections;
 
 import org.awaitility.Durations;
 import org.junit.After;
@@ -74,5 +78,36 @@ public class MapWithAIAvailabilityTest {
                 "Mexico has highway data");
         assertFalse(DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("building", false),
                 "Mexico does not yet have building data");
+    }
+
+    @Test
+    public void testNoURLs() {
+        MapWithAIPreferenceHelper.setMapWithAIURLs(Collections.emptyList());
+        DataAvailability.getInstance();
+        testgetDataLatLon();
+        MapWithAIPreferenceHelper.setMapWithAIURLs(Collections.emptyList());
+        DataAvailability.getInstance();
+        testHasDataLatLon();
+        MapWithAIPreferenceHelper.setMapWithAIURLs(Collections.emptyList());
+        DataAvailability.getInstance();
+        testHasDataBBox();
+    }
+
+    @Test
+    public void testGetPrivacyUrls() {
+        assertFalse(DataAvailability.getPrivacyPolicy().isEmpty());
+    }
+
+    @Test
+    public void testGetTOSUrls() {
+        assertFalse(DataAvailability.getTermsOfUse().isEmpty());
+    }
+
+    @Test
+    public void testDefaultUrlImplementations() {
+        DataAvailability instance = DataAvailability.getInstance();
+        assertNull(instance.getUrl());
+        assertEquals("", instance.getPrivacyPolicyUrl());
+        assertEquals("", instance.getTermsOfUseUrl());
     }
 }
