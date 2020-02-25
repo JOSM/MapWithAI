@@ -4,6 +4,7 @@
         "countries": {
             "US-CO": ["addr:housenumber"]
         },
+        "parameters": [],
         "license": "Public Domain",
         "osm_compatible": "yes",
         "permission_url": "https://wiki.openstreetmap.org/wiki/Import/Colorado_Addresses"
