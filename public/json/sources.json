@@ -145,6 +145,7 @@
         },
         "license": "ODBL",
         "osm_compatible": "yes",
-        "permission_url": "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/wiki/FAQ"
+        "permission_url": "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/wiki/FAQ",
+        "default": true
     }
 }
