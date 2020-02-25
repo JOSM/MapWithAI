@@ -66,6 +66,27 @@ public class DataAvailability {
     }
 
     /**
+     * Populate preferences with the default values
+     */
+    public static void populatePreferences() {
+        try (CachedFile jsonFile = new CachedFile(DEFAULT_SERVER_URL);
+                JsonParser jsonParser = Json.createParser(jsonFile.getContentReader());) {
+            jsonFile.setMaxAge(604_800);
+            jsonParser.next();
+            JsonObject jsonObject = jsonParser.getObject();
+            for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
+                JsonValue parameters = entry.getValue().asJsonObject().getJsonArray("parameters");
+                DataUrl url = new DataUrl(entry.getKey(), entry.getValue().asJsonObject().getString("url", ""), false,
+                        parameters == null ? "[]" : parameters.toString());
+                boolean enabled = entry.getValue().asJsonObject().getBoolean("default", false);
+                MapWithAIPreferenceHelper.setMapWithAIUrl(url, enabled, true);
+            }
+        } catch (JsonException | IOException e) {
+            Logging.debug(e);
+        }
+    }
+
+    /**
      * Initialize the class
      */
     private static void initialize() {
@@ -77,9 +98,7 @@ public class DataAvailability {
             boolean initializePreferences = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty();
             for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
                 if (initializePreferences) {
-                    DataUrl url = new DataUrl(entry.getKey(), entry.getValue().asJsonObject().getString("url", ""),
-                            false, entry.getValue().asJsonObject().getJsonArray("parameters").toString());
-                    MapWithAIPreferenceHelper.setMapWithAIUrl(url, false, true);
+                    populatePreferences();
                 }
                 Logging.debug("{0}: {1}", entry.getKey(), entry.getValue());
                 if (JsonValue.ValueType.OBJECT.equals(entry.getValue().getValueType())

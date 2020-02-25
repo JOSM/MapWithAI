@@ -78,10 +78,13 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     }
 
     private static void fillMapWithAIURLTableDisplayData(List<DataUrl> list) {
-        MapWithAIPreferenceHelper.getMapWithAIURLs()
-                .forEach(entry -> list.add(new DataUrl(entry.get(SOURCE), entry.get("url"),
-                        Boolean.valueOf(entry.getOrDefault("enabled", "false")),
-                        entry.getOrDefault("parameters", "[]"))));
+        List<Map<String, String>> entries = MapWithAIPreferenceHelper.getMapWithAIURLs();
+        if (list.isEmpty()) {
+            DataAvailability.populatePreferences();
+            entries = MapWithAIPreferenceHelper.getMapWithAIURLs();
+        }
+        entries.forEach(entry -> list.add(new DataUrl(entry.get(SOURCE), entry.get("url"),
+                Boolean.valueOf(entry.getOrDefault("enabled", "false")), entry.getOrDefault("parameters", "[]"))));
     }
 
     @Override
