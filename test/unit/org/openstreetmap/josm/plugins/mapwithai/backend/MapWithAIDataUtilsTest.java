@@ -200,14 +200,6 @@ public class MapWithAIDataUtilsTest {
         MapWithAIPreferenceHelper.setMapWithAIUrl("Fake2", fakeUrl, true, true);
         assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .filter(map -> fakeUrl.equals(map.get("url"))).count(), "There should only be one fakeUrl");
-        MapWithAIPreferenceHelper.setMapWithAIURLs(urls.parallelStream()
-                .filter(map -> !fakeUrl.equalsIgnoreCase(map.getOrDefault("url", ""))).collect(Collectors.toList()));
-        assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().size(),
-                "The MapWithAI URLs should have been reset (essentially)");
-        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> getDefaultMapWithAIAPIForTest(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                        .equals(map.get("url"))),
-                "The MapWithAI URLs should have been reset");
     }
 
     @Test

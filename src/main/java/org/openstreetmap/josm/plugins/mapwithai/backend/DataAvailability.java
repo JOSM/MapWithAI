@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
@@ -131,10 +130,10 @@ public class DataAvailability {
      */
     private static void parseCountries(Map<String, Map<String, Boolean>> countriesMap, JsonValue countries,
             JsonValue information) {
-        if (JsonValue.ValueType.ARRAY.equals(countries.getValueType())) {
-            parseCountriesArray(countriesMap, countries.asJsonArray(), information);
-        } else if (JsonValue.ValueType.OBJECT.equals(countries.getValueType())) {
+        if (JsonValue.ValueType.OBJECT.equals(countries.getValueType())) {
             parseCountriesObject(countriesMap, countries.asJsonObject(), information);
+        } else {
+            Logging.error("MapWithAI: Check format of countries map from MapWithAI");
         }
     }
 
@@ -164,33 +163,6 @@ public class DataAvailability {
                         .filter(val -> JsonValue.ValueType.STRING.equals(val.getValueType())).map(JsonValue::toString)
                         .map(DataAvailability::stripQuotes).collect(Collectors.toList())) {
                     providesMap.put(provide, Boolean.TRUE);
-                }
-            }
-        }
-    }
-
-    /**
-     * Parse a JsonArray for countries
-     *
-     * @param countriesMap The countries map (will be modified)
-     * @param countryArray The country array (JsonArray)
-     * @param information  The information for the source
-     */
-    private static void parseCountriesArray(Map<String, Map<String, Boolean>> countriesMap, JsonArray countryArray,
-            JsonValue information) {
-        List<String> array = countryArray.parallelStream()
-                .filter(c -> JsonValue.ValueType.STRING.equals(c.getValueType())).map(JsonValue::toString)
-                .map(DataAvailability::stripQuotes).collect(Collectors.toList());
-        if (JsonValue.ValueType.OBJECT.equals(information.getValueType())
-                && information.asJsonObject().containsKey(PROVIDES)) {
-            List<String> provides = information.asJsonObject().getJsonArray(PROVIDES).parallelStream()
-                    .filter(p -> JsonValue.ValueType.STRING.equals(p.getValueType())).map(JsonValue::toString)
-                    .map(DataAvailability::stripQuotes).collect(Collectors.toList());
-            for (String countryValue : array) {
-                for (String provide : provides) {
-                    Map<String, Boolean> providesMap = countriesMap.getOrDefault(countryValue, new TreeMap<>());
-                    countriesMap.putIfAbsent(countryValue, providesMap);
-                    providesMap.put(provide, true);
                 }
             }
         }
