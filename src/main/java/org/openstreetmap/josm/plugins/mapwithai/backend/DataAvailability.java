@@ -75,10 +75,11 @@ public class DataAvailability {
             jsonParser.next();
             JsonObject jsonObject = jsonParser.getObject();
             for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
-                JsonValue parameters = entry.getValue().asJsonObject().getJsonArray("parameters");
-                DataUrl url = new DataUrl(entry.getKey(), entry.getValue().asJsonObject().getString("url", ""), false,
+                JsonObject json = entry.getValue().asJsonObject();
+                JsonValue parameters = json.getJsonArray("parameters");
+                boolean enabled = json.getBoolean("default", false);
+                DataUrl url = new DataUrl(entry.getKey(), json.getString("url", ""), enabled,
                         parameters == null ? "[]" : parameters.toString());
-                boolean enabled = entry.getValue().asJsonObject().getBoolean("default", false);
                 MapWithAIPreferenceHelper.setMapWithAIUrl(url, enabled, true);
             }
         } catch (JsonException | IOException e) {
