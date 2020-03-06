@@ -78,27 +78,6 @@ public final class MapWithAIPreferenceHelper {
                 returnMap.add(layerMap);
             }
         }
-        if (returnMap.isEmpty()) {
-            final List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
-            final List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty() ? defaultAPIs
-                    : Config.getPref().getList(API_CONFIG);
-            returnMap.addAll(defaultList.stream().map(string -> {
-                final TreeMap<String, String> map = new TreeMap<>();
-                map.put(URL_STRING, string);
-                return map;
-            }).collect(Collectors.toList()));
-        }
-        returnMap.parallelStream().forEach(map -> {
-            final String url = map.get(URL_STRING);
-            if (DEFAULT_MAPWITHAI_API.equals(url)) {
-                map.putIfAbsent(SOURCE_STRING, MapWithAIPlugin.NAME);
-                map.putIfAbsent(ENABLED_STRING, "true");
-                map.putIfAbsent(PARAMETERS_STRING, DEFAULT_MAPWITHAI_API_PARAMETERS);
-            } else {
-                map.putIfAbsent(SOURCE_STRING, url);
-                map.putIfAbsent(ENABLED_STRING, Boolean.FALSE.toString());
-            }
-        });
         return returnMap;
     }
 
