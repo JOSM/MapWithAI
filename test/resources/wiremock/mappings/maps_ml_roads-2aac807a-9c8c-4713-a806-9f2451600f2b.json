@@ -15,7 +15,7 @@
       "X-Content-Type-Options" : "nosniff",
       "X-Frame-Options" : "DENY",
       "X-XSS-Protection" : "0",
-      "Access-Control-Allow-Origin" : "https://facebook.com",
+      "Access-Control-Allow-Origin" : "https://mapwith.ai",
       "X-FB-Debug" : "pAVoB1d1AQr2FejyueTMcu+w/Dz6gRkTSWM8vHG9Is5MwRmNnY97YHiWDtoDigLbkHsoKHQtAWaRwWI+47NZKw==",
       "Date" : "Thu, 05 Dec 2019 14:25:09 GMT",
       "Alt-Svc" : "h3-23=\":443\"; ma=3600",

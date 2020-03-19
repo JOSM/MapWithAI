@@ -57,7 +57,7 @@ public class GetDataRunnableTest {
     }
 
     public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
-        return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.facebook.com");
+        return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.mapwith.ai");
     }
 
     public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url, String wireMockReplace) {

@@ -64,7 +64,7 @@ public class MapWithAILayerTest {
         wireMock.start();
         MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
             map.put("url", map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                    .replace("https://www.facebook.com", wireMock.baseUrl()));
+                    .replace("https://www.mapwith.ai", wireMock.baseUrl()));
             return map;
         }).collect(Collectors.toList()));
         layer = new MapWithAILayer(new DataSet(), "test", null);

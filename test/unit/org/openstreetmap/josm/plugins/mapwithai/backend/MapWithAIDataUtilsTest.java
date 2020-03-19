@@ -70,7 +70,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     private String getDefaultMapWithAIAPIForTest(String url) {
-        return getDefaultMapWithAIAPIForTest(url, "https://www.facebook.com");
+        return getDefaultMapWithAIAPIForTest(url, "https://www.mapwith.ai");
     }
 
     private String getDefaultMapWithAIAPIForTest(String url, String wireMockReplace) {
