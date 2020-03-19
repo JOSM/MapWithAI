@@ -181,9 +181,12 @@ public class StreetAddressOrder extends Test {
             if (address instanceof OsmPrimitive && way instanceof Way) {
                 Node centroid = getCentroid(address);
                 WaySegment seg = Geometry.getClosestWaySegment((Way) way, (OsmPrimitive) address);
-                boolean right = Geometry.angleIsClockwise(seg.getFirstNode(), seg.getSecondNode(), centroid);
-                if (left != right) {
-                    addressesToReturn.add(address);
+                if (seg.getFirstNode().getEastNorth() != null && seg.getSecondNode().getEastNorth() != null
+                        && centroid.getEastNorth() != null) {
+                    boolean right = Geometry.angleIsClockwise(seg.getFirstNode(), seg.getSecondNode(), centroid);
+                    if (left != right) {
+                        addressesToReturn.add(address);
+                    }
                 }
             }
         }
