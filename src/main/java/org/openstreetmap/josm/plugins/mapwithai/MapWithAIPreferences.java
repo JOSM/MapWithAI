@@ -167,7 +167,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
         final Component expertHorizontalGlue = Box.createHorizontalGlue();
         pane.add(expertHorizontalGlue, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
-        final JLabel replacementTags = new JLabel(tr("Replacement Tags"));
+        final JLabel replacementTags = new JLabel(tr("Replacement Tags (to be replaced on download)"));
         pane.add(replacementTags, first);
         final JScrollPane scroll2 = new JScrollPane(replacementPreferenceTable);
         pane.add(scroll2, GBC.eol().fill(GridBagConstraints.BOTH));
