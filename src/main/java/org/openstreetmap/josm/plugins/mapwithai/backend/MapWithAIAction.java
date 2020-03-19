@@ -71,7 +71,8 @@ public class MapWithAIAction extends JosmAction {
             returnLayer = osmLayers.get(0);
         } else if (!osmLayers.isEmpty()) {
             returnLayer = AbstractMergeAction.askTargetLayer(osmLayers.toArray(new OsmDataLayer[0]),
-                    tr("Please select the target layer"), tr("Select target layer"), tr("OK"), "download");
+                    tr("Please select the initial layer for boundaries"), tr("Select target layer for boundaries"),
+                    tr("OK"), "download");
         }
         return returnLayer;
     }
