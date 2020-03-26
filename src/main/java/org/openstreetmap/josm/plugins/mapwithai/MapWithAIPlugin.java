@@ -42,6 +42,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddr
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StubEndsTest;
 import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;

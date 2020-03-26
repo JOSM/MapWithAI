@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai;
+package org.openstreetmap.josm.plugins.mapwithai.gui.preferences;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,8 +48,6 @@ public class MapWithAIPreferencesTest {
         preferences.addGui(pane);
 
         assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount(), "Preferences wasn't added");
-        assertEquals(pane.getPluginPreference(), preferences.getTabPreferenceSetting(pane),
-                "The expected parent of the settings panel was different");
 
         final boolean switchLayers = MapWithAIPreferenceHelper.isSwitchLayers();
 

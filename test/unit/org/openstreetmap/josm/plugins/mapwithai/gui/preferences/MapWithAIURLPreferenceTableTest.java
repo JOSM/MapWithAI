@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai;
+package org.openstreetmap.josm.plugins.mapwithai.gui.preferences;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,8 +14,9 @@ import java.util.TreeMap;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.openstreetmap.josm.plugins.mapwithai.MapWithAIURLPreferenceTable.URLTableModel;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIURLPreferenceTable;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIURLPreferenceTable.URLTableModel;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 /**

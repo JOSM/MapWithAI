@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai;
+package org.openstreetmap.josm.plugins.mapwithai.gui.preferences;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
@@ -36,6 +36,7 @@ import org.openstreetmap.josm.gui.preferences.SubPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.TabPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
 import org.openstreetmap.josm.gui.widgets.JosmTextField;
+import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;

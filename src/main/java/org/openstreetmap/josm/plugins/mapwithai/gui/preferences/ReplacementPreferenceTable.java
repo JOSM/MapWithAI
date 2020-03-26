@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai;
+package org.openstreetmap.josm.plugins.mapwithai.gui.preferences;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
