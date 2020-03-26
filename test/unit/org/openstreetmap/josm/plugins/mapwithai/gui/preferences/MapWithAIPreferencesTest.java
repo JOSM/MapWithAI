@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 import javax.swing.SpinnerNumberModel;
 
 import org.junit.Before;
@@ -38,16 +41,23 @@ public class MapWithAIPreferencesTest {
 
     /**
      * Test method for {@link MapWithAIPreferences#addGui(PreferenceTabbedPane)}.
+     *
+     * @throws SecurityException
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
      */
     @Test
-    public void testAddGui() {
+    public void testAddGui()
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         final PreferenceTabbedPane pane = new PreferenceTabbedPane();
         pane.buildGui();
-        final int tabs = pane.getPluginPreference().getTabPane().getTabCount();
-
+        Field tab = PreferenceTabbedPane.class.getDeclaredField("tabs");
+        tab.setAccessible(true);
+        int initialSize = ((List<?>) tab.get(pane)).size();
         preferences.addGui(pane);
 
-        assertEquals(tabs + 1, pane.getPluginPreference().getTabPane().getTabCount(), "Preferences wasn't added");
+        assertEquals(initialSize + 1, ((List<?>) tab.get(pane)).size(), "Preferences wasn't added");
 
         final boolean switchLayers = MapWithAIPreferenceHelper.isSwitchLayers();
 

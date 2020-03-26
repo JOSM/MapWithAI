@@ -28,24 +28,26 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
 import javax.swing.SpinnerNumberModel;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
+import org.openstreetmap.josm.gui.preferences.DefaultTabPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
-import org.openstreetmap.josm.gui.preferences.SubPreferenceSetting;
-import org.openstreetmap.josm.gui.preferences.TabPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
 import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWithAIProvidersPanel;
 import org.openstreetmap.josm.spi.preferences.StringSetting;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.OpenBrowser;
 
-public class MapWithAIPreferences implements SubPreferenceSetting {
+public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     private final JCheckBox switchLayerCheckBox;
     private final JCheckBox mergeBuildingAddressCheckBox;
     private final JSpinner maximumAdditionSpinner;
@@ -57,6 +59,8 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     private static final String SOURCE = "source";
 
     public MapWithAIPreferences() {
+        super("mapwithai", tr("MapWithAI preferences"), tr("Modify MapWithAI preferences"), false, new JTabbedPane());
+
         switchLayerCheckBox = new JCheckBox();
         maximumAdditionSpinner = new JSpinner(
                 new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 50, 1));
@@ -68,6 +72,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         mapwithaiurlTableDisplayData = new ArrayList<>();
         fillMapWithAIURLTableDisplayData(mapwithaiurlTableDisplayData);
         mapwithaiUrlPreferenceTable = new MapWithAIURLPreferenceTable(mapwithaiurlTableDisplayData);
+
     }
 
     private static void fillReplacementTagDisplayData(List<PrefEntry> list) {
@@ -90,14 +95,71 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
     @Override
     public void addGui(PreferenceTabbedPane gui) {
+        final JPanel p = gui.createPreferenceTab(this);
+        final JTabbedPane panel = getTabPane();
+        if (panel.getTabCount() == 0) {
+            panel.addTab(tr("Servers"), getServerList(gui));
+            panel.addTab(tr("Settings"), getSettingsPanel(gui));
+        }
+        p.add(panel, GBC.std().fill(GBC.BOTH));
+    }
+
+    private Component getServerList(PreferenceTabbedPane gui) {
+        if (false) {
+            final JPanel pane = new JPanel(new GridBagLayout());
+            final int width = 200;
+            final int height = 200;
+            final GBC first = GBC.std().weight(0, 1).anchor(GridBagConstraints.WEST);
+            final GBC second = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
+            final GBC buttonInsets = GBC.std().insets(5, 5, 0, 0);
+            final JLabel mapWithAIApiUrl = new JLabel(tr("{0} API URLs", MapWithAIPlugin.NAME));
+            mapWithAIApiUrl.setToolTipText(tr("The URL that will be called to get data from"));
+            pane.add(mapWithAIApiUrl, first);
+
+            final JScrollPane scroll1 = new JScrollPane(mapwithaiUrlPreferenceTable);
+            scroll1.setToolTipText(mapWithAIApiUrl.getToolTipText());
+            pane.add(scroll1, GBC.eol().fill(GridBagConstraints.BOTH));
+            scroll1.setPreferredSize(new Dimension(width, height));
+            pane.add(new JLabel(), first);
+            final JPanel replaceAddEditDeleteScroll1 = new JPanel(new GridBagLayout());
+            pane.add(replaceAddEditDeleteScroll1, second);
+            final JButton addScroll1 = new JButton(tr("Add"));
+            replaceAddEditDeleteScroll1.add(addScroll1, buttonInsets);
+            addScroll1.addActionListener(e -> {
+                mapwithaiurlTableDisplayData.add(DataUrl.emptyData());
+                mapwithaiUrlPreferenceTable.fireDataChanged();
+            });
+            final JButton editScroll1 = new JButton(tr("Edit Parameters"));
+            replaceAddEditDeleteScroll1.add(editScroll1, buttonInsets);
+            editScroll1.addActionListener(e -> {
+                final List<DataUrl> toEdit = mapwithaiUrlPreferenceTable.getSelectedItems();
+                if (toEdit.size() == MAX_SELECTED_TO_EDIT) {
+                    mapwithaiUrlPreferenceTable.editPreference(gui);
+                }
+            });
+            final JButton deleteScroll1 = new JButton(tr("Delete"));
+            replaceAddEditDeleteScroll1.add(deleteScroll1, buttonInsets);
+            deleteScroll1.addActionListener(e -> {
+                final List<DataUrl> toRemove = mapwithaiUrlPreferenceTable.getSelectedItems();
+                if (!toRemove.isEmpty()) {
+                    mapwithaiurlTableDisplayData.removeAll(toRemove);
+                }
+                mapwithaiUrlPreferenceTable.fireDataChanged();
+            });
+            return pane;
+        }
+        MapWithAILayerInfo info = new MapWithAILayerInfo(MapWithAILayerInfo.instance);
+        return new MapWithAIProvidersPanel(gui, info);
+    }
+
+    private Component getSettingsPanel(PreferenceTabbedPane gui) {
+        final JPanel pane = new JPanel(new GridBagLayout());
         final int width = 200;
         final int height = 200;
-        final JLabel mapWithAIApiUrl = new JLabel(tr("{0} API URLs", MapWithAIPlugin.NAME));
         final JLabel switchLayer = new JLabel(tr("Automatically switch layers"));
         final JLabel maximumAddition = new JLabel(tr("Maximum features (add)"));
         final JLabel mergeBuildingWithAddress = new JLabel(tr("Merge address nodes and buildings"));
 
-        mapWithAIApiUrl.setToolTipText(tr("The URL that will be called to get data from"));
         switchLayer.setToolTipText(
                 tr("If checked, automatically switch from the {0} layer to the OSM layer when objects are added",
                         MapWithAIPlugin.NAME));
@@ -112,47 +174,12 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
         mergeBuildingAddressCheckBox.setSelected(MapWithAIPreferenceHelper.isMergeBuildingAddress());
         mergeBuildingAddressCheckBox.setToolTipText(mergeBuildingWithAddress.getToolTipText());
 
-        final JPanel pane = new JPanel(new GridBagLayout());
         pane.setAlignmentY(Component.TOP_ALIGNMENT);
         pane.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         final GBC first = GBC.std().weight(0, 1).anchor(GridBagConstraints.WEST);
         final GBC second = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
         final GBC buttonInsets = GBC.std().insets(5, 5, 0, 0);
-
-        pane.add(mapWithAIApiUrl, first);
-
-        final JScrollPane scroll1 = new JScrollPane(mapwithaiUrlPreferenceTable);
-        scroll1.setToolTipText(mapWithAIApiUrl.getToolTipText());
-        pane.add(scroll1, GBC.eol().fill(GridBagConstraints.BOTH));
-        scroll1.setPreferredSize(new Dimension(width, height));
-
-        pane.add(new JLabel(), first);
-        final JPanel replaceAddEditDeleteScroll1 = new JPanel(new GridBagLayout());
-        pane.add(replaceAddEditDeleteScroll1, second);
-        final JButton addScroll1 = new JButton(tr("Add"));
-        replaceAddEditDeleteScroll1.add(addScroll1, buttonInsets);
-        addScroll1.addActionListener(e -> {
-            mapwithaiurlTableDisplayData.add(DataUrl.emptyData());
-            mapwithaiUrlPreferenceTable.fireDataChanged();
-        });
-        final JButton editScroll1 = new JButton(tr("Edit Parameters"));
-        replaceAddEditDeleteScroll1.add(editScroll1, buttonInsets);
-        editScroll1.addActionListener(e -> {
-            final List<DataUrl> toEdit = mapwithaiUrlPreferenceTable.getSelectedItems();
-            if (toEdit.size() == MAX_SELECTED_TO_EDIT) {
-                mapwithaiUrlPreferenceTable.editPreference(gui);
-            }
-        });
-        final JButton deleteScroll1 = new JButton(tr("Delete"));
-        replaceAddEditDeleteScroll1.add(deleteScroll1, buttonInsets);
-        deleteScroll1.addActionListener(e -> {
-            final List<DataUrl> toRemove = mapwithaiUrlPreferenceTable.getSelectedItems();
-            if (!toRemove.isEmpty()) {
-                mapwithaiurlTableDisplayData.removeAll(toRemove);
-            }
-            mapwithaiUrlPreferenceTable.fireDataChanged();
-        });
 
         pane.add(switchLayer, first);
 
@@ -238,9 +265,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
 
         Arrays.asList(replaceAddEditDeleteScroll2, scroll2, expertHorizontalGlue, replacementTags)
                 .forEach(ExpertToggleAction::addVisibilitySwitcher);
-
-        getTabPreferenceSetting(gui).addSubTab(this, MapWithAIPlugin.NAME, new JScrollPane(pane),
-                tr("{0} preferences", MapWithAIPlugin.NAME));
+        return pane;
     }
 
     @Override
@@ -278,11 +303,6 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
     @Override
     public boolean isExpert() {
         return false;
-    }
-
-    @Override
-    public TabPreferenceSetting getTabPreferenceSetting(PreferenceTabbedPane gui) {
-        return gui.getPluginPreference();
     }
 
     /**
