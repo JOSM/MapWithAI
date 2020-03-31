@@ -104,7 +104,7 @@ public class MapWithAIPreferences implements SubPreferenceSetting {
                 "This is the maximum number of complete OSM objects that can be added from the {0} layer, child objects do not count to this limit",
                 MapWithAIPlugin.NAME));
         mergeBuildingWithAddress.setToolTipText(tr(
-                "If checked, automatically merge address nodes onto added buildings, if and only if one address is withing the building boundary"));
+                "If checked, automatically merge address nodes onto added buildings, if and only if one address is within the building boundary"));
 
         switchLayerCheckBox.setSelected(MapWithAIPreferenceHelper.isSwitchLayers());
         switchLayerCheckBox.setToolTipText(switchLayer.getToolTipText());
