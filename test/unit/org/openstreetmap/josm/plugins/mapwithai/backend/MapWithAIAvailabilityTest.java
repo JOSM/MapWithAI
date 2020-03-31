@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Collections;
+import java.util.ArrayList;
 
 import org.awaitility.Durations;
 import org.junit.After;
@@ -17,6 +17,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Territories;
 
@@ -29,16 +31,14 @@ public class MapWithAIAvailabilityTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
+    public JOSMTestRules test = new JOSMTestRules().projection().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIAvailability.setReleaseUrl(
-                wireMock.baseUrl() + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
-        Territories.initialize();
+        MapWithAILayerInfoTest.setupMapWithAILayerInfo(wireMock);
         instance = DataAvailability.getInstance();
         LatLon temp = new LatLon(40, -100);
         await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
@@ -47,6 +47,7 @@ public class MapWithAIAvailabilityTest {
     @After
     public void tearDown() {
         wireMock.stop();
+        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
     }
 
     @Test
@@ -82,13 +83,13 @@ public class MapWithAIAvailabilityTest {
 
     @Test
     public void testNoURLs() {
-        MapWithAIPreferenceHelper.setMapWithAIURLs(Collections.emptyList());
+        new ArrayList<>(MapWithAILayerInfo.instance.getLayers()).forEach(i -> MapWithAILayerInfo.instance.remove(i));
         DataAvailability.getInstance();
         testgetDataLatLon();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(Collections.emptyList());
+        MapWithAILayerInfo.instance.getLayers().forEach(i -> MapWithAILayerInfo.instance.remove(i));
         DataAvailability.getInstance();
         testHasDataLatLon();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(Collections.emptyList());
+        MapWithAILayerInfo.instance.getLayers().forEach(i -> MapWithAILayerInfo.instance.remove(i));
         DataAvailability.getInstance();
         testHasDataBBox();
     }

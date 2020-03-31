@@ -10,12 +10,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import javax.json.JsonObject;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -35,7 +32,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.DetectTaskingManagerUtil
 import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadMapWithAITask;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 
@@ -52,27 +49,11 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         task.setZoomAfterDownload(settings.zoomToData());
         data.getUrls().forEach(url -> {
-            Future<?> future = task.download(new BoundingBoxMapWithAIDownloader(area, getUrl(url),
-                    DetectTaskingManagerUtils.hasTaskingManagerLayer()), new DownloadParams(), area, null);
+            Future<?> future = task.download(
+                    new BoundingBoxMapWithAIDownloader(area, url, DetectTaskingManagerUtils.hasTaskingManagerLayer()),
+                    new DownloadParams(), area, null);
             MainApplication.worker.execute(new PostDownloadHandler(task, future, data.getErrorReporter()));
         });
-    }
-
-    private static String getUrl(Map<String, String> urlInformation) {
-        StringBuilder sb = new StringBuilder();
-        if (urlInformation.containsKey("url")) {
-            sb.append(urlInformation.get("url"));
-            if (urlInformation.containsKey("parameters")) {
-                List<String> parameters = DataUrl.readJsonStringArraySimple(urlInformation.get("parameters"))
-                        .parallelStream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
-                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
-                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
-                if (!parameters.isEmpty()) {
-                    sb.append('&').append(String.join("&", parameters));
-                }
-            }
-        }
-        return sb.toString();
     }
 
     @Override
@@ -89,15 +70,15 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
      * Encapsulates data that is required to perform download from MapWithAI API
      */
     static class MapWithAIDownloadData {
-        private final List<Map<String, String>> url;
+        private final List<MapWithAIInfo> url;
         private final Consumer<Collection<Object>> errorReporter;
 
-        MapWithAIDownloadData(List<Map<String, String>> list, Consumer<Collection<Object>> errorReporter) {
+        MapWithAIDownloadData(List<MapWithAIInfo> list, Consumer<Collection<Object>> errorReporter) {
             this.url = list;
             this.errorReporter = errorReporter;
         }
 
-        List<Map<String, String>> getUrls() {
+        List<MapWithAIInfo> getUrls() {
             return url;
         }
 

@@ -22,7 +22,6 @@ import javax.json.stream.JsonParser;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.io.CachedFile;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
@@ -65,28 +64,6 @@ public class DataAvailability {
     }
 
     /**
-     * Populate preferences with the default values
-     */
-    public static void populatePreferences() {
-        try (CachedFile jsonFile = new CachedFile(DEFAULT_SERVER_URL);
-                JsonParser jsonParser = Json.createParser(jsonFile.getContentReader());) {
-            jsonFile.setMaxAge(604_800);
-            jsonParser.next();
-            JsonObject jsonObject = jsonParser.getObject();
-            for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
-                JsonObject json = entry.getValue().asJsonObject();
-                JsonValue parameters = json.getJsonArray("parameters");
-                boolean enabled = json.getBoolean("default", false);
-                DataUrl url = new DataUrl(entry.getKey(), json.getString("url", ""), enabled,
-                        parameters == null ? "[]" : parameters.toString());
-                MapWithAIPreferenceHelper.setMapWithAIUrl(url, enabled, true);
-            }
-        } catch (JsonException | IOException e) {
-            Logging.debug(e);
-        }
-    }
-
-    /**
      * Initialize the class
      */
     private static void initialize() {
@@ -95,11 +72,7 @@ public class DataAvailability {
             jsonFile.setMaxAge(604_800);
             jsonParser.next();
             JsonObject jsonObject = jsonParser.getObject();
-            boolean initializePreferences = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty();
             for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
-                if (initializePreferences) {
-                    populatePreferences();
-                }
                 Logging.debug("{0}: {1}", entry.getKey(), entry.getValue());
                 if (JsonValue.ValueType.OBJECT.equals(entry.getValue().getValueType())
                         && entry.getValue().asJsonObject().containsKey("countries")) {

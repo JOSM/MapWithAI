@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
+import javax.swing.SwingUtilities;
+
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
@@ -35,8 +37,6 @@ import org.openstreetmap.josm.tools.Utils;
  */
 public class MapWithAILayerInfo {
 
-    /** Unique instance */
-    public static final MapWithAILayerInfo instance = new MapWithAILayerInfo();
     /** List of all usable layers */
     private final List<MapWithAIInfo> layers = new ArrayList<>();
     /** List of layer ids of all usable layers */
@@ -48,20 +48,27 @@ public class MapWithAILayerInfo {
     /** List of all layer ids of available default layers (including mirrors) */
     static final Map<String, MapWithAIInfo> defaultLayerIds = new HashMap<>();
 
+    /** The prefix for configuration of the MapWithAI sources */
+    public static final String CONFIG_PREFIX = "mapwithai.sources.";
+
     private static final String[] DEFAULT_LAYER_SITES = {
             "https://gitlab.com/gokaart/JOSM_MapWithAI/-/raw/pages/public/json/sources.json" };
 
+    /** Unique instance -- MUST be after DEFAULT_LAYER_SITES */
+    public static final MapWithAILayerInfo instance = new MapWithAILayerInfo();
+
     /**
-     * Returns the list of imagery layers sites.
+     * Returns the list of source layers sites.
      *
-     * @return the list of imagery layers sites
+     * @return the list of source layers sites
      * @since 7434
      */
     public static Collection<String> getImageryLayersSites() {
-        return Config.getPref().getList("mapwithai.sources.layers.sites", Arrays.asList(DEFAULT_LAYER_SITES));
+        return Config.getPref().getList(CONFIG_PREFIX + "layers.sites", Arrays.asList(DEFAULT_LAYER_SITES));
     }
 
     private MapWithAILayerInfo() {
+        load(false);
     }
 
     /**
@@ -89,8 +96,8 @@ public class MapWithAILayerInfo {
      */
     public void load(boolean fastFail) {
         clear();
-        List<MapWithAIPreferenceEntry> entries = StructUtils.getListOfStructs(Config.getPref(), "mapwithai.entries",
-                null, MapWithAIPreferenceEntry.class);
+        List<MapWithAIPreferenceEntry> entries = StructUtils.getListOfStructs(Config.getPref(),
+                CONFIG_PREFIX + "entries", null, MapWithAIPreferenceEntry.class);
         if (entries != null) {
             for (MapWithAIPreferenceEntry prefEntry : entries) {
                 try {
@@ -102,7 +109,7 @@ public class MapWithAILayerInfo {
             }
             Collections.sort(layers);
         }
-        loadDefaults(false, null, fastFail);
+        loadDefaults(false, null, fastFail, null);
     }
 
     /**
@@ -117,13 +124,13 @@ public class MapWithAILayerInfo {
      *                   in the background
      * @param fastFail   whether opening HTTP connections should fail fast, see
      *                   {@link ImageryReader#setFastFail(boolean)}
+     * @param listener   A listener to call when the everything is done
      * @since 12634
      */
-    public void loadDefaults(boolean clearCache, ExecutorService worker, boolean fastFail) {
-        final DefaultEntryLoader loader = new DefaultEntryLoader(clearCache, fastFail);
+    public void loadDefaults(boolean clearCache, ExecutorService worker, boolean fastFail, FinishListener listener) {
+        final DefaultEntryLoader loader = new DefaultEntryLoader(clearCache, fastFail, listener);
         if (worker == null) {
             loader.realRun();
-            loader.finish();
         } else {
             worker.execute(loader);
         }
@@ -140,11 +147,13 @@ public class MapWithAILayerInfo {
         private MapWithAISourceReader reader;
         private boolean canceled;
         private boolean loadError;
+        private FinishListener listener;
 
-        DefaultEntryLoader(boolean clearCache, boolean fastFail) {
+        DefaultEntryLoader(boolean clearCache, boolean fastFail, FinishListener listener) {
             super(tr("Update default entries"));
             this.clearCache = clearCache;
             this.fastFail = fastFail;
+            this.listener = listener;
         }
 
         @Override
@@ -161,6 +170,7 @@ public class MapWithAILayerInfo {
                 }
                 loadSource(source);
             }
+            SwingUtilities.invokeLater(this::finish);
         }
 
         protected void loadSource(String source) {
@@ -202,6 +212,9 @@ public class MapWithAILayerInfo {
             if (!loadError && !defaultLayerIds.isEmpty()) {
                 dropOldEntries();
             }
+            if (listener != null) {
+                listener.onFinish();
+            }
         }
     }
 
@@ -239,12 +252,50 @@ public class MapWithAILayerInfo {
     public void updateEntriesFromDefaults(boolean dropold) {
         // add new default entries to the user selection
         boolean changed = false;
-        Collection<String> knownDefaults = new TreeSet<>(Config.getPref().getList("mapwithai.sources.layers.default"));
+        Collection<String> knownDefaults = new TreeSet<>(Config.getPref().getList(CONFIG_PREFIX + "layers.default"));
         Collection<String> newKnownDefaults = new TreeSet<>();
+        for (MapWithAIInfo def : defaultLayers) {
+            if (def.isDefaultEntry()) {
+                boolean isKnownDefault = false;
+                for (String entry : knownDefaults) {
+                    if (entry.equals(def.getId())) {
+                        isKnownDefault = true;
+                        newKnownDefaults.add(entry);
+                        knownDefaults.remove(entry);
+                        break;
+                    } else if (isSimilar(entry, def.getUrl())) {
+                        isKnownDefault = true;
+                        if (def.getId() != null) {
+                            newKnownDefaults.add(def.getId());
+                        }
+                        knownDefaults.remove(entry);
+                        break;
+                    }
+                }
+                boolean isInUserList = false;
+                if (!isKnownDefault) {
+                    if (def.getId() != null) {
+                        newKnownDefaults.add(def.getId());
+                        for (MapWithAIInfo i : layers) {
+                            if (isSimilar(def, i)) {
+                                isInUserList = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        Logging.error("Default imagery ''{0}'' has no id. Skipping.", def.getName());
+                    }
+                }
+                if (!isKnownDefault && !isInUserList) {
+                    add(new MapWithAIInfo(def));
+                    changed = true;
+                }
+            }
+        }
         if (!dropold && !knownDefaults.isEmpty()) {
             newKnownDefaults.addAll(knownDefaults);
         }
-        Config.getPref().putList("imagery.layers.default", new ArrayList<>(newKnownDefaults));
+        Config.getPref().putList(CONFIG_PREFIX + "layers.default", new ArrayList<>(newKnownDefaults));
 
         // automatically update user entries with same id as a default entry
         for (int i = 0; i < layers.size(); i++) {
@@ -332,7 +383,7 @@ public class MapWithAILayerInfo {
         for (MapWithAIInfo info : layers) {
             entries.add(new MapWithAIPreferenceEntry(info));
         }
-        StructUtils.putListOfStructs(Config.getPref(), "mapwithai.source.entries", entries,
+        StructUtils.putListOfStructs(Config.getPref(), CONFIG_PREFIX + "entries", entries,
                 MapWithAIPreferenceEntry.class);
     }
 
@@ -402,5 +453,9 @@ public class MapWithAILayerInfo {
      */
     public MapWithAIInfo getLayer(String id) {
         return layerIds.get(id);
+    }
+
+    public static interface FinishListener {
+        public void onFinish();
     }
 }

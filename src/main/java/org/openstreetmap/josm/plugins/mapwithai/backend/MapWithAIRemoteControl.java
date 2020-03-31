@@ -13,6 +13,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.io.remotecontrol.PermissionPrefWithDefault;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 
 public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHandler {
 
@@ -100,7 +101,8 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         if (url != null) {
             // TODO make option for permanent url
             String tSource = source == null ? url : source;
-            MapWithAIPreferenceHelper.setMapWithAIUrl(tSource, url, true, false);
+            MapWithAIInfo info = new MapWithAIInfo(tSource, url);
+            MapWithAIPreferenceHelper.setMapWithAIUrl(info, true, false);
         }
         if (switchLayer != null) {
             MapWithAIPreferenceHelper.setSwitchLayers(switchLayer, false);

@@ -128,6 +128,8 @@ public class MapWithAISourceReader implements Closeable {
                 }
             }
             MapWithAIInfo info = new MapWithAIInfo(name, url, type, eula, id);
+            info.setDefaultEntry(values.getBoolean("default", false));
+            info.setParameters(values.getJsonArray("parameters"));
             if (!bounds.isEmpty()) {
                 ImageryBounds bound = bounds.get(0);
                 bounds.remove(0);
@@ -155,7 +157,7 @@ public class MapWithAISourceReader implements Closeable {
     /**
      * Sets whether opening HTTP connections should fail fast, i.e., whether a
      * {@link HttpClient#setConnectTimeout(int) low connect timeout} should be used.
-     * 
+     *
      * @param fastFail whether opening HTTP connections should fail fast
      * @see CachedFile#setFastFail(boolean)
      */

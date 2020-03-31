@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,8 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
@@ -48,18 +49,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIDataUtilsTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
-            map.put("url", getDefaultMapWithAIAPIForTest(
-                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
-            return map;
-        }).collect(Collectors.toList()));
+
+        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
         MapWithAIDataUtils.setPaintStyleUrl(
                 MapWithAIDataUtils.getPaintStyleUrl().replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
     }
@@ -67,14 +65,7 @@ public class MapWithAIDataUtilsTest {
     @After
     public void tearDown() {
         wireMock.stop();
-    }
-
-    private String getDefaultMapWithAIAPIForTest(String url) {
-        return getDefaultMapWithAIAPIForTest(url, "https://www.mapwith.ai");
-    }
-
-    private String getDefaultMapWithAIAPIForTest(String url, String wireMockReplace) {
-        return url.replace(wireMockReplace, wireMock.baseUrl());
+        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
     }
 
     /**
@@ -184,22 +175,22 @@ public class MapWithAIDataUtilsTest {
     @Test
     public void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
-        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream().noneMatch(
-                map -> fakeUrl.equals(map.get("url"))), "fakeUrl shouldn't be in the current MapWithAI urls");
-        MapWithAIPreferenceHelper.setMapWithAIUrl("Fake", fakeUrl, true, true);
         assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> fakeUrl.equals(map.get("url"))), "fakeUrl should have been added");
-        final List<Map<String, String>> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIURLs());
+                .noneMatch(map -> fakeUrl.equals(map.getUrl())), "fakeUrl shouldn't be in the current MapWithAI urls");
+        MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("Fake", fakeUrl), true, true);
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+                .anyMatch(map -> fakeUrl.equals(map.getUrl())), "fakeUrl should have been added");
+        final List<MapWithAIInfo> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl());
         assertEquals(2, urls.size(), "There should be two urls (fakeUrl and the default)");
-        MapWithAIPreferenceHelper.setMapWithAIUrl("MapWithAI", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, true,
-                true);
+        MapWithAIPreferenceHelper.setMapWithAIUrl(
+                new MapWithAIInfo("MapWithAI", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API), true, true);
         assertTrue(
                 MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                        .anyMatch(map -> MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equals(map.get("url"))),
+                        .anyMatch(map -> MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equals(map.getUrl())),
                 "The default URL should exist");
-        MapWithAIPreferenceHelper.setMapWithAIUrl("Fake2", fakeUrl, true, true);
+        MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("Fake2", fakeUrl), true, false);
         assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .filter(map -> fakeUrl.equals(map.get("url"))).count(), "There should only be one fakeUrl");
+                .filter(map -> fakeUrl.equals(map.getUrl())).count(), "There should only be one fakeUrl");
     }
 
     @Test

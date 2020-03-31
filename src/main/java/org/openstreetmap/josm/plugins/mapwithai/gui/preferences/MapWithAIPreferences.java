@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -39,7 +38,6 @@ import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWithAIProvidersPanel;
 import org.openstreetmap.josm.spi.preferences.StringSetting;
@@ -52,9 +50,8 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     private final JCheckBox mergeBuildingAddressCheckBox;
     private final JSpinner maximumAdditionSpinner;
     private final ReplacementPreferenceTable replacementPreferenceTable;
-    private final MapWithAIURLPreferenceTable mapwithaiUrlPreferenceTable;
     private final List<PrefEntry> replacementTableDisplayData;
-    private final List<DataUrl> mapwithaiurlTableDisplayData;
+    private MapWithAILayerInfo info;
     private static final int MAX_SELECTED_TO_EDIT = 1;
     private static final String SOURCE = "source";
 
@@ -68,11 +65,6 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         replacementTableDisplayData = new ArrayList<>();
         fillReplacementTagDisplayData(replacementTableDisplayData);
         replacementPreferenceTable = new ReplacementPreferenceTable(replacementTableDisplayData);
-
-        mapwithaiurlTableDisplayData = new ArrayList<>();
-        fillMapWithAIURLTableDisplayData(mapwithaiurlTableDisplayData);
-        mapwithaiUrlPreferenceTable = new MapWithAIURLPreferenceTable(mapwithaiurlTableDisplayData);
-
     }
 
     private static void fillReplacementTagDisplayData(List<PrefEntry> list) {
@@ -81,16 +73,6 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
             list.add(
                     new PrefEntry(entry.getKey(), new StringSetting(entry.getValue()), new StringSetting(null), false));
         }
-    }
-
-    private static void fillMapWithAIURLTableDisplayData(List<DataUrl> list) {
-        List<Map<String, String>> entries = MapWithAIPreferenceHelper.getMapWithAIURLs();
-        if (list.isEmpty()) {
-            DataAvailability.populatePreferences();
-            entries = MapWithAIPreferenceHelper.getMapWithAIURLs();
-        }
-        entries.forEach(entry -> list.add(new DataUrl(entry.get(SOURCE), entry.get("url"),
-                Boolean.valueOf(entry.getOrDefault("enabled", "false")), entry.getOrDefault("parameters", "[]"))));
     }
 
     @Override
@@ -105,50 +87,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     }
 
     private Component getServerList(PreferenceTabbedPane gui) {
-        if (false) {
-            final JPanel pane = new JPanel(new GridBagLayout());
-            final int width = 200;
-            final int height = 200;
-            final GBC first = GBC.std().weight(0, 1).anchor(GridBagConstraints.WEST);
-            final GBC second = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
-            final GBC buttonInsets = GBC.std().insets(5, 5, 0, 0);
-            final JLabel mapWithAIApiUrl = new JLabel(tr("{0} API URLs", MapWithAIPlugin.NAME));
-            mapWithAIApiUrl.setToolTipText(tr("The URL that will be called to get data from"));
-            pane.add(mapWithAIApiUrl, first);
-
-            final JScrollPane scroll1 = new JScrollPane(mapwithaiUrlPreferenceTable);
-            scroll1.setToolTipText(mapWithAIApiUrl.getToolTipText());
-            pane.add(scroll1, GBC.eol().fill(GridBagConstraints.BOTH));
-            scroll1.setPreferredSize(new Dimension(width, height));
-            pane.add(new JLabel(), first);
-            final JPanel replaceAddEditDeleteScroll1 = new JPanel(new GridBagLayout());
-            pane.add(replaceAddEditDeleteScroll1, second);
-            final JButton addScroll1 = new JButton(tr("Add"));
-            replaceAddEditDeleteScroll1.add(addScroll1, buttonInsets);
-            addScroll1.addActionListener(e -> {
-                mapwithaiurlTableDisplayData.add(DataUrl.emptyData());
-                mapwithaiUrlPreferenceTable.fireDataChanged();
-            });
-            final JButton editScroll1 = new JButton(tr("Edit Parameters"));
-            replaceAddEditDeleteScroll1.add(editScroll1, buttonInsets);
-            editScroll1.addActionListener(e -> {
-                final List<DataUrl> toEdit = mapwithaiUrlPreferenceTable.getSelectedItems();
-                if (toEdit.size() == MAX_SELECTED_TO_EDIT) {
-                    mapwithaiUrlPreferenceTable.editPreference(gui);
-                }
-            });
-            final JButton deleteScroll1 = new JButton(tr("Delete"));
-            replaceAddEditDeleteScroll1.add(deleteScroll1, buttonInsets);
-            deleteScroll1.addActionListener(e -> {
-                final List<DataUrl> toRemove = mapwithaiUrlPreferenceTable.getSelectedItems();
-                if (!toRemove.isEmpty()) {
-                    mapwithaiurlTableDisplayData.removeAll(toRemove);
-                }
-                mapwithaiUrlPreferenceTable.fireDataChanged();
-            });
-            return pane;
-        }
-        MapWithAILayerInfo info = new MapWithAILayerInfo(MapWithAILayerInfo.instance);
+        info = new MapWithAILayerInfo(MapWithAILayerInfo.instance);
         return new MapWithAIProvidersPanel(gui, info);
     }
 
@@ -270,28 +209,16 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
 
     @Override
     public boolean ok() {
-        final ArrayList<DataUrl> tData = new ArrayList<>(
-                mapwithaiurlTableDisplayData.stream().distinct()
-                        .filter(data -> !data.getMap().getOrDefault("url", "http://example.com")
-                                .equalsIgnoreCase(DataUrl.emptyData().getMap().get("url")))
-                        .collect(Collectors.toList()));
-        mapwithaiurlTableDisplayData.clear();
-        mapwithaiurlTableDisplayData.addAll(tData);
-        MapWithAIPreferenceHelper.setMapWithAIURLs(convertUrlPrefToMap(mapwithaiurlTableDisplayData));
         MapWithAIPreferenceHelper.setSwitchLayers(switchLayerCheckBox.isSelected(), true);
         final Object value = maximumAdditionSpinner.getValue();
         if (value instanceof Number) {
             MapWithAIPreferenceHelper.setMaximumAddition(((Number) value).intValue(), true);
         }
+        info.save();
+        MapWithAILayerInfo.instance.clear();
+        MapWithAILayerInfo.instance.load(false);
         MapWithAIPreferenceHelper.setReplacementTags(convertReplacementPrefToMap(replacementTableDisplayData));
         return false;
-    }
-
-    private static List<Map<String, String>> convertUrlPrefToMap(List<DataUrl> displayData) {
-        return displayData.stream().map(DataUrl::getMap)
-                .filter(map -> !map.getOrDefault("url", "").isEmpty()
-                        && !DataUrl.emptyData().getMap().get("url").equals(map.get("url")))
-                .collect(Collectors.toList());
     }
 
     private static Map<String, String> convertReplacementPrefToMap(List<PrefEntry> displayData) {

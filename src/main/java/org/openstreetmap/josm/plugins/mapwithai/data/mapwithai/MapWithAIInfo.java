@@ -5,20 +5,28 @@ import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Image;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.stream.JsonParser;
 import javax.swing.ImageIcon;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.Attributed;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.data.StructUtils.StructEntry;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
@@ -29,8 +37,9 @@ import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Utils;
 
-public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
+public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithAIInfo>, Attributed {
     /**
      * Type of MapWithAI entry
      */
@@ -76,18 +85,18 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
             this.description = description;
         }
 
-        public String getCategoryString() {
+        public final String getCategoryString() {
             return category;
         }
 
-        public ImageIcon getIcon(ImageProvider.ImageSizes size) {
+        public final String getDescription() {
+            return description;
+        }
+
+        public final ImageIcon getIcon(ImageSizes size) {
             return iconCache
                     .computeIfAbsent(size, x -> Collections.synchronizedMap(new EnumMap<>(MapWithAICategory.class)))
                     .computeIfAbsent(this, x -> ImageProvider.get(x.icon, size));
-        }
-
-        public String getDescription() {
-            return description;
         }
 
         public static MapWithAICategory fromString(String s) {
@@ -102,6 +111,10 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
 
     /**
      * original name of the service entry in case of translation call, for multiple
+     * languages English when possible
+     */
+    /**
+     * original name of the imagery entry in case of translation call, for multiple
      * languages English when possible
      */
     private String origName;
@@ -150,15 +163,12 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
     private String date;
     /** icon used in menu */
     private String icon;
+    /** HTTP headers **/
+    private Map<String, String> customHttpHeaders = Collections.emptyMap();
     /** category of the service */
     private MapWithAICategory category;
-    /** The name of the service */
-    private String name;
-    /** The id of the service */
-    private String id;
-    /** The url of the service */
-    private String url;
     private MapWithAIType type;
+    private JsonArray parameters;
 
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
@@ -213,6 +223,8 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
         String description;
         @StructEntry
         String category;
+        @StructEntry
+        String parameters;
 
         /**
          * Constructs a new empty {@MapWithAIPreferenceEntry}
@@ -242,8 +254,12 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
             terms_of_use_text = i.termsOfUseText;
             terms_of_use_url = i.termsOfUseURL;
             country_code = i.countryCode;
+            cookies = i.cookies;
             icon = intern(i.icon);
             description = i.description;
+            if (i.parameters != null) {
+                parameters = i.parameters.toString();
+            }
             category = i.category != null ? i.category.getCategoryString() : null;
             if (i.bounds != null) {
                 bounds = i.bounds.encodeAsString(",");
@@ -318,7 +334,15 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
         CheckParameterUtil.ensureParameterNotNull(e.name, "name");
         CheckParameterUtil.ensureParameterNotNull(e.url, "url");
         description = e.description;
+        cookies = e.cookies;
         eulaAcceptanceRequired = e.eula;
+        if (e.parameters != null) {
+            try (JsonParser parser = Json.createParser(new StringReader(e.parameters))) {
+                if (parser.hasNext() && JsonParser.Event.START_ARRAY.equals(parser.next())) {
+                    parameters = parser.getArray();
+                }
+            }
+        }
         type = MapWithAIType.fromString(e.type);
         if (type == null) {
             throw new IllegalArgumentException("unknown type");
@@ -350,6 +374,8 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
 
     public MapWithAIInfo(MapWithAIInfo i) {
         this(i.name, i.url, i.id);
+        this.cookies = i.cookies;
+
         this.origName = i.origName;
         this.langName = i.langName;
         this.defaultEntry = i.defaultEntry;
@@ -368,6 +394,7 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
         this.countryCode = i.countryCode;
         this.date = i.date;
         this.icon = intern(i.icon);
+        setCustomHttpHeaders(i.customHttpHeaders);
         this.category = i.category;
     }
 
@@ -440,61 +467,6 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
 
     public boolean equalsBaseValues(MapWithAIInfo in) {
         return url.equals(in.url);
-    }
-
-    /**
-     * Request name of the tile source
-     *
-     * @return name of the tile source
-     */
-    public final String getName() {
-        return name;
-    }
-
-    /**
-     * Request URL of the tile source
-     *
-     * @return url of the tile source
-     */
-    public final String getUrl() {
-        return url;
-    }
-
-    /**
-     * Request ID of the tile source. Id can be null. This gets the configured id as
-     * is. Due to a user error, this may not be unique.
-     *
-     * @return id of the tile source
-     */
-    public final String getId() {
-        return id;
-    }
-
-    /**
-     * Sets the tile URL.
-     *
-     * @param url tile URL
-     */
-    public final void setUrl(String url) {
-        this.url = url;
-    }
-
-    /**
-     * Sets the tile name.
-     *
-     * @param name tile name
-     */
-    public final void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Sets the tile id.
-     *
-     * @param id tile id
-     */
-    public final void setId(String id) {
-        this.id = id;
     }
 
     private static String intern(String string) {
@@ -670,24 +642,29 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
      * @see #getTermsOfUseURL()
      */
     public void setTermsOfUseURL(String text) {
-        termsOfUseURL = text; // 950
+        termsOfUseURL = text;
     }
 
     public void clearId() {
         if (this.id != null) {
-            Collection<String> newAddedIds = new TreeSet<>(Config.getPref().getList("imagery.layers.addedIds"));
+            Collection<String> newAddedIds = new TreeSet<>(
+                    Config.getPref().getList(MapWithAILayerInfo.CONFIG_PREFIX + "addedIds"));
             newAddedIds.add(this.id);
-            Config.getPref().putList("imagery.layers.addedIds", new ArrayList<>(newAddedIds));
+            Config.getPref().putList(MapWithAILayerInfo.CONFIG_PREFIX + "addedIds", new ArrayList<>(newAddedIds));
         }
         setId(null);
     }
 
-    public String getCountryCode() {
-        return countryCode;
-    }
-
     public MapWithAICategory getCategory() {
         return category;
+    }
+
+    public boolean isDefaultEntry() {
+        return defaultEntry;
+    }
+
+    public void setDefaultEntry(boolean defaultEntry) {
+        this.defaultEntry = defaultEntry;
     }
 
     public String getToolTipText() {
@@ -701,6 +678,57 @@ public class MapWithAIInfo implements Comparable<MapWithAIInfo>, Attributed {
             res.insert(0, "<html>").append("</html>");
         }
         return res.toString();
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    /**
+     * Returns custom HTTP headers that should be sent with request towards imagery
+     * provider
+     *
+     * @return headers
+     */
+    public Map<String, String> getCustomHttpHeaders() {
+        return customHttpHeaders;
+    }
+
+    /**
+     * Sets custom HTTP headers that should be sent with request towards imagery
+     * provider
+     *
+     * @param customHttpHeaders http headers
+     */
+    public void setCustomHttpHeaders(Map<String, String> customHttpHeaders) {
+        this.customHttpHeaders = Utils.toUnmodifiableMap(customHttpHeaders);
+    }
+
+    public void setParameters(JsonArray parameters) {
+        this.parameters = parameters;
+    }
+
+    public JsonArray getParameters() {
+        return parameters;
+    }
+
+    public List<String> getParametersString() {
+        return parameters == null ? Collections.emptyList()
+                : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
+                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
+                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
+    }
+
+    public String getUrlExpanded() {
+        StringBuilder sb = new StringBuilder();
+        if (url != null && !url.trim().isEmpty()) {
+            sb.append(url);
+            List<String> parameters = getParametersString();
+            if (!parameters.isEmpty()) {
+                sb.append('&').append(String.join("&", parameters));
+            }
+        }
+        return sb.toString();
     }
 
 }

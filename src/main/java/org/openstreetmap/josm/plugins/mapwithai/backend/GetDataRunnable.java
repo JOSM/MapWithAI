@@ -41,8 +41,8 @@ import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
@@ -431,21 +431,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      */
     private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
         final DataSet dataSet = new DataSet();
-        final List<Map<String, String>> urlMaps = MapWithAIPreferenceHelper.getMapWithAIUrl().stream().map(TreeMap::new)
-                .collect(Collectors.toList());
-        if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
-            urlMaps.forEach(map -> map.put("url", map.get("url").concat("&crop_bbox={crop_bbox}")));
-        }
-
-        urlMaps.parallelStream().filter(map -> map.containsKey("parameters")).forEach(DataUrl::addUrlParameters);
-
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
-        urlMaps.parallelStream().forEach(map -> {
+        MapWithAILayerInfo.instance.getLayers().parallelStream().forEach(map -> {
             try {
                 Bounds bound = new Bounds(bbox.getBottomRight());
                 bound.extend(bbox.getTopLeft());
-                BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, map.get("url"),
+                BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, map,
                         DetectTaskingManagerUtils.hasTaskingManagerLayer());
                 dataSet.mergeFrom(downloader.parseOsm(monitor));
             } catch (OsmTransferException e1) {

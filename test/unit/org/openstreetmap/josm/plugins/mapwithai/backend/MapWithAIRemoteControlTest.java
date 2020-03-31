@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.util.stream.Collectors;
-
 import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Before;
@@ -21,6 +19,8 @@ import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -45,23 +45,20 @@ public class MapWithAIRemoteControlTest {
      */
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection();
+    public JOSMTestRules test = new JOSMTestRules().main().projection().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
-            map.put("url", map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                    .replace("https://www.mapwith.ai", wireMock.baseUrl()));
-            return map;
-        }).collect(Collectors.toList()));
+        MapWithAILayerInfoTest.setupMapWithAILayerInfo(wireMock);
     }
 
     @After
     public void tearDown() {
         wireMock.stop();
+        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
     }
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
@@ -95,8 +92,8 @@ public class MapWithAIRemoteControlTest {
      */
     @Test
     public void testNominalRequest() throws Exception {
-        newHandler("https://localhost?url="
-                + Utils.encodeUrl(MapWithAIPreferenceHelper.getMapWithAIUrl().get(0).get("url"))).handle();
+        newHandler("https://localhost?url=" + Utils.encodeUrl(MapWithAILayerInfo.instance.getLayers().get(0).getUrl()))
+                .handle();
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertTrue(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
@@ -109,7 +106,7 @@ public class MapWithAIRemoteControlTest {
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> badUrl.equals(map.get("url"))));
+                .anyMatch(map -> badUrl.equals(map.getUrl())));
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
         assertNotEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
 

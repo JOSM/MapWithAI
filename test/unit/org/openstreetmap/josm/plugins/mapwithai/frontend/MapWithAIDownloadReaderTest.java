@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.util.stream.Collectors;
-
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.After;
@@ -21,6 +19,7 @@ import org.openstreetmap.josm.gui.download.DownloadSettings;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -34,11 +33,7 @@ public class MapWithAIDownloadReaderTest {
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
-            map.put("url", getDefaultMapWithAIAPIForTest(
-                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
-            return map;
-        }).collect(Collectors.toList()));
+        MapWithAILayerInfo.instance.getLayers().forEach(i -> i.setUrl(getDefaultMapWithAIAPIForTest(i.getUrl())));
     }
 
     @After

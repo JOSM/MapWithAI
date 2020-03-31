@@ -49,13 +49,13 @@ import org.openstreetmap.gui.jmapviewer.interfaces.MapPolygon;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapRectangle;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
-import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryCategory;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.preferences.NamedColorProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.bbox.JosmMapViewer;
 import org.openstreetmap.josm.gui.bbox.SlippyMapBBoxChooser;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
+import org.openstreetmap.josm.gui.preferences.imagery.ImageryProvidersPanel;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.gui.widgets.FilterField;
 import org.openstreetmap.josm.gui.widgets.HtmlPanel;
@@ -71,11 +71,12 @@ import org.openstreetmap.josm.tools.Logging;
 
 /**
  * A panel displaying imagery providers. Largely duplicates
- * {@link ImageryprovidersPanel}.
+ * {@link ImageryProvidersPanel}.
  *
  * @since 15115 (extracted from ImageryPreferences)
  */
 public class MapWithAIProvidersPanel extends JPanel {
+    private static final long serialVersionUID = -5876039771496409422L;
     // Public JTables and JosmMapViewer
     /** The table of active providers **/
     public final JTable activeTable;
@@ -110,18 +111,19 @@ public class MapWithAIProvidersPanel extends JPanel {
     private final transient MapWithAILayerInfo layerInfo;
 
     /**
-     * class to render the URL information of Imagery source
+     * class to render the URL information of MapWithAI source
      *
      * @since 8065
      */
-    private static class ImageryURLTableCellRenderer extends DefaultTableCellRenderer {
+    private static class MapWithAIURLTableCellRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 184934756853356357L;
 
         private static final NamedColorProperty IMAGERY_BACKGROUND_COLOR = new NamedColorProperty(
-                marktr("Imagery Background: Default"), new Color(200, 255, 200));
+                marktr("MapWithAI Background: Default"), new Color(200, 255, 200));
 
         private final transient List<MapWithAIInfo> layers;
 
-        ImageryURLTableCellRenderer(List<MapWithAIInfo> layers) {
+        MapWithAIURLTableCellRenderer(List<MapWithAIInfo> layers) {
             this.layers = layers;
         }
 
@@ -146,11 +148,12 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     /**
-     * class to render an information of Imagery source
+     * class to render an information of MapWithAI source
      *
      * @param <T> type of information
      */
     private static class MapWithAITableCellRenderer<T> extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1739280307217707613L;
         private final Function<T, Object> mapper;
         private final Function<T, String> tooltip;
         private final BiConsumer<T, JLabel> decorator;
@@ -182,7 +185,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     /**
-     * class to render the category information of Imagery source
+     * class to render the category information of MapWithAI source
      */
     private static class MapWithAICategoryTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<MapWithAICategory> {
@@ -195,10 +198,12 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     /**
-     * class to render the country information of Imagery source
+     * class to render the country information of MapWithAI source
      */
     private static class MapWithAICountryTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<String> {
+        private static final long serialVersionUID = 5975643008500799758L;
+
         MapWithAICountryTableCellRenderer() {
             super(code -> code, ImageryInfo::getLocalizedCountry, null);
         }
@@ -209,13 +214,15 @@ public class MapWithAIProvidersPanel extends JPanel {
      */
     private static class MapWithAINameTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<MapWithAIInfo> {
+        private static final long serialVersionUID = 6669934435517244629L;
+
         MapWithAINameTableCellRenderer() {
             super(info -> info == null ? null : info.getName(), MapWithAIInfo::getToolTipText, null);
         }
     }
 
     /**
-     * Constructs a new {@code ImageryProvidersPanel}.
+     * Constructs a new {@code MapWithAIProvidersPanel}.
      *
      * @param gui          The parent preference tab pane
      * @param layerInfoArg The list of imagery entries to display
@@ -252,7 +259,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         TableColumnModel mod = defaultTable.getColumnModel();
         mod.getColumn(3).setPreferredWidth(775);
-        mod.getColumn(3).setCellRenderer(new ImageryURLTableCellRenderer(layerInfo.getLayers()));
+        mod.getColumn(3).setCellRenderer(new MapWithAIURLTableCellRenderer(layerInfo.getLayers()));
         mod.getColumn(2).setPreferredWidth(475);
         mod.getColumn(2).setCellRenderer(new MapWithAINameTableCellRenderer());
         mod.getColumn(1).setCellRenderer(new MapWithAICountryTableCellRenderer());
@@ -262,7 +269,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         mod = activeTable.getColumnModel();
         mod.getColumn(1).setPreferredWidth(800);
-        mod.getColumn(1).setCellRenderer(new ImageryURLTableCellRenderer(layerInfo.getAllDefaultLayers()));
+        mod.getColumn(1).setCellRenderer(new MapWithAIURLTableCellRenderer(layerInfo.getAllDefaultLayers()));
         mod.getColumn(0).setPreferredWidth(200);
 
         RemoveEntryAction remove = new RemoveEntryAction();
@@ -477,6 +484,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class RemoveEntryAction extends AbstractAction implements ListSelectionListener {
+        private static final long serialVersionUID = 2666450386256004180L;
 
         /**
          * Constructs a new {@code RemoveEntryAction}.
@@ -507,6 +515,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class ActivateAction extends AbstractAction implements ListSelectionListener {
+        private static final long serialVersionUID = -452335751201424801L;
 
         /**
          * Constructs a new {@code ActivateAction}.
@@ -560,6 +569,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class ReloadAction extends AbstractAction {
+        private static final long serialVersionUID = 7801339998423585685L;
 
         /**
          * Constructs a new {@code ReloadAction}.
@@ -571,12 +581,13 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent evt) {
-            layerInfo.loadDefaults(true, MainApplication.worker, false);
-            defaultModel.fireTableDataChanged();
-            defaultTable.getSelectionModel().clearSelection();
-            defaultTableListener.clearMap();
-            /* loading new file may change active layers */
-            activeModel.fireTableDataChanged();
+            layerInfo.loadDefaults(true, MainApplication.worker, false, () -> {
+                defaultModel.fireTableDataChanged();
+                defaultTable.getSelectionModel().clearSelection();
+                defaultTableListener.clearMap();
+                /* loading new file may change active layers */
+                activeModel.fireTableDataChanged();
+            });
         }
     }
 
@@ -587,10 +598,10 @@ public class MapWithAIProvidersPanel extends JPanel {
         private static final long serialVersionUID = 60378230494588007L;
 
         /**
-         * Constructs a new {@code ImageryLayerTableModel}.
+         * Constructs a new {@code MapWithAILayerTableModel}.
          */
         public MapWithAILayerTableModel() {
-            setColumnIdentifiers(new String[] { tr("Menu Name"), tr("MapWithAI URL") });
+            setColumnIdentifiers(new String[] { tr("Default Source Value"), tr("MapWithAI URL") });
         }
 
         /**
@@ -663,8 +674,10 @@ public class MapWithAIProvidersPanel extends JPanel {
      * The table model for the default imagery layer list
      */
     public class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
+        private static final long serialVersionUID = -2966437364160797385L;
+
         /**
-         * Constructs a new {@code ImageryDefaultLayerTableModel}.
+         * Constructs a new {@code MapWithAIDefaultLayerTableModel}.
          */
         public MapWithAIDefaultLayerTableModel() {
             setColumnIdentifiers(new String[] { "", "", tr("Menu Name (Default)"), tr("MapWithAI URL (Default)") });
@@ -689,11 +702,11 @@ public class MapWithAIProvidersPanel extends JPanel {
         public Class<?> getColumnClass(int columnIndex) {
             switch (columnIndex) {
             case 0:
-                return ImageryCategory.class;
+                return MapWithAICategory.class;
             case 1:
                 return String.class;
             case 2:
-                return ImageryInfo.class;
+                return MapWithAIInfo.class;
             case 3:
                 return String.class;
             default:

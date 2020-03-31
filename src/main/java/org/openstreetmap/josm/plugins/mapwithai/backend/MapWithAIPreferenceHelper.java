@@ -1,17 +1,16 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
@@ -27,12 +26,6 @@ public final class MapWithAIPreferenceHelper {
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
     private static final String MAXIMUMSELECTION = MapWithAIPlugin.NAME.concat(".maximumselection");
-    private static final String API_CONFIG = MapWithAIPlugin.NAME.concat(".apis");
-    private static final String API_MAP_CONFIG = API_CONFIG.concat("map");
-    private static final String URL_STRING = "url";
-    private static final String SOURCE_STRING = "source";
-    private static final String ENABLED_STRING = "enabled";
-    private static final String PARAMETERS_STRING = "parameters";
 
     private MapWithAIPreferenceHelper() {
         // Hide the constructor
@@ -51,55 +44,11 @@ public final class MapWithAIPreferenceHelper {
      * @return A list of enabled MapWithAI urls (maps have source, parameters,
      *         enabled, and the url)
      */
-    public static List<Map<String, String>> getMapWithAIUrl() {
-        final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        return (layer != null) && (layer.getMapWithAIUrl() != null)
-                ? getMapWithAIURLs().parallelStream().filter(map -> layer.getMapWithAIUrl().equals(map.get(URL_STRING)))
-                        .collect(Collectors.toList())
-                : getMapWithAIURLs().stream()
-                        .filter(map -> Boolean.valueOf(map.getOrDefault(ENABLED_STRING, Boolean.FALSE.toString())))
-                        .collect(Collectors.toList());
-    }
-
-    /**
-     * Get all of the MapWithAI urls (or the default)
-     *
-     * @return The urls for MapWithAI endpoints (maps have source, parameters,
-     *         enabled, and the url)
-     */
-    public static List<Map<String, String>> getMapWithAIURLs() {
-        final List<Map<String, String>> returnMap = Config.getPref().getListOfMaps(API_MAP_CONFIG, new ArrayList<>())
-                .stream().map(TreeMap::new).collect(Collectors.toList());
-        if (MapWithAIDataUtils.getLayer(false) != null) {
-            TreeMap<String, String> layerMap = new TreeMap<>();
-            layerMap.put("url", MapWithAIDataUtils.getLayer(false).getMapWithAIUrl());
-            if (layerMap.get("url") != null && !layerMap.get("url").trim().isEmpty() && returnMap.parallelStream()
-                    .noneMatch(map -> map.getOrDefault("url", "").equals(layerMap.get("url")))) {
-                returnMap.add(layerMap);
-            }
-        }
-        if (returnMap.isEmpty()) {
-            final List<String> defaultAPIs = Collections.singletonList(DEFAULT_MAPWITHAI_API);
-            final List<String> defaultList = Config.getPref().getList(API_CONFIG).isEmpty() ? defaultAPIs
-                    : Config.getPref().getList(API_CONFIG);
-            returnMap.addAll(defaultList.stream().map(string -> {
-                final TreeMap<String, String> map = new TreeMap<>();
-                map.put(URL_STRING, string);
-                return map;
-            }).collect(Collectors.toList()));
-        }
-        returnMap.parallelStream().forEach(map -> {
-            final String url = map.get(URL_STRING);
-            if (DEFAULT_MAPWITHAI_API.equals(url)) {
-                map.putIfAbsent(SOURCE_STRING, MapWithAIPlugin.NAME);
-                map.putIfAbsent(ENABLED_STRING, "true");
-                map.putIfAbsent(PARAMETERS_STRING, DEFAULT_MAPWITHAI_API_PARAMETERS);
-            } else {
-                map.putIfAbsent(SOURCE_STRING, url);
-                map.putIfAbsent(ENABLED_STRING, Boolean.FALSE.toString());
-            }
-        });
-        return returnMap;
+    public static List<MapWithAIInfo> getMapWithAIUrl() {
+        return MapWithAIDataUtils.getLayer(false) == null
+                || MapWithAIDataUtils.getLayer(false).getMapWithAIUrl() == null
+                        ? MapWithAILayerInfo.instance.getLayers()
+                        : Collections.singletonList(MapWithAIDataUtils.getLayer(false).getMapWithAIUrl());
     }
 
     /**
@@ -136,60 +85,13 @@ public final class MapWithAIPreferenceHelper {
         return returnBoolean;
     }
 
-    /**
-     * Set the MapWithAI url
-     *
-     * @param source    The source tag for the url
-     * @param url       The url to set as the default
-     * @param enabled   {@code true} if the url should be used for downloads
-     * @param permanent {@code true} if we want the setting to persist between
-     *                  sessions
-     */
-    public static void setMapWithAIUrl(String source, String url, boolean enabled, boolean permanent) {
-        setMapWithAIUrl(new DataUrl(source, url, permanent), enabled, permanent);
-    }
-
-    public static void setMapWithAIUrl(DataUrl dataUrl, boolean enabled, boolean permanent) {
-        final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        final String setUrl = dataUrl.getMap().getOrDefault("url", DEFAULT_MAPWITHAI_API);
-
-        if (permanent) {
-            final List<Map<String, String>> urls = new ArrayList<>(getMapWithAIURLs());
-            Map<String, String> addOrModifyMap = urls.parallelStream()
-                    .filter(map -> map.getOrDefault(URL_STRING, "").equals(setUrl)).findFirst().orElse(new TreeMap<>());
-            if (addOrModifyMap.isEmpty()) {
-                urls.add(addOrModifyMap);
-            } else {
-                urls.remove(addOrModifyMap);
-                addOrModifyMap = new TreeMap<>(addOrModifyMap);
-                urls.add(addOrModifyMap);
-            }
-            addOrModifyMap.putAll(dataUrl.getMap());
-            addOrModifyMap.put(ENABLED_STRING, Boolean.toString(enabled));
-            setMapWithAIURLs(urls);
+    public static void setMapWithAIUrl(MapWithAIInfo info, boolean enabled, boolean permanent) {
+        if (permanent && enabled) {
+            MapWithAILayerInfo.instance.add(info);
+            MapWithAILayerInfo.instance.save();
+        } else if (enabled && MapWithAIDataUtils.getLayer(false) != null) {
+            MapWithAIDataUtils.getLayer(false).setMapWithAIUrl(info);
         }
-        if (layer != null && !permanent && enabled) {
-            layer.setMapWithAIUrl(setUrl);
-        }
-    }
-
-    /**
-     * Set the MapWithAI urls
-     *
-     * @param urls A list of URLs
-     * @return true if the configuration changed
-     */
-    public static boolean setMapWithAIURLs(List<Map<String, String>> urls) {
-        final List<Map<String, String>> setUrls = urls.isEmpty() ? new ArrayList<>() : urls;
-        if (urls.isEmpty()) {
-            final TreeMap<String, String> defaultAPIMap = new TreeMap<>();
-            defaultAPIMap.put(URL_STRING, DEFAULT_MAPWITHAI_API);
-            defaultAPIMap.put(ENABLED_STRING, Boolean.TRUE.toString());
-            defaultAPIMap.put(SOURCE_STRING, MapWithAIPlugin.NAME);
-            defaultAPIMap.put(PARAMETERS_STRING, DEFAULT_MAPWITHAI_API_PARAMETERS);
-            setUrls.add(defaultAPIMap);
-        }
-        return Config.getPref().putListOfMaps(API_MAP_CONFIG, setUrls);
     }
 
     /**
@@ -277,4 +179,5 @@ public final class MapWithAIPreferenceHelper {
                 : Arrays.asList(new TreeMap<>(tagsToReplace));
         Config.getPref().putListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), tags);
     }
+
 }

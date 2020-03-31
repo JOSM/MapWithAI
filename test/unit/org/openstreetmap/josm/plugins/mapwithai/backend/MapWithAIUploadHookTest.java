@@ -27,6 +27,7 @@ import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.PluginException;
 import org.openstreetmap.josm.plugins.PluginInformation;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -38,7 +39,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIUploadHookTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection().preferences();
+    public JOSMTestRules test = new JOSMTestRules().main().projection().preferences().territories();
 
     /**
      * Test method for {@link MapWithAIUploadHook#modifyChangesetTags(Map)}.
@@ -81,7 +82,7 @@ public class MapWithAIUploadHookTest {
                 Arrays.asList(tags.get("mapwithai:options").split(";")).contains("version=".concat(info.localversion)),
                 "The version should be the localversion");
 
-        MapWithAIPreferenceHelper.setMapWithAIUrl("False URL", "false-url", true, true);
+        MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("False URL", "false-url"), true, false);
 
         tags.clear();
 
@@ -94,7 +95,7 @@ public class MapWithAIUploadHookTest {
         List<String> split = Arrays.asList(tags.get("mapwithai:options").split(";"));
         assertEquals(2, split.size(), "There should be another option in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
-        assertTrue(split.contains("url=false-url"), "The false-url should be shown in the changeset tag");
+        assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
 
         MapWithAIPreferenceHelper.setMaximumAddition(20, false);
         tags.clear();
@@ -102,7 +103,7 @@ public class MapWithAIUploadHookTest {
         split = Arrays.asList(tags.get("mapwithai:options").split(";"));
         assertEquals(3, split.size(), "There should be three ; in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
-        assertTrue(split.contains("url=false-url"), "The false-url should be shown in the changeset tag");
+        assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
         assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
 
         BBox tBBox = new BBox(1, 0, 0, 1);
@@ -115,7 +116,7 @@ public class MapWithAIUploadHookTest {
         split = Arrays.asList(tags.get("mapwithai:options").split(";"));
         assertEquals(4, split.size(), "There should be four ; in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
-        assertTrue(split.contains("url=false-url"), "The false-url should be shown in the changeset tag");
+        assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
         assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
         assertTrue(split.contains("task=".concat(tBBox.toStringCSV(","))),
                 "There should be a task in the mapwithai:options");

@@ -15,7 +15,6 @@ import java.awt.Component;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.Action;
 import javax.swing.JLabel;
@@ -40,6 +39,8 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.ContinuousDownloadAction;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -53,7 +54,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAILayerTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
@@ -62,17 +63,14 @@ public class MapWithAILayerTest {
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
-            map.put("url", map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)
-                    .replace("https://www.mapwith.ai", wireMock.baseUrl()));
-            return map;
-        }).collect(Collectors.toList()));
+        MapWithAILayerInfoTest.setupMapWithAILayerInfo(wireMock);
         layer = new MapWithAILayer(new DataSet(), "test", null);
     }
 
     @After
     public void tearDown() {
         wireMock.stop();
+        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
     }
 
     @Test
@@ -107,7 +105,7 @@ public class MapWithAILayerTest {
                     "The layer doesn't have its own switchlayer boolean");
         }
 
-        layer.setMapWithAIUrl("bad_url");
+        layer.setMapWithAIUrl(new MapWithAIInfo("bad_url", "bad_url"));
         layer.setMaximumAddition(0);
         layer.setSwitchLayers(false);
 

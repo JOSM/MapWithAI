@@ -4,9 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -14,6 +11,7 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.io.BoundingBoxDownloader;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.tools.HttpClient;
 
 public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
@@ -21,12 +19,14 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private final boolean crop;
 
     private final Bounds downloadArea;
+    private MapWithAIInfo info;
 
     private static final int DEFAULT_TIMEOUT = 50_000; // 50 seconds
 
-    public BoundingBoxMapWithAIDownloader(Bounds downloadArea, String url, boolean crop) {
+    public BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop) {
         super(downloadArea);
-        this.url = url;
+        this.info = info;
+        this.url = info.getUrlExpanded();
         this.crop = crop;
         this.downloadArea = downloadArea;
     }
@@ -40,27 +40,15 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     @Override
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
-        if (url != null) {
-            GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(url));
+        if (url != null && info.getUrl() != null && !info.getUrl().trim().isEmpty()) {
+            GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(info));
         }
         GetDataRunnable.cleanup(ds, downloadArea);
         return ds;
     }
 
-    private static String getSourceTag(String url) {
-        List<Map<String, String>> possible = MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
-                .filter(map -> url.contains(map.getOrDefault("url", null))).collect(Collectors.toList());
-        Map<String, String> probable = null;
-        long max = 0;
-        for (Map<String, String> check : possible) {
-            List<String> parameters = MapWithAIDataUtils.parseParameters(check.get("parameters"));
-            long count = parameters.parallelStream().filter(url::contains).count();
-            if (count > max || probable == null) {
-                max = count;
-                probable = check;
-            }
-        }
-        return probable == null ? MapWithAIPlugin.NAME : probable.getOrDefault("source", MapWithAIPlugin.NAME);
+    private static String getSourceTag(MapWithAIInfo info) {
+        return info.getName() == null ? MapWithAIPlugin.NAME : info.getName();
     }
 
     /**

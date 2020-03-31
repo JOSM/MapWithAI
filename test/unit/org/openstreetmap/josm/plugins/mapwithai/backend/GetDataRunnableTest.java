@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -30,6 +29,8 @@ import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Geometry;
 
@@ -37,23 +38,20 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 public class GetDataRunnableTest {
     @Rule
-    public JOSMTestRules rule = new JOSMTestRules().projection().fakeAPI();
+    public JOSMTestRules rule = new JOSMTestRules().projection().fakeAPI().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     @Before
     public void setUp() {
         wireMock.start();
-        MapWithAIPreferenceHelper.setMapWithAIURLs(MapWithAIPreferenceHelper.getMapWithAIURLs().stream().map(map -> {
-            map.put("url", getDefaultMapWithAIAPIForTest(wireMock,
-                    map.getOrDefault("url", MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API)));
-            return map;
-        }).collect(Collectors.toList()));
+        MapWithAILayerInfoTest.setupMapWithAILayerInfo(wireMock);
     }
 
     @After
     public void tearDown() {
         wireMock.stop();
+        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
     }
 
     public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {

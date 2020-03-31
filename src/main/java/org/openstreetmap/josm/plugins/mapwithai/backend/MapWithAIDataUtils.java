@@ -9,14 +9,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
-import javax.json.JsonObject;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -39,8 +37,8 @@ import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DataUrl;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -166,31 +164,28 @@ public final class MapWithAIDataUtils {
         final List<Bounds> realBounds = realBBoxes.stream()
                 .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox).stream())
                 .map(MapWithAIDataUtils::bboxToBounds).collect(Collectors.toList());
-        if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> Boolean.valueOf(map.getOrDefault("enabled", "false")))) {
+        if (!MapWithAILayerInfo.instance.getLayers().isEmpty()) {
             if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
-                realBounds.parallelStream()
-                        .forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                                .filter(map -> map.containsKey("url")).map(MapWithAIDataUtils::getUrl)
-                                .filter(string -> !string.trim().isEmpty()).forEach(url -> {
-                                    BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
-                                            bound, url, DetectTaskingManagerUtils.hasTaskingManagerLayer());
-                                    try {
-                                        DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
-                                        synchronized (MapWithAIDataUtils.class) {
-                                            dataSet.mergeFrom(ds);
-                                        }
-                                    } catch (OsmTransferException e) {
-                                        Logging.error(e);
-                                    }
-                                }));
+                realBounds.parallelStream().forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl()
+                        .parallelStream().filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty()).forEach(i -> {
+                            BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, i,
+                                    DetectTaskingManagerUtils.hasTaskingManagerLayer());
+                            try {
+                                DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
+                                synchronized (MapWithAIDataUtils.class) {
+                                    dataSet.mergeFrom(ds);
+                                }
+                            } catch (OsmTransferException e) {
+                                Logging.error(e);
+                            }
+                        }));
                 monitor.finishTask();
                 monitor.close();
             }
         } else {
-            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIURLs().isEmpty()
+            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
                     ? new Notification(tr("There are no defined URLs. To get the defaults, restart JOSM"))
                     : new Notification(tr("No URLS are enabled"));
             noUrls.setDuration(Notification.TIME_DEFAULT);
@@ -238,33 +233,6 @@ public final class MapWithAIDataUtils {
         public boolean confirmed() {
             return bool;
         }
-    }
-
-    private static String getUrl(Map<String, String> urlInformation) {
-        StringBuilder sb = new StringBuilder();
-        if (urlInformation.containsKey("url")) {
-            sb.append(urlInformation.get("url"));
-            if (urlInformation.containsKey("parameters")) {
-                List<String> parameters = parseParameters(urlInformation.get("parameters"));
-                if (!parameters.isEmpty()) {
-                    sb.append('&').append(String.join("&", parameters));
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Parse a parameters string and return relevant parameters
-     *
-     * @param parameters A JSON string of parameters
-     * @return Enabled parameters (list thereof)
-     */
-    public static List<String> parseParameters(String parameters) {
-        return DataUrl.readJsonStringArraySimple(parameters).parallelStream().filter(JsonObject.class::isInstance)
-                .map(JsonObject.class::cast).filter(map -> map.getBoolean("enabled", false))
-                .filter(map -> map.containsKey("parameter")).map(map -> map.getString("parameter"))
-                .collect(Collectors.toList());
     }
 
     private static Bounds bboxToBounds(BBox bbox) {

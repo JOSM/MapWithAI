@@ -2,6 +2,7 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.UploadAction;
@@ -35,13 +36,12 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
             if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
                 sb.append(";task=").append(DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","));
             }
-            if (MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream().anyMatch(
-                    map -> !MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API.equalsIgnoreCase(map.get("url")))) {
-                sb.append(";url=")
-                        .append(String.join(";url=", MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                                .filter(map -> map.containsKey("url")).map(map -> map.get("url"))
-                                .map(url -> url.replace(MapWithAIPreferenceHelper.DEFAULT_MAPWITHAI_API, "DEFAULT_URL"))
-                                .filter(url -> !"DEFAULT_URL".equals(url)).collect(Collectors.toList())));
+            if (!MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
+                sb.append(";url_ids=")
+                        .append(String.join(";url_ids=",
+                                MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
+                                        .map(i -> i.getId() == null ? i.getUrl() : i.getId()).filter(Objects::nonNull)
+                                        .collect(Collectors.joining(","))));
             }
             String mapwithaiOptions = sb.toString();
             tags.put("mapwithai:options",

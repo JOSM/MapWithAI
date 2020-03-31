@@ -25,13 +25,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
-import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryType;
 import org.openstreetmap.josm.data.imagery.TMSCachedTileLoaderJob;
 import org.openstreetmap.josm.gui.preferences.imagery.AddImageryPanel.ContentValidationListener;
 import org.openstreetmap.josm.gui.preferences.imagery.HeadersTable;
 import org.openstreetmap.josm.gui.widgets.JosmTextArea;
 import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIType;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -145,7 +145,7 @@ public class AddMapWithAIPanel extends JPanel {
         return s.replaceAll("[\r\n]+", "").trim();
     }
 
-    protected static String sanitize(String s, ImageryType type) {
+    protected static String sanitize(String s, MapWithAIType type) {
         String ret = s;
         String imageryType = type.getTypeString() + ':';
         if (ret.startsWith(imageryType)) {
@@ -155,11 +155,11 @@ public class AddMapWithAIPanel extends JPanel {
         return sanitize(ret);
     }
 
-    protected final String getImageryName() {
+    protected final String getInfoName() {
         return sanitize(name.getText());
     }
 
-    protected final String getImageryRawUrl() {
+    protected final String getInfoRawUrl() {
         return sanitize(rawUrl.getText());
     }
 
@@ -169,7 +169,7 @@ public class AddMapWithAIPanel extends JPanel {
 
     /**
      * Registers a new ContentValidationListener
-     * 
+     *
      * @param l The new ContentValidationListener that will be notified of
      *          validation status changes
      */

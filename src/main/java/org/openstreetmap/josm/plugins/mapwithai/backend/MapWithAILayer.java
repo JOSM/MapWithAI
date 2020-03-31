@@ -37,6 +37,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -47,7 +48,7 @@ import org.openstreetmap.josm.tools.ImageProvider;
  */
 public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener {
     private Integer maximumAddition;
-    private String url;
+    private MapWithAIInfo url;
     private Boolean switchLayers;
     private boolean continuousDownload;
     private final Lock lock;
@@ -81,11 +82,11 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         return maximumAddition;
     }
 
-    public void setMapWithAIUrl(String url) {
-        this.url = url;
+    public void setMapWithAIUrl(MapWithAIInfo info) {
+        this.url = info;
     }
 
-    public String getMapWithAIUrl() {
+    public MapWithAIInfo getMapWithAIUrl() {
         return url;
     }
 
@@ -107,7 +108,8 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
                         GBC.eop().insets(15, 0, 0, 0));
             }
             if (url != null) {
-                panel.add(new JLabel(tr("URL: {0}", url), SwingConstants.HORIZONTAL), GBC.eop().insets(15, 0, 0, 0));
+                panel.add(new JLabel(tr("URL: {0}", url.getUrlExpanded()), SwingConstants.HORIZONTAL),
+                        GBC.eop().insets(15, 0, 0, 0));
             }
             if (switchLayers != null) {
                 panel.add(new JLabel(tr("Switch Layers: {0}", switchLayers), SwingConstants.HORIZONTAL),
