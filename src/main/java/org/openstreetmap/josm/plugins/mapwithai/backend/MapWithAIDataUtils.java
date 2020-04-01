@@ -168,19 +168,20 @@ public final class MapWithAIDataUtils {
             if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
-                realBounds.parallelStream().forEach(bound -> MapWithAIPreferenceHelper.getMapWithAIUrl()
-                        .parallelStream().filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty()).forEach(i -> {
-                            BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, i,
-                                    DetectTaskingManagerUtils.hasTaskingManagerLayer());
-                            try {
-                                DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
-                                synchronized (MapWithAIDataUtils.class) {
-                                    dataSet.mergeFrom(ds);
-                                }
-                            } catch (OsmTransferException e) {
-                                Logging.error(e);
-                            }
-                        }));
+                realBounds.parallelStream()
+                        .forEach(bound -> new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl()).parallelStream()
+                                .filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty()).forEach(i -> {
+                                    BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
+                                            bound, i, DetectTaskingManagerUtils.hasTaskingManagerLayer());
+                                    try {
+                                        DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
+                                        synchronized (MapWithAIDataUtils.class) {
+                                            dataSet.mergeFrom(ds);
+                                        }
+                                    } catch (OsmTransferException e) {
+                                        Logging.error(e);
+                                    }
+                                }));
                 monitor.finishTask();
                 monitor.close();
             }

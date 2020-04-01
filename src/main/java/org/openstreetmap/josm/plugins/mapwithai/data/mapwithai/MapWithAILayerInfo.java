@@ -38,7 +38,7 @@ import org.openstreetmap.josm.tools.Utils;
 public class MapWithAILayerInfo {
 
     /** List of all usable layers */
-    private final List<MapWithAIInfo> layers = new ArrayList<>();
+    private final List<MapWithAIInfo> layers = Collections.synchronizedList(new ArrayList<>());
     /** List of layer ids of all usable layers */
     private final Map<String, MapWithAIInfo> layerIds = new HashMap<>();
     /** List of all available default layers */
@@ -378,10 +378,12 @@ public class MapWithAILayerInfo {
     /**
      * Save the list of imagery entries to preferences.
      */
-    public void save() {
+    public synchronized void save() {
         List<MapWithAIPreferenceEntry> entries = new ArrayList<>();
-        for (MapWithAIInfo info : layers) {
-            entries.add(new MapWithAIPreferenceEntry(info));
+        synchronized (layers) {
+            for (MapWithAIInfo info : layers) {
+                entries.add(new MapWithAIPreferenceEntry(info));
+            }
         }
         StructUtils.putListOfStructs(Config.getPref(), CONFIG_PREFIX + "entries", entries,
                 MapWithAIPreferenceEntry.class);

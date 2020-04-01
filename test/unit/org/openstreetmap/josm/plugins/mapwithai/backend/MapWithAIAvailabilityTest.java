@@ -71,10 +71,10 @@ public class MapWithAIAvailabilityTest {
                 "The US should have highway data");
         assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("building", false),
                 "The US should have building data");
-        assertFalse(DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("highway", false),
-                "Canada does not yet have highway data");
-        assertTrue(DataAvailability.getDataTypes(new LatLon(45.424722, -75.695)).getOrDefault("building", false),
-                "Canada does have building data");
+        assertFalse(DataAvailability.getDataTypes(new LatLon(71.67, -42.85)).getOrDefault("highway", false),
+                "Denmark should not have highway data");
+        assertFalse(DataAvailability.getDataTypes(new LatLon(71.67, -42.85)).getOrDefault("building", false),
+                "Denmark does not have building data");
         assertTrue(DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("highway", false),
                 "Mexico has highway data");
         assertFalse(DataAvailability.getDataTypes(new LatLon(19.433333, -99.133333)).getOrDefault("building", false),
