@@ -3,7 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -25,7 +24,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.SpinnerNumberModel;
@@ -34,9 +32,7 @@ import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.gui.preferences.DefaultTabPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
-import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWithAIProvidersPanel;
@@ -175,8 +171,6 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
 
         pane.add(Box.createHorizontalGlue(), second);
 
-        // TODO check implementation legalInformation(pane);
-
         JButton kaartLogo = new JButton(ImageProvider.getIfAvailable("kaart") == null ? null
                 : new ImageProvider("kaart").setHeight(ImageProvider.ImageSizes.SETTINGS_TAB.getAdjustedHeight())
                         .get());
@@ -248,51 +242,5 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
      */
     public JSpinner getMaximumAdditionSpinner() {
         return maximumAdditionSpinner;
-    }
-
-    /**
-     * Get legal information for sources with special handling
-     *
-     * @param pane A pane to directly add the terms of use/privacy panels to
-     * @return A scroll pane with sources
-     */
-    public JScrollPane legalInformation(JPanel pane) {
-        GBC line = GBC.eol().fill(GridBagConstraints.HORIZONTAL);
-        JPanel termsOfUse = new JPanel(new GridBagLayout());
-        termsOfUse.add(new JLabel(tr("Server Terms Of Use")), line);
-        DataAvailability.getTermsOfUse().stream().map(MapWithAIPreferences::convertUrlToTextWithAction)
-                .forEach(urlObj -> termsOfUse.add(urlObj, line));
-        JPanel privacy = new JPanel(new GridBagLayout());
-        privacy.add(new JLabel(tr("Server Privacy Policy")), line);
-        DataAvailability.getPrivacyPolicy().stream().map(MapWithAIPreferences::convertUrlToTextWithAction)
-                .forEach(urlObj -> privacy.add(urlObj, line));
-
-        JScrollPane scroll = new JScrollPane();
-        scroll.add(termsOfUse, line);
-        scroll.add(privacy, line);
-        scroll.setMinimumSize(new Dimension(0, 60));
-        if (pane != null) {
-            pane.add(new JSeparator(), line);
-            pane.add(new JLabel(tr("Default Provider Legal Information")), line);
-            pane.add(termsOfUse, line);
-            pane.add(privacy, line);
-            pane.add(new JSeparator(), line);
-        }
-        return scroll;
-    }
-
-    private static JosmTextField convertUrlToTextWithAction(String url) {
-        JosmTextField field = new JosmTextField();
-        field.setEditable(false);
-        field.setText(url);
-        field.setForeground(Color.BLUE);
-        field.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        field.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                OpenBrowser.displayUrl(url);
-            }
-        });
-        return field;
     }
 }
