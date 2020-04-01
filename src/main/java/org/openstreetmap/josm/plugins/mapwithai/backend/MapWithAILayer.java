@@ -22,7 +22,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
@@ -39,6 +38,7 @@ import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListen
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -223,12 +223,12 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
                             .map(Way.class::cast).anyMatch(w -> w.containsNode(n)))) {
                 selection = event.getSelection();
             } else {
-                selection = event.getSelection().stream().distinct().sorted(new OsmComparator(event.getOldSelection()))
-                        .limit(maximumAdditionSelection)
+                OsmComparator comparator = new OsmComparator(event.getOldSelection());
+                selection = event.getSelection().stream().distinct().sorted(comparator).limit(maximumAdditionSelection)
                         .limit(event.getOldSelection().size() + Math.max(1L, maximumAdditionSelection / 10L))
                         .collect(Collectors.toList());
             }
-            SwingUtilities.invokeLater(() -> getDataSet().setSelected(selection));
+            GuiHelper.runInEDT(() -> getDataSet().setSelected(selection));
         }
     }
 

@@ -30,7 +30,6 @@ import org.openstreetmap.josm.tools.Shortcut;
 public class MapWithAIMoveAction extends JosmAction {
     /** UID for abstract action */
     private static final long serialVersionUID = 319374598;
-    private transient Notification lastNotification;
 
     /** The maximum number of objects is this times the maximum add */
     public static final int MAX_ADD_MULTIPLIER = 10;
@@ -69,9 +68,6 @@ public class MapWithAIMoveAction extends JosmAction {
                     .collect(Collectors.toList());
             ds.clearSelection(nodes);
             nodes.stream().map(Node::getReferrers).forEach(ds::addSelected);
-            if (ds.getSelected().size() > maxAddition && !(maxAddition == 0 && ExpertToggleAction.isExpert())) {
-                createMaxAddedDialog(maxAddition, ds.getSelected().size());
-            }
             final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
             final OsmDataLayer editLayer = getOsmDataLayer();
             if ((editLayer != null && !selected.isEmpty()
@@ -114,21 +110,6 @@ public class MapWithAIMoveAction extends JosmAction {
                 .filter(OsmDataLayer::isVisible).filter(OsmDataLayer::isUploadable)
                 .filter(osmLayer -> !osmLayer.isLocked() && osmLayer.getClass().equals(OsmDataLayer.class)).findFirst()
                 .orElse(null);
-    }
-
-    private void createMaxAddedDialog(int maxAddition, int triedToAdd) {
-        final Notification notification = new Notification();
-        final StringBuilder message = new StringBuilder();
-        message.append(MapWithAIPlugin.NAME).append(": ").append(tr("maximum additions per action are "))
-                .append(maxAddition).append(", ").append(tr("tried to add ")).append(triedToAdd).append('.');
-        notification.setContent(message.toString());
-        notification.setDuration(Notification.TIME_DEFAULT);
-        notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
-        notification.show();
-        if (lastNotification != null) {
-            lastNotification.setDuration(0);
-        }
-        lastNotification = notification;
     }
 
     @Override

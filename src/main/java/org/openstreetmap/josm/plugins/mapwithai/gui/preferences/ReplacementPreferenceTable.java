@@ -55,7 +55,7 @@ public class ReplacementPreferenceTable extends PreferencesTable {
                 : null;
     }
 
-    private static boolean askAddSetting(JComponent gui, JPanel p) {
+    protected static boolean askAddSetting(JComponent gui, JPanel p) {
         return new ExtendedDialog(gui, tr("Add setting"), tr("OK"), tr("Cancel")).setContent(p)
                 .setButtonIcons("ok", "cancel").showDialog().getValue() == 1;
     }

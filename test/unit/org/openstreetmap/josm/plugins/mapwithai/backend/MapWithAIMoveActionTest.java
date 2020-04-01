@@ -17,12 +17,17 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mockit.Mock;
+import mockit.MockUp;
 
 public class MapWithAIMoveActionTest {
     MapWithAIMoveAction moveAction;
@@ -105,5 +110,33 @@ public class MapWithAIMoveActionTest {
         assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key shouldn't exist");
         assertTrue(way1.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should exist");
         assertFalse(way1.lastNode().isDeleted(), "way1 should no longer be deleted");
+    }
+
+    private static class NotificationMocker extends MockUp<Notification> {
+        public boolean shown;
+
+        @Mock
+        public void show() {
+            shown = true;
+        }
+    }
+
+    @Test
+    public void testMaxAddNotification() {
+        TestUtils.assumeWorkingJMockit();
+        new WindowMocker();
+        NotificationMocker notification = new NotificationMocker();
+        DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "TEST", null));
+        MapWithAIPreferenceHelper.setMaximumAddition(1, false);
+        for (int i = 0; i < 40; i++) {
+            ds.addPrimitive(new Node(LatLon.ZERO));
+        }
+        for (int i = 0; i < 11; i++) {
+            GuiHelper.runInEDTAndWait(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
+            moveAction.actionPerformed(null);
+        }
+        assertTrue(notification.shown);
+        notification.shown = false;
     }
 }

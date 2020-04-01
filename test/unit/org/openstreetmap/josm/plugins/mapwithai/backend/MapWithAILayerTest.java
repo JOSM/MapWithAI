@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
 import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.awaitility.Durations;
 import org.junit.After;
@@ -30,17 +32,21 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.ContinuousDownloadAction;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -142,6 +148,22 @@ public class MapWithAILayerTest {
     }
 
     @Test
+    public void testSelection() throws InvocationTargetException, InterruptedException {
+        MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
+        DataSet ds = mapWithAILayer.getDataSet();
+        new GetDataRunnable(Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null).fork()
+                .join();
+        assertTrue(ds.getSelected().isEmpty());
+        SwingUtilities.invokeAndWait(() -> ds.setSelected(ds.allNonDeletedCompletePrimitives()));
+        assertEquals(1, ds.getSelected().size());
+        OsmPrimitive prim = ds.getSelected().iterator().next();
+        assertTrue(prim instanceof Way);
+        SwingUtilities.invokeAndWait(() -> ds.setSelected(((Way) prim).getNodes()));
+        assertEquals(((Way) prim).getNodes().size(), ds.getSelected().size());
+        assertTrue(((Way) prim).getNodes().parallelStream().allMatch(ds::isSelected));
+    }
+
+    @Test
     public void testGetData() {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         final OsmDataLayer osm = new OsmDataLayer(new DataSet(), "test", null);
@@ -182,5 +204,24 @@ public class MapWithAILayerTest {
         Action[] actions = layer.getMenuEntries();
         assertTrue(actions.length > 0);
         assertEquals(ContinuousDownloadAction.class, layer.getMenuEntries()[actions.length - 3].getClass());
+    }
+
+    @Test
+    public void testLayerSwitch() {
+        MapWithAIDataUtils.addMapWithAIPaintStyles();
+        Layer osm = new OsmDataLayer(new DataSet(), "TEST", null);
+        MainApplication.getLayerManager().addLayer(osm);
+        MainApplication.getLayerManager().addLayer(layer);
+        MainApplication.getLayerManager().setActiveLayer(layer);
+        StyleSource pref = MapWithAIDataUtils.getMapWithAIPaintStyle();
+        layer.activeOrEditLayerChanged(null);
+        assertTrue(pref.active);
+        MainApplication.getLayerManager().setActiveLayer(osm);
+        layer.activeOrEditLayerChanged(null);
+        assertTrue(pref.active);
+        Config.getPref().putBoolean(MapWithAIPlugin.NAME + ".boolean:toggle_with_layer", true);
+
+        layer.activeOrEditLayerChanged(null);
+        assertFalse(pref.active);
     }
 }
