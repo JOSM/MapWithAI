@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -27,8 +28,10 @@ import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
@@ -213,11 +216,45 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         if ((event.getSelection().size() - event.getOldSelection().size() > 1
                 || maximumAdditionSelection < event.getSelection().size())
                 && (MapWithAIPreferenceHelper.getMaximumAddition() != 0 || !ExpertToggleAction.isExpert())) {
-            Collection<OsmPrimitive> selection = event.getSelection().stream().distinct()
-                    .limit(maximumAdditionSelection).limit(event.getOldSelection().size() + 1L)
-                    .collect(Collectors.toList());
+            Collection<OsmPrimitive> selection;
+            if (event.getSelection().parallelStream().filter(Node.class::isInstance).map(Node.class::cast)
+                    .filter(n -> !event.getOldSelection().contains(n))
+                    .allMatch(n -> event.getOldSelection().parallelStream().filter(Way.class::isInstance)
+                            .map(Way.class::cast).anyMatch(w -> w.containsNode(n)))) {
+                selection = event.getSelection();
+            } else {
+                selection = event.getSelection().stream().distinct().sorted(new OsmComparator(event.getOldSelection()))
+                        .limit(maximumAdditionSelection)
+                        .limit(event.getOldSelection().size() + Math.max(1L, maximumAdditionSelection / 10L))
+                        .collect(Collectors.toList());
+            }
             SwingUtilities.invokeLater(() -> getDataSet().setSelected(selection));
         }
+    }
+
+    private static class OsmComparator implements Comparator<OsmPrimitive> {
+        final Collection<OsmPrimitive> previousSelection;
+
+        public OsmComparator(Collection<OsmPrimitive> previousSelection) {
+            this.previousSelection = previousSelection;
+        }
+
+        @Override
+        public int compare(OsmPrimitive o1, OsmPrimitive o2) {
+            if (previousSelection.contains(o1) == previousSelection.contains(o2)) {
+                if (o1.isTagged() == o2.isTagged()) {
+                    return o1.compareTo(o2);
+                } else if (o1.isTagged()) {
+                    return -1;
+                }
+                return 1;
+            }
+            if (previousSelection.contains(o1)) {
+                return -1;
+            }
+            return 1;
+        }
+
     }
 
     /**
