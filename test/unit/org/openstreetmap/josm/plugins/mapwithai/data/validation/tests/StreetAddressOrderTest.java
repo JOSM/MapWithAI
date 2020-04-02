@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import org.openstreetmap.josm.tools.Geometry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class StreetAddressOrderTest {
+    private static final String ADDR_STREET = "addr:street";
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().projection();
@@ -43,7 +45,7 @@ public class StreetAddressOrderTest {
         Node tNode = new Node(new LatLon(0, 0.00001));
         ds.addPrimitive(tNode);
         tNode = new Node(tNode, true);
-        tNode.put("addr:street", "Test Road");
+        tNode.put(ADDR_STREET, "Test Road");
         ds.addPrimitive(tNode);
 
         tNode = new Node(tNode, true);
@@ -190,4 +192,72 @@ public class StreetAddressOrderTest {
         assertEquals(1, StreetAddressOrder.getNeighbors(primitives.get(2), primitives).size());
     }
 
+    @Test
+    public void testGetNearbyAddresses() {
+        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
+        DataSet ds = new DataSet();
+        way1.getNodes().forEach(ds::addPrimitive);
+        ds.addPrimitive(way1);
+
+        assertTrue(StreetAddressOrder.getNearbyAddresses(way1).isEmpty());
+
+        Node node1 = new Node(new LatLon(1, 2));
+        node1.put(ADDR_STREET, "Test1");
+        ds.addPrimitive(node1);
+
+        assertTrue(StreetAddressOrder.getNearbyAddresses(way1).isEmpty());
+
+        Node node2 = new Node(new LatLon(1, 1.0001));
+        node2.put(ADDR_STREET, "Test2");
+        ds.addPrimitive(node2);
+
+        assertEquals(1, StreetAddressOrder.getNearbyAddresses(way1).size());
+        assertSame(node2, StreetAddressOrder.getNearbyAddresses(way1).get(0));
+
+        Node node3 = new Node(new LatLon(1, 0.9999));
+        ds.addPrimitive(node3);
+
+        assertSame(node2, StreetAddressOrder.getNearbyAddresses(way1).get(0));
+        assertEquals(1, StreetAddressOrder.getNearbyAddresses(way1).size());
+
+        node3.put(ADDR_STREET, "Test3");
+        assertTrue(StreetAddressOrder.getNearbyAddresses(way1).containsAll(Arrays.asList(node2, node3)));
+        assertEquals(2, StreetAddressOrder.getNearbyAddresses(way1).size());
+    }
+
+    @Test
+    public void testIsNearestRoad() {
+        Node node1 = new Node(new LatLon(0, 0));
+        DataSet ds = new DataSet(node1);
+        double boxCorners = 0.0009;
+        Way way1 = TestUtils.newWay("", new Node(new LatLon(boxCorners, boxCorners)),
+                new Node(new LatLon(boxCorners, -boxCorners)));
+        Way way2 = TestUtils.newWay("", new Node(new LatLon(-boxCorners, boxCorners)),
+                new Node(new LatLon(-boxCorners, -boxCorners)));
+        for (Way way : Arrays.asList(way1, way2)) {
+            way.getNodes().forEach(ds::addPrimitive);
+            ds.addPrimitive(way);
+        }
+
+        assertFalse(StreetAddressOrder.isNearestRoad(way1, node1));
+        assertFalse(StreetAddressOrder.isNearestRoad(way2, node1));
+
+        way1.put("highway", "residential");
+        way2.put("highway", "motorway");
+
+        assertTrue(StreetAddressOrder.isNearestRoad(way1, node1));
+        assertTrue(StreetAddressOrder.isNearestRoad(way2, node1));
+
+        node1.setCoor(new LatLon(boxCorners * 0.9, boxCorners * 0.9));
+        assertTrue(StreetAddressOrder.isNearestRoad(way1, node1));
+        assertFalse(StreetAddressOrder.isNearestRoad(way2, node1));
+
+        node1.setCoor(new LatLon(-boxCorners * 0.9, -boxCorners * 0.9));
+        assertTrue(StreetAddressOrder.isNearestRoad(way2, node1));
+        assertFalse(StreetAddressOrder.isNearestRoad(way1, node1));
+
+        node1.setCoor(new LatLon(0.00005, 0.00005));
+        assertFalse(StreetAddressOrder.isNearestRoad(way2, node1));
+        assertTrue(StreetAddressOrder.isNearestRoad(way1, node1));
+    }
 }

@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWay;
 import org.openstreetmap.josm.data.osm.Node;
@@ -42,7 +44,7 @@ public class StreetAddressOrder extends Test {
     public void visit(Way way) {
         if (way.isUsable() && way.hasTag("highway", StreetAddressTest.CLASSIFIED_HIGHWAYS) && way.hasTag("name")) {
             String name = way.get("name");
-            List<IPrimitive> addresses = StreetAddressTest.getNearbyAddresses(way).stream().filter(Objects::nonNull)
+            List<IPrimitive> addresses = getNearbyAddresses(way).stream().filter(Objects::nonNull)
                     .filter(w -> w.hasTag("addr:housenumber")).filter(w -> name.equals(w.get("addr:street")))
                     .sorted(Comparator.comparing(p -> convertAddrHouseNumberToDouble(p.get("addr:housenumber"))))
                     .collect(Collectors.toList());
@@ -55,18 +57,58 @@ public class StreetAddressOrder extends Test {
     }
 
     /**
+     * Get nearby addresses to a way
+     *
+     * @param way The way to get nearby addresses from
+     * @return The primitives that have appropriate addr tags near to the way
+     */
+    public static List<IPrimitive> getNearbyAddresses(Way way) {
+        BBox bbox = StreetAddressTest.expandBBox(way.getBBox(), StreetAddressTest.BBOX_EXPANSION);
+        List<Node> addrNodes = way.getDataSet().searchNodes(bbox).parallelStream()
+                .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
+        List<Way> addrWays = way.getDataSet().searchWays(bbox).parallelStream()
+                .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
+        List<Relation> addrRelations = way.getDataSet().searchRelations(bbox).parallelStream()
+                .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
+        return Stream.of(addrNodes, addrWays, addrRelations).flatMap(List::parallelStream)
+                .filter(prim -> isNearestRoad(way, prim)).collect(Collectors.toList());
+    }
+
+    /**
+     * Check if a way is the nearest road to a primitive
+     *
+     * @param way  The way to check
+     * @param prim The primitive to get the distance from
+     * @return {@code true} if the primitive is the nearest way
+     */
+    public static boolean isNearestRoad(Way way, OsmPrimitive prim) {
+        BBox primBBox = StreetAddressTest.expandBBox(prim.getBBox(), StreetAddressTest.BBOX_EXPANSION);
+        List<Pair<Way, Double>> sorted = way.getDataSet().searchWays(primBBox).parallelStream()
+                .filter(StreetAddressTest::isHighway).map(iway -> StreetAddressTest.distanceToWay(iway, prim))
+                .sorted(Comparator.comparing(p -> p.b)).collect(Collectors.toList());
+
+        if (!sorted.isEmpty()) {
+            double minDistance = sorted.get(0).b;
+            List<Way> nearby = sorted.stream().filter(p -> p.b - minDistance < StreetAddressTest.BBOX_EXPANSION * 0.05)
+                    .map(p -> p.a).collect(Collectors.toList());
+            return nearby.contains(way);
+        }
+        return false;
+    }
+
+    /**
      * Convert a housenumber (addr:housenumber) to a double
      *
      * @param housenumber The housenumber to convert
      * @return The double representation, or {@link Double#NaN} if not convertible.
      */
     public static double convertAddrHouseNumberToDouble(String housenumber) {
-        String[] parts = housenumber.split(" ");
+        String[] parts = housenumber.split(" ", -1);
         double number = 0;
         for (String part : parts) {
             try {
                 if (part.contains("/")) {
-                    String[] fractional = part.split("/");
+                    String[] fractional = part.split("/", -1);
                     double tmp = Double.parseDouble(fractional[0]);
                     for (int i = 1; i < fractional.length; i++) {
                         tmp = tmp / Double.parseDouble(fractional[i]);
