@@ -32,7 +32,7 @@ import org.openstreetmap.josm.tools.Pair;
 
 public class StreetAddressTest extends Test {
     /** Standard bbox expansion */
-    public static final double BBOX_EXPANSION = 0.001;
+    public static final double BBOX_EXPANSION = 0.002;
     private static final String ADDR_STREET = "addr:street";
     private final Set<OsmPrimitive> namePrimitiveMap = new HashSet<>();
     /**
@@ -80,7 +80,7 @@ public class StreetAddressTest extends Test {
     }
 
     public void realVisit(OsmPrimitive primitive) {
-        if (primitive.isUsable() && hasStreetAddressTags(primitive)) {
+        if (primitive.isUsable() && hasStreetAddressTags(primitive) && !primitive.isOutsideDownloadArea()) {
             Collection<Way> surroundingWays = getSurroundingHighways(primitive);
             Collection<String> names = getWayNames(surroundingWays);
             if (!names.contains(primitive.get(ADDR_STREET))) {
@@ -90,9 +90,9 @@ public class StreetAddressTest extends Test {
     }
 
     public static Collection<String> getWayNames(Collection<Way> ways) {
-        return ways.parallelStream().flatMap(w -> w.getInterestingTags().entrySet().parallelStream())
-                .filter(e -> e.getKey().contains("name") && !e.getKey().contains("tiger")).map(Map.Entry::getValue)
-                .collect(Collectors.toSet());
+        return ways.parallelStream().flatMap(w -> w.getInterestingTags().entrySet().parallelStream()).filter(
+                e -> (e.getKey().contains("name") || e.getKey().contains("ref")) && !e.getKey().contains("tiger"))
+                .map(Map.Entry::getValue).collect(Collectors.toSet());
     }
 
     public static Collection<Way> getSurroundingHighways(OsmPrimitive address) {

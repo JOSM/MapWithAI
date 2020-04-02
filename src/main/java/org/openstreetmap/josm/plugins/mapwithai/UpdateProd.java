@@ -28,7 +28,8 @@ public final class UpdateProd {
      * @return {@code true} if an update is needed
      */
     public static boolean doProd(int nextMinVersion) {
-        if (nextMinVersion > Version.getInstance().getVersion()) {
+        if (nextMinVersion > Version.getInstance().getVersion()
+                && Version.getInstance().getVersion() != Version.JOSM_UNKNOWN_VERSION) {
             int doUpdate = ConditionalOptionPaneUtil.showOptionDialog(
                     MapWithAIPlugin.NAME.concat(".ignore_next_version"), MainApplication.getMainFrame(),
                     tr("Please update JOSM -- {0} {1} is the last {0} version to support JOSM {2}",
