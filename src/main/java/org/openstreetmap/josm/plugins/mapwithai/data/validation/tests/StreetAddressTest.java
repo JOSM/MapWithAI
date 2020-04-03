@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -90,9 +91,11 @@ public class StreetAddressTest extends Test {
     }
 
     public static Collection<String> getWayNames(Collection<Way> ways) {
-        return ways.parallelStream().flatMap(w -> w.getInterestingTags().entrySet().parallelStream()).filter(
-                e -> (e.getKey().contains("name") || e.getKey().contains("ref")) && !e.getKey().contains("tiger"))
-                .map(Map.Entry::getValue).collect(Collectors.toSet());
+        return ways.parallelStream().flatMap(w -> w.getInterestingTags().entrySet().parallelStream())
+                .filter(e -> (e.getKey().contains("name") || e.getKey().contains("ref"))
+                        && !e.getKey().contains("tiger"))
+                .map(Map.Entry::getValue).flatMap(s -> Stream.of(s.split(";", -1))).map(String::trim)
+                .filter(s -> !s.isEmpty()).collect(Collectors.toSet());
     }
 
     public static Collection<Way> getSurroundingHighways(OsmPrimitive address) {
