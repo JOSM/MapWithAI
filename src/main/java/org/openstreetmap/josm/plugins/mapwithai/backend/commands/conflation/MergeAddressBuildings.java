@@ -3,14 +3,11 @@ package org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -20,10 +17,10 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import org.openstreetmap.josm.tools.Geometry;
-import org.openstreetmap.josm.tools.Logging;
 
 public class MergeAddressBuildings extends AbstractConflationCommand {
     public static final String KEY = "building";
@@ -78,18 +75,15 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
                 .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
-        if (nodesWithAddresses.size() == 1) {
+        if (nodesWithAddresses.size() == 1
+                && nodesWithAddresses.parallelStream().allMatch(n -> n.getParentWays().isEmpty())) {
             String currentKey = null;
             try {
                 // Remove the key to avoid the popup from utilsplugin2
                 currentKey = object.get(KEY);
                 object.remove(KEY);
-                try {
-                    SwingUtilities.invokeAndWait(() -> commandList
-                            .add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object)));
-                } catch (InvocationTargetException | InterruptedException e) {
-                    Logging.error(e);
-                }
+                GuiHelper.runInEDTAndWait(() -> commandList
+                        .add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object)));
             } finally {
                 if (currentKey != null) {
                     object.put(KEY, currentKey);

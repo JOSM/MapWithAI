@@ -17,11 +17,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
-import javax.swing.SwingUtilities;
-
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.OfflineAccessException;
 import org.openstreetmap.josm.io.OnlineResource;
@@ -170,7 +169,7 @@ public class MapWithAILayerInfo {
                 }
                 loadSource(source);
             }
-            SwingUtilities.invokeLater(this::finish);
+            GuiHelper.runInEDT(this::finish);
         }
 
         protected void loadSource(String source) {

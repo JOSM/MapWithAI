@@ -21,6 +21,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.visitor.MergeSourceBuildingVisitor;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
@@ -88,10 +89,10 @@ public class MovePrimitiveDataSetCommand extends Command {
         final List<Command> commands = new ArrayList<>();
 
         final Collection<OsmPrimitive> selected = from.getAllSelected();
-        from.setSelected(selection);
+        GuiHelper.runInEDTAndWait(() -> from.setSelected(selection));
         final MergeSourceBuildingVisitor builder = new MergeSourceBuildingVisitor(from);
         final DataSet hull = builder.build();
-        from.setSelected(selected);
+        GuiHelper.runInEDTAndWait(() -> from.setSelected(selected));
 
         final List<PrimitiveData> primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save)
                 .collect(Collectors.toList());

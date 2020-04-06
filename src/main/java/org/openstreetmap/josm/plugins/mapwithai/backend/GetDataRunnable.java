@@ -4,7 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,8 +15,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
-
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
@@ -39,6 +36,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
@@ -126,20 +124,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param bounds  The newly added bounds to the dataset. May be {@code null}.
      */
     public static void cleanup(DataSet dataSet, Bounds bounds) {
-        if (SwingUtilities.isEventDispatchThread()) {
-            realCleanup(dataSet, bounds);
-        } else {
-            try {
-                SwingUtilities.invokeAndWait(() -> {
-                    realCleanup(dataSet, bounds);
-                });
-            } catch (InterruptedException e) {
-                Logging.debug(e);
-                Thread.currentThread().interrupt();
-            } catch (InvocationTargetException e) {
-                Logging.debug(e);
-            }
-        }
+        GuiHelper.runInEDTAndWait(() -> realCleanup(dataSet, bounds));
     }
 
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {

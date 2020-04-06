@@ -4,7 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,7 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
@@ -35,6 +33,7 @@ import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
@@ -96,7 +95,7 @@ public final class MapWithAIDataUtils {
     public static void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
                 .filter(source -> paintStyleResourceUrl.equals(source.url))
-                .forEach(style -> SwingUtilities.invokeLater(() -> MapPaintStyles.removeStyle(style)));
+                .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
     }
 
     /**
@@ -192,25 +191,14 @@ public final class MapWithAIDataUtils {
             noUrls.setDuration(Notification.TIME_DEFAULT);
             noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
             noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
-            if (SwingUtilities.isEventDispatchThread()) {
-                noUrls.show();
-            } else {
-                SwingUtilities.invokeLater(noUrls::show);
-            }
+            GuiHelper.runInEDT(noUrls::show);
         }
         return dataSet;
     }
 
     private static boolean confirmBigDownload(List<BBox> realBBoxes) {
         ConfirmBigDownload confirmation = new ConfirmBigDownload(realBBoxes);
-        try {
-            SwingUtilities.invokeAndWait(confirmation);
-        } catch (InterruptedException e) {
-            Logging.error(e);
-            Thread.currentThread().interrupt();
-        } catch (InvocationTargetException e) {
-            Logging.error(e);
-        }
+        GuiHelper.runInEDTAndWait(confirmation);
         return confirmation.confirmed();
     }
 
@@ -288,16 +276,8 @@ public final class MapWithAIDataUtils {
         }
 
         final MapWithAILayer tLayer = layer;
-        if (!MainApplication.getLayerManager().getLayers().contains(tLayer)) {
-            if (SwingUtilities.isEventDispatchThread() && create) {
-                MainApplication.getLayerManager().addLayer(tLayer);
-            } else if (create) {
-                try {
-                    SwingUtilities.invokeAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
-                } catch (InvocationTargetException | InterruptedException e) {
-                    Logging.error(e);
-                }
-            }
+        if (!MainApplication.getLayerManager().getLayers().contains(tLayer) && create) {
+            GuiHelper.runInEDT(() -> MainApplication.getLayerManager().addLayer(tLayer));
         }
 
         return layer;
@@ -505,8 +485,8 @@ public final class MapWithAIDataUtils {
      * @return The number of objects added from the MapWithAI data layer
      */
     public static Long getAddedObjects() {
-        return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
-                .filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
+        return GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands())
+                .parallelStream().filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
                 .mapToLong(MapWithAIAddCommand::getAddedObjects).sum();
     }
 
@@ -514,8 +494,8 @@ public final class MapWithAIDataUtils {
      * @return The source tags for Objects added from the MapWithAI data layer
      */
     public static List<String> getAddedObjectsSource() {
-        return UndoRedoHandler.getInstance().getUndoCommands().parallelStream()
-                .filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
+        return GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands())
+                .parallelStream().filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
                 .flatMap(com -> com.getSourceTags().stream()).distinct().collect(Collectors.toList());
     }
 

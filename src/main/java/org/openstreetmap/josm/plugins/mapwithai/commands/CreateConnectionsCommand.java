@@ -15,14 +15,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import javax.swing.SwingUtilities;
-
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
@@ -60,18 +59,8 @@ public class CreateConnectionsCommand extends Command {
             command.executeCommand();
         }
         if (undoCommands != null) {
-            try {
-                SwingUtilities.invokeAndWait(() -> undoCommands.executeCommand());
-            } catch (InvocationTargetException e) {
-                undoCommands.executeCommand();
-                Logging.debug(e);
-            } catch (InterruptedException e) {
-                undoCommands.executeCommand();
-                Logging.debug(e);
-                Thread.currentThread().interrupt();
-            } finally {
-                SwingUtilities.invokeLater(() -> UndoRedoHandler.getInstance().add(undoCommands, false));
-            }
+            GuiHelper.runInEDTAndWait(() -> undoCommands.executeCommand());
+            GuiHelper.runInEDTAndWait(() -> UndoRedoHandler.getInstance().add(undoCommands, false));
         }
         return true;
     }

@@ -3,7 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.Command;
@@ -23,6 +21,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
@@ -35,7 +34,6 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     DataSet mapWithAI;
     Collection<OsmPrimitive> primitives;
     Command command;
-    Lock lock;
     final Map<OsmPrimitive, String> sources;
 
     /**
@@ -48,7 +46,6 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     public MapWithAIAddCommand(MapWithAILayer mapWithAILayer, OsmDataLayer editLayer,
             Collection<OsmPrimitive> selection) {
         this(mapWithAILayer.getDataSet(), editLayer.getDataSet(), selection);
-        lock = mapWithAILayer.getLock();
     }
 
     /**
@@ -74,11 +71,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public boolean executeCommand() {
-        if (EventQueue.isDispatchThread()) {
-            new Thread((Runnable) this::run, getClass().getName()).start();
-        } else {
-            run();
-        }
+        GuiHelper.runInEDTAndWait(this::run);
         return true;
     }
 
@@ -90,26 +83,16 @@ public class MapWithAIAddCommand extends Command implements Runnable {
             throw new IllegalArgumentException();
         }
         synchronized (this) {
-            try {
-                if (lock != null) {
-                    lock.lock();
-                }
-                if (command == null) {// needed for undo/redo (don't create a new command)
-                    final List<OsmPrimitive> allPrimitives = new ArrayList<>();
-                    MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
-                    Collection<PrimitiveData> primitiveData = new HashSet<>();
-                    final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI,
-                            primitives, primitiveData);
-                    final Command createConnectionsCommand = createConnections(editable, primitiveData);
-                    command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand,
-                            createConnectionsCommand);
-                }
-                command.executeCommand();
-            } finally {
-                if (lock != null) {
-                    lock.unlock();
-                }
+            if (command == null) {// needed for undo/redo (don't create a new command)
+                final List<OsmPrimitive> allPrimitives = new ArrayList<>();
+                MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
+                Collection<PrimitiveData> primitiveData = new HashSet<>();
+                final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI, primitives,
+                        primitiveData);
+                final Command createConnectionsCommand = createConnections(editable, primitiveData);
+                command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
             }
+            GuiHelper.runInEDT(command::executeCommand);
         }
     }
 
@@ -128,19 +111,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public void undoCommand() {
-        try {
-            if (lock != null) {
-                lock.lock();
-            }
-            synchronized (this) {
-                if (command != null) {
-                    command.undoCommand();
-                }
-            }
-        } finally {
-            if (lock != null) {
-                lock.unlock();
-            }
+        if (command != null) {
+            GuiHelper.runInEDT(command::undoCommand);
         }
     }
 
@@ -191,6 +163,6 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(editable, mapWithAI, primitives, lock);
+        return Objects.hash(editable, mapWithAI, primitives);
     }
 }
