@@ -110,19 +110,25 @@ public class MovePrimitiveDataSetCommand extends Command {
         List<Command> removeKeyCommand = new ArrayList<>();
         Set<OsmPrimitive> fullSelection = new HashSet<>();
         MapWithAIDataUtils.addPrimitivesToCollection(fullSelection, selection);
-        CreateConnectionsCommand.getConflationCommands().forEach(clazz -> {
-            try {
-                removeKeyCommand.add(new ChangePropertyCommand(fullSelection,
-                        clazz.getConstructor(DataSet.class).newInstance(from).getKey(), null));
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                Logging.error(e);
-            }
-        });
-        SequenceCommand sequence = new SequenceCommand("Temporary Command", removeKeyCommand);
-        sequence.executeCommand(); // This *must* be executed for the delete command to get everything.
-        commands.add(DeleteCommand.delete(selection, true, true));
-        sequence.undoCommand();
+        if (!fullSelection.isEmpty()) {
+            CreateConnectionsCommand.getConflationCommands().forEach(clazz -> {
+                try {
+                    removeKeyCommand.add(new ChangePropertyCommand(fullSelection,
+                            clazz.getConstructor(DataSet.class).newInstance(from).getKey(), null));
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                    Logging.error(e);
+                }
+            });
+        }
+        if (!removeKeyCommand.isEmpty()) {
+            SequenceCommand sequence = new SequenceCommand("Temporary Command", removeKeyCommand);
+            sequence.executeCommand(); // This *must* be executed for the delete command to get everything.
+            commands.add(DeleteCommand.delete(selection, true, true));
+            sequence.undoCommand();
+        } else {
+            commands.add(DeleteCommand.delete(selection, true, true));
+        }
 
         return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
                 "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
