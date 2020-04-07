@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.GraphicsEnvironment;
+import java.lang.reflect.Field;
 
 import javax.swing.JOptionPane;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.OpenBrowserMocker;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -26,12 +28,16 @@ public class UpdateProdTest {
     public JOSMTestRules rule = new JOSMTestRules().preferences();
 
     @Test
-    public void testDoProd() {
+    public void testDoProd()
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         TestUtils.assumeWorkingJMockit();
         new OpenBrowserMocker();
         if (GraphicsEnvironment.isHeadless()) {
             new WindowMocker();
         }
+        Field version = Version.class.getDeclaredField("version");
+        version.setAccessible(true);
+        version.setInt(Version.getInstance(), 15000);
         String booleanKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version"));
         String intKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version")).concat(".value"); // "message.MapWithAI.ignore_next_version.value";
         Config.getPref().putBoolean(booleanKey, false);

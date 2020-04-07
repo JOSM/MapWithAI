@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Before;
@@ -94,6 +95,9 @@ public class MapWithAIRemoteControlTest {
     public void testNominalRequest() throws Exception {
         newHandler("https://localhost?url=" + Utils.encodeUrl(MapWithAILayerInfo.instance.getLayers().get(0).getUrl()))
                 .handle();
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+                .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
+
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertTrue(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
@@ -103,6 +107,8 @@ public class MapWithAIRemoteControlTest {
     public void testTemporaryUrl() throws Exception {
         final String badUrl = "https://bad.url";
         newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl)).handle();
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+                .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
@@ -122,6 +128,9 @@ public class MapWithAIRemoteControlTest {
         final Integer maxObj = 1;
         newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj="
                 + maxObj.toString()).handle();
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+                .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
+
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
@@ -138,6 +147,9 @@ public class MapWithAIRemoteControlTest {
     public void testBBox() throws Exception {
         BBox temp = getTestBBox();
         newHandler("http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp.toStringCSV(","))).handle();
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+                .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
+
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         await().atMost(Durations.TEN_SECONDS)

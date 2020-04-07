@@ -22,6 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Before;
@@ -138,6 +139,7 @@ public class MapWithAILayerTest {
         assertNull(mapWithAILayer, "There should be no MapWithAI layer yet");
 
         mapWithAILayer = MapWithAIDataUtils.getLayer(true);
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         assertEquals(MapWithAILayer.class, mapWithAILayer.getClass(),
                 "The MapWithAI layer should be of the MapWithAILayer.class");
 
@@ -201,6 +203,7 @@ public class MapWithAILayerTest {
     @Test
     public void testGetMenuEntries() {
         Layer layer = MapWithAIDataUtils.getLayer(true);
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         Action[] actions = layer.getMenuEntries();
         assertTrue(actions.length > 0);
         assertEquals(ContinuousDownloadAction.class, layer.getMenuEntries()[actions.length - 3].getClass());

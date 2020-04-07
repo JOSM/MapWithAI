@@ -94,6 +94,7 @@ public class MapWithAIActionTest {
         MapWithAIAction.toggleLayer(layer);
         assertSame(layer, MainApplication.getLayerManager().getActiveLayer());
         MapWithAIDataUtils.getLayer(true);
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         // Adding the MapWithAI layer switches to it
         assertSame(MapWithAIDataUtils.getLayer(false), MainApplication.getLayerManager().getActiveLayer());
         MapWithAIAction.toggleLayer(layer);
@@ -110,6 +111,7 @@ public class MapWithAIActionTest {
         assertNull(notification);
 
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         notification = MapWithAIAction.createMessageDialog();
         assertNotNull(notification);
         DataSource source = new DataSource(new Bounds(38.8876078, -77.012173, 38.892087, -77.0059234), "test area");

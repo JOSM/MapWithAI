@@ -13,6 +13,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -91,6 +93,7 @@ public class MapWithAIAddComandTest {
         assertTrue(way3.isDeleted(), "The way should be deleted");
 
         command.undoCommand();
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> ds2.getPrimitiveById(way3) == null);
         assertNull(ds2.getPrimitiveById(way3), "DataSet should no longer contain object");
         assertFalse(ds1.getPrimitiveById(way3).isDeleted(),
                 "The way should no longer be deleted in its original DataSet");
@@ -143,11 +146,13 @@ public class MapWithAIAddComandTest {
 
         MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> mapWithAIData.allNonDeletedPrimitives().isEmpty());
         assertEquals(6, osmData.allNonDeletedPrimitives().size(), "All primitives should now be in osmData");
         assertTrue(mapWithAIData.allNonDeletedPrimitives().isEmpty(),
                 "There should be no remaining non-deleted primitives");
 
         command.undoCommand();
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> osmData.allNonDeletedPrimitives().size() == 3);
         assertEquals(3, osmData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
         assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
 
@@ -155,11 +160,13 @@ public class MapWithAIAddComandTest {
         way1.lastNode().put(dupe);
         command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> osmData.allNonDeletedPrimitives().size() == 5);
         assertEquals(5, osmData.allNonDeletedPrimitives().size(), "All primitives should now be in osmData");
         assertTrue(mapWithAIData.allNonDeletedPrimitives().isEmpty(),
                 "There should be no remaining non-deleted primitives");
 
         command.undoCommand();
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> osmData.allNonDeletedPrimitives().size() == 3);
         assertEquals(3, osmData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
         assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
     }
@@ -213,6 +220,12 @@ public class MapWithAIAddComandTest {
         mapWithAIData.addSelected(way);
         MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
+        Awaitility.await().atMost(Durations.FIVE_SECONDS)
+                .until(() -> osmData.getPrimitiveById(176232378, OsmPrimitiveType.NODE) != null);
+        Awaitility.await().atMost(Durations.FIVE_SECONDS)
+                .until(() -> osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE) != null);
+        Awaitility.await().atMost(Durations.FIVE_SECONDS).until(() -> osmData.getPrimitiveById(way) != null);
+
         assertNotNull(osmData.getPrimitiveById(176232378, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(way));

@@ -16,16 +16,20 @@ import com.github.tomakehurst.wiremock.WireMockServer;
  */
 public class MapWithAILayerInfoTest {
     public static void setupMapWithAILayerInfo(WireMockServer wireMock) {
-        resetMapWithAILayerInfo();
-        MapWithAILayerInfo.instance.getLayers().stream()
-                .forEach(i -> i.setUrl(GetDataRunnableTest.getDefaultMapWithAIAPIForTest(wireMock, i.getUrl())));
-        MapWithAILayerInfo.instance.save();
+        synchronized (MapWithAILayerInfoTest.class) {
+            resetMapWithAILayerInfo();
+            MapWithAILayerInfo.instance.getLayers().stream()
+                    .forEach(i -> i.setUrl(GetDataRunnableTest.getDefaultMapWithAIAPIForTest(wireMock, i.getUrl())));
+            MapWithAILayerInfo.instance.save();
+        }
     }
 
     public static void resetMapWithAILayerInfo() {
-        MapWithAILayerInfo.instance.clear();
-        MapWithAILayerInfo.instance.getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
-                .forEach(MapWithAILayerInfo.instance::add);
-        MapWithAILayerInfo.instance.save();
+        synchronized (MapWithAILayerInfoTest.class) {
+            MapWithAILayerInfo.instance.clear();
+            MapWithAILayerInfo.instance.getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
+                    .forEach(MapWithAILayerInfo.instance::add);
+            MapWithAILayerInfo.instance.save();
+        }
     }
 }

@@ -7,9 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -72,6 +75,11 @@ public class MapWithAIMoveActionTest {
     }
 
     @Test
+    public void testMoveEmptyAction() {
+        Assertions.assertDoesNotThrow(() -> moveAction.actionPerformed(null));
+    }
+
+    @Test
     public void testConflationDupeKeyRemoval() {
         mapWithAIData.unlock();
         way1.lastNode().put(DuplicateCommand.KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
@@ -80,6 +88,7 @@ public class MapWithAIMoveActionTest {
         final DataSet ds = osmLayer.getDataSet();
 
         moveAction.actionPerformed(null);
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> ds.getPrimitiveById(way1) != null);
         assertTrue(((Way) ds.getPrimitiveById(way1)).lastNode().equals(((Way) ds.getPrimitiveById(way2)).lastNode()),
                 "The duplicate node should have been replaced");
         assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY),
@@ -88,6 +97,8 @@ public class MapWithAIMoveActionTest {
                 "The dupe key should no longer exist");
 
         UndoRedoHandler.getInstance().undo();
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+                .until(() -> !((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY));
         assertFalse(way2.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
         assertTrue(way1.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
     }
@@ -101,12 +112,14 @@ public class MapWithAIMoveActionTest {
         mapWithAIData.addSelected(way1);
 
         moveAction.actionPerformed(null);
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> way1.isDeleted());
         assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
         assertFalse(way2.firstNode().hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
         assertFalse(way2.getNode(1).hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
         assertTrue(way1.isDeleted(), "way1 should be deleted when added");
 
         UndoRedoHandler.getInstance().undo();
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> !way1.isDeleted() && !way1.lastNode().isDeleted());
         assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key shouldn't exist");
         assertTrue(way1.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should exist");
         assertFalse(way1.lastNode().isDeleted(), "way1 should no longer be deleted");
