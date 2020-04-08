@@ -136,8 +136,8 @@ public class MapWithAISourceReader implements Closeable {
                 bounds.forEach(bound::extend);
                 bounds.forEach(b -> b.getShapes().forEach(bound::addShape));
                 info.setBounds(bound);
-                return info;
             }
+            return info;
         }
         return new MapWithAIInfo(name);
     }

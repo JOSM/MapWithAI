@@ -275,6 +275,9 @@ public class MapWithAIProvidersPanel extends JPanel {
         RemoveEntryAction remove = new RemoveEntryAction();
         activeTable.getSelectionModel().addListSelectionListener(remove);
 
+        EditEntryAction edit = new EditEntryAction();
+        activeTable.getSelectionModel().addListSelectionListener(edit);
+
         add(new JLabel(tr("Available default entries:")), GBC.std().insets(5, 5, 0, 0));
         add(new JLabel(tr("Boundaries of selected MapWithAI entries:")), GBC.eol().insets(5, 5, 0, 0));
 
@@ -341,6 +344,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         activeToolbar.setBorderPainted(false);
         activeToolbar.setOpaque(false);
         activeToolbar.add(new NewEntryAction(MapWithAIInfo.MapWithAIType.THIRD_PARTY));
+        activeToolbar.add(edit);
         activeToolbar.add(remove);
         add(activeToolbar, GBC.eol().anchor(GBC.NORTH).insets(0, 0, 5, 5));
     }
@@ -470,7 +474,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
             if (addDialog.getValue() == 1) {
                 try {
-                    activeModel.addRow(p.getInfo());
+                    activeModel.addRow(p.getSourceInfo());
                 } catch (IllegalArgumentException ex) {
                     if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
                         throw ex;
@@ -478,6 +482,41 @@ public class MapWithAIProvidersPanel extends JPanel {
                         JOptionPane.showMessageDialog(MainApplication.getMainFrame(), ex.getMessage(), tr("Error"),
                                 JOptionPane.ERROR_MESSAGE);
                     }
+                }
+            }
+        }
+    }
+
+    private class EditEntryAction extends AbstractAction implements ListSelectionListener {
+        private static final long serialVersionUID = -1682304557691078801L;
+
+        /**
+         * Constructs a new {@code EditEntryAction}.
+         */
+        EditEntryAction() {
+            putValue(NAME, tr("Edit"));
+            putValue(SHORT_DESCRIPTION, tr("Edit entry"));
+            new ImageProvider("dialogs", "edit").getResource().attachImageIcon(this, true);
+            updateEnabledState();
+        }
+
+        protected final void updateEnabledState() {
+            setEnabled(activeTable.getSelectedRowCount() > 0);
+        }
+
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            updateEnabledState();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (activeTable.getSelectedRow() != -1) {
+                final AddMapWithAIPanel p = new AddMapWithAIPanel(activeModel.getRow(activeTable.getSelectedRow()));
+                final AddMapWithAIDialog addDialog = new AddMapWithAIDialog(gui, p);
+                addDialog.showDialog();
+                if (addDialog.getValue() == 1) {
+                    p.getSourceInfo();
                 }
             }
         }

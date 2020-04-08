@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -24,7 +28,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
+import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryType;
 import org.openstreetmap.josm.data.imagery.TMSCachedTileLoaderJob;
 import org.openstreetmap.josm.gui.preferences.imagery.AddImageryPanel.ContentValidationListener;
 import org.openstreetmap.josm.gui.preferences.imagery.HeadersTable;
@@ -40,6 +46,8 @@ import org.openstreetmap.josm.tools.Logging;
  */
 public class AddMapWithAIPanel extends JPanel {
     private static final long serialVersionUID = -2838267045934203122L;
+    private final transient JPanel layerPanel = new JPanel(new GridBagLayout());
+
     protected final JosmTextArea rawUrl = new JosmTextArea(3, 40).transferFocusOnTab();
     protected final JosmTextField name = new JosmTextField();
 
@@ -47,13 +55,25 @@ public class AddMapWithAIPanel extends JPanel {
 
     private final JCheckBox validGeoreference = new JCheckBox(tr("Is layer properly georeferenced?"));
     private HeadersTable headersTable;
+    private MapWithAIParametersPanel parametersTable;
     private JSpinner minimumCacheExpiry;
     private JComboBox<String> minimumCacheExpiryUnit;
     private TimeUnit currentUnit;
 
-    protected AddMapWithAIPanel() {
+    private MapWithAIInfo info;
+
+    protected AddMapWithAIPanel(LayoutManager layout) {
+        super(layout);
+        registerValidableComponent(name);
+    }
+
+    /**
+     * default constructor
+     */
+    public AddMapWithAIPanel() {
         this(new GridBagLayout());
         headersTable = new HeadersTable();
+        parametersTable = new MapWithAIParametersPanel();
         minimumCacheExpiry = new JSpinner(new SpinnerNumberModel(
                 (Number) TimeUnit.MILLISECONDS.toSeconds(TMSCachedTileLoaderJob.MINIMUM_EXPIRES.get()), 0L,
                 Long.valueOf(Integer.MAX_VALUE), 1));
@@ -86,10 +106,34 @@ public class AddMapWithAIPanel extends JPanel {
                 minimumCacheExpiry.setValue(newValue);
             }
         });
+        add(new JLabel(tr("{0} Make sure OSM has the permission to use this service", "1.")), GBC.eol());
+        add(new JLabel(tr("{0} Enter Service URL", "2.")), GBC.eol());
+        add(rawUrl, GBC.eop().fill(GBC.HORIZONTAL));
+        rawUrl.setLineWrap(true);
+        rawUrl.setAlignmentY(TOP_ALIGNMENT);
+        add(layerPanel, GBC.eol().fill());
 
+        addCommonSettings();
+
+        add(new JLabel(tr("{0} Enter name for this source", "3.")), GBC.eol());
+        add(name, GBC.eol().fill(GBC.HORIZONTAL));
+        registerValidableComponent(rawUrl);
+    }
+
+    public AddMapWithAIPanel(MapWithAIInfo info) {
+        this();
+        this.info = info;
+        rawUrl.setText(info.getUrl());
+        name.setText(info.getName());
+        if (info.getParameters() != null) {
+            parametersTable.setParameters(info.getParameters());
+        }
+        parametersTable.addListener(e -> notifyListeners());
     }
 
     protected void addCommonSettings() {
+        add(new JLabel(tr("Set parameters")), GBC.eop());
+        add(parametersTable, GBC.eol().fill());
         if (ExpertToggleAction.isExpert()) {
             add(new JLabel(tr("Minimum cache expiry: ")));
             add(minimumCacheExpiry);
@@ -104,13 +148,12 @@ public class AddMapWithAIPanel extends JPanel {
         return headersTable.getHeaders();
     }
 
-    protected boolean getCommonIsValidGeoreference() {
-        return validGeoreference.isSelected();
+    protected Map<String, Pair<String, Boolean>> getCommonParameters() {
+        return parametersTable.getParameters();
     }
 
-    protected AddMapWithAIPanel(LayoutManager layout) {
-        super(layout);
-        registerValidableComponent(name);
+    protected boolean getCommonIsValidGeoreference() {
+        return validGeoreference.isSelected();
     }
 
     protected final void registerValidableComponent(AbstractButton component) {
@@ -136,16 +179,33 @@ public class AddMapWithAIPanel extends JPanel {
         });
     }
 
-    protected MapWithAIInfo getInfo() {
-        // TODO
-        return new MapWithAIInfo();
+    private JsonArray convertToJsonParameterArray(Map<String, Pair<String, Boolean>> parameters) {
+        JsonArrayBuilder builder = Json.createArrayBuilder();
+        for (Map.Entry<String, Pair<String, Boolean>> entry : parameters.entrySet()) {
+            JsonObjectBuilder entryBuilder = Json.createObjectBuilder();
+            entryBuilder.add("parameter", entry.getKey());
+            entryBuilder.add("description", entry.getValue().getKey());
+            entryBuilder.add("enabled", entry.getValue().getValue());
+            builder.add(entryBuilder.build());
+        }
+        return builder.build();
+    }
+
+    protected MapWithAIInfo getSourceInfo() {
+        MapWithAIInfo ret = info == null ? new MapWithAIInfo() : info;
+        ret.setName(getImageryName());
+        ret.setUrl(getImageryRawUrl());
+        ret.setCustomHttpHeaders(getCommonHeaders());
+        ret.setSourceType(MapWithAIType.THIRD_PARTY);
+        ret.setParameters(convertToJsonParameterArray(getCommonParameters()));
+        return ret;
     }
 
     protected static String sanitize(String s) {
         return s.replaceAll("[\r\n]+", "").trim();
     }
 
-    protected static String sanitize(String s, MapWithAIType type) {
+    protected static String sanitize(String s, ImageryType type) {
         String ret = s;
         String imageryType = type.getTypeString() + ':';
         if (ret.startsWith(imageryType)) {
@@ -155,16 +215,16 @@ public class AddMapWithAIPanel extends JPanel {
         return sanitize(ret);
     }
 
-    protected final String getInfoName() {
+    protected final String getImageryName() {
         return sanitize(name.getText());
     }
 
-    protected final String getInfoRawUrl() {
+    protected final String getImageryRawUrl() {
         return sanitize(rawUrl.getText());
     }
 
-    protected boolean isInfoValid() {
-        return true; // TODO check validity
+    protected boolean isSourceValid() {
+        return !getImageryName().isEmpty() && !getImageryRawUrl().isEmpty();
     }
 
     /**
@@ -181,7 +241,7 @@ public class AddMapWithAIPanel extends JPanel {
 
     private void notifyListeners() {
         for (ContentValidationListener l : listeners) {
-            l.contentChanged(isInfoValid());
+            l.contentChanged(isSourceValid());
         }
     }
 }

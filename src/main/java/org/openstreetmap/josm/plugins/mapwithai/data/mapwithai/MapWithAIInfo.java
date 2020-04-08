@@ -31,6 +31,7 @@ import org.openstreetmap.josm.data.StructUtils.StructEntry;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -126,8 +127,6 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      * activated
      */
     private String eulaAcceptanceRequired;
-    /** Type of the MapWithAI service */
-    private MapWithAIType mapwithaiType = MapWithAIType.THIRD_PARTY;
     /** data boundaries, displayed in preferences and used for automatic download */
     private ImageryInfo.ImageryBounds bounds;
     /**
@@ -241,7 +240,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         public MapWithAIPreferenceEntry(MapWithAIInfo i) {
             name = i.name;
             id = i.id;
-            type = i.mapwithaiType.getTypeString();
+            type = i.type.getTypeString();
             url = i.url;
             eula = i.eulaAcceptanceRequired;
             attribution_text = i.attributionText;
@@ -303,6 +302,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         this.name = name;
         this.url = baseUrl;
         this.id = id;
+        if (type == null) {
+            type = MapWithAIType.THIRD_PARTY;
+        }
     }
 
     /**
@@ -728,6 +730,10 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             }
         }
         return sb.toString();
+    }
+
+    public void setSourceType(MapWithAIType type) {
+        this.type = type;
     }
 
 }
