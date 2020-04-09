@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.Command;
@@ -34,6 +35,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     DataSet mapWithAI;
     Collection<OsmPrimitive> primitives;
     Command command;
+    Lock lock;
     final Map<OsmPrimitive, String> sources;
 
     /**
@@ -46,6 +48,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     public MapWithAIAddCommand(MapWithAILayer mapWithAILayer, OsmDataLayer editLayer,
             Collection<OsmPrimitive> selection) {
         this(mapWithAILayer.getDataSet(), editLayer.getDataSet(), selection);
+        lock = mapWithAILayer.getLock();
     }
 
     /**
@@ -83,16 +86,26 @@ public class MapWithAIAddCommand extends Command implements Runnable {
             throw new IllegalArgumentException();
         }
         synchronized (this) {
-            if (command == null) {// needed for undo/redo (don't create a new command)
-                final List<OsmPrimitive> allPrimitives = new ArrayList<>();
-                MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
-                Collection<PrimitiveData> primitiveData = new HashSet<>();
-                final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI, primitives,
-                        primitiveData);
-                final Command createConnectionsCommand = createConnections(editable, primitiveData);
-                command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand, createConnectionsCommand);
+            try {
+                if (lock != null) {
+                    lock.lock();
+                }
+                if (command == null) {// needed for undo/redo (don't create a new command)
+                    final List<OsmPrimitive> allPrimitives = new ArrayList<>();
+                    MapWithAIDataUtils.addPrimitivesToCollection(allPrimitives, primitives);
+                    Collection<PrimitiveData> primitiveData = new HashSet<>();
+                    final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI,
+                            primitives, primitiveData);
+                    final Command createConnectionsCommand = createConnections(editable, primitiveData);
+                    command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand,
+                            createConnectionsCommand);
+                }
+                GuiHelper.runInEDTAndWait(command::executeCommand);
+            } finally {
+                if (lock != null) {
+                    lock.unlock();
+                }
             }
-            GuiHelper.runInEDT(command::executeCommand);
         }
     }
 
@@ -111,8 +124,19 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public void undoCommand() {
-        if (command != null) {
-            GuiHelper.runInEDT(command::undoCommand);
+        try {
+            if (lock != null) {
+                lock.lock();
+            }
+            synchronized (this) {
+                if (command != null) {
+                    GuiHelper.runInEDTAndWait(command::undoCommand);
+                }
+            }
+        } finally {
+            if (lock != null) {
+                lock.unlock();
+            }
         }
     }
 
@@ -163,6 +187,6 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(editable, mapWithAI, primitives);
+        return Objects.hash(editable, mapWithAI, primitives, lock);
     }
 }
