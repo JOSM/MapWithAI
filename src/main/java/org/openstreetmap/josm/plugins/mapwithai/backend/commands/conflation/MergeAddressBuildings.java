@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -101,5 +102,10 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
     @Override
     public boolean keyShouldNotExistInOSM() {
         return false;
+    }
+
+    @Override
+    public Collection<Class<? extends AbstractConflationCommand>> conflictedCommands() {
+        return Collections.singleton(MergeBuildingAddress.class);
     }
 }

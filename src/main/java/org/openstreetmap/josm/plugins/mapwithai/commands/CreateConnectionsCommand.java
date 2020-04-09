@@ -59,8 +59,7 @@ public class CreateConnectionsCommand extends Command {
             command.executeCommand();
         }
         if (undoCommands != null) {
-            GuiHelper.runInEDTAndWait(() -> undoCommands.executeCommand());
-            GuiHelper.runInEDTAndWait(() -> UndoRedoHandler.getInstance().add(undoCommands, false));
+            GuiHelper.runInEDTAndWait(() -> UndoRedoHandler.getInstance().add(undoCommands));
         }
         return true;
     }
@@ -88,6 +87,7 @@ public class CreateConnectionsCommand extends Command {
         final List<Command> undoable = new ArrayList<>();
         final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
                 .filter(Objects::nonNull).collect(Collectors.toList());
+        List<Class<? extends AbstractConflationCommand>> runCommands = new ArrayList<>();
         for (final Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
             final AbstractConflationCommand abstractCommand;
             try {
@@ -97,18 +97,24 @@ public class CreateConnectionsCommand extends Command {
                 Logging.debug(e);
                 continue;
             }
+            // If there are conflicting commands, don't add it.
+            if (runCommands.parallelStream().anyMatch(c -> abstractCommand.conflictedCommands().contains(c))) {
+                continue;
+            }
             final Collection<OsmPrimitive> tPrimitives = new TreeSet<>();
             abstractCommand.getInterestedTypes()
                     .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));
 
-            final Command actualCommand = abstractCommand.getCommand(tPrimitives.stream()
-                    .filter(prim -> prim.hasKey(abstractCommand.getKey())).collect(Collectors.toList()));
+            final Command actualCommand = abstractCommand.getCommand(
+                    tPrimitives.stream().filter(prim -> prim.hasKey(abstractCommand.getKey()) && !prim.isDeleted())
+                            .collect(Collectors.toList()));
             if (Objects.nonNull(actualCommand)) {
                 if (abstractCommand.allowUndo()) {
                     undoable.add(actualCommand);
                 } else {
                     permanent.add(actualCommand);
                 }
+                runCommands.add(abstractCommand.getClass());
             }
         }
 

@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -146,4 +147,11 @@ public abstract class AbstractConflationCommand extends Command {
      * @return {@code true} if the key should not exist in OpenStreetMap
      */
     public abstract boolean keyShouldNotExistInOSM();
+
+    /**
+     * @return Conflation commands that conflict with this conflation command
+     */
+    public Collection<Class<? extends AbstractConflationCommand>> conflictedCommands() {
+        return Collections.emptyList();
+    }
 }

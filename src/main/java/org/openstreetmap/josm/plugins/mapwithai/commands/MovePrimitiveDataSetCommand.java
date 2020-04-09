@@ -33,7 +33,7 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  */
 public class MovePrimitiveDataSetCommand extends Command {
-    private SequenceCommand command;
+    private Command command;
 
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives) {
         super(to);
@@ -70,7 +70,7 @@ public class MovePrimitiveDataSetCommand extends Command {
      * @param selection The primitives to move
      * @return The command that does the actual move
      */
-    public static SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
+    public static Command moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection) {
         return moveCollection(from, to, selection, new HashSet<>());
     }
 
@@ -84,7 +84,7 @@ public class MovePrimitiveDataSetCommand extends Command {
      *                      if any positive ids are available)
      * @return The command that does the actual move
      */
-    public static SequenceCommand moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection,
+    public static Command moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection,
             Collection<PrimitiveData> primitiveData) {
         final List<Command> commands = new ArrayList<>();
 
@@ -121,14 +121,16 @@ public class MovePrimitiveDataSetCommand extends Command {
                 }
             });
         }
+        Command delete;
         if (!removeKeyCommand.isEmpty()) {
             SequenceCommand sequence = new SequenceCommand("Temporary Command", removeKeyCommand);
             sequence.executeCommand(); // This *must* be executed for the delete command to get everything.
-            commands.add(DeleteCommand.delete(selection, true, true));
+            delete = DeleteCommand.delete(selection, true, true);
             sequence.undoCommand();
         } else {
-            commands.add(DeleteCommand.delete(selection, true, true));
+            delete = DeleteCommand.delete(selection, true, true);
         }
+        commands.add(delete);
 
         return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
                 "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);

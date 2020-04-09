@@ -129,4 +129,8 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
         return false;
     }
 
+    @Override
+    public Collection<Class<? extends AbstractConflationCommand>> conflictedCommands() {
+        return Collections.singleton(MergeAddressBuildings.class);
+    }
 }
