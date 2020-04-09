@@ -96,16 +96,16 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
 
         if (maxObj != null) {
-            MapWithAIPreferenceHelper.setMaximumAddition(maxObj, false);
+            layer.setMaximumAddition(maxObj);
         }
         if (url != null) {
             // TODO make option for permanent url
             String tSource = source == null ? url : source;
             MapWithAIInfo info = new MapWithAIInfo(tSource, url);
-            MapWithAIPreferenceHelper.setMapWithAIUrl(info, true, false);
+            layer.setMapWithAIUrl(info);
         }
         if (switchLayer != null) {
-            MapWithAIPreferenceHelper.setSwitchLayers(switchLayer, false);
+            layer.setSwitchLayers(switchLayer);
         }
 
         if (download != null && download.isInWorld()) {
