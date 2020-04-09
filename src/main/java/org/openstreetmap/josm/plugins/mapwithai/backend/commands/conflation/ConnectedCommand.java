@@ -76,8 +76,10 @@ public class ConnectedCommand extends AbstractConflationCommand {
                         (Node) primitiveConnections[i + 1], (Node) primitiveConnections[i + 2]);
                 commands.addAll(addNodesToWayCommand);
             } else {
-                Logging.error("{0}: {1}, {2}: {3}, {4}: {5}", i, primitiveConnections[i].getClass(), i + 1,
-                        primitiveConnections[i + 1].getClass(), i + 2, primitiveConnections[i + 2].getClass());
+                Logging.error("MapWithAI: Cannot create connections ({0}: {1}, {2}: {3}, {4}: {5})", i,
+                        primitiveConnections[i] == null ? null : primitiveConnections[i].getClass(), i + 1,
+                        primitiveConnections[i + 1] == null ? null : primitiveConnections[i + 1].getClass(), i + 2,
+                        primitiveConnections[i + 2] == null ? null : primitiveConnections[i + 2].getClass());
             }
         }
         commands.add(new ChangePropertyCommand(node, KEY, null));
