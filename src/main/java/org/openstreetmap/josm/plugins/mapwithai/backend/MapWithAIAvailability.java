@@ -92,7 +92,7 @@ public final class MapWithAIAvailability extends DataAvailability {
     private static Map<String, Map<String, Boolean>> parseForCountries(JsonArray countries) {
         final Map<String, Map<String, Boolean>> returnCountries = new TreeMap<>();
         Territories.initialize();
-        final DataSet territories = Territories.getDataSet();
+        final DataSet territories = Territories.getOriginalDataSet();
         for (int i = 0; i < countries.size(); i++) {
             final JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
             for (String countryName : cornerCaseNames(country.getString("Country"))) {
