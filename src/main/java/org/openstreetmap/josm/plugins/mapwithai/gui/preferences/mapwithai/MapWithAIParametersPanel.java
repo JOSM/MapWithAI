@@ -19,8 +19,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.openstreetmap.josm.tools.GBC;
+import org.openstreetmap.josm.tools.Pair;
 
 public class MapWithAIParametersPanel extends JPanel {
 
@@ -124,7 +124,7 @@ public class MapWithAIParametersPanel extends JPanel {
 
     private static List<Object[]> getHeadersAsVector(Map<String, Pair<String, Boolean>> headers) {
         return headers.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                .map(e -> new Object[] { e.getKey(), e.getValue().getLeft(), e.getValue().getRight() })
+                .map(e -> new Object[] { e.getKey(), e.getValue().a, e.getValue().b })
                 .collect(Collectors.toList());
     }
 
@@ -133,7 +133,7 @@ public class MapWithAIParametersPanel extends JPanel {
      */
     public Map<String, Pair<String, Boolean>> getParameters() {
         return headers.stream().distinct()
-                .collect(Collectors.toMap(x -> (String) x[0], x -> Pair.of((String) x[1], (Boolean) x[2])));
+                .collect(Collectors.toMap(x -> (String) x[0], x -> new Pair<>((String) x[1], (Boolean) x[2])));
     }
 
     public void setParameters(JsonArray parameters) {

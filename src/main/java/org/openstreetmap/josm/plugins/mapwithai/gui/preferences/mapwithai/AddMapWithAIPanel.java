@@ -28,7 +28,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryType;
 import org.openstreetmap.josm.data.imagery.TMSCachedTileLoaderJob;
@@ -40,6 +39,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIType;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Pair;
 
 /**
  * An panel used to add MapWithAI sources.
@@ -184,8 +184,8 @@ public class AddMapWithAIPanel extends JPanel {
         for (Map.Entry<String, Pair<String, Boolean>> entry : parameters.entrySet()) {
             JsonObjectBuilder entryBuilder = Json.createObjectBuilder();
             entryBuilder.add("parameter", entry.getKey());
-            entryBuilder.add("description", entry.getValue().getKey());
-            entryBuilder.add("enabled", entry.getValue().getValue());
+            entryBuilder.add("description", entry.getValue().a);
+            entryBuilder.add("enabled", entry.getValue().b);
             builder.add(entryBuilder.build());
         }
         return builder.build();
