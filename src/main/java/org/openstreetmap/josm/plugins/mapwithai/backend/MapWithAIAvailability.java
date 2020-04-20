@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,8 +21,6 @@ import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 
-import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
@@ -92,23 +91,16 @@ public final class MapWithAIAvailability extends DataAvailability {
     private static Map<String, Map<String, Boolean>> parseForCountries(JsonArray countries) {
         final Map<String, Map<String, Boolean>> returnCountries = new TreeMap<>();
         Territories.initialize();
-        final DataSet territories = Territories.getOriginalDataSet();
         for (int i = 0; i < countries.size(); i++) {
             final JsonObject country = countries.getJsonObject(i).getJsonObject("properties");
             for (String countryName : cornerCaseNames(country.getString("Country"))) {
-                final Optional<OsmPrimitive> realCountry = territories.allPrimitives().parallelStream()
-                        .filter(primitive -> countryName.equalsIgnoreCase(primitive.get("name:en"))).findFirst();
-                if (realCountry.isPresent()) {
-                    final OsmPrimitive countryLoop = realCountry.get();
-                    final String key = Optional.ofNullable(countryLoop.get("ISO3166-1:alpha2"))
-                            .orElse(Optional.ofNullable(countryLoop.get("ISO3166-2")).orElse(""));
-                    if ("".equals(key)) {
-                        Logging.error("{0}: {1} does not have a \"ISO3166-1:alpha2\" or \"ISO3166-2\" key. {2}",
-                                MapWithAIPlugin.NAME, countryLoop, countryLoop.getInterestingTags());
-                    } else {
-                        Logging.trace("{0}: {1} has a country code of {2}", MapWithAIPlugin.NAME,
-                                countryLoop.get("name:en"), key);
-                    }
+                final Optional<String> realCountryISO = Territories.getOriginalDataSet().allPrimitives()
+                        .parallelStream()
+                        .filter(o -> o.hasKey("name:en") && o.get("name:en").equalsIgnoreCase(countryName))
+                        .map(o -> o.hasKey("ISO3166-1:alpha2") ? o.get("ISO3166-1:alpha2") : o.get("ISO3166-2"))
+                        .min(Comparator.comparing(String::length));
+                if (realCountryISO.isPresent()) {
+                    String key = realCountryISO.get();
                     // We need to handle cases like Alaska more elegantly
                     final Map<String, Boolean> data = returnCountries.getOrDefault(key, new TreeMap<>());
                     for (final Entry<String, String> entry : POSSIBLE_DATA_POINTS.entrySet()) {
