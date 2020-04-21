@@ -1,6 +1,11 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,21 +22,17 @@ import javax.json.JsonReader;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
 
-import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.osm.BBox;
-import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
-import org.openstreetmap.josm.data.osm.Relation;
-import org.openstreetmap.josm.data.osm.RelationMember;
-import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.tools.DefaultGeoProperty;
+import org.openstreetmap.josm.tools.GeoPropertyIndex;
 import org.openstreetmap.josm.tools.HttpClient;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -104,32 +105,29 @@ public class MapWithAISourceReader implements Closeable {
             List<ImageryBounds> bounds = new ArrayList<>();
             if (JsonValue.ValueType.OBJECT.equals(countries.getValueType())) {
                 Set<String> codes = Territories.getKnownIso3166Codes();
-                DataSet ds = Territories.getOriginalDataSet();
                 for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
                     if (codes.contains(country.getKey())) {
-                        Collection<OsmPrimitive> countryData = ds
-                                .getPrimitives(i -> i.getKeys().containsValue(country.getKey()));
-                        OsmPrimitive prim = countryData.iterator().next();
-                        ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(prim.getBBox(), ","), ",");
-                        countryData
-                                .stream().map(OsmPrimitive::getBBox).map(b -> new Bounds(b.getBottomRightLat(),
-                                        b.getTopLeftLon(), b.getTopLeftLat(), b.getBottomRightLon()))
-                                .forEach(tmp::extend);
-                        countryData.stream().filter(Way.class::isInstance).map(Way.class::cast)
-                                .map(MapWithAISourceReader::wayToShape).forEach(tmp::addShape);
-                        // This doesn't subtract inner ways. TODO?
-                        countryData.stream().filter(Relation.class::isInstance).map(Relation.class::cast)
-                                .flatMap(r -> r.getMembers().stream().filter(m -> "outer".equals(m.getRole()))
-                                        .map(RelationMember::getMember).filter(Way.class::isInstance)
-                                        .map(Way.class::cast))
-                                .map(MapWithAISourceReader::wayToShape).forEach(tmp::addShape);
-                        bounds.add(tmp);
+                        GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country.getKey());
+                        if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
+                            DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
+                            Rectangle2D areaBounds = prop.getArea().getBounds2D();
+                            ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
+                                    areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY()), ","), ",");
+                            areaToShapes(prop.getArea()).forEach(tmp::addShape);
+                            bounds.add(tmp);
+                        }
                     }
                 }
             }
             MapWithAIInfo info = new MapWithAIInfo(name, url, type, eula, id);
             info.setDefaultEntry(values.getBoolean("default", false));
             info.setParameters(values.getJsonArray("parameters"));
+            if (values.containsKey("terms_of_use_url")) {
+                info.setTermsOfUseText(values.getString("terms_of_use_url"));
+            }
+            if (values.containsKey("privacy_policy_url")) {
+                info.setPrivacyPolicyURL(values.getString("privacy_policy_url"));
+            }
             if (!bounds.isEmpty()) {
                 ImageryBounds bound = bounds.get(0);
                 bounds.remove(0);
@@ -142,16 +140,38 @@ public class MapWithAISourceReader implements Closeable {
         return new MapWithAIInfo(name);
     }
 
+    private static Collection<Shape> areaToShapes(java.awt.Shape shape) {
+        PathIterator iterator = shape.getPathIterator(new AffineTransform());
+        Shape defaultShape = new Shape();
+        Collection<Shape> shapes = new ArrayList<>();
+        float[] moveTo = null;
+        while (!iterator.isDone()) {
+            float[] coords = new float[6];
+            int type = iterator.currentSegment(coords);
+            if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
+                if (type == PathIterator.SEG_MOVETO) {
+                    moveTo = coords;
+                }
+                defaultShape.addPoint(Float.toString(coords[1]), Float.toString(coords[0]));
+            } else if (type == PathIterator.SEG_CLOSE && moveTo != null && moveTo.length >= 2) {
+                defaultShape.addPoint(Float.toString(moveTo[1]), Float.toString(moveTo[0]));
+                shapes.add(defaultShape);
+                defaultShape = new Shape();
+            } else {
+                Logging.error(tr("No implementation for converting a segment of type {0} to coordinates", type));
+            }
+            iterator.next();
+        }
+        if (!defaultShape.getPoints().isEmpty()) {
+            shapes.add(defaultShape);
+        }
+        return shapes;
+    }
+
     private static String bboxToBoundsString(BBox bbox, String separator) {
         return String.join(separator, LatLon.cDdFormatter.format(bbox.getBottomRightLat()),
                 LatLon.cDdFormatter.format(bbox.getTopLeftLon()), LatLon.cDdFormatter.format(bbox.getTopLeftLat()),
                 LatLon.cDdFormatter.format(bbox.getBottomRightLon()));
-    }
-
-    private static Shape wayToShape(Way way) {
-        return new Shape(way.getNodes().stream().map(Node::getCoor)
-                .map(l -> Double.toString(l.lat()) + "," + Double.toString(l.lon())).collect(Collectors.joining(",")),
-                ",");
     }
 
     /**

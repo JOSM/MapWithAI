@@ -15,6 +15,7 @@ plugins {
   id "com.github.spotbugs" version "3.0.0"
   id "org.openstreetmap.josm" version "0.6.5"
   id "net.ltgt.errorprone" version "1.1.1"
+  id "com.diffplug.gradle.spotless" version "3.28.1"
   //id 'de.aaschmid.cpd' version '2.0'
 }
 
@@ -122,6 +123,17 @@ jacocoTestCoverageVerification {
         minimum = 0.80
       }
     }
+  }
+}
+
+spotless {
+  java {
+    licenseHeader "// License: GPL. For details, see LICENSE file."
+    removeUnusedImports()
+    endWithNewline()
+    indentWithSpaces(4)
+    eclipse().configFile "config/josm_formatting.xml"
+    trimTrailingWhitespace()
   }
 }
 

@@ -35,7 +35,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIActionTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection().timeout(100000);
+    public JOSMTestRules test = new JOSMTestRules().main().projection().territories().timeout(100000);
 
     private MapWithAIAction action;
 
@@ -45,9 +45,7 @@ public class MapWithAIActionTest {
     public void setUp() {
         action = new MapWithAIAction();
         wireMock.start(); // This is required to avoid failing a test in MapWithAIAvailabilityTest
-        MapWithAIAvailability.setReleaseUrl(
-                wireMock.baseUrl() + "/facebookmicrosites/Open-Mapping-At-Facebook/master/data/rapid_releases.geojson");
-        Territories.initialize();
+        DataAvailability.setReleaseUrl(wireMock.baseUrl() + "/JOSM_MapWithAI/json/sources.json");
         LatLon temp = new LatLon(40, -100);
         await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
     }

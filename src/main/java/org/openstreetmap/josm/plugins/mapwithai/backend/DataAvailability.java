@@ -28,7 +28,7 @@ import org.openstreetmap.josm.tools.Utils;
 
 public class DataAvailability {
     /** This points to a list of default sources that can be used with MapWithAI */
-    public static final String DEFAULT_SERVER_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
+    public static String DEFAULT_SERVER_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
     /** A map of tag -&gt; message of possible data types */
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
@@ -44,9 +44,7 @@ public class DataAvailability {
      * This holds classes that can give availability of data for a specific service
      */
     private static final List<Class<? extends DataAvailability>> DATA_SOURCES = new ArrayList<>();
-    static {
-        DATA_SOURCES.add(MapWithAIAvailability.class);
-    }
+
     /**
      * A map of countries to a map of available types
      * ({@code Map<Country, Map<Type, IsAvailable>>}
@@ -263,5 +261,14 @@ public class DataAvailability {
             }
             return "";
         }).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).collect(Collectors.toList());
+    }
+
+    /**
+     * Set the URL to use to get MapWithAI information
+     *
+     * @param url The URL which serves MapWithAI servers
+     */
+    public static void setReleaseUrl(String url) {
+        DEFAULT_SERVER_URL = url;
     }
 }

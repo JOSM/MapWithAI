@@ -124,8 +124,7 @@ public class MapWithAIParametersPanel extends JPanel {
 
     private static List<Object[]> getHeadersAsVector(Map<String, Pair<String, Boolean>> headers) {
         return headers.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                .map(e -> new Object[] { e.getKey(), e.getValue().a, e.getValue().b })
-                .collect(Collectors.toList());
+                .map(e -> new Object[] { e.getKey(), e.getValue().a, e.getValue().b }).collect(Collectors.toList());
     }
 
     /**
