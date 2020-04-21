@@ -71,11 +71,11 @@ public class MapWithAITestRules extends JOSMTestRules {
         }
     }
 
-    private static void setupMapWithAILayerInfo(WireMockServer wireMock) {
+    private static void setupMapWithAILayerInfo(WireMockServer wireMockServer) {
         synchronized (MapWithAITestRules.class) {
             resetMapWithAILayerInfo();
             MapWithAILayerInfo.instance.getLayers().stream()
-                    .forEach(i -> i.setUrl(GetDataRunnableTest.getDefaultMapWithAIAPIForTest(wireMock, i.getUrl())));
+                    .forEach(i -> i.setUrl(GetDataRunnableTest.getDefaultMapWithAIAPIForTest(wireMockServer, i.getUrl())));
             MapWithAILayerInfo.instance.save();
         }
     }
