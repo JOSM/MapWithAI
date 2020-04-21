@@ -1,7 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -29,10 +26,8 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
-import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -44,20 +39,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class CreateConnectionsCommandTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
-
-    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
-
-    @Before
-    public void setUp() {
-        wireMock.start();
-        Config.getPref().put("osm-server.url", wireMock.baseUrl());
-    }
-
-    @After
-    public void tearDown() {
-        wireMock.stop();
-    }
+    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection();
 
     /**
      * Test method for

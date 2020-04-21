@@ -1,7 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,7 +23,6 @@ import javax.swing.SwingUtilities;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,11 +44,9 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.ContinuousDownloadAction;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -61,23 +57,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAILayerTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI().territories();
-
-    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
+    public JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().fakeAPI()
+            .territories();
 
     MapWithAILayer layer;
 
     @Before
     public void setUp() {
-        wireMock.start();
-        MapWithAILayerInfoTest.setupMapWithAILayerInfo(wireMock);
         layer = new MapWithAILayer(new DataSet(), "test", null);
-    }
-
-    @After
-    public void tearDown() {
-        wireMock.stop();
-        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
     }
 
     @Test

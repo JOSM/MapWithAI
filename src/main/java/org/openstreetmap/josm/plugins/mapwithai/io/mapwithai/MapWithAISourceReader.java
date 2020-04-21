@@ -123,7 +123,7 @@ public class MapWithAISourceReader implements Closeable {
             info.setDefaultEntry(values.getBoolean("default", false));
             info.setParameters(values.getJsonArray("parameters"));
             if (values.containsKey("terms_of_use_url")) {
-                info.setTermsOfUseText(values.getString("terms_of_use_url"));
+                info.setTermsOfUseURL(values.getString("terms_of_use_url"));
             }
             if (values.containsKey("privacy_policy_url")) {
                 info.setPrivacyPolicyURL(values.getString("privacy_policy_url"));

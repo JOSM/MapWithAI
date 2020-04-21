@@ -1,7 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,8 +10,6 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -21,11 +18,9 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
-import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Utils;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -46,21 +41,7 @@ public class MapWithAIRemoteControlTest {
      */
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection().territories();
-
-    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
-
-    @Before
-    public void setUp() {
-        wireMock.start();
-        MapWithAILayerInfoTest.setupMapWithAILayerInfo(wireMock);
-    }
-
-    @After
-    public void tearDown() {
-        wireMock.stop();
-        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
-    }
+    public JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories();
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();

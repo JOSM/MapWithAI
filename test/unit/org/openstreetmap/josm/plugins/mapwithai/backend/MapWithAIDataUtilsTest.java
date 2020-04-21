@@ -1,7 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,8 +16,6 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -36,36 +33,17 @@ import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
-import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class MapWithAIDataUtilsTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI().territories();
-
-    WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
-
-    @Before
-    public void setUp() {
-        wireMock.start();
-
-        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
-        MapWithAIDataUtils.setPaintStyleUrl(
-                MapWithAIDataUtils.getPaintStyleUrl().replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
-    }
-
-    @After
-    public void tearDown() {
-        wireMock.stop();
-        MapWithAILayerInfoTest.resetMapWithAILayerInfo();
-    }
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection()
+            .fakeAPI().territories();
 
     /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to

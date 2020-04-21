@@ -13,9 +13,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Version;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.OpenBrowserMocker;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.OpenBrowserMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 /**

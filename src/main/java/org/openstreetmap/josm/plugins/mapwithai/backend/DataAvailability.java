@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.json.Json;
 import javax.json.JsonException;
@@ -22,6 +23,8 @@ import javax.json.stream.JsonParser;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.io.CachedFile;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
@@ -235,15 +238,17 @@ public class DataAvailability {
      * @return List of terms of use urls
      */
     public static final List<String> getTermsOfUse() {
-        return DATA_SOURCES.stream().map(clazz -> {
-            try {
-                return clazz.getConstructor().newInstance().getTermsOfUseUrl();
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                Logging.debug(e);
-            }
-            return "";
-        }).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).collect(Collectors.toList());
+        return Stream.concat(MapWithAILayerInfo.instance.getLayers().stream().map(MapWithAIInfo::getTermsOfUseURL),
+                DATA_SOURCES.stream().map(clazz -> {
+                    try {
+                        return clazz.getConstructor().newInstance().getTermsOfUseUrl();
+                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                        Logging.debug(e);
+                    }
+                    return "";
+                })).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -252,15 +257,17 @@ public class DataAvailability {
      * @return List of privacy policy urls
      */
     public static final List<String> getPrivacyPolicy() {
-        return DATA_SOURCES.stream().map(clazz -> {
-            try {
-                return clazz.getConstructor().newInstance().getPrivacyPolicyUrl();
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                Logging.debug(e);
-            }
-            return "";
-        }).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).collect(Collectors.toList());
+        return Stream.concat(MapWithAILayerInfo.instance.getLayers().stream().map(MapWithAIInfo::getPrivacyPolicyURL),
+                DATA_SOURCES.stream().map(clazz -> {
+                    try {
+                        return clazz.getConstructor().newInstance().getPrivacyPolicyUrl();
+                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                        Logging.debug(e);
+                    }
+                    return "";
+                })).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).distinct()
+                .collect(Collectors.toList());
     }
 
     /**
