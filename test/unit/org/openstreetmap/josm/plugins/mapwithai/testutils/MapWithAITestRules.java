@@ -26,6 +26,12 @@ public class MapWithAITestRules extends JOSMTestRules {
     private boolean sources;
     private boolean wiremock;
     private WireMockServer wireMock;
+    private boolean workerExceptions = true;
+
+    public MapWithAITestRules() {
+        super();
+        super.assertionsInEDT();
+    }
 
     public MapWithAITestRules sources() {
         this.sources = true;
@@ -35,6 +41,11 @@ public class MapWithAITestRules extends JOSMTestRules {
     public MapWithAITestRules wiremock() {
         this.wiremock = true;
         super.territories();
+        return this;
+    }
+
+    public MapWithAITestRules noWorkerExceptions() {
+        this.workerExceptions = false;
         return this;
     }
 
@@ -67,6 +78,12 @@ public class MapWithAITestRules extends JOSMTestRules {
             } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
                 Logging.error(e);
             }
+        }
+        if (workerExceptions) {
+            Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+                Logging.error(t.getClass().getSimpleName());
+                Logging.error(e);
+            });
         }
     }
 

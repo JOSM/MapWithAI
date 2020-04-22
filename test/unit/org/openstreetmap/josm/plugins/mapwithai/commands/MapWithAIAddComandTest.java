@@ -9,13 +9,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.actions.SaveActionBase;
 import org.openstreetmap.josm.command.MoveCommand;
@@ -31,7 +36,10 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+import org.openstreetmap.josm.tools.Logging;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -188,9 +196,14 @@ public class MapWithAIAddComandTest {
 
     /**
      * https://josm.openstreetmap.de/ticket/18351
+     *
+     * @throws InterruptedException
+     * @throws InvocationTargetException
      */
     @Test
-    public void testRegression18351() {
+    public void testRegression18351() throws InvocationTargetException, InterruptedException {
+        new WindowMocker();
+        List<FutureTask<?>> futures = new SwingUtilitiesMocker().futureTasks;
         Way way = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe",
                 new Node(new LatLon(39.0339521, -108.4874581)), new Node(new LatLon(39.0292629, -108.4875117)));
         way.firstNode().put("dupe", "n176220609");
@@ -211,6 +224,17 @@ public class MapWithAIAddComandTest {
         assertNotNull(osmData.getPrimitiveById(176232378, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(way));
+        Awaitility.await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS);
+        Assertions.assertDoesNotThrow(() -> {
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    Logging.error(e);
+                    throw e;
+                }
+            }
+        });
     }
 
     @Test
