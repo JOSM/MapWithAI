@@ -47,6 +47,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -65,6 +66,7 @@ public class MapWithAILayerTest {
     @Before
     public void setUp() {
         layer = new MapWithAILayer(new DataSet(), "test", null);
+        Territories.initialize(); // Required to avoid an NPE (see JOSM-19132)
     }
 
     @Test
