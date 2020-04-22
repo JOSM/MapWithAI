@@ -40,7 +40,7 @@ public class MapWithAIAddComandTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection();
+    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection().assertionsInEDT();
 
     @Test
     public void testMoveCollection() {
