@@ -6,6 +6,10 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import java.util.logging.Level;
 
 import org.junit.runners.model.InitializationError;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.io.OsmApi;
+import org.openstreetmap.josm.io.OsmApiInitializationException;
+import org.openstreetmap.josm.io.OsmTransferCanceledException;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnableTest;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
@@ -58,6 +62,11 @@ public class MapWithAITestRules extends JOSMTestRules {
                     .replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
             DataAvailability.setReleaseUrl(wireMock.baseUrl() + "/JOSM_MapWithAI/json/sources.json");
             Config.getPref().put("osm-server.url", wireMock.baseUrl());
+            try {
+                OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
+            } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
+                Logging.error(e);
+            }
         }
     }
 

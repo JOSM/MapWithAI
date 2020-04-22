@@ -1,23 +1,32 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.frontend;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.lang.reflect.Field;
+
+import javax.swing.JLabel;
+
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.gui.download.DownloadSettings;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
+import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader.MapWithAIDownloadData;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.ImageProvider;
 
 public class MapWithAIDownloadReaderTest {
     @Rule
@@ -52,5 +61,84 @@ public class MapWithAIDownloadReaderTest {
         assertFalse(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
         assertTrue(settings.getDownloadBounds().get().toBBox().bboxIsFunctionallyEqual(
                 MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().get(0).toBBox(), 0.0001));
+    }
+
+    @Test
+    public void testMapWithAIDownloadDataGetData() {
+        MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
+        MapWithAIDownloadReader.MapWithAIDownloadPanel panel = new MapWithAIDownloadReader.MapWithAIDownloadPanel(
+                reader);
+        MapWithAIDownloadData data = panel.getData();
+        assertFalse(data.getUrls().isEmpty());
+    }
+
+    /**
+     * This rememberSettings method is blank, so just make certain nothing gets
+     * thrown
+     */
+    @Test
+    public void testMapWithAIDownloadDataRememberSettings() {
+        MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
+        MapWithAIDownloadReader.MapWithAIDownloadPanel panel = new MapWithAIDownloadReader.MapWithAIDownloadPanel(
+                reader);
+        assertDoesNotThrow(() -> panel.rememberSettings());
+    }
+
+    /**
+     * This restoreSettings method is blank, so just make certain nothing gets
+     * thrown
+     */
+    @Test
+    public void testMapWithAIDownloadDataRestoreSettings() {
+        MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
+        MapWithAIDownloadReader.MapWithAIDownloadPanel panel = new MapWithAIDownloadReader.MapWithAIDownloadPanel(
+                reader);
+        assertDoesNotThrow(() -> panel.restoreSettings());
+    }
+
+    @Test
+    public void testMapWithAIDownloadDataSizeCheck()
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
+        MapWithAIDownloadReader.MapWithAIDownloadPanel panel = new MapWithAIDownloadReader.MapWithAIDownloadPanel(
+                reader);
+        Field sizeCheckField = MapWithAIDownloadReader.MapWithAIDownloadPanel.class.getDeclaredField("sizeCheck");
+        sizeCheckField.setAccessible(true);
+        JLabel sizeCheck = (JLabel) sizeCheckField.get(panel);
+        assertTrue(sizeCheck.getText().isEmpty());
+        panel.boundingBoxChanged(null);
+        assertEquals(tr("No area selected yet"), sizeCheck.getText());
+        panel.boundingBoxChanged(MapWithAIDataUtilsTest.getTestBounds());
+        assertEquals(tr("Download area ok, size probably acceptable to server"), sizeCheck.getText());
+        panel.boundingBoxChanged(new Bounds(0, 0, 0.0001, 10));
+        assertEquals(tr("Download area too large; will probably be rejected by server"), sizeCheck.getText());
+        panel.boundingBoxChanged(MapWithAIDataUtilsTest.getTestBounds());
+        assertEquals(tr("Download area ok, size probably acceptable to server"), sizeCheck.getText());
+        panel.boundingBoxChanged(new Bounds(0, 0, 10, 0.0001));
+        assertEquals(tr("Download area too large; will probably be rejected by server"), sizeCheck.getText());
+        panel.boundingBoxChanged(MapWithAIDataUtilsTest.getTestBounds());
+        assertEquals(tr("Download area ok, size probably acceptable to server"), sizeCheck.getText());
+    }
+
+    @Test
+    public void testMapWithAIDownloadDataGetSimpleName() {
+        MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
+        MapWithAIDownloadReader.MapWithAIDownloadPanel panel = new MapWithAIDownloadReader.MapWithAIDownloadPanel(
+                reader);
+        assertFalse(panel.getSimpleName().isEmpty());
+    }
+
+    @Test
+    public void testMapWithAIDownloadDataGetIcon() {
+        // Eclipse doesn't have dialogs/mapwithai when running tests
+        try {
+            ImageProvider.get("dialogs", "mapwithai");
+        } catch (Exception e) {
+            Assume.assumeNoException(e);
+        }
+        MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
+        MapWithAIDownloadReader.MapWithAIDownloadPanel panel = new MapWithAIDownloadReader.MapWithAIDownloadPanel(
+                reader);
+        assertNotNull(panel.getIcon());
     }
 }

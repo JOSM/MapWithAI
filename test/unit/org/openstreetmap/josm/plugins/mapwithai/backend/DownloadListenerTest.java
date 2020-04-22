@@ -36,7 +36,7 @@ public class DownloadListenerTest {
         // Test when MapWithAI layer isn't continuous downloading
         ds.addDataSource(new DataSource(bounds, "Test bounds"));
         listener.dataSourceChange(null);
-        Awaitility.await().atLeast(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.ONE_SECOND)
+        Awaitility.await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.ONE_SECOND)
                 .until(() -> layer.getDataSet().getDataSources().isEmpty());
         assertTrue(layer.getDataSet().getDataSourceBounds().isEmpty());
 
