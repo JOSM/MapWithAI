@@ -38,7 +38,6 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Conn
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -202,7 +201,7 @@ public class MapWithAIAddComandTest {
      */
     @Test
     public void testRegression18351() throws InvocationTargetException, InterruptedException {
-        new WindowMocker();
+        System.getProperty("java.awt.headless", "true");
         List<FutureTask<?>> futures = new SwingUtilitiesMocker().futureTasks;
         Way way = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe",
                 new Node(new LatLon(39.0339521, -108.4874581)), new Node(new LatLon(39.0292629, -108.4875117)));

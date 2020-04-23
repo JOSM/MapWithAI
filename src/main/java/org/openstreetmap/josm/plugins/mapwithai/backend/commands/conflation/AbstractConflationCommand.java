@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.GraphicsEnvironment;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +24,8 @@ import org.openstreetmap.josm.data.osm.SimplePrimitiveId;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.io.DownloadPrimitivesTask;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Pair;
@@ -120,8 +123,12 @@ public abstract class AbstractConflationCommand extends Command {
                 layer = new OsmDataLayer(dataSet, generatedLayerName, null);
             }
 
-            final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor(
-                    tr("Downloading additional OsmPrimitives"));
+            final ProgressMonitor monitor;
+            if (GraphicsEnvironment.isHeadless()) {
+                monitor = NullProgressMonitor.INSTANCE;
+            } else {
+                monitor = new PleaseWaitProgressMonitor(tr("Downloading additional OsmPrimitives"));
+            }
             final DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true,
                     monitor);
             downloadPrimitivesTask.run();
