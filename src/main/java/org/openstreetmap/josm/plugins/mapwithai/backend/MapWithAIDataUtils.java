@@ -186,7 +186,7 @@ public final class MapWithAIDataUtils {
             }
         } else {
             final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
-                    "There are no defined URLs. To add sources, go to Preferences -> MapWithAI -> Servers and add the appropriate servers"))
+                    "There are no defined URLs. Attempting to add the appropriate servers.\n(Redownload may be required)"))
                     : new Notification(tr("No URLS are enabled"));
             if (MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
                     && MapWithAILayerInfo.instance.getDefaultLayers().isEmpty()) {
