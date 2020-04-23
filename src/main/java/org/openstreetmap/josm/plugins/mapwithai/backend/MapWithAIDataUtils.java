@@ -186,8 +186,8 @@ public final class MapWithAIDataUtils {
                 monitor.close();
             }
         } else {
-            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
-                    ? new Notification(tr("There are no defined URLs. To get the defaults, restart JOSM"))
+            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
+                    "There are no defined URLs. To add sources, go to Preferences -> MapWithAI -> Servers and add the appropriate servers"))
                     : new Notification(tr("No URLS are enabled"));
             noUrls.setDuration(Notification.TIME_DEFAULT);
             noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
