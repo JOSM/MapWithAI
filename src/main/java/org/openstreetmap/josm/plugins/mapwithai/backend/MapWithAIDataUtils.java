@@ -185,17 +185,19 @@ public final class MapWithAIDataUtils {
                 monitor.close();
             }
         } else {
-            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
-                    "There are no defined URLs. Attempting to add the appropriate servers.\n(Redownload may be required)"))
+            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
+                    ? new Notification(tr(
+                            "There are no defined URLs. Attempting to add the appropriate servers.\nPlease try again."))
                     : new Notification(tr("No URLS are enabled"));
-            if (MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
-                    && MapWithAILayerInfo.instance.getDefaultLayers().isEmpty()) {
-                MapWithAILayerInfo.instance.loadDefaults(true, MainApplication.worker, false, () -> getData(bbox));
-            }
             noUrls.setDuration(Notification.TIME_DEFAULT);
             noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
             noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
             GuiHelper.runInEDT(noUrls::show);
+            if (MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
+                    && MapWithAILayerInfo.instance.getDefaultLayers().isEmpty()) {
+                MapWithAILayerInfo.instance.loadDefaults(true, MainApplication.worker, false,
+                        () -> Logging.info("MapWithAI Sources: Initialized sources"));
+            }
         }
         return dataSet;
     }
