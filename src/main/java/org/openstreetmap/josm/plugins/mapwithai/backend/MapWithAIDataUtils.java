@@ -188,6 +188,10 @@ public final class MapWithAIDataUtils {
             final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
                     "There are no defined URLs. To add sources, go to Preferences -> MapWithAI -> Servers and add the appropriate servers"))
                     : new Notification(tr("No URLS are enabled"));
+            if (MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
+                    && MapWithAILayerInfo.instance.getDefaultLayers().isEmpty()) {
+                MapWithAILayerInfo.instance.loadDefaults(true, MainApplication.worker, false, () -> getData(bbox));
+            }
             noUrls.setDuration(Notification.TIME_DEFAULT);
             noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
             noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
