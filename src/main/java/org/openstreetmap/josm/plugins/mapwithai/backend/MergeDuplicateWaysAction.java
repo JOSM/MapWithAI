@@ -29,7 +29,7 @@ public class MergeDuplicateWaysAction extends JosmAction {
         super(tr("{0}: ".concat(DESCRIPTION), MapWithAIPlugin.NAME), "mapwithai", tr(DESCRIPTION),
                 Shortcut.registerShortcut("data:attemptmergeway", tr(DESCRIPTION), KeyEvent.VK_EXCLAMATION_MARK,
                         Shortcut.ALT_CTRL_SHIFT),
-                true);
+                true, "mapwithai:attemptmergeway", true);
         setHelpId(ht("Plugin/MapWithAI"));
     }
 

@@ -185,10 +185,10 @@ public final class MapWithAIDataUtils {
                 monitor.close();
             }
         } else {
-            final Notification noUrls = MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
-                    ? new Notification(tr(
+            final Notification noUrls = GuiHelper.runInEDTAndWaitAndReturn(
+                    () -> MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
                             "There are no defined URLs. Attempting to add the appropriate servers.\nPlease try again."))
-                    : new Notification(tr("No URLS are enabled"));
+                            : new Notification(tr("No URLS are enabled")));
             noUrls.setDuration(Notification.TIME_DEFAULT);
             noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
             noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));

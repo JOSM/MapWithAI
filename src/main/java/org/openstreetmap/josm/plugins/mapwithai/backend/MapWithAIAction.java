@@ -34,7 +34,7 @@ public class MapWithAIAction extends JosmAction {
         super(tr("{0}: Download data", MapWithAIPlugin.NAME), "mapwithai",
                 tr("Get data from {0}", MapWithAIPlugin.NAME), Shortcut.registerShortcut("data:mapWithAI",
                         tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R, Shortcut.CTRL),
-                true);
+                true, "mapwithai:downloadData", true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 

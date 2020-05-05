@@ -37,7 +37,7 @@ public class MapWithAIMoveAction extends JosmAction {
 
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), "mapwithai",
-                tr("Add data from {0}", MapWithAIPlugin.NAME), obtainShortcut(), true);
+                tr("Add data from {0}", MapWithAIPlugin.NAME), obtainShortcut(), true, "mapwithai:movedata", true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
 
