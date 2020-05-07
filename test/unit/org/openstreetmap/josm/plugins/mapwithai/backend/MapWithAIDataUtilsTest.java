@@ -175,8 +175,9 @@ public class MapWithAIDataUtilsTest {
         final BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
         for (Double i : Arrays.asList(0.0001, 0.001, 0.01, 0.1)) {
             bbox.add(i, i);
-            List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
-            assertEquals(getExpectedNumberOfBBoxes(bbox), bboxes.size(), "The bbox should be appropriately reduced");
+            List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox, 5_000);
+            assertEquals(getExpectedNumberOfBBoxes(bbox, 5_000), bboxes.size(),
+                    "The bbox should be appropriately reduced");
             checkInBBox(bbox, bboxes);
             checkBBoxesConnect(bbox, bboxes);
         }
@@ -192,11 +193,11 @@ public class MapWithAIDataUtilsTest {
                 .collect(Collectors.toList()).isEmpty());
     }
 
-    private static int getExpectedNumberOfBBoxes(BBox bbox) {
+    private static int getExpectedNumberOfBBoxes(BBox bbox, int maximumDimensions) {
         double width = MapWithAIDataUtils.getWidth(bbox);
         double height = MapWithAIDataUtils.getHeight(bbox);
-        int widthDivisions = (int) Math.ceil(width / MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
-        int heightDivisions = (int) Math.ceil(height / MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+        int widthDivisions = (int) Math.ceil(width / maximumDimensions);
+        int heightDivisions = (int) Math.ceil(height / maximumDimensions);
         return widthDivisions * heightDivisions;
     }
 

@@ -56,6 +56,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
 
+    private Integer maximumDimensions;
+
     private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
     private static final String SERVER_ID_KEY = "server_id";
 
@@ -86,9 +88,19 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         this.monitor = Optional.ofNullable(monitor).orElse(NullProgressMonitor.INSTANCE);
     }
 
+    /**
+     * Set the maximum download bbox size. Must be called before execution.
+     *
+     * @param maximumDimensions The maximum bbox download size
+     */
+    public void setMaximumDimensions(int maximumDimensions) {
+        this.maximumDimensions = maximumDimensions;
+    }
+
     @Override
     public DataSet compute() {
-        final List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox);
+        final List<BBox> bboxes = maximumDimensions == null ? MapWithAIDataUtils.reduceBBoxSize(bbox)
+                : MapWithAIDataUtils.reduceBBoxSize(bbox, maximumDimensions);
         monitor.beginTask(tr("Downloading {0} data ({1} total downloads)", MapWithAIPlugin.NAME, bboxes.size()),
                 bboxes.size() - 1);
         if (!monitor.isCanceled()) {

@@ -98,8 +98,10 @@ public class GetDataRunnableTest {
     @Test
     public void testRegressionTicket46() {
         DataSet ds = new DataSet();
-        new GetDataRunnable(Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null).fork()
-                .join();
+        GetDataRunnable getData = new GetDataRunnable(
+                Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null);
+        getData.setMaximumDimensions(5_000);
+        getData.fork().join();
         assertNotNull(ds);
         assertFalse(ds.isEmpty());
         assertFalse(ds.allNonDeletedPrimitives().isEmpty());

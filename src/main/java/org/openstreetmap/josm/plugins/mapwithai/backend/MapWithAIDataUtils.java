@@ -47,7 +47,7 @@ import org.openstreetmap.josm.tools.Utils;
  */
 public final class MapWithAIDataUtils {
     /** THe maximum dimensions for MapWithAI data (in kilometers) */
-    public static final int MAXIMUM_SIDE_DIMENSIONS = 5_000; // RapiD is about 1km, max is 10km, but 10km causes
+    public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1km, max is 10km, but 10km causes
     // timeouts
     private static final int TOO_MANY_BBOXES = 4;
     private static ForkJoinPool forkJoinPool;
@@ -148,20 +148,45 @@ public final class MapWithAIDataUtils {
      * @return A DataSet with data inside the bbox
      */
     public static DataSet getData(BBox bbox) {
-        return getData(Arrays.asList(bbox));
+        return getData(Arrays.asList(bbox), MAXIMUM_SIDE_DIMENSIONS);
     }
 
     /**
+     * Get a dataset from the API servers using a bbox
+     *
+     * @param bbox              The bbox from which to get data
+     * @param maximumDimensions The maximum dimensions to try to download at any one
+     *                          time
+     * @return A DataSet with data inside the bbox
+     */
+    public static DataSet getData(BBox bbox, int maximumDimensions) {
+        return getData(Arrays.asList(bbox), maximumDimensions);
+    }
+
+    /**
+     *
      * Get a dataset from the API servers using a list bboxes
      *
      * @param bbox The bboxes from which to get data
      * @return A DataSet with data inside the bboxes
      */
     public static DataSet getData(List<BBox> bbox) {
+        return getData(bbox, MAXIMUM_SIDE_DIMENSIONS);
+    }
+
+    /**
+     * Get a dataset from the API servers using a list bboxes
+     *
+     * @param bbox              The bboxes from which to get data
+     * @param maximumDimensions The maximum dimensions to try to download at any one
+     *                          time
+     * @return A DataSet with data inside the bboxes
+     */
+    public static DataSet getData(List<BBox> bbox, int maximumDimensions) {
         final DataSet dataSet = new DataSet();
         final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
         final List<Bounds> realBounds = realBBoxes.stream()
-                .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox).stream())
+                .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox, maximumDimensions).stream())
                 .map(MapWithAIDataUtils::bboxToBounds).collect(Collectors.toList());
         if (!MapWithAILayerInfo.instance.getLayers().isEmpty()) {
             if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
@@ -179,6 +204,9 @@ public final class MapWithAIDataUtils {
                                         }
                                     } catch (OsmTransferException e) {
                                         Logging.error(e);
+                                        if (maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10) {
+                                            dataSet.mergeFrom(getData(bound.toBBox(), maximumDimensions / 2));
+                                        }
                                     }
                                 }));
                 monitor.finishTask();
@@ -423,16 +451,17 @@ public final class MapWithAIDataUtils {
     }
 
     /**
-     * @param bbox The bbox to reduce to a set maximum dimension
+     * @param bbox              The bbox to reduce to a set maximum dimension
+     * @param maximumDimensions The maximum side dimensions of the bbox
      * @return A list of BBoxes that have a dimension no more than
-     *         {@link MAXIMUM_SIDE_DIMENSIONS}
+     *         {@code maximumDimensions}
      */
-    public static List<BBox> reduceBBoxSize(BBox bbox) {
+    public static List<BBox> reduceBBoxSize(BBox bbox, int maximumDimensions) {
         final List<BBox> returnBounds = new ArrayList<>();
         final double width = getWidth(bbox);
         final double height = getHeight(bbox);
-        final Double widthDivisions = width / MAXIMUM_SIDE_DIMENSIONS;
-        final Double heightDivisions = height / MAXIMUM_SIDE_DIMENSIONS;
+        final Double widthDivisions = width / maximumDimensions;
+        final Double heightDivisions = height / maximumDimensions;
         final int widthSplits = widthDivisions.intValue() + ((widthDivisions - widthDivisions.intValue()) > 0 ? 1 : 0);
         final int heightSplits = heightDivisions.intValue()
                 + ((heightDivisions - heightDivisions.intValue()) > 0 ? 1 : 0);
@@ -458,8 +487,18 @@ public final class MapWithAIDataUtils {
      *         {@link MAXIMUM_SIDE_DIMENSIONS}
      */
     public static List<BBox> reduceBBoxSize(List<BBox> bboxes) {
+        return reduceBBoxSize(bboxes, MAXIMUM_SIDE_DIMENSIONS);
+    }
+
+    /**
+     * @param bboxes            The bboxes to reduce to a set maximum dimension
+     * @param maximumDimensions The maximum width/height dimensions
+     * @return A list of BBoxes that have a dimension no more than the
+     *         {@code maximumDimensions}
+     */
+    public static List<BBox> reduceBBoxSize(List<BBox> bboxes, int maximumDimensions) {
         final List<BBox> returnBBoxes = new ArrayList<>();
-        bboxes.forEach(bbox -> returnBBoxes.addAll(reduceBBoxSize(bbox)));
+        bboxes.forEach(bbox -> returnBBoxes.addAll(reduceBBoxSize(bbox, maximumDimensions)));
         return returnBBoxes.stream().distinct().collect(Collectors.toList());
     }
 

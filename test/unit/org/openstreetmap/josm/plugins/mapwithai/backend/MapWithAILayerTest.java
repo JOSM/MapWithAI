@@ -142,8 +142,10 @@ public class MapWithAILayerTest {
     public void testSelection() throws InvocationTargetException, InterruptedException {
         MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         DataSet ds = mapWithAILayer.getDataSet();
-        new GetDataRunnable(Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null).fork()
-                .join();
+        GetDataRunnable getData = new GetDataRunnable(
+                Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null);
+        getData.setMaximumDimensions(5_000);
+        getData.fork().join();
         assertTrue(ds.getSelected().isEmpty());
         SwingUtilities.invokeAndWait(() -> ds.setSelected(ds.allNonDeletedCompletePrimitives()));
         assertEquals(1, ds.getSelected().size());
