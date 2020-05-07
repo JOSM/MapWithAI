@@ -137,6 +137,7 @@ spotless {
 }
 
 josm {
+  debugPort = 7055
   manifest {
     oldVersionDownloadLink 16220, "v1.4.2", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.4.2/mapwithai.jar")
     oldVersionDownloadLink 15820, "v1.3.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.3.7/mapwithai.jar")
