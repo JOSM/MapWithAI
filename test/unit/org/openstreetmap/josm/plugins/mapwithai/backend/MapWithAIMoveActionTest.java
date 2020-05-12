@@ -7,6 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.swing.JOptionPane;
 
 import org.awaitility.Awaitility;
@@ -30,6 +34,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Dupl
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+import org.openstreetmap.josm.tools.I18n;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -145,6 +150,14 @@ public class MapWithAIMoveActionTest {
     public void testMaxAddNotification() {
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
+        Map<String, Object> map = new HashMap<>();
+        for (String text : Arrays.asList(I18n.marktr("Sequence: Merge {0} nodes"), I18n.marktr("Delete {0} nodes"))) {
+            for (int i = 0; i < 10; i++) {
+                map.computeIfAbsent(I18n.tr(text, i), (t) -> JOptionPane.NO_OPTION);
+            }
+        }
+        new JOptionPaneSimpleMocker(map);
+
         NotificationMocker notification = new NotificationMocker();
         DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "TEST", null));
@@ -153,7 +166,8 @@ public class MapWithAIMoveActionTest {
             ds.addPrimitive(new Node(LatLon.ZERO));
         }
         for (int i = 0; i < 11; i++) {
-            GuiHelper.runInEDTAndWait(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
+            GuiHelper
+                    .runInEDTAndWaitWithException(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
             moveAction.actionPerformed(null);
         }
         assertTrue(notification.shown);

@@ -10,11 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.swing.JOptionPane;
 
@@ -40,9 +40,11 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.PleaseWaitDialogMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
+import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
 import com.google.common.collect.ImmutableMap;
@@ -103,6 +105,7 @@ public class MapWithAIAddComandTest {
 
     @Test
     public void testCreateConnections() {
+        new PleaseWaitDialogMocker();
         final DataSet ds1 = new DataSet();
         final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0, 0.15)));
@@ -217,7 +220,12 @@ public class MapWithAIAddComandTest {
     @Test
     public void testRegression18351() throws InvocationTargetException, InterruptedException {
         System.getProperty("java.awt.headless", "true");
-        List<FutureTask<?>> futures = new SwingUtilitiesMocker().futureTasks;
+        TestUtils.assumeWorkingJMockit();
+        new WindowMocker();
+        new PleaseWaitDialogMocker();
+        SwingUtilitiesMocker swingMocker = new SwingUtilitiesMocker();
+
+        swingMocker.futureTasks.clear();
         Way way = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe",
                 new Node(new LatLon(39.0339521, -108.4874581)), new Node(new LatLon(39.0292629, -108.4875117)));
         way.firstNode().put("dupe", "n176220609");
@@ -239,12 +247,14 @@ public class MapWithAIAddComandTest {
         assertNotNull(osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(way));
         Awaitility.await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS);
+        List<Future<?>> futures = new ArrayList<>(swingMocker.futureTasks);
         Assertions.assertDoesNotThrow(() -> {
             for (Future<?> future : futures) {
                 try {
                     future.get();
                 } catch (Exception e) {
                     Logging.error(e);
+                    Logging.logWithStackTrace(Logging.LEVEL_ERROR, e);
                     throw e;
                 }
             }
