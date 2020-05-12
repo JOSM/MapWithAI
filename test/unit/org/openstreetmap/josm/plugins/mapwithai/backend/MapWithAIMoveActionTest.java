@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import javax.swing.JOptionPane;
+
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Before;
@@ -26,7 +28,10 @@ import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+
+import com.google.common.collect.ImmutableMap;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
@@ -65,6 +70,8 @@ public class MapWithAIMoveActionTest {
 
     @Test
     public void testMoveAction() {
+        new JOptionPaneSimpleMocker(ImmutableMap.of("Sequence: Merge 2 nodes", JOptionPane.NO_OPTION));
+
         mapWithAIData.addSelected(way1);
         moveAction.actionPerformed(null);
         assertEquals(osmLayer, MainApplication.getLayerManager().getActiveLayer(),

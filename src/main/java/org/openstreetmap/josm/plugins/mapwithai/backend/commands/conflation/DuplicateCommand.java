@@ -19,6 +19,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Utils;
 
 public class DuplicateCommand extends AbstractConflationCommand {
     public static final String KEY = "dupe";
@@ -90,8 +91,8 @@ public class DuplicateCommand extends AbstractConflationCommand {
     @Override
     public Command getRealCommand() {
         final List<Command> commands = new ArrayList<>();
-        for (Node tNode : possiblyAffectedPrimitives.stream().filter(Node.class::isInstance).map(Node.class::cast)
-                .distinct().filter(node -> node.hasKey(KEY)).collect(Collectors.toList())) {
+        for (Node tNode : Utils.filteredCollection(possiblyAffectedPrimitives, Node.class).stream().distinct()
+                .filter(node -> node.hasKey(KEY)).collect(Collectors.toList())) {
             List<Command> tCommands = duplicateNode(getAffectedDataSet(), tNode);
             // We have to execute the command to avoid duplicating the command later. Undo
             // occurs later, so that the state doesn't actually change.

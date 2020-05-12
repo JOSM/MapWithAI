@@ -16,8 +16,11 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+import javax.swing.JOptionPane;
+
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -32,13 +35,17 @@ import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.tests.SharpAngles;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
 import org.openstreetmap.josm.tools.Logging;
+
+import com.google.common.collect.ImmutableMap;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -47,7 +54,13 @@ public class MapWithAIAddComandTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection().assertionsInEDT();
+    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection().assertionsInEDT().main();
+
+    @Before
+    public void setUp() {
+        // Required to avoid an NPE with AutoZoomHandler
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "Temp", null));
+    }
 
     @Test
     public void testMoveCollection() {
@@ -121,6 +134,8 @@ public class MapWithAIAddComandTest {
 
     @Test
     public void testCreateConnectionsUndo() {
+        new JOptionPaneSimpleMocker(ImmutableMap.of("Sequence: Merge 2 nodes", JOptionPane.NO_OPTION));
+
         final DataSet osmData = new DataSet();
         final DataSet mapWithAIData = new DataSet();
         final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),

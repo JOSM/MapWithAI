@@ -28,6 +28,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Conn
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeAddressBuildings;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeBuildingAddress;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.cleanup.MissingConnectionTags;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -41,6 +42,7 @@ public class CreateConnectionsCommand extends Command {
         CONFLATION_COMMANDS.add(DuplicateCommand.class);
         CONFLATION_COMMANDS.add(MergeAddressBuildings.class);
         CONFLATION_COMMANDS.add(MergeBuildingAddress.class);
+        CONFLATION_COMMANDS.add(MissingConnectionTags.class);
     }
 
     public CreateConnectionsCommand(DataSet data, Collection<PrimitiveData> primitives) {
@@ -58,7 +60,7 @@ public class CreateConnectionsCommand extends Command {
         if (command != null) {
             command.executeCommand();
         }
-        if (undoCommands != null) {
+        if (undoCommands != null && !UndoRedoHandler.getInstance().getUndoCommands().contains(undoCommands)) {
             GuiHelper.runInEDTAndWait(() -> UndoRedoHandler.getInstance().add(undoCommands));
         }
         return true;

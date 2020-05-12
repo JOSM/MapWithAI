@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.testutils;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.logging.Level;
 
 import org.junit.runners.model.InitializationError;
@@ -21,12 +22,15 @@ import org.openstreetmap.josm.tools.Logging;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
+import mockit.integration.TestRunnerDecorator;
+
 public class MapWithAITestRules extends JOSMTestRules {
 
     private boolean sources;
     private boolean wiremock;
     private WireMockServer wireMock;
     private boolean workerExceptions = true;
+    private UncaughtExceptionHandler currentExceptionHandler;
 
     public MapWithAITestRules() {
         super();
@@ -58,6 +62,7 @@ public class MapWithAITestRules extends JOSMTestRules {
      */
     @Override
     protected void before() throws InitializationError, ReflectiveOperationException {
+        TestRunnerDecorator.cleanUpAllMocks();
         super.before();
         Logging.getLogger().setFilter(record -> record.getLevel().intValue() >= Level.WARNING.intValue()
                 || record.getSourceClassName().startsWith("org.openstreetmap.josm.plugins.mapwithai"));
@@ -80,6 +85,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             }
         }
         if (workerExceptions) {
+            currentExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
             Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
                 Logging.error(t.getClass().getSimpleName());
                 Logging.error(e);
@@ -88,13 +94,18 @@ public class MapWithAITestRules extends JOSMTestRules {
     }
 
     @Override
-    protected void after() {
+    protected void after() throws ReflectiveOperationException {
+        super.after();
         if (wiremock) {
             wireMock.stop();
             resetMapWithAILayerInfo();
             DataAvailability.setReleaseUrl(DataAvailability.DEFAULT_SERVER_URL);
             Config.getPref().put("osm-server.url", null);
         }
+        if (workerExceptions) {
+            Thread.setDefaultUncaughtExceptionHandler(currentExceptionHandler);
+        }
+        TestRunnerDecorator.cleanUpAllMocks();
     }
 
     private static void setupMapWithAILayerInfo(WireMockServer wireMockServer) {
