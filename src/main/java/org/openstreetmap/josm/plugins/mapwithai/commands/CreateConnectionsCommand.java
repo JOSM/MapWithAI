@@ -29,6 +29,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Dupl
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeAddressBuildings;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeBuildingAddress;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.cleanup.MissingConnectionTags;
+import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.cleanup.OverNodedWays;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -43,6 +44,7 @@ public class CreateConnectionsCommand extends Command {
         CONFLATION_COMMANDS.add(MergeAddressBuildings.class);
         CONFLATION_COMMANDS.add(MergeBuildingAddress.class);
         CONFLATION_COMMANDS.add(MissingConnectionTags.class);
+        CONFLATION_COMMANDS.add(OverNodedWays.class);
     }
 
     public CreateConnectionsCommand(DataSet data, Collection<PrimitiveData> primitives) {

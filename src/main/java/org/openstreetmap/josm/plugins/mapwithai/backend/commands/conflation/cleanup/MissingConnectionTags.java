@@ -30,6 +30,8 @@ import org.openstreetmap.josm.data.validation.tests.CrossingWays;
 import org.openstreetmap.josm.data.validation.tests.DuplicateNode;
 import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.AbstractOsmDataLayer;
+import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
@@ -45,7 +47,8 @@ import org.openstreetmap.josm.tools.Utils;
  * @author Taylor Smock
  */
 public class MissingConnectionTags extends AbstractConflationCommand {
-    private double precision = Config.getPref().getDouble("validator.duplicatenodes.precision", 0.);
+    private double precision;
+    private static final String HIGHWAY = "highway";
 
     public MissingConnectionTags(DataSet data) {
         super(data);
@@ -64,11 +67,22 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     @Override
     public String getKey() {
         // For now, we assume that only highways are at issue.
-        return "highway";
+        return HIGHWAY;
     }
 
     @Override
     public Command getRealCommand() {
+        precision = Config.getPref().getDouble("validator.duplicatenodes.precision", 0.);
+        Layer current = MainApplication.getLayerManager().getActiveLayer();
+        Collection<Way> ways = Utils.filteredCollection(possiblyAffectedPrimitives, Way.class);
+        if (!ways.isEmpty()) {
+            DataSet ds = this.getAffectedDataSet();
+            Layer toSwitch = MainApplication.getLayerManager().getLayersOfType(AbstractOsmDataLayer.class).stream()
+                    .filter(d -> ds.equals(d.getDataSet())).findAny().orElse(null);
+            if (toSwitch != null) {
+                MainApplication.getLayerManager().setActiveLayer(toSwitch);
+            }
+        }
         // precision is in meters
         precision = precision == 0 ? 1 : precision;
         String prefKey = "mapwithai.conflation.missingconflationtags";
@@ -79,6 +93,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         fixErrors(prefKey, commands, findDuplicateNodes(possiblyAffectedPrimitives));
         fixErrors(prefKey, commands, findCrossingWaysAtNodes(possiblyAffectedPrimitives));
         ConditionalOptionPaneUtil.endBulkOperation(prefKey);
+        if (current != null) {
+            MainApplication.getLayerManager().setActiveLayer(current);
+        }
         GuiHelper.runInEDT(() -> getAffectedDataSet().setSelected(selection));
         commands.forEach(Command::undoCommand);
         return commands.isEmpty() ? null : new SequenceCommand(tr("Perform missing conflation steps"), commands);
@@ -149,7 +166,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
             way.getDataSet().searchWays(way.getBBox()).forEach(crossingWays::visit);
             crossingWays.endTest();
             for (TestError error : crossingWays.getErrors()) {
-                if (seenFix.containsAll(error.getPrimitives())) {
+                if (seenFix.containsAll(error.getPrimitives())
+                        || error.getPrimitives().stream().filter(Way.class::isInstance).map(Way.class::cast)
+                                .filter(w -> w.hasKey(HIGHWAY)).count() == 0L) {
                     continue;
                 }
                 TestError.Builder fixError = TestError.builder(error.getTester(), error.getSeverity(), error.getCode())
@@ -164,11 +183,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     }
 
     private Supplier<Command> createIntersectionCommandSupplier(TestError error, Way way) {
-        Collection<Node> nodes = Geometry
-                .addIntersections(
-                        error.getPrimitives().stream().filter(Way.class::isInstance).map(Way.class::cast)
-                                .filter(w -> w.hasKey("highway")).collect(Collectors.toList()),
-                        false, new ArrayList<>());
+        Collection<Node> nodes = Geometry.addIntersections(error.getPrimitives().stream().filter(Way.class::isInstance)
+                .map(Way.class::cast).filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList()), false,
+                new ArrayList<>());
         if (nodes.stream().anyMatch(n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
                 .anyMatch(wn -> n.getCoor().greatCircleDistance(wn.getCoor()) < precision))) {
             return () -> createIntersectionCommand(way,
