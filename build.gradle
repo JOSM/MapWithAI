@@ -81,7 +81,9 @@ def ivyModule = new XmlParser().parse(new File("$projectDir/ivy.xml"))
 logger.info("Dependencies from ivy.xml (added to configuration `packIntoJar`):")
 ivyModule.dependencies.dependency.each {
   logger.info("  * ${it.@org}:${it.@name}:${it.@rev}")
-  project.dependencies.packIntoJar("${it.@org}:${it.@name}:${it.@rev}")
+  if (!"${it.@conf}".contains("test")) {
+    project.dependencies.packIntoJar("${it.@org}:${it.@name}:${it.@rev}")
+  }
 }
 
 test {
