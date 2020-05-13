@@ -57,17 +57,20 @@ setting::toggle_with_layer {
  * Set .mapwithai for all known MapWithAI datasets *
  ***************************************************/
 
-way[regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft|digitalglobe"), ")$"), tag("source"))][setting("show_new")]:new {
+way["source"][regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft/BuildingFootprints|digitalglobe"), ")$"), tag("source"))][setting("show_new")]:new,
+way["mapwithai:source"][setting("show_new")] {
     set .mapwithai;
-    set_color: JOSM_pref(concat("mapwithai.mappaint.", tag("source"), "_new"), #FF00FF);
+    set_color: JOSM_pref(concat("mapwithai.mappaint.", any(tag("source"), tag("mapwithai:source")), "_new"), #FF00FF);
 }
-way[regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft|digitalglobe"), ")$"), tag("source"))][setting("show_old")]!:new!:modified {
+way["source"][regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft/BuildingFootprints|digitalglobe"), ")$"), tag("source"))][setting("show_old")]!:new!:modified,
+way["mapwithai:source"][setting("show_old")]!:new!:modified {
     set .mapwithai;
-    set_color: JOSM_pref(concat("mapwithai.mappaint.", tag("source"), "_old"), #FF00FF);
+    set_color: JOSM_pref(concat("mapwithai.mappaint.", any(tag("source"), tag("mapwithai:source")), "_old"), #FF00FF);
 }
-way[regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft|digitalglobe"), ")$"), tag("source"))][setting("show_modified")]:modified {
+way[regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft/BuildingFootprints|digitalglobe"), ")$"), tag("source"))][setting("show_modified")]:modified,
+way["mapwithai:source"][setting("show_modified")]:modified {
     set .mapwithai;
-    set_color: JOSM_pref(concat("mapwithai.mappaint.", tag("source"), "_modified"), #FF00FF);
+    set_color: JOSM_pref(concat("mapwithai.mappaint.", any(tag("source"), tag("mapwithai:source")), "_modified"), #FF00FF);
 }
 
 way.mapwithai {
