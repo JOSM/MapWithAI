@@ -25,9 +25,11 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
+import org.openstreetmap.josm.data.preferences.sources.ValidatorPrefHelper;
 import org.openstreetmap.josm.data.validation.TestError;
 import org.openstreetmap.josm.data.validation.tests.CrossingWays;
 import org.openstreetmap.josm.data.validation.tests.DuplicateNode;
+import org.openstreetmap.josm.data.validation.tests.UnconnectedWays;
 import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.AbstractOsmDataLayer;
@@ -73,6 +75,8 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     @Override
     public Command getRealCommand() {
         precision = Config.getPref().getDouble("validator.duplicatenodes.precision", 0.);
+        // precision is in meters
+        precision = precision == 0 ? 1 : precision;
         Layer current = MainApplication.getLayerManager().getActiveLayer();
         Collection<Way> ways = Utils.filteredCollection(possiblyAffectedPrimitives, Way.class);
         if (!ways.isEmpty()) {
@@ -83,8 +87,6 @@ public class MissingConnectionTags extends AbstractConflationCommand {
                 MainApplication.getLayerManager().setActiveLayer(toSwitch);
             }
         }
-        // precision is in meters
-        precision = precision == 0 ? 1 : precision;
         String prefKey = "mapwithai.conflation.missingconflationtags";
 
         Collection<OsmPrimitive> selection = getAffectedDataSet().getAllSelected();
@@ -92,6 +94,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         Collection<Command> commands = new ArrayList<>();
         fixErrors(prefKey, commands, findDuplicateNodes(possiblyAffectedPrimitives));
         fixErrors(prefKey, commands, findCrossingWaysAtNodes(possiblyAffectedPrimitives));
+        fixErrors(prefKey, commands, findUnconnectedWays(possiblyAffectedPrimitives));
         ConditionalOptionPaneUtil.endBulkOperation(prefKey);
         if (current != null) {
             MainApplication.getLayerManager().setActiveLayer(current);
@@ -205,15 +208,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
             searchWays.remove(way);
             for (Way potential : searchWays) {
                 for (Node node : way.getNodes()) {
-                    if (Geometry.getDistance(node, potential) < precision) {
-                        WaySegment seg = Geometry.getClosestWaySegment(potential, node);
-                        int index1 = potential.getNodes().indexOf(seg.getFirstNode());
-                        int index2 = potential.getNodes().indexOf(seg.getSecondNode());
-                        if (index2 - index1 == 1) {
-                            Way newWay = new Way(potential);
-                            newWay.addNode(index2, node);
-                            commands.add(new ChangeCommand(potential, newWay));
-                        }
+                    Command command = createAddNodeCommand(potential, node, precision);
+                    if (command != null) {
+                        commands.add(command);
                     }
                 }
             }
@@ -224,6 +221,51 @@ public class MissingConnectionTags extends AbstractConflationCommand {
             return new SequenceCommand(tr("Create intersections"), commands);
         }
         return null;
+    }
+
+    private static Command createAddNodeCommand(Way way, Node node, double precision) {
+        if (Geometry.getDistance(node, way) < precision) {
+            WaySegment seg = Geometry.getClosestWaySegment(way, node);
+            int index1 = way.getNodes().indexOf(seg.getFirstNode());
+            int index2 = way.getNodes().indexOf(seg.getSecondNode());
+            if (index2 - index1 == 1) {
+                Way newWay = new Way(way);
+                newWay.addNode(index2, node);
+                return new ChangeCommand(way, newWay);
+            }
+        }
+        return null;
+    }
+
+    protected static Collection<TestError> findUnconnectedWays(Collection<OsmPrimitive> possiblyAffectedPrimitives) {
+        UnconnectedWays.UnconnectedHighways unconnectedWays = new UnconnectedWays.UnconnectedHighways();
+        unconnectedWays.startTest(NullProgressMonitor.INSTANCE);
+        unconnectedWays.visit(possiblyAffectedPrimitives);
+        unconnectedWays.endTest();
+        double p = Config.getPref().getDouble(
+                ValidatorPrefHelper.PREFIX + "." + UnconnectedWays.class.getSimpleName() + ".node_way_distance", 10.0);
+        // precision is in meters
+        double precision = p == 0 ? 1 : p;
+
+        Collection<TestError> issues = new ArrayList<>();
+        for (TestError issue : unconnectedWays.getErrors()) {
+            if (issue.isFixable()) {
+                issues.add(issue);
+                continue;
+            }
+            Way way = Utils.filteredCollection(new ArrayList<>(issue.getPrimitives()), Way.class).stream().findAny()
+                    .orElse(null);
+            Node node = Utils.filteredCollection(new ArrayList<>(issue.getPrimitives()), Node.class).stream().findAny()
+                    .orElse(null);
+            if (way != null && node != null) {
+                TestError.Builder issueBuilder = TestError
+                        .builder(issue.getTester(), issue.getSeverity(), issue.getCode()).message(issue.getMessage())
+                        .primitives(issue.getPrimitives());
+                issueBuilder.fix(() -> createAddNodeCommand(way, node, precision));
+                issues.add(issueBuilder.build());
+            }
+        }
+        return issues;
     }
 
     private static boolean noConflationKey(OsmPrimitive prim) {
