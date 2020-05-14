@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
 
@@ -113,7 +113,8 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     protected void fixErrors(String prefKey, Collection<Command> commands, Collection<TestError> issues) {
         for (TestError issue : issues) {
             issue.getHighlighted();
-            if (!issue.isFixable() || issue.getPrimitives().parallelStream().anyMatch(IPrimitive::isDeleted)) {
+            if (!issue.isFixable() || issue.getFix() == null
+                    || issue.getPrimitives().parallelStream().anyMatch(IPrimitive::isDeleted)) {
                 continue;
             }
             GuiHelper.runInEDT(() -> getAffectedDataSet().setSelected(issue.getPrimitives()));
@@ -158,7 +159,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
                 }
                 List<OsmPrimitive> dupeNodes = duplicateNodeTest.getErrors().stream()
                         .filter(e -> e.getPrimitives().contains(node)).flatMap(e -> e.getPrimitives().stream())
-                        .distinct().filter(p -> !p.isDeleted() && !p.equals(node)).collect(Collectors.toList());
+                        .distinct()
+                        .filter(p -> !p.isDeleted() && !p.equals(node) && noConflationKey(p) && p.getOsmId() > 0)
+                        .collect(Collectors.toList());
                 if (dupeNodes.isEmpty()) {
                     continue;
                 }
@@ -214,8 +217,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         Collection<Node> nodes = Geometry.addIntersections(error.getPrimitives().stream().filter(Way.class::isInstance)
                 .map(Way.class::cast).filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList()), false,
                 new ArrayList<>());
-        if (nodes.stream().anyMatch(n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
-                .anyMatch(wn -> n.getCoor().greatCircleDistance(wn.getCoor()) < precision))) {
+        if (nodes.stream().filter(MissingConnectionTags::noConflationKey)
+                .anyMatch(n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
+                        .anyMatch(wn -> n.getCoor().greatCircleDistance(wn.getCoor()) < precision))) {
             return () -> createIntersectionCommand(way,
                     way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
                             .filter(n1 -> nodes.stream().anyMatch(n2 -> Geometry.getDistance(n1, n2) < precision))
@@ -251,10 +255,10 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     private static Command createAddNodeCommand(Way way, Node node, double precision) {
         if (Geometry.getDistance(node, way) < precision) {
             WaySegment seg = Geometry.getClosestWaySegment(way, node);
-            if (seg != null) {
-                return new ChangePropertyCommand(node, "conn",
-                        String.join(",", Stream.of(way, seg.getFirstNode(), seg.getSecondNode())
-                                .map(p -> p.getPrimitiveId().toString()).collect(Collectors.toList())));
+            List<OsmPrimitive> prims = Arrays.asList(way, seg.getFirstNode(), seg.getSecondNode());
+            if (seg != null && prims.stream().allMatch(p -> p.getOsmId() > 0)) {
+                return new ChangePropertyCommand(node, "conn", String.join(",",
+                        prims.stream().map(p -> p.getPrimitiveId().toString()).collect(Collectors.toList())));
             }
         }
         return null;
@@ -270,13 +274,14 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         // precision is in meters
         double precision = p == 0 ? 1 : p;
 
-        Collection<OsmPrimitive> primsAndChildren = new ArrayList<>(possiblyAffectedPrimitives);
+        Collection<OsmPrimitive> primsAndChildren = new ArrayList<>();
         possiblyAffectedPrimitives.stream().filter(Way.class::isInstance).map(Way.class::cast).map(Way::getNodes)
-                .forEach(primsAndChildren::addAll);
+                .flatMap(List::stream).filter(MissingConnectionTags::noConflationKey).forEach(primsAndChildren::add);
         Collection<TestError> issues = new ArrayList<>();
         for (TestError issue : unconnectedWays.getErrors()) {
-            if (issue.isFixable() || issue.getPrimitives().stream().noneMatch(t -> primsAndChildren.contains(t))) {
-                if (issue.isFixable() && issue.getPrimitives().stream().anyMatch(t -> primsAndChildren.contains(t))) {
+            if (issue.isFixable() || issue.getPrimitives().stream().noneMatch(primsAndChildren::contains)) {
+                if (issue.isFixable() && issue.getPrimitives().stream().filter(MissingConnectionTags::noConflationKey)
+                        .anyMatch(primsAndChildren::contains)) {
                     issues.add(issue);
                 }
                 continue;
@@ -299,7 +304,8 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     private static boolean noConflationKey(OsmPrimitive prim) {
         return CreateConnectionsCommand.getConflationCommands().stream().map(c -> {
             try {
-                return c.getConstructor(DataSet.class).newInstance(prim.getDataSet());
+                return c.getConstructor(DataSet.class)
+                        .newInstance(prim.getDataSet() == null ? new DataSet() : prim.getDataSet());
             } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                     | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                 Logging.error(e);

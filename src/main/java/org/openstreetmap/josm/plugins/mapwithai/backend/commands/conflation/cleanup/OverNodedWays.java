@@ -74,7 +74,10 @@ public class OverNodedWays extends AbstractConflationCommand {
                 AutoScaleAction.zoomTo(Collections.singleton(way));
                 double length = SimplifyWayAction.askSimplifyWays(
                         tr("You are about to simplify {0} way with a total length of {1}.", 1, way.getLength()), true);
-                commands.add(SimplifyWayAction.createSimplifyCommand(way, length));
+                command = SimplifyWayAction.createSimplifyCommand(way, length);
+                if (command != null) {
+                    commands.add(command);
+                }
             }
         }
         if (current != null) {
