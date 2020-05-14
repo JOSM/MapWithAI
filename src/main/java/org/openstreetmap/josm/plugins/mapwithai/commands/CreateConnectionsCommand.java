@@ -39,11 +39,11 @@ public class CreateConnectionsCommand extends Command {
     private Command undoCommands;
     private static final LinkedHashSet<Class<? extends AbstractConflationCommand>> CONFLATION_COMMANDS = new LinkedHashSet<>();
     static {
+        CONFLATION_COMMANDS.add(MissingConnectionTags.class);
         CONFLATION_COMMANDS.add(ConnectedCommand.class);
         CONFLATION_COMMANDS.add(DuplicateCommand.class);
         CONFLATION_COMMANDS.add(MergeAddressBuildings.class);
         CONFLATION_COMMANDS.add(MergeBuildingAddress.class);
-        CONFLATION_COMMANDS.add(MissingConnectionTags.class);
         CONFLATION_COMMANDS.add(OverNodedWays.class);
     }
 
@@ -89,8 +89,6 @@ public class CreateConnectionsCommand extends Command {
     public static List<Command> createConnections(DataSet dataSet, Collection<PrimitiveData> collection) {
         final List<Command> permanent = new ArrayList<>();
         final List<Command> undoable = new ArrayList<>();
-        final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
-                .filter(Objects::nonNull).collect(Collectors.toList());
         List<Class<? extends AbstractConflationCommand>> runCommands = new ArrayList<>();
         for (final Class<? extends AbstractConflationCommand> abstractCommandClass : getConflationCommands()) {
             final AbstractConflationCommand abstractCommand;
@@ -105,6 +103,8 @@ public class CreateConnectionsCommand extends Command {
             if (runCommands.parallelStream().anyMatch(c -> abstractCommand.conflictedCommands().contains(c))) {
                 continue;
             }
+            final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
+                    .filter(Objects::nonNull).collect(Collectors.toList());
             final Collection<OsmPrimitive> tPrimitives = new TreeSet<>();
             abstractCommand.getInterestedTypes()
                     .forEach(clazz -> tPrimitives.addAll(Utils.filteredCollection(realPrimitives, clazz)));

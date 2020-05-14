@@ -38,6 +38,8 @@ public class DuplicateCommandTest {
 
         assertNull(dupe.getCommand(Collections.singleton(dupe1)));
 
+        // SimplePrimitiveId doesn't understand negative ids
+        dupe2.setOsmId(2, 1);
         dupe1.put(dupe.getKey(), "n" + dupe2.getUniqueId());
 
         Command command = dupe.getCommand(Collections.singleton(dupe1));
@@ -50,7 +52,7 @@ public class DuplicateCommandTest {
         assertTrue(dupe1.hasKey(dupe.getKey()));
         assertFalse(dupe2.hasKey(dupe.getKey()));
 
-        Command deleteDupe2 = DeleteCommand.delete(Collections.singleton(dupe2));
+        Command deleteDupe2 = DeleteCommand.delete(Collections.singleton(dupe2), true, true);
         deleteDupe2.executeCommand();
         command = dupe.getCommand(Collections.singleton(dupe1));
         command.executeCommand();

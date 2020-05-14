@@ -65,6 +65,11 @@ public class CreateConnectionsCommandTest {
         createConnections.undoCommand();
         assertFalse(dataSet.isModified(), "DataSet shouldn't be modified yet");
 
+        // SimplePrimitiveId doesn't like negative ids
+        way.setOsmId(1, 1);
+        way.firstNode().setOsmId(1, 1);
+        way.lastNode().setOsmId(2, 1);
+
         node3.put(ConnectedCommand.KEY,
                 "w" + way.getUniqueId() + ",n" + node1.getUniqueId() + ",n" + node2.getUniqueId());
         createConnections = new CreateConnectionsCommand(dataSet, Collections.singleton(node3.save()));

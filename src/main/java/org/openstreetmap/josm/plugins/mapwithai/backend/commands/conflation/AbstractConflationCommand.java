@@ -27,7 +27,6 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
-import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Pair;
 
 public abstract class AbstractConflationCommand extends Command {
@@ -83,22 +82,10 @@ public abstract class AbstractConflationCommand extends Command {
         final OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
         for (int i = 0; i < connections.length; i++) {
             final String member = connections[i];
-            final char firstChar = member.charAt(0);
-            OsmPrimitiveType type = null;
-            if (firstChar == 'w') {
-                type = OsmPrimitiveType.WAY;
-            } else if (firstChar == 'n') {
-                type = OsmPrimitiveType.NODE;
-            } else if (firstChar == 'r') {
-                type = OsmPrimitiveType.RELATION;
-            } else {
-                throw new IllegalArgumentException(
-                        tr("{0}: We don't know how to handle {1} types", MapWithAIPlugin.NAME, firstChar));
-            }
-            final long id = Long.parseLong(member.substring(1));
-            primitiveConnections[i] = dataSet.getPrimitiveById(id, type);
+            SimplePrimitiveId primitiveId = SimplePrimitiveId.fromString(member);
+            primitiveConnections[i] = dataSet.getPrimitiveById(primitiveId);
             if (primitiveConnections[i] == null) {
-                missingPrimitives.put(i, new Pair<>(id, type));
+                missingPrimitives.put(i, new Pair<>(primitiveId.getUniqueId(), primitiveId.getType()));
             }
         }
         obtainMissingPrimitives(dataSet, primitiveConnections, missingPrimitives);

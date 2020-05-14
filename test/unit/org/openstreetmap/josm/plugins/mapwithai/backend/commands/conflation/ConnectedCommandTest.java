@@ -40,6 +40,11 @@ public class ConnectedCommandTest {
 
         assertThrows(NullPointerException.class, () -> command.getCommand(Collections.singletonList(toAdd)));
 
+        // SimplePrimitiveId doesn't like negative ids
+        way.setOsmId(1, 1);
+        way.firstNode().setOsmId(1, 1);
+        way.lastNode().setOsmId(2, 1);
+
         toAdd.put(command.getKey(),
                 "w" + way.getUniqueId() + ",n" + way.firstNode().getUniqueId() + ",n" + way.lastNode().getUniqueId());
 

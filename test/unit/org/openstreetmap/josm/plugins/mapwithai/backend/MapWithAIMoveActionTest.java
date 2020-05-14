@@ -7,12 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JOptionPane;
-
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Before;
@@ -31,12 +25,9 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
-import org.openstreetmap.josm.tools.I18n;
-
-import com.google.common.collect.ImmutableMap;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
@@ -65,6 +56,9 @@ public class MapWithAIMoveActionTest {
         way2.getNodes().forEach(node -> osmData.addPrimitive(node));
         osmData.addPrimitive(way2);
         mapWithAIData.addPrimitive(way1);
+        way2.setOsmId(1, 1);
+        way2.firstNode().setOsmId(1, 1);
+        way2.lastNode().setOsmId(2, 1);
 
         osmLayer = new OsmDataLayer(osmData, "osm", null);
         final MapWithAILayer mapWithAILayer = new MapWithAILayer(mapWithAIData, "MapWithAI", null);
@@ -75,14 +69,16 @@ public class MapWithAIMoveActionTest {
 
     @Test
     public void testMoveAction() {
-        new JOptionPaneSimpleMocker(ImmutableMap.of("Sequence: Merge 2 nodes", JOptionPane.NO_OPTION));
+        new MissingConnectionTagsMocker();
 
         mapWithAIData.addSelected(way1);
         moveAction.actionPerformed(null);
         assertEquals(osmLayer, MainApplication.getLayerManager().getActiveLayer(),
                 "Current layer should be the OMS layer");
         assertNotNull(osmLayer.getDataSet().getPrimitiveById(way1), "way1 should have been added to the OSM layer");
-        UndoRedoHandler.getInstance().undo();
+        while (UndoRedoHandler.getInstance().hasUndoCommands()) {
+            UndoRedoHandler.getInstance().undo();
+        }
         assertNull(osmLayer.getDataSet().getPrimitiveById(way1), "way1 should have been removed from the OSM layer");
     }
 
@@ -93,6 +89,7 @@ public class MapWithAIMoveActionTest {
 
     @Test
     public void testConflationDupeKeyRemoval() {
+        new MissingConnectionTagsMocker();
         mapWithAIData.unlock();
         way1.lastNode().put(DuplicateCommand.KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
         mapWithAIData.lock();
@@ -117,6 +114,7 @@ public class MapWithAIMoveActionTest {
 
     @Test
     public void testConflationConnKeyRemoval() {
+        new MissingConnectionTagsMocker();
         mapWithAIData.unlock();
         way1.lastNode().put(ConnectedCommand.KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
                 + Long.toString(way2.lastNode().getUniqueId()) + ",n" + Long.toString(way2.firstNode().getUniqueId()));
@@ -150,13 +148,7 @@ public class MapWithAIMoveActionTest {
     public void testMaxAddNotification() {
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
-        Map<String, Object> map = new HashMap<>();
-        for (String text : Arrays.asList(I18n.marktr("Sequence: Merge {0} nodes"), I18n.marktr("Delete {0} nodes"))) {
-            for (int i = 0; i < 10; i++) {
-                map.computeIfAbsent(I18n.tr(text, i), (t) -> JOptionPane.NO_OPTION);
-            }
-        }
-        new JOptionPaneSimpleMocker(map);
+        new MissingConnectionTagsMocker();
 
         NotificationMocker notification = new NotificationMocker();
         DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();

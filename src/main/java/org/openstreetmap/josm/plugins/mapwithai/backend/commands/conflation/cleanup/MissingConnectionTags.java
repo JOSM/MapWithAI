@@ -8,14 +8,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.AutoScaleAction;
-import org.openstreetmap.josm.command.ChangeCommand;
+import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.BBox;
@@ -100,11 +102,15 @@ public class MissingConnectionTags extends AbstractConflationCommand {
             MainApplication.getLayerManager().setActiveLayer(current);
         }
         GuiHelper.runInEDT(() -> getAffectedDataSet().setSelected(selection));
-        commands.forEach(Command::undoCommand);
-        return commands.isEmpty() ? null : new SequenceCommand(tr("Perform missing conflation steps"), commands);
+        if (commands.size() == 1) {
+            return commands.iterator().next();
+        } else if (!commands.isEmpty()) {
+            return new SequenceCommand(tr("Perform missing conflation steps"), commands);
+        }
+        return null;
     }
 
-    private void fixErrors(String prefKey, Collection<Command> commands, Collection<TestError> issues) {
+    protected void fixErrors(String prefKey, Collection<Command> commands, Collection<TestError> issues) {
         for (TestError issue : issues) {
             issue.getHighlighted();
             if (!issue.isFixable() || issue.getPrimitives().parallelStream().anyMatch(IPrimitive::isDeleted)) {
@@ -147,7 +153,26 @@ public class MissingConnectionTags extends AbstractConflationCommand {
                 way.getDataSet().searchNodes(searchBBox).stream().filter(MissingConnectionTags::noConflationKey)
                         .forEach(duplicateNodeTest::visit);
                 duplicateNodeTest.endTest();
-                issues.addAll(duplicateNodeTest.getErrors().stream().distinct().collect(Collectors.toList()));
+                if (duplicateNodeTest.getErrors().isEmpty()) {
+                    continue;
+                }
+                List<OsmPrimitive> dupeNodes = duplicateNodeTest.getErrors().stream()
+                        .filter(e -> e.getPrimitives().contains(node)).flatMap(e -> e.getPrimitives().stream())
+                        .distinct().filter(p -> !p.isDeleted() && !p.equals(node)).collect(Collectors.toList());
+                if (dupeNodes.isEmpty()) {
+                    continue;
+                }
+                List<String> dupes = duplicateNodeTest.getErrors().stream()
+                        .filter(e -> e.getPrimitives().contains(node)).flatMap(e -> e.getPrimitives().stream())
+                        .distinct().filter(p -> !p.isDeleted() && !p.equals(node)).map(OsmPrimitive::getPrimitiveId)
+                        .map(Object::toString).collect(Collectors.toList());
+
+                TestError initial = duplicateNodeTest.getErrors().get(0);
+                List<OsmPrimitive> prims = new ArrayList<>(dupeNodes);
+                prims.add(node);
+                issues.add(TestError.builder(initial.getTester(), initial.getSeverity(), initial.getCode())
+                        .message(initial.getMessage()).primitives(prims)
+                        .fix(() -> new ChangePropertyCommand(node, "dupe", String.join(",", dupes))).build());
                 duplicateNodeTest.clear();
             }
         }
@@ -175,7 +200,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
                     continue;
                 }
                 TestError.Builder fixError = TestError.builder(error.getTester(), error.getSeverity(), error.getCode())
-                        .primitives(error.getPrimitives()).fix(createIntersectionCommandSupplier(error, way))
+                        .primitives(error.getPrimitives()).fix(createIntersectionCommandSupplier(error, way, precision))
                         .message(error.getMessage());
                 seenFix.addAll(error.getPrimitives());
                 issues.add(fixError.build());
@@ -185,7 +210,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         return issues;
     }
 
-    private Supplier<Command> createIntersectionCommandSupplier(TestError error, Way way) {
+    private static Supplier<Command> createIntersectionCommandSupplier(TestError error, Way way, double precision) {
         Collection<Node> nodes = Geometry.addIntersections(error.getPrimitives().stream().filter(Way.class::isInstance)
                 .map(Way.class::cast).filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList()), false,
                 new ArrayList<>());
@@ -226,12 +251,10 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     private static Command createAddNodeCommand(Way way, Node node, double precision) {
         if (Geometry.getDistance(node, way) < precision) {
             WaySegment seg = Geometry.getClosestWaySegment(way, node);
-            int index1 = way.getNodes().indexOf(seg.getFirstNode());
-            int index2 = way.getNodes().indexOf(seg.getSecondNode());
-            if (index2 - index1 == 1) {
-                Way newWay = new Way(way);
-                newWay.addNode(index2, node);
-                return new ChangeCommand(way, newWay);
+            if (seg != null) {
+                return new ChangePropertyCommand(node, "conn",
+                        String.join(",", Stream.of(way, seg.getFirstNode(), seg.getSecondNode())
+                                .map(p -> p.getPrimitiveId().toString()).collect(Collectors.toList())));
             }
         }
         return null;
@@ -247,10 +270,15 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         // precision is in meters
         double precision = p == 0 ? 1 : p;
 
+        Collection<OsmPrimitive> primsAndChildren = new ArrayList<>(possiblyAffectedPrimitives);
+        possiblyAffectedPrimitives.stream().filter(Way.class::isInstance).map(Way.class::cast).map(Way::getNodes)
+                .forEach(primsAndChildren::addAll);
         Collection<TestError> issues = new ArrayList<>();
         for (TestError issue : unconnectedWays.getErrors()) {
-            if (issue.isFixable()) {
-                issues.add(issue);
+            if (issue.isFixable() || issue.getPrimitives().stream().noneMatch(t -> primsAndChildren.contains(t))) {
+                if (issue.isFixable() && issue.getPrimitives().stream().anyMatch(t -> primsAndChildren.contains(t))) {
+                    issues.add(issue);
+                }
                 continue;
             }
             Way way = Utils.filteredCollection(new ArrayList<>(issue.getPrimitives()), Way.class).stream().findAny()

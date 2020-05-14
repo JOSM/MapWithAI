@@ -16,8 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import javax.swing.JOptionPane;
-
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Before;
@@ -40,14 +38,12 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.PleaseWaitDialogMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
-
-import com.google.common.collect.ImmutableMap;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -111,6 +107,11 @@ public class MapWithAIAddComandTest {
                 new Node(new LatLon(0, 0.15)));
         final Way way2 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0.05)),
                 new Node(new LatLon(0.05, 0.2)));
+        // SimplePrimitiveId doesn't understand negative ids
+        way1.setOsmId(1, 1);
+        way1.firstNode().setOsmId(1, 1);
+        way1.lastNode().setOsmId(2, 1);
+
         way2.firstNode().put("conn",
                 "w".concat(Long.toString(way1.getUniqueId())).concat(",n")
                         .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
@@ -137,7 +138,7 @@ public class MapWithAIAddComandTest {
 
     @Test
     public void testCreateConnectionsUndo() {
-        new JOptionPaneSimpleMocker(ImmutableMap.of("Sequence: Merge 2 nodes", JOptionPane.NO_OPTION));
+        new MissingConnectionTagsMocker();
 
         final DataSet osmData = new DataSet();
         final DataSet mapWithAIData = new DataSet();
@@ -150,6 +151,7 @@ public class MapWithAIAddComandTest {
         osmData.addPrimitive(way2);
         mapWithAIData.addPrimitive(way1);
         mapWithAIData.setSelected(way1);
+        way2.lastNode().setOsmId(1, 1);
 
         MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
@@ -270,6 +272,9 @@ public class MapWithAIAddComandTest {
                 new Node(new LatLon(3.4188681, 102.0562935)));
         Way original = TestUtils.newWay("highway=tertiary", new Node(new LatLon(3.4185368, 102.0560268)),
                 new Node(new LatLon(3.4187717, 102.0558451)));
+        original.setOsmId(1, 1);
+        original.firstNode().setOsmId(1, 1);
+        original.lastNode().setOsmId(2, 1);
         String connectedValue = "w" + Long.toString(original.getUniqueId()) + ",n"
                 + Long.toString(original.firstNode().getUniqueId()) + ",n"
                 + Long.toString(original.lastNode().getUniqueId());
