@@ -15,6 +15,7 @@ import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.BoundingBoxDownloader;
+import org.openstreetmap.josm.io.GeoJSONReader;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.io.OsmTransferException;
@@ -90,7 +91,15 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
 
     @Override
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
-        DataSet ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
+        DataSet ds;
+        if (MapWithAIInfo.MapWithAIType.ESRI_FEATURE_SERVER.equals(this.info.getSourceType())) {
+            ds = GeoJSONReader.parseDataSet(source, progressMonitor);
+            if (info.getReplacementTags() != null) {
+                GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
+            }
+        } else {
+            ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
+        }
         if (url != null && info.getUrl() != null && !info.getUrl().trim().isEmpty()) {
             GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(info));
         }

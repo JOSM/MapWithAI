@@ -44,7 +44,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      * Type of MapWithAI entry
      */
     public enum MapWithAIType {
-        FACEBOOK("facebook"), THIRD_PARTY("thirdParty");
+        FACEBOOK("facebook"), THIRD_PARTY("thirdParty"), ESRI("esri"), ESRI_FEATURE_SERVER("esriFeatureServer");
 
         private final String typeString;
 
@@ -734,9 +734,15 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         StringBuilder sb = new StringBuilder();
         if (url != null && !url.trim().isEmpty()) {
             sb.append(url);
-            List<String> parameters = getParametersString();
-            if (!parameters.isEmpty()) {
-                sb.append('&').append(String.join("&", parameters));
+            if (MapWithAIType.ESRI_FEATURE_SERVER.equals(type)) {
+                if (!url.endsWith("/")) {
+                    sb.append("/");
+                }
+                sb.append("query?geometryType=esriGeometryEnvelope&geometry={bbox}&inSR=4326&f=geojson&outfields=*");
+            }
+            List<String> parametersString = getParametersString();
+            if (!parametersString.isEmpty()) {
+                sb.append('&').append(String.join("&", parametersString));
             }
         }
         return sb.toString();
