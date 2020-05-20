@@ -1,5 +1,6 @@
 {
     "Statewide Aggregate Addresses in Colorado 2019 (Public)": {
+        "type": "thirdParty",
         "countries": {
             "US-CO": ["addr:housenumber"]
         },
@@ -10,6 +11,7 @@
         "url": "https://importdata.riverviewtechnologies.com/coloradoAddresses/map?bbox={bbox}"
     },
     "MapWithAI": {
+        "type": "facebook",
         "countries": {
             "AE": ["highway"],
             "AF": ["highway"],
