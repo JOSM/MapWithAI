@@ -59,8 +59,10 @@ public class AddMapWithAIPanel extends JPanel {
     private JSpinner minimumCacheExpiry;
     private JComboBox<String> minimumCacheExpiryUnit;
     private TimeUnit currentUnit;
+    private MapWithAIInfo.MapWithAIType type;
 
     private MapWithAIInfo info;
+    private JComboBox<MapWithAIInfo.MapWithAIType> typeBox;
 
     protected AddMapWithAIPanel(LayoutManager layout) {
         super(layout);
@@ -117,6 +119,14 @@ public class AddMapWithAIPanel extends JPanel {
 
         add(new JLabel(tr("{0} Enter name for this source", "3.")), GBC.eol());
         add(name, GBC.eol().fill(GBC.HORIZONTAL));
+        add(new JLabel(tr("{0} What is the type of this source?", "4.")), GBC.eol());
+        typeBox = new JComboBox<>(MapWithAIInfo.MapWithAIType.values());
+        typeBox.setSelectedItem(MapWithAIInfo.MapWithAIType.THIRD_PARTY);
+        typeBox.addItemListener(l -> {
+            type = (MapWithAIType) typeBox.getSelectedItem();
+            notifyListeners();
+        });
+        add(typeBox, GBC.eol());
         registerValidableComponent(rawUrl);
     }
 
@@ -125,6 +135,8 @@ public class AddMapWithAIPanel extends JPanel {
         this.info = info;
         rawUrl.setText(info.getUrl());
         name.setText(info.getName());
+        typeBox.setSelectedItem(info.getSourceType());
+        this.info.setSourceType(this.type);
         if (info.getParameters() != null) {
             parametersTable.setParameters(info.getParameters());
         }
@@ -196,7 +208,7 @@ public class AddMapWithAIPanel extends JPanel {
         ret.setName(getImageryName());
         ret.setUrl(getImageryRawUrl());
         ret.setCustomHttpHeaders(getCommonHeaders());
-        ret.setSourceType(MapWithAIType.THIRD_PARTY);
+        ret.setSourceType(this.type);
         ret.setParameters(convertToJsonParameterArray(getCommonParameters()));
         return ret;
     }
