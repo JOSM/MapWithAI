@@ -48,7 +48,7 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         Bounds area = settings.getDownloadBounds().orElse(new Bounds(0, 0, 0, 0));
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         task.setZoomAfterDownload(settings.zoomToData());
-        data.getUrls().forEach(url -> {
+        data.getUrls().stream().filter(i -> i.getBounds() == null || i.getBounds().intersects(area)).forEach(url -> {
             Future<?> future = task.download(
                     new BoundingBoxMapWithAIDownloader(area, url, DetectTaskingManagerUtils.hasTaskingManagerLayer()),
                     new DownloadParams(), area, null);
