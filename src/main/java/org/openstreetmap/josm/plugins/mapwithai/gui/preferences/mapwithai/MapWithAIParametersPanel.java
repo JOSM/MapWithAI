@@ -4,8 +4,10 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.GridBagLayout;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,8 @@ import org.openstreetmap.josm.tools.Pair;
 public class MapWithAIParametersPanel extends JPanel {
 
     private final class ParametersTableModel extends AbstractTableModel {
+        private Set<Integer> disabledRows = new HashSet<>();
+
         @Override
         public String getColumnName(int column) {
             switch (column) {
@@ -72,7 +76,17 @@ public class MapWithAIParametersPanel extends JPanel {
 
         @Override
         public boolean isCellEditable(int row, int column) {
-            return true;
+            return !disabledRows.contains(row);
+        }
+
+        /**
+         * Prevent a row from being edited
+         *
+         * @param row The row that shouldn't be editable
+         * @return See {@link Set#add}
+         */
+        public boolean disableRowEdits(int row) {
+            return disabledRows.add(row);
         }
 
         @Override
@@ -142,6 +156,11 @@ public class MapWithAIParametersPanel extends JPanel {
             model.setValueAt(obj.getString("parameter"), i, 1);
             model.setValueAt(obj.getString("description", ""), i, 0);
             model.setValueAt(obj.getBoolean("enabled", false), i, 2);
+            boolean permanent = obj.getBoolean("permanent", false);
+            if (permanent) {
+                model.disableRowEdits(i);
+            }
+            i++;
         }
         model.fireTableDataChanged();
     }
