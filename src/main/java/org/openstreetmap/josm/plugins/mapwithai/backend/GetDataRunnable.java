@@ -23,6 +23,7 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
@@ -142,6 +143,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {
         replaceTags(dataSet);
         removeCommonTags(dataSet);
+        removeEmptyTags(dataSet, bounds);
         mergeNodes(dataSet);
         cleanupDataSet(dataSet);
         mergeWays(dataSet);
@@ -149,6 +151,38 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         new MergeDuplicateWays(dataSet).executeCommand();
         (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
                 .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
+    }
+
+    /**
+     * Remove empty tags from primitives
+     *
+     * @param dataSet The dataset to remove tags from
+     * @param bounds  The bounds to remove the empty tags from (performance)
+     */
+    public static void removeEmptyTags(DataSet dataSet, Bounds bounds) {
+        if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
+            bounds = dataSet.getDataSourceBounds().get(0);
+            dataSet.getDataSourceBounds().forEach(bounds::extend);
+        } else if (bounds == null) {
+            bounds = new Bounds(-90, -180, 90, 180);
+        }
+        dataSet.searchPrimitives(bounds.toBBox()).forEach(GetDataRunnable::realRemoveEmptyTags);
+    }
+
+    /**
+     * Remove empty tags from primitives. We assume that the `getKey` implementation
+     * returns a new map.
+     *
+     * @param prim The primitive to remove empty tags from.
+     */
+    private static void realRemoveEmptyTags(IPrimitive prim) {
+        Map<String, String> keys = prim.getKeys();
+        for (Map.Entry<String, String> entry : keys.entrySet()) {
+            if (entry.getValue() == null || entry.getValue().trim().isEmpty()) {
+                // The OsmPrimitives all return a new map, so this is safe.
+                prim.remove(entry.getKey());
+            }
+        }
     }
 
     /**
@@ -227,6 +261,30 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         final Map<Tag, Tag> replaceTags = MapWithAIPreferenceHelper.getReplacementTags().entrySet().parallelStream()
                 .map(entry -> new Pair<>(Tag.ofString(entry.getKey()), Tag.ofString(entry.getValue())))
                 .collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
+        replaceTags(dataSet, replaceTags);
+    }
+
+    /**
+     * Replace tags in a dataset with a set of replacement tags
+     *
+     * @param dataSet     The dataset with primitives to change
+     * @param replaceKeys The keys to replace (does not replace values)
+     */
+    public static void replaceKeys(DataSet dataSet, Map<String, String> replaceKeys) {
+        replaceKeys.entrySet().stream().filter(e -> !e.getKey().equals(e.getValue())).forEach(
+                e -> dataSet.allNonDeletedPrimitives().stream().filter(p -> p.hasKey(e.getKey())).forEach(p -> {
+                    p.put(e.getValue(), p.get(e.getKey()));
+                    p.remove(e.getKey());
+                }));
+    }
+
+    /**
+     * Replace tags in a dataset with a set of replacement tags
+     *
+     * @param dataSet The dataset with primitives to change
+     * @param map     The tags to replace
+     */
+    public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
         replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
                 .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())).forEach(prim -> prim.put(replace)));
     }

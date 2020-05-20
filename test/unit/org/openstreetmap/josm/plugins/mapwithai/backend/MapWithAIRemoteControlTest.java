@@ -109,7 +109,7 @@ public class MapWithAIRemoteControlTest {
         final Integer maxObj = 1;
         newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj="
                 + maxObj.toString()).handle();
-        Awaitility.await().atMost(Durations.ONE_SECOND)
+        Awaitility.await().atMost(Durations.TWO_SECONDS)
                 .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
@@ -128,7 +128,7 @@ public class MapWithAIRemoteControlTest {
     public void testBBox() throws Exception {
         BBox temp = getTestBBox();
         newHandler("http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp.toStringCSV(","))).handle();
-        Awaitility.await().atMost(Durations.ONE_SECOND)
+        Awaitility.await().atMost(Durations.TWO_SECONDS)
                 .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
