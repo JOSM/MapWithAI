@@ -22,8 +22,7 @@ import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
-import org.openstreetmap.josm.io.OfflineAccessException;
-import org.openstreetmap.josm.io.OnlineResource;
+import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
@@ -173,13 +172,7 @@ public class MapWithAILayerInfo {
         }
 
         protected void loadSource(String source) {
-            boolean online = true;
-            try {
-                OnlineResource.JOSM_WEBSITE.checkOfflineAccess(source, Config.getUrls().getJOSMWebsite());
-            } catch (OfflineAccessException e) {
-                Logging.log(Logging.LEVEL_WARN, e);
-                online = false;
-            }
+            boolean online = NetworkManager.isOffline(source);
             if (clearCache && online) {
                 CachedFile.cleanup(source);
             }
