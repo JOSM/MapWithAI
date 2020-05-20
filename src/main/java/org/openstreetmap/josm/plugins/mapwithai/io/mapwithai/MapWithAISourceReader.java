@@ -98,9 +98,9 @@ public class MapWithAISourceReader implements Closeable {
         if (JsonValue.ValueType.OBJECT.equals(entry.getValue().getValueType())) {
             JsonObject values = entry.getValue().asJsonObject();
             String url = values.getString("url", "");
-            String type = MapWithAIInfo.MapWithAIType.THIRD_PARTY.getTypeString();
+            String type = values.getString("type", MapWithAIInfo.MapWithAIType.THIRD_PARTY.getTypeString());
             String eula = values.getString("eula", "");
-            String id = name.replace(" ", "_");
+            String id = values.getString("id", name.replace(" ", "_"));
             JsonValue countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
             List<ImageryBounds> bounds = new ArrayList<>();
             if (JsonValue.ValueType.OBJECT.equals(countries.getValueType())) {
