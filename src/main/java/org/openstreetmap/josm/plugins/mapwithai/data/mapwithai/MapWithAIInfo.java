@@ -167,6 +167,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
     private MapWithAICategory category;
     private MapWithAIType type;
     private JsonArray parameters;
+    private Map<String, String> replacementTags;
 
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
@@ -223,6 +224,8 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         String category;
         @StructEntry
         String parameters;
+        @StructEntry
+        Map<String, String> replacementTags;
 
         /**
          * Constructs a new empty {@MapWithAIPreferenceEntry}
@@ -257,6 +260,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             description = i.description;
             if (i.parameters != null) {
                 parameters = i.parameters.toString();
+            }
+            if (i.replacementTags != null) {
+                replacementTags = i.replacementTags;
             }
             category = i.category != null ? i.category.getCategoryString() : null;
             if (i.bounds != null) {
@@ -302,9 +308,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         this.name = name;
         this.url = baseUrl;
         this.id = id;
-        if (type == null) {
-            type = MapWithAIType.THIRD_PARTY;
-        }
+        this.type = MapWithAIType.THIRD_PARTY;
     }
 
     /**
@@ -343,6 +347,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                     parameters = parser.getArray();
                 }
             }
+        }
+        if (e.replacementTags != null) {
+            replacementTags = e.replacementTags;
         }
         type = MapWithAIType.fromString(e.type);
         if (type == null) {
@@ -392,11 +399,13 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         this.attributionImageURL = i.attributionImageURL;
         this.termsOfUseText = i.termsOfUseText;
         this.termsOfUseURL = i.termsOfUseURL;
+        this.type = i.type;
         this.countryCode = i.countryCode;
         this.date = i.date;
         this.icon = intern(i.icon);
         setCustomHttpHeaders(i.customHttpHeaders);
         this.category = i.category;
+        this.replacementTags = i.replacementTags;
     }
 
     @Override
@@ -423,7 +432,8 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                 && Objects.equals(this.termsOfUseURL, other.termsOfUseURL)
                 && Objects.equals(this.countryCode, other.countryCode) && Objects.equals(this.date, other.date)
                 && Objects.equals(this.icon, other.icon) && Objects.equals(this.description, other.description)
-                && Objects.equals(this.category, other.category);
+                && Objects.equals(this.category, other.category)
+                && Objects.equals(this.replacementTags, other.replacementTags);
         // CHECKSTYLE.ON: BooleanExpressionComplexity
     }
 
@@ -732,8 +742,34 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         return sb.toString();
     }
 
+    /**
+     * @param type Set the source type
+     */
     public void setSourceType(MapWithAIType type) {
         this.type = type;
+    }
+
+    /**
+     * @return The type of the source
+     */
+    public MapWithAIType getSourceType() {
+        return this.type;
+    }
+
+    /**
+     * Set the required replacement tags
+     *
+     * @param replacementTags The tags to replace
+     */
+    public void setReplacementTags(Map<String, String> replacementTags) {
+        this.replacementTags = replacementTags;
+    }
+
+    /**
+     * @return The required replacement tags (run first)
+     */
+    public Map<String, String> getReplacementTags() {
+        return replacementTags;
     }
 
 }
