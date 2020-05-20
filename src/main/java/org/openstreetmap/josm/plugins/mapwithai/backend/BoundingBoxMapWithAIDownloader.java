@@ -44,6 +44,8 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     @Override
     protected String getRequestForBbox(double lon1, double lat1, double lon2, double lat2) {
         return url.replace("{bbox}", Double.toString(lon1) + ',' + lat1 + ',' + lon2 + ',' + lat2)
+                .replace("{xmin}", Double.toString(lon1)).replace("{ymin}", Double.toString(lat1))
+                .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2))
                 + (crop ? "&crop_bbox=" + DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",") : "");
     }
 
