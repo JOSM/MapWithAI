@@ -1,4 +1,9 @@
 {
+    "ESRI OpenStreetMap Curated Data": {
+        "type": "esri",
+        "url": "https://openstreetmap.maps.arcgis.com/sharing/rest/",
+        "id": "bdf6c800b3ae453b9db239e03d7c1727"
+    },
     "Statewide Aggregate Addresses in Colorado 2019 (Public)": {
         "id": "colorado_public_aggregate_addresses",
         "type": "thirdParty",
