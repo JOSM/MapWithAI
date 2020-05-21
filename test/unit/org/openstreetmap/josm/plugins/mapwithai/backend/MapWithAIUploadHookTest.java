@@ -5,13 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -38,6 +41,36 @@ public class MapWithAIUploadHookTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new JOSMTestRules().main().projection().preferences().territories();
+    private PluginInformation info;
+    private OsmDataLayer osmLayer;
+    private MapWithAILayer aiLayer;
+    private Way way1;
+    private Way way2;
+    private MapWithAIMoveAction action;
+    private MapWithAIUploadHook hook;
+
+    @Before
+    public void setUp() throws PluginException, IOException {
+        try (final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8))) {
+            info = new PluginInformation(in, "MapWithAI", null);
+            info.localversion = "no-such-version";
+        }
+
+        aiLayer = MapWithAIDataUtils.getLayer(true);
+        osmLayer = new OsmDataLayer(new DataSet(), "no-name", null);
+        MainApplication.getLayerManager().addLayer(osmLayer);
+
+        way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
+        way1.getNodes().forEach(aiLayer.getDataSet()::addPrimitive);
+        aiLayer.getDataSet().addPrimitive(way1);
+
+        way2 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
+        way2.getNodes().forEach(aiLayer.getDataSet()::addPrimitive);
+        aiLayer.getDataSet().addPrimitive(way2);
+
+        action = new MapWithAIMoveAction();
+        hook = new MapWithAIUploadHook(info);
+    }
 
     /**
      * Test method for {@link MapWithAIUploadHook#modifyChangesetTags(Map)}.
@@ -45,31 +78,12 @@ public class MapWithAIUploadHookTest {
      * @throws PluginException
      */
     @Test
-    public void testModifyChangesetTags() throws PluginException {
-        final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        PluginInformation info = new PluginInformation(in, "MapWithAI", null);
-        info.localversion = "no-such-version";
-
-        MapWithAIUploadHook hook = new MapWithAIUploadHook(info);
-
-        MapWithAILayer aiLayer = MapWithAIDataUtils.getLayer(true);
-        OsmDataLayer osmLayer = new OsmDataLayer(new DataSet(), "no-name", null);
-        MainApplication.getLayerManager().addLayer(osmLayer);
-
-        Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
-        way1.getNodes().forEach(aiLayer.getDataSet()::addPrimitive);
-        aiLayer.getDataSet().addPrimitive(way1);
-
-        Way way2 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
-        way2.getNodes().forEach(aiLayer.getDataSet()::addPrimitive);
-        aiLayer.getDataSet().addPrimitive(way2);
-
+    public void testModifyChangesetTags() {
         Map<String, String> tags = new TreeMap<>();
         hook.modifyChangesetTags(tags);
         assertTrue(tags.isEmpty(), "Tags should be empty due to no primitives being added");
 
         aiLayer.getDataSet().setSelected(way1);
-        MapWithAIMoveAction action = new MapWithAIMoveAction();
         action.actionPerformed(null);
 
         hook.modifyChangesetTags(tags);
@@ -118,5 +132,33 @@ public class MapWithAIUploadHookTest {
         assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
         assertTrue(split.contains("task=".concat(tBBox.toStringCSV(","))),
                 "There should be a task in the mapwithai:options");
+    }
+
+    @Test
+    public void testLongUrls() {
+        aiLayer.getDataSet().addSelected(way2.firstNode());
+        action.actionPerformed(null);
+        String superLongURL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("False URL", superLongURL), true, false);
+        Map<String, String> tags = new TreeMap<>();
+        hook.modifyChangesetTags(tags);
+        assertTrue(tags.entrySet().parallelStream().map(Map.Entry::getValue).mapToInt(String::length).max()
+                .orElse(256) <= 255);
+        String fullTags = tags.entrySet().stream().filter(e -> e.getKey().contains("mapwithai:options"))
+                .map(Map.Entry::getValue).collect(Collectors.joining());
+        String url = fullTags.split("url_ids=", -1)[1];
+        assertEquals(superLongURL, url);
+    }
+
+    @Test
+    public void testEmptyUrl() {
+        // While this should never happen without significant effort on the part of the
+        // user, we still handle this case.
+        aiLayer.getDataSet().addSelected(way2.firstNode());
+        action.actionPerformed(null);
+        MapWithAIPreferenceHelper.setMapWithAIUrl(null, true, false);
+        Map<String, String> tags = new TreeMap<>();
+        hook.modifyChangesetTags(tags);
+        assertTrue(tags.entrySet().stream().map(Map.Entry::getValue).noneMatch(s -> s.contains("url")));
     }
 }
