@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai.frontend;
+package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +23,8 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
-import org.openstreetmap.josm.plugins.mapwithai.frontend.MapWithAIDownloadReader.MapWithAIDownloadData;
+import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader;
+import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader.MapWithAIDownloadData;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.ImageProvider;
