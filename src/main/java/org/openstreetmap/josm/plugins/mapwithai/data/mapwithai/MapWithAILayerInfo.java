@@ -67,6 +67,10 @@ public class MapWithAILayerInfo {
     /** Unique instance -- MUST be after DEFAULT_LAYER_SITES */
     public static final MapWithAILayerInfo instance = new MapWithAILayerInfo();
 
+    public static MapWithAILayerInfo getInstance() {
+        return instance;
+    }
+
     /**
      * Returns the list of source layers sites.
      *

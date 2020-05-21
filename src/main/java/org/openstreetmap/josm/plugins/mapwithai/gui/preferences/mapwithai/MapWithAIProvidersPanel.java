@@ -29,6 +29,7 @@ import java.util.function.Function;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -107,7 +108,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     public final JToolBar defaultToolbar;
 
     // Private members
-    private final PreferenceTabbedPane gui;
+    private final JComponent gui;
     private final transient MapWithAILayerInfo layerInfo;
 
     /**
@@ -227,7 +228,7 @@ public class MapWithAIProvidersPanel extends JPanel {
      * @param gui          The parent preference tab pane
      * @param layerInfoArg The list of imagery entries to display
      */
-    public MapWithAIProvidersPanel(final PreferenceTabbedPane gui, MapWithAILayerInfo layerInfoArg) {
+    public MapWithAIProvidersPanel(final JComponent gui, MapWithAILayerInfo layerInfoArg) {
         super(new GridBagLayout());
         this.gui = gui;
         this.layerInfo = layerInfoArg;
@@ -474,7 +475,14 @@ public class MapWithAIProvidersPanel extends JPanel {
 
             if (addDialog.getValue() == 1) {
                 try {
-                    activeModel.addRow(p.getSourceInfo());
+                    MapWithAIInfo info = p.getSourceInfo();
+                    if (MapWithAIInfo.MapWithAIType.ESRI.equals(info.getSourceType())) {
+                        for (MapWithAIInfo i : MapWithAILayerInfo.addEsriLayer(info)) {
+                            activeModel.addRow(i);
+                        }
+                    } else {
+                        activeModel.addRow(info);
+                    }
                 } catch (IllegalArgumentException ex) {
                     if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
                         throw ex;

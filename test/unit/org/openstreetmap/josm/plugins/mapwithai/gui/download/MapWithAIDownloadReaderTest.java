@@ -23,7 +23,6 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
-import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader.MapWithAIDownloadData;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;

@@ -10,7 +10,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 import javax.swing.Icon;
@@ -18,17 +17,13 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
-import org.openstreetmap.josm.actions.downloadtasks.PostDownloadHandler;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.download.AbstractDownloadSourcePanel;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
 import org.openstreetmap.josm.gui.download.DownloadSettings;
 import org.openstreetmap.josm.gui.download.DownloadSource;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.plugins.mapwithai.backend.BoundingBoxMapWithAIDownloader;
-import org.openstreetmap.josm.plugins.mapwithai.backend.DetectTaskingManagerUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadMapWithAITask;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
@@ -48,12 +43,9 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         Bounds area = settings.getDownloadBounds().orElse(new Bounds(0, 0, 0, 0));
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         task.setZoomAfterDownload(settings.zoomToData());
-        data.getUrls().stream().filter(i -> i.getBounds() == null || i.getBounds().intersects(area)).forEach(url -> {
-            Future<?> future = task.download(
-                    new BoundingBoxMapWithAIDownloader(area, url, DetectTaskingManagerUtils.hasTaskingManagerLayer()),
-                    new DownloadParams(), area, null);
-            MainApplication.worker.execute(new PostDownloadHandler(task, future, data.getErrorReporter()));
-        });
+        DownloadParams params = new DownloadParams();
+        params.withNewLayer(settings.asNewLayer());
+        task.download(params, area, null);
     }
 
     @Override
@@ -151,12 +143,24 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
                 return;
             }
 
-            double width = Math.max(bbox.getMin().greatCircleDistance(new LatLon(bbox.getMinLat(), bbox.getMaxLon())),
-                    bbox.getMax().greatCircleDistance(new LatLon(bbox.getMaxLat(), bbox.getMinLon())));
-            double height = Math.max(bbox.getMin().greatCircleDistance(new LatLon(bbox.getMaxLat(), bbox.getMinLon())),
-                    bbox.getMax().greatCircleDistance(new LatLon(bbox.getMinLat(), bbox.getMaxLon())));
-            displaySizeCheckResult(height > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS
-                    || width > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+            displaySizeCheckResult(isDownloadAreaTooLarge(bbox));
+        }
+
+        /**
+         * Check if the download area is too large
+         *
+         * @param bound The bound to check
+         * @return {@code true} if the area is too large
+         */
+        public static boolean isDownloadAreaTooLarge(Bounds bound) {
+            double width = Math.max(
+                    bound.getMin().greatCircleDistance(new LatLon(bound.getMinLat(), bound.getMaxLon())),
+                    bound.getMax().greatCircleDistance(new LatLon(bound.getMaxLat(), bound.getMinLon())));
+            double height = Math.max(
+                    bound.getMin().greatCircleDistance(new LatLon(bound.getMaxLat(), bound.getMinLon())),
+                    bound.getMax().greatCircleDistance(new LatLon(bound.getMinLat(), bound.getMaxLon())));
+            return height > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS
+                    || width > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS;
         }
 
         private void displaySizeCheckResult(boolean isAreaTooLarge) {

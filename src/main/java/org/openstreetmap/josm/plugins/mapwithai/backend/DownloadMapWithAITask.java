@@ -3,28 +3,41 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.downloadtasks.DownloadOsmTask;
 import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
 import org.openstreetmap.josm.data.Bounds;
-import org.openstreetmap.josm.data.ViewportData;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.MapFrame;
-import org.openstreetmap.josm.gui.io.UpdatePrimitivesTask;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.io.OsmServerReader;
+import org.openstreetmap.josm.io.OsmTransferException;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.Utils;
+import org.xml.sax.SAXException;
 
 public class DownloadMapWithAITask extends DownloadOsmTask {
+    private List<MapWithAIInfo> urls;
+
+    public DownloadMapWithAITask() {
+        urls = MapWithAILayerInfo.getInstance().getLayers();
+    }
+
     @Override
     public Future<?> download(OsmServerReader reader, DownloadParams settings, Bounds downloadArea,
             ProgressMonitor progressMonitor) {
-        return download(new MapWithAIDownloadTask(settings, reader, progressMonitor, zoomAfterDownload), downloadArea);
+        DownloadTask task = new DownloadTask(settings, tr("MapWithAI Download"), progressMonitor, false, false,
+                downloadArea);
+        return MainApplication.worker.submit(task);
     }
 
     @Override
@@ -41,49 +54,58 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         return null;
     }
 
-    protected class MapWithAIDownloadTask extends DownloadOsmTask.DownloadTask {
+    protected class DownloadTask extends AbstractInternalTask {
+        BoundingBoxMapWithAIDownloader downloader;
+        final Bounds bounds;
 
-        /**
-         * Constructs a new {@code DownloadTask}.
-         *
-         * @param settings        download settings
-         * @param reader          OSM data reader
-         * @param progressMonitor progress monitor
-         */
-        public MapWithAIDownloadTask(DownloadParams settings, OsmServerReader reader, ProgressMonitor progressMonitor) {
-            this(settings, reader, progressMonitor, true);
+        public DownloadTask(DownloadParams settings, String title, boolean ignoreException, boolean zoomAfterDownload,
+                Bounds bounds) {
+            this(settings, title, NullProgressMonitor.INSTANCE, ignoreException, zoomAfterDownload, bounds);
         }
 
-        /**
-         * Constructs a new {@code DownloadTask}.
-         *
-         * @param settings          download settings
-         * @param reader            OSM data reader
-         * @param progressMonitor   progress monitor
-         * @param zoomAfterDownload If true, the map view will zoom to download area
-         *                          after download
-         */
-        public MapWithAIDownloadTask(DownloadParams settings, OsmServerReader reader, ProgressMonitor progressMonitor,
-                boolean zoomAfterDownload) {
-            super(settings, reader, progressMonitor, zoomAfterDownload);
+        public DownloadTask(DownloadParams settings, String title, ProgressMonitor progressMonitor,
+                boolean ignoreException, boolean zoomAfterDownload, Bounds bounds) {
+            super(settings, title, progressMonitor, ignoreException, zoomAfterDownload);
+            this.bounds = bounds;
         }
 
         @Override
-        protected void loadData(String newLayerName, Bounds bounds) {
-            MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
-            Collection<OsmPrimitive> primitivesToUpdate = searchPrimitivesToUpdate(bounds, layer.getDataSet());
-            layer.mergeFrom(dataSet);
-            MapFrame map = MainApplication.getMap();
-            if (map != null && (zoomAfterDownload
-                    || MainApplication.getLayerManager().getLayers().parallelStream().allMatch(layer::equals))) {
-                computeBbox(bounds).map(ViewportData::new).ifPresent(map.mapView::zoomTo);
+        protected void cancel() {
+            setCanceled(true);
+            if (downloader != null) {
+                downloader.cancel();
             }
-            if (!primitivesToUpdate.isEmpty()) {
-                MainApplication.worker.execute(new UpdatePrimitivesTask(layer, primitivesToUpdate));
+        }
+
+        @Override
+        protected void realRun() throws SAXException, IOException, OsmTransferException {
+            Collection<MapWithAIInfo> relevantUrls = urls.stream()
+                    .filter(i -> i.getBounds() == null || i.getBounds().intersects(bounds))
+                    .collect(Collectors.toList());
+            ProgressMonitor monitor = getProgressMonitor();
+            if (relevantUrls.size() < 5) {
+                monitor.indeterminateSubTask(tr("MapWithAI Download"));
+            } else {
+                monitor.setTicksCount(relevantUrls.size());
             }
-            layer.onPostDownloadFromServer(bounds);
+            for (MapWithAIInfo info : relevantUrls) {
+                if (isCanceled()) {
+                    break;
+                }
+                downloader = new BoundingBoxMapWithAIDownloader(bounds, info, false);
+                DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, true));
+                synchronized (DownloadMapWithAITask.DownloadTask.class) {
+                    MapWithAIDataUtils.getLayer(true).getDataSet().mergeFrom(ds);
+                }
+            }
+        }
+
+        @Override
+        protected void finish() {
+            if (!isCanceled() && !isFailed()) {
+                GetDataRunnable.cleanup(MapWithAIDataUtils.getLayer(true).getDataSet(), null);
+            }
         }
 
     }
-
 }

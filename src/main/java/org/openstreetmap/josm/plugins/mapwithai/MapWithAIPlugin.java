@@ -23,6 +23,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
+import org.openstreetmap.josm.gui.download.OSMDownloadSource;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
 import org.openstreetmap.josm.plugins.Plugin;
@@ -41,7 +42,9 @@ import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIsl
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressOrder;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StubEndsTest;
+import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadOptions;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader;
+import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
@@ -101,14 +104,19 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         MapWithAIDataUtils.addMapWithAIPaintStyles();
 
+        destroyables = new ArrayList<>();
+        MapWithAIDownloadOptions mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
+        mapWithAIDownloadOptions.addGui(DownloadDialog.getInstance());
+        destroyables.add(mapWithAIDownloadOptions);
+
         setVersionInfo(info.localversion);
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
         new MapWithAIRemoteControl(); // instantiate to get action into Remote Control Preferences
-        destroyables = new ArrayList<>();
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());
         mapWithAIDownloadReader = new MapWithAIDownloadReader();
         DownloadDialog.addDownloadSource(mapWithAIDownloadReader);
+        OSMDownloadSource.addDownloadType(new MapWithAIDownloadSourceType());
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));
     }
 
@@ -171,6 +179,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         destroyables.forEach(Destroyable::destroy);
         DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
+        OSMDownloadSource.removeDownloadType(OSMDownloadSource.getDownloadType(MapWithAIDownloadSourceType.class));
         VALIDATORS.forEach(OsmValidator::removeTest);
         DownloadListener.destroyAll();
     }
