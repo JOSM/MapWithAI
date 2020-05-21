@@ -1,0 +1,27 @@
+{
+  "id" : "ca7c6f18-2915-4be6-b28a-1729a6217b54",
+  "name" : "faviconico",
+  "request" : {
+    "url" : "/favicon.ico",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "base64Body" : "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAHh0lEQVRYR5WXe1BU9xXHP/fu3WVZdrkuiKDsGsAgKgri21HxQawx0bWNTdJHGpu009E0zSSNjW3HdjLNNCY1mXEmSWM7GadOnE6qGaOI1mittQXF+iCigoDvBXFZFvbuC9hn/3Ahu3dXk37/ufd3zvmd7/md373nd34CXwOy1SYAc4FVQAFQD+xS7LXhuF4CngEWAncrp03458d/+uXJh6z5g1/lW3iQMk78beA3wDSV+gCwJv6+H1idqLRaxlypmFL8/hubn/toQvG4Ie6D+wYgW21WYKc+U7c0Eo4QCkXSma2KP+vSKQFWrZj3xeyZkza8vOGJxnR6TTqhbLUtzNDrTlSUF09ZWTMHh7MfxeMHwGjMBCASiZKbm321uKigRNJKC32+AcxmE7KcRSBwb8HFRQW0XbUXhEORp5/70QbH0cOfNqm5UjIgW23LJK2mbvWKeZn5Y3IAcPT0cfJMC3NnTEIURc43dzA6V2bOjEm7ykotuQcPn14pZ2dhNpsQRQGXy8O+vzcQCUchHnRNdVWwqrJ04ysvrH0vkU9UkU8G9pllY2Zrh31Enj8mh5pFVRizMrnd1cPoXJkc2URBvjnrL389ciUSjTBqlBFJ0iCKInl5o5g6uTjRNSajQed0urd+8NH+pG9lJADZatMDewGTs1fhStttwuEv9z07OwuAcfm5eH0DKL4AWYZM3ZKFlQX/qm/mk8+OE41GR+ynTS5Gp5MA8PkGuN3pwOlSMrq6ev98oqG5MCUA4HfApOGBRhKJRmMkIjs7C0thHssWTWfKxPEcPX6uJRgKeWZNL8XvG6QtIWuCADqdluxsAwC3OnvQaSXciq+gvvHih7FYTBgJQLbaSoCXE8ks4/JGVpCIoaEgl1tvsreuPub3D+x7tGbO9YcnWGJGYyaOXjcAXm+A2sOnyMjQUjbBgiAIOJz9dN5xonj8eH2Bxz7ccWApCRnYBGiTiIKhFHIAn3+Q+sZLMa83sPHgnjcHFy+oaGu6ePV1n28g1nGtk75+L46efhTFj8vl4UxTO7FYjMGBIKfOtCBJGmJRND3O/l8DCLLVZgR6gMxhEp1OYq2tGjm+74kwmQydMypK31u5fPYHwCygEvCtW/921/5DJ7doJLFKkiSGBoMpcwGe/c5yDAY9oiCEJpWNL5EAWyI5QPnkohRyURBCFVNL6tauqf63VtJEHR/3fNPToDytH6/vLdxY2Lxz+6bBxjMtNY+u/dW6SDi4BdCryU0mAwaDHo/Hjz8wqL1w6doaCahRG6qrniASfXzF3O0L5k69OnQnqG99qf0x5aiyiPC9LXTsdHTmfTdv67zXpxQp9tptstXWBBxTFzqvN4C9s4fmlht4fQHcbt8MKZ7GJHTecSaNR+fIVxbMnXo1GoyKlx65+FLoVqgwQU24M2zp3tq9LdAaeDEWizULgnBCttqOACsT7SaWWsnNyWZgYAhRFFi6qLJaApIrBuB2+7jr6KMg/14lNBkNToC+2r5CNXkCBKVOqRYE4Y/xcbs6AFefwrUbd1i8oALzKBPRaMwiAia1J0mrQSMmFUkAwu5IRoowGSn7ngiXy0NGhpa80aOQJA06naRPZQHCoQifHarHrfgAuH6z2wP8Y6hrsCOd/f+D4fMFIBaLIQL+dIbRSAxXnweAs+fbbgmC0NL9h+7dQNpzOY62hHefWllcVJD0d4WC4SERuKU2HEbj2VYCgUGWL5tpj8ViRfP88yTgh4Anjfkh4PcJ49Nqg8ryCUnjgaGgUwSa1YbD8HoD7N5/Yu+rLz7533jzoZ0fmL8LKAW2Ay6gCVg1PzD/8fmB+YmB1QGfJvoLhpKrq8830CbIVtvKePRq9AC/BfqBZ0wmQ84rL6ztyjLof7H++dW309gjW23ZwPNAOdAB7ACeAN4Axjz1rSXkmE30uhTcio9MfcY6IT7xp8BbgDGe3vfjK3gLqB4mMJtNlJc95BYE4Z1Pdmz+T1aW3g201zdeDK96avP3gK3AmISY+oHXgN3AprFjc382s6LUdPpcq99SmPfm8QPvbhnpiGSrLQMYC9yNH80/v1/L9siSGUwrL+4db80/pxHFyLmm9qkHPj81XvH4R7ogFRqA78d9jwW63bf3BwVBiKVryV4F3knnBcBSmMc3ls5Ke1S7+jzs2Xci7TzgOjBFsdcmdcjp6sCzaWQjqCwvSUsOkKHTMrtqIiXFYzGZDGp1CbBCLUznKelkVKOl/RZWS+I2fwmjMZOZVWUARKNRdu05RsCfdDeR1XPSZeBgGtkIbty8y6kzLUQiafd6BA2nL6vJI0DK3SDlI9PLZQ3AMsCi1g3D0dNPJBrFWpiXVn/2i3YuXLymFr+m2GtTLjApGVDstb54j/A3tS4Rcuoec+HydfbW1XP2fGJFxg/8QLHXvpsy4WvcDdfF/+2kpZrNJp5cU40oikQiURSPn6bmDjqudaldHAfWK/badrViGA8MgHtBGIGfAD8GJgNMr3iYWdMn0txyHXuXk+5uV+KUKHAE2KbYaz+/r+M4vjKARMhWWymwuLioYI5Opy1sa7dnxQl74ofaOeCYYq9NiuhB+B9nAMhoxt6i3QAAAABJRU5ErkJggg==",
+    "headers" : {
+      "Content-Type" : "image/x-icon",
+      "Date" : "Wed, 20 May 2020 20:48:55 GMT",
+      "Last-Modified" : "Tue, 28 May 2019 19:23:26 GMT",
+      "ETag" : "\"753bb356c99d2af802399138b68e11a2\"",
+      "Accept-Ranges" : "bytes",
+      "Server" : "AmazonS3",
+      "X-Cache" : "Miss from cloudfront",
+      "Via" : "1.1 f33529eebdae9f360e1e83d3ee6348f6.cloudfront.net (CloudFront)",
+      "X-Amz-Cf-Pop" : "SFO5-C3",
+      "X-Amz-Cf-Id" : "hgNIOJVi2BMfl0pDZwuWYzTO_VRcX1M96LFOz2_72BRIkJd38CB0_Q=="
+    }
+  },
+  "uuid" : "ca7c6f18-2915-4be6-b28a-1729a6217b54",
+  "persistent" : true,
+  "insertionIndex" : 17
+}

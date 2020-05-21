@@ -2,8 +2,10 @@
 package org.openstreetmap.josm.plugins.mapwithai.testutils;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.junit.runners.model.InitializationError;
@@ -21,6 +23,7 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
 import mockit.integration.TestRunnerDecorator;
 
@@ -98,6 +101,9 @@ public class MapWithAITestRules extends JOSMTestRules {
         super.after();
         if (wiremock) {
             wireMock.stop();
+            List<LoggedRequest> requests = wireMock.findUnmatchedRequests().getRequests();
+            requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
+            assertTrue(requests.isEmpty());
             resetMapWithAILayerInfo();
             DataAvailability.setReleaseUrl(DataAvailability.DEFAULT_SERVER_URL);
             Config.getPref().put("osm-server.url", null);
