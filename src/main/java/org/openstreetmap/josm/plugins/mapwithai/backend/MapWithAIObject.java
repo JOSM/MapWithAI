@@ -74,6 +74,7 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
     @Override
     public void destroy() {
         statusLines.forEach(mapStatus -> mapStatus.remove(mapWithAIObjects));
+        statusLines.clear();
         UndoRedoHandler.getInstance().removeCommandQueueListener(this);
     }
 }
