@@ -168,6 +168,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
     private MapWithAIType type;
     private JsonArray parameters;
     private Map<String, String> replacementTags;
+    private boolean conflate;
+    private String conflationUrl;
+    private JsonArray conflationParameters;
 
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
@@ -226,6 +229,12 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         String parameters;
         @StructEntry
         Map<String, String> replacementTags;
+        @StructEntry
+        boolean conflate;
+        @StructEntry
+        String conflationUrl;
+        @StructEntry
+        String conflationParameters;
 
         /**
          * Constructs a new empty {@MapWithAIPreferenceEntry}
@@ -261,6 +270,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             if (i.parameters != null) {
                 parameters = i.parameters.toString();
             }
+            if (i.conflationParameters != null) {
+                conflationParameters = i.conflationParameters.toString();
+            }
             if (i.replacementTags != null) {
                 replacementTags = i.replacementTags;
             }
@@ -278,6 +290,8 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                     shapes = shapesString.toString();
                 }
             }
+            conflate = i.conflate;
+            conflationUrl = i.conflationUrl;
         }
 
         @Override
@@ -378,6 +392,15 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         countryCode = intern(e.country_code);
         icon = intern(e.icon);
         category = MapWithAICategory.fromString(e.category);
+        conflate = e.conflate;
+        conflationUrl = e.conflationUrl;
+        if (e.conflationParameters != null) {
+            try (JsonParser parser = Json.createParser(new StringReader(e.conflationParameters))) {
+                if (parser.hasNext() && JsonParser.Event.START_ARRAY.equals(parser.next())) {
+                    conflationParameters = parser.getArray();
+                }
+            }
+        }
     }
 
     public MapWithAIInfo(MapWithAIInfo i) {
@@ -406,6 +429,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         setCustomHttpHeaders(i.customHttpHeaders);
         this.category = i.category;
         this.replacementTags = i.replacementTags;
+        this.conflate = i.conflate;
+        this.conflationUrl = i.conflationUrl;
+        this.conflationParameters = i.conflationParameters;
     }
 
     @Override
@@ -433,7 +459,9 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                 && Objects.equals(this.countryCode, other.countryCode) && Objects.equals(this.date, other.date)
                 && Objects.equals(this.icon, other.icon) && Objects.equals(this.description, other.description)
                 && Objects.equals(this.category, other.category)
-                && Objects.equals(this.replacementTags, other.replacementTags);
+                && Objects.equals(this.replacementTags, other.replacementTags)
+                && Objects.equals(this.conflationUrl, other.conflationUrl)
+                && Objects.equals(this.conflationParameters, other.conflationParameters);
         // CHECKSTYLE.ON: BooleanExpressionComplexity
     }
 
@@ -723,14 +751,57 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         return parameters;
     }
 
+    /**
+     * Get the parameters as a string (for URL usage)
+     *
+     * @return The string to be appended to the url
+     */
     public List<String> getParametersString() {
+        return getParametersString(parameters);
+    }
+
+    /**
+     * Get the conflation parameters as a string
+     *
+     * @return The conflation parameters to be appended to the url
+     */
+    public List<String> getConflationParameterString() {
+        return getParametersString(this.conflationParameters);
+    }
+
+    private static List<String> getParametersString(JsonArray parameters) {
         return parameters == null ? Collections.emptyList()
                 : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
                         .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
                         .map(map -> map.getString("parameter")).collect(Collectors.toList());
+
     }
 
     public String getUrlExpanded() {
+        StringBuilder sb;
+        if (conflate) {
+            sb = getConflationUrl();
+        } else {
+            sb = getNonConflatedUrl();
+        }
+        return sb.toString();
+    }
+
+    private StringBuilder getConflationUrl() {
+        if (conflationUrl == null) {
+            return getNonConflatedUrl();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(conflationUrl.replace("{id}", this.id));
+
+        List<String> parametersString = getConflationParameterString();
+        if (!parametersString.isEmpty()) {
+            sb.append('&').append(String.join("&", parametersString));
+        }
+        return sb;
+    }
+
+    private StringBuilder getNonConflatedUrl() {
         StringBuilder sb = new StringBuilder();
         if (url != null && !url.trim().isEmpty()) {
             sb.append(url);
@@ -740,12 +811,13 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                 }
                 sb.append("query?geometryType=esriGeometryEnvelope&geometry={bbox}&inSR=4326&f=geojson&outfields=*");
             }
+
             List<String> parametersString = getParametersString();
             if (!parametersString.isEmpty()) {
                 sb.append('&').append(String.join("&", parametersString));
             }
         }
-        return sb.toString();
+        return sb;
     }
 
     /**
@@ -776,6 +848,25 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      */
     public Map<String, String> getReplacementTags() {
         return replacementTags;
+    }
+
+    /**
+     * @param conflation If true, try to use the conflation URL
+     */
+    public void setConflation(boolean conflation) {
+        this.conflate = conflation;
+    }
+
+    /**
+     * @param conflationUrl Set the conflation url to use. null will disable, but
+     *                      you should use {@link MapWithAIInfo#setConflation}.
+     */
+    public void setConflationUrl(String conflationUrl) {
+        this.conflationUrl = conflationUrl;
+    }
+
+    public void setConflationParameters(JsonArray parameters) {
+        this.conflationParameters = parameters;
     }
 
 }

@@ -100,6 +100,8 @@ public class MapWithAISourceReader implements Closeable {
             String url = values.getString("url", "");
             String type = values.getString("type", MapWithAIInfo.MapWithAIType.THIRD_PARTY.getTypeString());
             String eula = values.getString("eula", "");
+            boolean conflation = values.getBoolean("conflate", false);
+            String conflationUrl = values.getString("conflationUrl", null);
             String id = values.getString("id", name.replace(" ", "_"));
             JsonValue countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
             List<ImageryBounds> bounds = new ArrayList<>();
@@ -122,6 +124,9 @@ public class MapWithAISourceReader implements Closeable {
             MapWithAIInfo info = new MapWithAIInfo(name, url, type, eula, id);
             info.setDefaultEntry(values.getBoolean("default", false));
             info.setParameters(values.getJsonArray("parameters"));
+            info.setConflationParameters(values.getJsonArray("conflationParameters"));
+            info.setConflation(conflation);
+            info.setConflationUrl(conflationUrl);
             if (values.containsKey("terms_of_use_url")) {
                 info.setTermsOfUseURL(values.getString("terms_of_use_url"));
             }

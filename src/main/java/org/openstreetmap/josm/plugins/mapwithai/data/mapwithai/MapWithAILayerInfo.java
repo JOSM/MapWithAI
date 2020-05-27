@@ -230,7 +230,14 @@ public class MapWithAILayerInfo {
         }
     }
 
-    private static Collection<MapWithAIInfo> addEsriLayer(MapWithAIInfo layer) {
+    /**
+     * Take a {@link MapWithAIInfo.MapWithAIType#ESRI} layer and convert it to a
+     * list of "true" layers.
+     *
+     * @param layer The ESRI layer (no checks performed here)
+     * @return The layers to be added instead of the ESRI layer.
+     */
+    public static Collection<MapWithAIInfo> addEsriLayer(MapWithAIInfo layer) {
         Pattern startReplace = Pattern.compile("\\{start\\}");
         String search = "/search?sortField=added&sortOrder=desc&num=12&start={start}&f=json";
         String url = layer.getUrl();
@@ -254,7 +261,8 @@ public class MapWithAILayerInfo {
                     searchUrl = startReplace.matcher(search).replaceAll(next);
                     JsonArray features = obj.getJsonArray("results");
                     for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
-                        MapWithAIInfo newInfo = new MapWithAIInfo();
+                        // Use the initial esri server information to keep conflation info
+                        MapWithAIInfo newInfo = new MapWithAIInfo(layer);
                         newInfo.setId(feature.getString("id"));
                         if (feature.getString("type", "").equals("Feature Service")) {
                             newInfo.setUrl(featureService(newInfo, feature.getString("url")));

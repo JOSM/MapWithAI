@@ -92,12 +92,16 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     @Override
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds;
-        if (MapWithAIInfo.MapWithAIType.ESRI_FEATURE_SERVER.equals(this.info.getSourceType())) {
+        String contentType = this.activeConnection.getResponse().getHeaderField("Content-Type");
+        if (contentType.contains("text/xml")) {
+            ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
+        } else if (MapWithAIInfo.MapWithAIType.ESRI_FEATURE_SERVER.equals(this.info.getSourceType())) {
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
                 GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
             }
         } else {
+            // Fall back to XML parsing
             ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
         }
         if (url != null && info.getUrl() != null && !info.getUrl().trim().isEmpty()) {
