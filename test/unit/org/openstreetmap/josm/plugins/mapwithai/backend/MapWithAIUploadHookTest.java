@@ -29,6 +29,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.PluginException;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -152,6 +153,7 @@ public class MapWithAIUploadHookTest {
 
     @Test
     public void testEmptyUrl() {
+        MapWithAILayerInfo.getInstance().clear();
         // While this should never happen without significant effort on the part of the
         // user, we still handle this case.
         aiLayer.getDataSet().addSelected(way2.firstNode());
