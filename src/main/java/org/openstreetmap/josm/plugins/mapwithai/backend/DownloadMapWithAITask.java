@@ -88,21 +88,23 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
             } else {
                 monitor.setTicksCount(relevantUrls.size());
             }
+            downloadedData = new DataSet();
             for (MapWithAIInfo info : relevantUrls) {
                 if (isCanceled()) {
                     break;
                 }
                 downloader = new BoundingBoxMapWithAIDownloader(bounds, info, false);
                 DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, true));
-                synchronized (DownloadMapWithAITask.DownloadTask.class) {
-                    MapWithAIDataUtils.getLayer(true).getDataSet().mergeFrom(ds);
-                }
+                downloadedData.mergeFrom(ds);
             }
         }
 
         @Override
         protected void finish() {
             if (!isCanceled() && !isFailed()) {
+                synchronized (DownloadMapWithAITask.DownloadTask.class) {
+                    MapWithAIDataUtils.getLayer(true).getDataSet().mergeFrom(downloadedData);
+                }
                 GetDataRunnable.cleanup(MapWithAIDataUtils.getLayer(true).getDataSet(), null);
             }
         }
