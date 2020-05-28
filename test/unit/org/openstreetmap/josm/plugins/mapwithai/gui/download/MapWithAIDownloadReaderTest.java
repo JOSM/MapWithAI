@@ -26,6 +26,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelpe
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader.MapWithAIDownloadData;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.ImageProvider;
 
 public class MapWithAIDownloadReaderTest {
@@ -44,6 +45,7 @@ public class MapWithAIDownloadReaderTest {
 
     @Test
     public void testDoDownload() {
+        new WindowMocker();
         MapWithAIDownloadReader reader = new MapWithAIDownloadReader();
         // TODO revert commit that adds these lines as soon as MapWithAI fixes timeout
         // issue see

@@ -26,6 +26,7 @@ import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPrefere
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -47,6 +48,7 @@ public class MapWithAIPluginTest {
      */
     @Before
     public void setUp() throws Exception {
+        new WindowMocker();
         final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
         info = new PluginInformation(in, "MapWithAI", null);
         info.localversion = VERSION;
