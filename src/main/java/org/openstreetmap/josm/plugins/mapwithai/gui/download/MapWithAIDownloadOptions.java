@@ -4,10 +4,14 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.GridBagLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
 import org.openstreetmap.josm.data.Bounds;
-import org.openstreetmap.josm.gui.bbox.JosmMapViewer;
+import org.openstreetmap.josm.gui.bbox.BBoxChooser;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
 import org.openstreetmap.josm.gui.download.DownloadSelection;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -15,10 +19,14 @@ import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWit
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.GBC;
 
-public class MapWithAIDownloadOptions extends JPanel implements DownloadSelection, Destroyable {
+/**
+ * Add options for MapWithAI downloads to the main JOSM download window
+ *
+ * @author Taylor Smock
+ */
+public class MapWithAIDownloadOptions extends JPanel implements DownloadSelection, Destroyable, PropertyChangeListener {
     private final JPanel optionPanel;
     private DownloadDialog iGui;
-    private JosmMapViewer defaultMap;
     private MapWithAIProvidersPanel mapwithaiProvidersPanel;
 
     public MapWithAIDownloadOptions() {
@@ -28,6 +36,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
         optionPanel.add(favorites, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this, MapWithAILayerInfo.getInstance());
         optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.CENTER));
+        mapwithaiProvidersPanel.defaultMap.addPropertyChangeListener(this);
     }
 
     @Override
@@ -38,7 +47,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
 
     @Override
     public void setDownloadArea(Bounds area) {
-        // TODO
+        mapwithaiProvidersPanel.setCurrentBounds(area);
     }
 
     @Override
@@ -48,4 +57,11 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
         }
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(BBoxChooser.BBOX_PROP) && iGui != null) {
+            mapwithaiProvidersPanel.fireAreaListeners();
+            iGui.boundingBoxChanged((Bounds) evt.getNewValue(), this);
+        }
+    }
 }

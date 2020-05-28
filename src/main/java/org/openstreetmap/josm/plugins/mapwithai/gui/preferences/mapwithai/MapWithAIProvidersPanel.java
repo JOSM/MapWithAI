@@ -17,11 +17,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -48,12 +46,12 @@ import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
 import org.openstreetmap.gui.jmapviewer.MapRectangleImpl;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapPolygon;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapRectangle;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.preferences.NamedColorProperty;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.bbox.JosmMapViewer;
 import org.openstreetmap.josm.gui.bbox.SlippyMapBBoxChooser;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.gui.preferences.imagery.ImageryProvidersPanel;
@@ -68,6 +66,7 @@ import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 import org.openstreetmap.josm.tools.LanguageInfo;
+import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -91,7 +90,7 @@ public class MapWithAIProvidersPanel extends JPanel {
      **/
     private final transient DefListSelectionListener defaultTableListener;
     /** The map displaying imagery bounds of selected default providers **/
-    public final JosmMapViewer defaultMap;
+    public final SlippyMapBBoxChooser defaultMap;
 
     // Public models
     /** The model of active providers **/
@@ -110,19 +109,28 @@ public class MapWithAIProvidersPanel extends JPanel {
     // Private members
     private final JComponent gui;
     private final transient MapWithAILayerInfo layerInfo;
+    private final transient ListenerList<AreaListener> areaListeners = ListenerList.create();
+
+    private static interface AreaListener {
+        void updateArea(Bounds area);
+    }
 
     /**
      * class to render the URL information of MapWithAI source
      *
      * @since 8065
      */
-    private static class MapWithAIURLTableCellRenderer extends DefaultTableCellRenderer {
+    private static class MapWithAIURLTableCellRenderer extends DefaultTableCellRenderer implements AreaListener {
         private static final long serialVersionUID = 184934756853356357L;
 
         private static final NamedColorProperty IMAGERY_BACKGROUND_COLOR = new NamedColorProperty(
                 marktr("MapWithAI Background: Default"), new Color(200, 255, 200));
+        private static final NamedColorProperty MAPWITHAI_AREA_BACKGROUND_COLOR = new NamedColorProperty(
+                marktr("MapWithAI Background: Layer in area"), Color.decode("#f1ffc7"));
 
         private final transient List<MapWithAIInfo> layers;
+
+        private Bounds area;
 
         MapWithAIURLTableCellRenderer(List<MapWithAIInfo> layers) {
             this.layers = layers;
@@ -133,18 +141,33 @@ public class MapWithAIProvidersPanel extends JPanel {
                 int row, int column) {
             JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
                     column);
-            GuiHelper.setBackgroundReadable(label, UIManager.getColor("Table.background"));
+            Color defaultColor = UIManager.getColor("Table.background");
+            GuiHelper.setBackgroundReadable(label, defaultColor);
             if (value != null) { // Fix #8159
                 String t = value.toString();
-                for (MapWithAIInfo l : layers) {
-                    if (l.getUrl().equals(t)) {
-                        GuiHelper.setBackgroundReadable(label, IMAGERY_BACKGROUND_COLOR.get());
-                        break;
+                MapWithAIInfo info = layers.stream().filter(i -> t.equals(i.getUrl())).findFirst().orElse(null);
+                if (info != null) {
+                    GuiHelper.setBackgroundReadable(label, IMAGERY_BACKGROUND_COLOR.get());
+                } else {
+                    info = MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
+                            .filter(i -> t.equals(i.getUrl())).findFirst().orElse(null);
+                    if (info != null) {
+                        if (this.area != null && (this.area.intersects(info.getBounds())
+                                || (info.getBounds() != null && info.getBounds().intersects(this.area)))) {
+                            GuiHelper.setBackgroundReadable(label, MAPWITHAI_AREA_BACKGROUND_COLOR.get());
+                        } else {
+                            GuiHelper.setBackgroundReadable(label, defaultColor);
+                        }
                     }
                 }
                 label.setToolTipText((String) value);
             }
             return label;
+        }
+
+        @Override
+        public void updateArea(Bounds area) {
+            this.area = area;
         }
     }
 
@@ -260,7 +283,10 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         TableColumnModel mod = defaultTable.getColumnModel();
         mod.getColumn(3).setPreferredWidth(775);
-        mod.getColumn(3).setCellRenderer(new MapWithAIURLTableCellRenderer(layerInfo.getLayers()));
+        MapWithAIURLTableCellRenderer defaultTableCellRenderer = new MapWithAIURLTableCellRenderer(
+                layerInfo.getLayers());
+        areaListeners.addListener(defaultTableCellRenderer);
+        mod.getColumn(3).setCellRenderer(defaultTableCellRenderer);
         mod.getColumn(2).setPreferredWidth(475);
         mod.getColumn(2).setCellRenderer(new MapWithAINameTableCellRenderer());
         mod.getColumn(1).setCellRenderer(new MapWithAICountryTableCellRenderer());
@@ -270,7 +296,10 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         mod = activeTable.getColumnModel();
         mod.getColumn(1).setPreferredWidth(800);
-        mod.getColumn(1).setCellRenderer(new MapWithAIURLTableCellRenderer(layerInfo.getAllDefaultLayers()));
+        MapWithAIURLTableCellRenderer activeTableCellRenderer = new MapWithAIURLTableCellRenderer(
+                layerInfo.getAllDefaultLayers());
+        areaListeners.addListener(activeTableCellRenderer);
+        mod.getColumn(1).setCellRenderer(activeTableCellRenderer);
         mod.getColumn(0).setPreferredWidth(200);
 
         RemoveEntryAction remove = new RemoveEntryAction();
@@ -291,7 +320,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         add(defaultPane, GBC.std().fill(GridBagConstraints.BOTH).weight(1.0, 0.6).insets(5, 0, 0, 0));
 
         // Add default item map
-        defaultMap = new JosmMapViewer();
+        defaultMap = new SlippyMapBBoxChooser();
         defaultMap.setTileSource(SlippyMapBBoxChooser.DefaultOsmTileSourceProvider.get()); // for attribution
         defaultMap.addMouseListener(new MouseAdapter() {
             @Override
@@ -303,6 +332,22 @@ public class MapWithAIProvidersPanel extends JPanel {
         });
         defaultMap.setZoomControlsVisible(false);
         defaultMap.setMinimumSize(new Dimension(100, 200));
+        defaultMap.addJMVListener(e -> {
+            Rectangle2D visibleRect = defaultMap.getVisibleRect();
+            ICoordinate max = defaultMap.getPosition((int) visibleRect.getMaxX(), (int) visibleRect.getMaxY());
+            ICoordinate min = defaultMap.getPosition((int) visibleRect.getMinX(), (int) visibleRect.getMinY());
+            Bounds b = new Bounds(
+                    new LatLon(Math.min(max.getLat(), min.getLat()),
+                            LatLon.toIntervalLon(Math.min(max.getLon(), min.getLon()))),
+                    new LatLon(Math.max(max.getLat(), min.getLat()),
+                            LatLon.toIntervalLon(Math.max(max.getLon(), min.getLon()))));
+
+            this.areaListeners.fireEvent(f -> f.updateArea(b));
+            // This is required to ensure that all cells are appropriately coloured
+            // Both revalidate and repaint are needed.
+            this.defaultTable.revalidate();
+            this.defaultTable.repaint();
+        });
         add(defaultMap, GBC.std().fill(GridBagConstraints.BOTH).weight(0.33, 0.6).insets(5, 0, 0, 0));
 
         defaultTableListener = new DefListSelectionListener();
@@ -348,6 +393,21 @@ public class MapWithAIProvidersPanel extends JPanel {
         activeToolbar.add(edit);
         activeToolbar.add(remove);
         add(activeToolbar, GBC.eol().anchor(GBC.NORTH).insets(0, 0, 5, 5));
+    }
+
+    /**
+     * @param The current area to highlight data from
+     */
+    public void setCurrentBounds(Bounds area) {
+        this.defaultMap.setBoundingBox(area);
+        fireAreaListeners();
+    }
+
+    /**
+     * Fire area listeners
+     */
+    public void fireAreaListeners() {
+        this.areaListeners.fireEvent(f -> f.updateArea(this.defaultMap.getBoundingBox()));
     }
 
     // Listener of default providers list selection
@@ -590,8 +650,6 @@ public class MapWithAIProvidersPanel extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-
-            Set<String> acceptedEulas = new HashSet<>();
 
             outer: for (int line : lines) {
                 MapWithAIInfo info = defaultModel.getRow(defaultTable.convertRowIndexToModel(line));
