@@ -321,9 +321,8 @@ public class MapWithAILayerInfo {
                 JsonReader reader = Json.createReader(br)) {
             JsonObject info = reader.readObject();
 
-            return info.getJsonArray("fields").getValuesAs(JsonObject.class).stream()
-                    .filter(o -> o.getBoolean("editable", true))
-                    .collect(Collectors.toMap(o -> o.getString("name"), o -> o.getString("alias", null)));
+            return info.getJsonArray("fields").getValuesAs(JsonObject.class).stream().collect(Collectors.toMap(
+                    o -> o.getString("name"), o -> o.getBoolean("editable", true) ? o.getString("alias", "") : ""));
         } catch (IOException e) {
             Logging.error(e);
         }
