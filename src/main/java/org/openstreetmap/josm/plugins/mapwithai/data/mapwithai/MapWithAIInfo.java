@@ -105,6 +105,14 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                     return category;
                 }
             }
+            // Fuzzy match
+            if (s != null && !s.trim().isEmpty()) {
+                for (MapWithAICategory type : MapWithAICategory.values()) {
+                    if (s.contains(type.getCategoryString()) || type.getCategoryString().contains(s)) {
+                        return type;
+                    }
+                }
+            }
             return null;
         }
     }
