@@ -322,6 +322,7 @@ public class MapWithAILayerInfo {
             JsonObject info = reader.readObject();
 
             return info.getJsonArray("fields").getValuesAs(JsonObject.class).stream()
+                    .filter(o -> o.getBoolean("editable", true))
                     .collect(Collectors.toMap(o -> o.getString("name"), o -> o.getString("alias", null)));
         } catch (IOException e) {
             Logging.error(e);
