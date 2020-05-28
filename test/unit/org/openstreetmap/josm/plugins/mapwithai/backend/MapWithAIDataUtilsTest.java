@@ -140,11 +140,10 @@ public class MapWithAIDataUtilsTest {
         Awaitility.await().atMost(Durations.FIVE_SECONDS)
                 .until(() -> !MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
         List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
-        int initialSize = paintStyles.size();
         for (int i = 0; i < 10; i++) {
             MapWithAIDataUtils.addMapWithAIPaintStyles();
             paintStyles = MapPaintStyles.getStyles().getStyleSources();
-            assertEquals(initialSize + 1, paintStyles.size(),
+            assertEquals(1, paintStyles.stream().filter(s -> s.title.contains("MapWithAI")).count(),
                     "The paintstyle should have been added, but only one of it");
         }
     }
