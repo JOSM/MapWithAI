@@ -3,12 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
-
 import java.awt.Image;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -17,13 +17,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.stream.JsonParser;
 import javax.swing.ImageIcon;
-
 import org.openstreetmap.gui.jmapviewer.interfaces.Attributed;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
@@ -40,6 +38,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithAIInfo>, Attributed {
+
     /**
      * Type of MapWithAI entry
      */
@@ -66,7 +65,8 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         }
     }
 
-    public enum MapWithAICategory {
+    public enum MapWithAICategory implements Comparable<MapWithAICategory> {
+
         BUILDING("data/closedway", "buildings", marktr("Buildings")),
         HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),
         ADDRESS("presets/misc/housenumber_small", "addresses", marktr("Addresses")),
@@ -105,15 +105,25 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                     return category;
                 }
             }
-            // Fuzzy match
+            // fuzzy match
             if (s != null && !s.trim().isEmpty()) {
+                s = s.toLowerCase();
                 for (MapWithAICategory type : MapWithAICategory.values()) {
-                    if (s.contains(type.getCategoryString()) || type.getCategoryString().contains(s)) {
+                    if (s.contains(type.getDescription().toLowerCase())
+                            || type.getDescription().toLowerCase().contains(s)) {
                         return type;
                     }
                 }
             }
             return null;
+        }
+
+        public static class DescriptionComparator implements Comparator<MapWithAICategory> {
+
+            @Override
+            public int compare(MapWithAICategory o1, MapWithAICategory o2) {
+                return (o1 == null || o2 == null) ? 1 : o1.getDescription().compareTo(o2.getDescription());
+            }
         }
     }
 
@@ -191,6 +201,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      **/
 
     public static class MapWithAIPreferenceEntry {
+
         @StructEntry
         String name;
         @StructEntry
@@ -310,6 +321,16 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             }
             s.append(']');
             return s.toString();
+        }
+    }
+
+    public static class MapWithAIInfoCategoryComparator implements Comparator<MapWithAIInfo> {
+
+        @Override
+        public int compare(MapWithAIInfo o1, MapWithAIInfo o2) {
+            return (Objects.nonNull(o1.getCategory()) || Objects.nonNull(o2.getCategory()) ? 1
+                    : Objects.compare(o1.getCategory(), o2.getCategory(),
+                            new MapWithAICategory.DescriptionComparator()));
         }
     }
 
@@ -527,6 +548,14 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      */
     public void setBounds(ImageryBounds b) {
         this.bounds = b;
+    }
+
+    public void setCategory(MapWithAICategory category) {
+        this.category = category;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /**
@@ -876,5 +905,4 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
     public void setConflationParameters(JsonArray parameters) {
         this.conflationParameters = parameters;
     }
-
 }

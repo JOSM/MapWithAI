@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,15 +20,14 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.JsonString;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
-
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
@@ -36,6 +36,7 @@ import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -216,8 +217,9 @@ public class MapWithAILayerInfo {
                 }
             }
             defaultLayerIds.clear();
-            Collections.sort(defaultLayers);
-            Collections.sort(allDefaultLayers);
+
+            Collections.sort(defaultLayers, new MapWithAIInfo.MapWithAIInfoCategoryComparator());
+            Collections.sort(allDefaultLayers, new MapWithAIInfo.MapWithAIInfoCategoryComparator());
             buildIdMap(allDefaultLayers, defaultLayerIds);
             updateEntriesFromDefaults(!loadError);
             buildIdMap(layers, layerIds);
@@ -282,8 +284,17 @@ public class MapWithAILayerInfo {
                             newInfo.setAttributionImageURL(url + "content/items/" + newInfo.getId() + "/info/"
                                     + feature.getString("thumbnail"));
                         }
-                        // TODO groupCategories
-                        // TODO snippet/description
+                        // TODO: change this to streams
+                        MapWithAICategory category = null;
+                        for (JsonString elem : feature.getJsonArray("groupCategories").getValuesAs(JsonString.class)) {
+                            category = MapWithAICategory.fromString(elem.getString().replace("/Categories/", ""));
+                            if (category != null) {
+                                break;
+                            }
+
+                        }
+                        newInfo.setCategory(category);
+                        newInfo.setDescription(feature.getString("snippet"));
                         information.add(newInfo);
                     }
                 }
@@ -291,6 +302,16 @@ public class MapWithAILayerInfo {
                 Logging.error(e);
                 next = "-1";
             }
+        }
+        Comparator<MapWithAIInfo> comparator = new Comparator<MapWithAIInfo>() {
+
+            @Override
+            public int compare(MapWithAIInfo o1, MapWithAIInfo o2) {
+                return o1.getCategory().getDescription().compareTo(o2.getCategory().getDescription());
+            }
+        };
+        if (information != null) {
+            information = information.stream().sorted(comparator).collect(Collectors.toSet());
         }
         return information;
     }
@@ -321,8 +342,8 @@ public class MapWithAILayerInfo {
                 JsonReader reader = Json.createReader(br)) {
             JsonObject info = reader.readObject();
 
-            return info.getJsonArray("fields").getValuesAs(JsonObject.class).stream().collect(Collectors.toMap(
-                    o -> o.getString("name"), o -> o.getBoolean("editable", true) ? o.getString("alias", "") : ""));
+            return info.getJsonArray("fields").getValuesAs(JsonObject.class).stream()
+                    .collect(Collectors.toMap(o -> o.getString("name"), o -> o.getString("alias", null)));
         } catch (IOException e) {
             Logging.error(e);
         }
@@ -569,6 +590,7 @@ public class MapWithAILayerInfo {
     }
 
     public static interface FinishListener {
+
         public void onFinish();
     }
 }

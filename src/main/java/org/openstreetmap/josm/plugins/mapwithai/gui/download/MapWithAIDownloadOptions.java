@@ -4,10 +4,8 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.GridBagLayout;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.gui.bbox.JosmMapViewer;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
@@ -29,7 +27,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
         favorites.add(new JLabel("TODO: Favorites go here!")); // TODO
         optionPanel.add(favorites, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this, MapWithAILayerInfo.getInstance());
-        optionPanel.add(mapwithaiProvidersPanel);
+        optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.CENTER));
     }
 
     @Override
