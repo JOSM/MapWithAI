@@ -128,7 +128,7 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         @Override
         public Icon getIcon() {
             return new ImageProvider("dialogs", "mapwithai")
-                    .setMaxHeight(ImageProvider.ImageSizes.SIDEBUTTON.getVirtualHeight()).get();
+                    .setMaxHeight(ImageProvider.ImageSizes.SIDEBUTTON.getVirtualHeight()).setOptional(true).get();
         }
 
         @Override
