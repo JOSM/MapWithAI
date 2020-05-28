@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.awt.Image;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -17,11 +18,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.stream.JsonParser;
 import javax.swing.ImageIcon;
+
 import org.openstreetmap.gui.jmapviewer.interfaces.Attributed;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
@@ -816,7 +819,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
 
     public String getUrlExpanded() {
         StringBuilder sb;
-        if (conflate) {
+        if (conflate && Config.getPref().getBoolean("mapwithai.third_party.conflate", true)) {
             sb = getConflationUrl();
         } else {
             sb = getNonConflatedUrl();
