@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
@@ -33,8 +34,7 @@ import org.openstreetmap.josm.tools.Pair;
 public class MergeDuplicateWays extends Command {
     public static final String ORIG_ID = "orig_id";
 
-    private final Way way1;
-    private final Way way2;
+    private final List<Way> ways;
 
     private final List<Command> commands;
     private Command command;
@@ -58,26 +58,33 @@ public class MergeDuplicateWays extends Command {
     }
 
     public MergeDuplicateWays(DataSet data, Way way1, Way way2) {
+        this(data, Stream.of(way1, way2).filter(Objects::nonNull).collect(Collectors.toList()));
+    }
+
+    public MergeDuplicateWays(DataSet data, List<Way> ways) {
         super(data);
-        this.way1 = way1;
-        this.way2 = way2;
-        commands = new ArrayList<>();
+        this.ways = ways;
+        this.commands = new ArrayList<>();
     }
 
     @Override
     public boolean executeCommand() {
         if (commands.isEmpty() || (command == null)) {
-            if ((way1 == null) && (way2 == null)) {
+            if (ways.isEmpty()) {
                 filterDataSet(getAffectedDataSet(), commands, bound);
-            } else if ((way1 != null) && (way2 == null)) {
-                checkForDuplicateWays(way1, commands);
-            } else if (way1 == null) {
-                checkForDuplicateWays(way2, commands);
+            } else if (ways.size() == 1) {
+                checkForDuplicateWays(ways.get(0), commands);
             } else {
-                final Command tCommand = checkForDuplicateWays(way1, way2);
-                if (tCommand != null) {
-                    commands.add(tCommand);
-                    tCommand.executeCommand();
+                Iterator<Way> it = ways.iterator();
+                Way way1 = it.next();
+                while (it.hasNext()) {
+                    Way way2 = it.next();
+                    final Command tCommand = checkForDuplicateWays(way1, way2);
+                    if (tCommand != null) {
+                        commands.add(tCommand);
+                        tCommand.executeCommand();
+                    }
+                    way1 = way2;
                 }
             }
             final List<Command> realCommands = commands.stream().filter(Objects::nonNull).distinct()

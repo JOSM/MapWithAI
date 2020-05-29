@@ -141,6 +141,12 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {
+        if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
+            bounds = dataSet.getDataSourceBounds().get(0);
+            dataSet.getDataSourceBounds().forEach(bounds::extend);
+        } else if (bounds == null) {
+            bounds = new Bounds(0, 0, 0, 0);
+        }
         replaceTags(dataSet);
         removeCommonTags(dataSet);
         removeEmptyTags(dataSet, bounds);
@@ -148,9 +154,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         cleanupDataSet(dataSet);
         mergeWays(dataSet);
         removeAlreadyAddedData(dataSet);
-        new MergeDuplicateWays(dataSet).executeCommand();
-        (bounds == null ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox())).parallelStream()
-                .filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
+        List<Way> ways = dataSet.searchWays(bounds.toBBox()).stream().filter(w -> w.hasKey("highway"))
+                .collect(Collectors.toList());
+        if (!ways.isEmpty()) {
+            new MergeDuplicateWays(dataSet, ways).executeCommand();
+        }
+        (bounds.isCollapsed() || bounds.isOutOfTheWorld() ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox()))
+                .parallelStream().filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
     }
 
     /**
