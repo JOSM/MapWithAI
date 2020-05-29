@@ -42,6 +42,29 @@ archivesBaseName = "mapwithai"
 def gitlabGroup = "gokaart"
 def gitlabRepositoryName = "JOSM_MapWithAI"
 
+repositories {
+  jcenter()
+  mavenCentral()
+}
+
+sourceSets {
+  test {
+    java {
+      srcDirs = ["test/unit"]
+    }
+    resources {
+      srcDirs = ["test/data"]
+    }
+  }
+  intTest {
+    java {
+      srcDirs = ["test/integration"]
+    }
+    resources {
+      srcDirs = ["test/data"]
+    }
+  }
+}
 
 def versions = [
   awaitility: "4.0.2",
@@ -55,10 +78,6 @@ def versions = [
   findsecbugs: "1.10.1",
 ]
 
-repositories {
-  jcenter()
-  mavenCentral()
-}
 dependencies {
   if (!JavaVersion.current().isJava9Compatible()) {
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
@@ -69,11 +88,17 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
   testImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
+  testCompile("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
   testCompile("org.jmockit:jmockit:${versions.jmockit}")
   testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
   testImplementation("com.github.tomakehurst:wiremock:${versions.wiremock}")
   testImplementation("org.awaitility:awaitility:${versions.awaitility}")
+}
+
+configurations {
+    intTestImplementation.extendsFrom testImplementation
+    intTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 // Add dependencies from ivy.xml
@@ -91,6 +116,7 @@ test {
     jvmArgs("-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}")
   }
   useJUnitPlatform()
+  ignoreFailures
   testLogging {
     exceptionFormat "full"
     events "skipped", "failed"
@@ -100,16 +126,17 @@ test {
   }
 }
 
-sourceSets {
-  test {
-    java {
-      srcDirs = ["test/unit"]
-    }
-    resources {
-      srcDirs = ["test/data"]
-    }
-  }
+task integrationTest(type: Test) {
+  description = "Run integration tests"
+  group = "verification"
+
+  testClassesDirs = sourceSets.intTest.output.classesDirs
+  classpath = sourceSets.intTest.runtimeClasspath
+  shouldRunAfter test
 }
+
+check.dependsOn integrationTest
+
 tasks.processResources {
   from("$projectDir/LICENSE")
   from("$projectDir/README.md")

@@ -87,10 +87,20 @@ public class MapWithAISourceReader implements Closeable {
             JsonStructure struct = reader.read();
             if (JsonValue.ValueType.OBJECT.equals(struct.getValueType())) {
                 JsonObject jsonObject = struct.asJsonObject();
-                entries = jsonObject.entrySet().stream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
+                entries = parseJson(jsonObject);
             }
             return entries;
         }
+    }
+
+    /**
+     * Parses MapWithAI entry sources
+     *
+     * @param jsonObject The json of the data sources
+     * @return The parsed entries
+     */
+    public static List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
+        return jsonObject.entrySet().stream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
     }
 
     private static MapWithAIInfo parse(Map.Entry<String, JsonValue> entry) {
