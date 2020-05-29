@@ -47,7 +47,6 @@ public class MapWithAIAction extends JosmAction {
                     .collect(Collectors.toList());
             final OsmDataLayer layer = getOsmLayer(osmLayers);
             if ((layer != null) && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
-                new DownloadListener(layer.getDataSet());
                 final Notification notification = createMessageDialog();
                 if (notification != null) {
                     notification.show();

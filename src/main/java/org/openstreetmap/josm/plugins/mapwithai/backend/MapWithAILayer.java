@@ -284,6 +284,13 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         @Override
         public void actionPerformed(ActionEvent e) {
             layer.continuousDownload = !layer.continuousDownload;
+            if (layer.continuousDownload) {
+                for (OsmDataLayer data : MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)) {
+                    new DownloadListener(data.getDataSet());
+                }
+            } else {
+                DownloadListener.destroyAll();
+            }
         }
 
         @Override

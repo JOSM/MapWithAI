@@ -62,6 +62,6 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
      * Destroy all download listeners for MapWithAI
      */
     public static void destroyAll() {
-        LISTENERS.forEach(DownloadListener::destroy);
+        new HashSet<>(LISTENERS).forEach(DownloadListener::destroy);
     }
 }
