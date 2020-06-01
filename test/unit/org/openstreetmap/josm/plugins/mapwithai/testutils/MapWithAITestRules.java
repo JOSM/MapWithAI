@@ -124,11 +124,20 @@ public class MapWithAITestRules extends JOSMTestRules {
     }
 
     private static void resetMapWithAILayerInfo() {
-        synchronized (MapWithAITestRules.class) {
+        synchronized (MapWithAILayerInfo.class) {
             MapWithAILayerInfo.instance.clear();
             MapWithAILayerInfo.instance.getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
                     .forEach(MapWithAILayerInfo.instance::add);
             MapWithAILayerInfo.instance.save();
         }
+    }
+
+    /**
+     * Get the wiremock instance
+     *
+     * @return The WireMock
+     */
+    public WireMockServer getWireMock() {
+        return this.wireMock;
     }
 }

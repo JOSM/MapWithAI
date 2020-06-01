@@ -1,0 +1,30 @@
+{
+  "id" : "1b8f292c-d3b0-4281-ad07-680b02579e6b",
+  "name" : "do88dok2xjtucxd1_arcgis_rest_services_riverside_ca_buildings_featureserver",
+  "request" : {
+    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Riverside_CA_Buildings/FeatureServer?f=pjson",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\r\n  \"currentVersion\" : 10.7, \r\n  \"serviceItemId\" : \"37ff44d836fd4a2d9a80b609e3d589c6\", \r\n  \"isView\" : true, \r\n  \"isUpdatableView\" : true, \r\n  \"sourceSchemaChangesAllowed\" : true, \r\n  \"serviceDescription\" : \"\", \r\n  \"hasVersionedData\" : false, \r\n  \"supportsDisconnectedEditing\" : false, \r\n  \"hasStaticData\" : false, \r\n  \"hasSharedDomains\" : false, \r\n  \"maxRecordCount\" : 1000, \r\n  \"supportedQueryFormats\" : \"JSON\", \r\n  \"supportsVCSProjection\" : false, \r\n  \"capabilities\" : \"Query\", \r\n  \"description\" : \"\", \r\n  \"copyrightText\" : \"\", \r\n  \"spatialReference\" : {\r\n    \"wkid\" : 4326, \r\n    \"latestWkid\" : 4326\r\n  }, \r\n  \"initialExtent\" : {\r\n    \"xmin\" : -117.5146144105976, \r\n    \"ymin\" : 33.844485330883067, \r\n    \"xmax\" : -117.26599679190556, \r\n    \"ymax\" : 34.034093431983059, \r\n    \"spatialReference\" : {\r\n      \"wkid\" : 4326, \r\n      \"latestWkid\" : 4326\r\n    }\r\n  }, \r\n  \"fullExtent\" : {\r\n    \"xmin\" : -117.54107499999998, \r\n    \"ymin\" : 33.858206000000052, \r\n    \"xmax\" : -117.26151999999996, \r\n    \"ymax\" : 34.03057700100004, \r\n    \"spatialReference\" : {\r\n      \"wkid\" : 4326, \r\n      \"latestWkid\" : 4326\r\n    }\r\n  }, \r\n  \"allowGeometryUpdates\" : true, \r\n  \"units\" : \"esriDecimalDegrees\", \r\n  \"supportsAppend\" : true, \r\n  \"supportsSharedDomains\" : true, \r\n  \"syncEnabled\" : false, \r\n  \"supportsApplyEditsWithGlobalIds\" : false, \r\n  \"supportsReturnDeleteResults\" : true, \r\n  \"xssPreventionInfo\" : {\r\n    \"xssPreventionEnabled\" : true, \r\n    \"xssPreventionRule\" : \"InputOnly\", \r\n    \"xssInputRule\" : \"rejectInvalid\"\r\n  }, \r\n  \"layers\" : [\r\n    {\r\n      \"id\" : 0, \r\n      \"name\" : \"Riverside_buildings\", \r\n      \"parentLayerId\" : -1, \r\n      \"defaultVisibility\" : true, \r\n      \"subLayerIds\" : null, \r\n      \"minScale\" : 40000, \r\n      \"maxScale\" : 0, \r\n      \"geometryType\" : \"esriGeometryPolygon\"\r\n    }\r\n  ], \r\n  \"tables\" : []\r\n}",
+    "headers" : {
+      "Content-Type" : "text/plain; charset=utf-8",
+      "Cache-Control" : "public, max-age=30, s-maxage=30",
+      "Last-Modified" : "Fri, 24 Apr 2020 15:26:47 GMT",
+      "ETag" : "-917103859",
+      "Server" : "Microsoft-IIS/10.0",
+      "X-ArcGIS-Correlation-Id" : "|51bfce8c109b994bb7a28544d39352e8.a8a777e_",
+      "X-ArcGIS-Instance" : "MTSDS_Web_IN_19",
+      "X-Powered-By" : "ASP.NET",
+      "Date" : "Mon, 01 Jun 2020 16:36:23 GMT",
+      "X-Cache" : "RefreshHit from cloudfront",
+      "Via" : "1.1 4b2d2d4c49521bf403522140b78283a1.cloudfront.net (CloudFront)",
+      "X-Amz-Cf-Pop" : "DEN50-C2",
+      "X-Amz-Cf-Id" : "KMfmDJNR0r65x0Xg5sYCeExYPqXoAMNd5daa0nOLWjuLLe2cP7NSjw=="
+    }
+  },
+  "uuid" : "1b8f292c-d3b0-4281-ad07-680b02579e6b",
+  "persistent" : true,
+  "insertionIndex" : 25
+}
