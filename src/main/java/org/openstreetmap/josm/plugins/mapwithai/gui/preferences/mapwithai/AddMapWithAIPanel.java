@@ -191,7 +191,7 @@ public class AddMapWithAIPanel extends JPanel {
         });
     }
 
-    private JsonArray convertToJsonParameterArray(Map<String, Pair<String, Boolean>> parameters) {
+    private static JsonArray convertToJsonParameterArray(Map<String, Pair<String, Boolean>> parameters) {
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (Map.Entry<String, Pair<String, Boolean>> entry : parameters.entrySet()) {
             JsonObjectBuilder entryBuilder = Json.createObjectBuilder();

@@ -19,8 +19,11 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.google.common.collect.ImmutableMap;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class MapWithAISourceReaderTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new JOSMTestRules().preferences().territories().projection();
 
     @Test

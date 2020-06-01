@@ -164,7 +164,7 @@ public class MapWithAILayerInfo {
         private MapWithAISourceReader reader;
         private boolean canceled;
         private boolean loadError;
-        private FinishListener listener;
+        private final FinishListener listener;
 
         DefaultEntryLoader(boolean clearCache, boolean fastFail, FinishListener listener) {
             super(tr("Update default entries"));
@@ -302,13 +302,8 @@ public class MapWithAILayerInfo {
                 next = "-1";
             }
         }
-        Comparator<MapWithAIInfo> comparator = new Comparator<MapWithAIInfo>() {
-
-            @Override
-            public int compare(MapWithAIInfo o1, MapWithAIInfo o2) {
-                return o1.getCategory().getDescription().compareTo(o2.getCategory().getDescription());
-            }
-        };
+        Comparator<MapWithAIInfo> comparator = (o1, o2) -> o1.getCategory().getDescription()
+                .compareTo(o2.getCategory().getDescription());
         if (information != null) {
             information = information.stream().sorted(comparator).collect(Collectors.toSet());
         }
@@ -335,13 +330,12 @@ public class MapWithAILayerInfo {
     }
 
     private static Map<String, String> getReplacementTags(String layerUrl) {
-        String toGet = layerUrl.endsWith("pjson") ? layerUrl : layerUrl.concat("?f=pjson");
+        String toGet = layerUrl.endsWith("?f=pjson") ? layerUrl : layerUrl.concat("?f=pjson");
         try (CachedFile featureServer = new CachedFile(toGet);
                 BufferedReader br = featureServer.getContentReader();
                 JsonReader reader = Json.createReader(br)) {
-            JsonObject info = reader.readObject();
 
-            return info.getJsonArray("fields").getValuesAs(JsonObject.class).stream()
+            return reader.readObject().getJsonArray("fields").getValuesAs(JsonObject.class).stream()
                     .collect(Collectors.toMap(o -> o.getString("name"), o -> o.getString("alias", null)));
         } catch (IOException e) {
             Logging.error(e);
@@ -571,7 +565,7 @@ public class MapWithAILayerInfo {
      *         otherwise
      */
     public String getUniqueId(MapWithAIInfo info) {
-        if (info.getId() != null && layerIds.get(info.getId()) == info) {
+        if (info != null && info.getId() != null && info.equals(layerIds.get(info.getId()))) {
             return info.getId();
         }
         return null;
@@ -588,8 +582,10 @@ public class MapWithAILayerInfo {
         return layerIds.get(id);
     }
 
-    public static interface FinishListener {
-
-        public void onFinish();
+    public interface FinishListener {
+        /**
+         * Called when information is finished loading
+         */
+        void onFinish();
     }
 }

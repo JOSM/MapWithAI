@@ -30,7 +30,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private static long lastErrorTime;
 
     private final Bounds downloadArea;
-    private MapWithAIInfo info;
+    private final MapWithAIInfo info;
 
     private static final int DEFAULT_TIMEOUT = 50_000; // 50 seconds
 

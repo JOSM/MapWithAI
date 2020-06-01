@@ -12,9 +12,6 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,19 +50,16 @@ import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.preferences.NamedColorProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.bbox.SlippyMapBBoxChooser;
-import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.gui.preferences.imagery.ImageryProvidersPanel;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.gui.widgets.FilterField;
 import org.openstreetmap.josm.gui.widgets.HtmlPanel;
-import org.openstreetmap.josm.gui.widgets.JosmEditorPane;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
-import org.openstreetmap.josm.tools.LanguageInfo;
 import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -111,7 +105,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     private final transient MapWithAILayerInfo layerInfo;
     private final transient ListenerList<AreaListener> areaListeners = ListenerList.create();
 
-    private static interface AreaListener {
+    private interface AreaListener {
         void updateArea(Bounds area);
     }
 
@@ -517,14 +511,12 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     private class NewEntryAction extends AbstractAction {
         private static final long serialVersionUID = 7451336680150337942L;
-        private final MapWithAIInfo.MapWithAIType type;
 
         NewEntryAction(MapWithAIInfo.MapWithAIType type) {
             putValue(NAME, type.toString());
             putValue(SHORT_DESCRIPTION, tr("Add a new {0} entry by entering the URL", type.toString()));
             String icon = /* ICON(dialogs/) */ "add";
             new ImageProvider("dialogs", icon).getResource().attachImageIcon(this, true);
-            this.type = type;
         }
 
         @Override
@@ -840,40 +832,5 @@ public class MapWithAIProvidersPanel extends JPanel {
         public boolean isCellEditable(int row, int column) {
             return false;
         }
-    }
-
-    private static boolean confirmEulaAcceptance(PreferenceTabbedPane gui, String eulaUrl) {
-        URL url;
-        try {
-            url = new URL(eulaUrl.replaceAll("\\{lang\\}", LanguageInfo.getWikiLanguagePrefix()));
-            JosmEditorPane htmlPane;
-            try {
-                htmlPane = new JosmEditorPane(url);
-            } catch (IOException e1) {
-                Logging.trace(e1);
-                // give a second chance with a default Locale 'en'
-                try {
-                    url = new URL(eulaUrl.replaceAll("\\{lang\\}", ""));
-                    htmlPane = new JosmEditorPane(url);
-                } catch (IOException e2) {
-                    Logging.debug(e2);
-                    JOptionPane.showMessageDialog(gui, tr("EULA license URL not available: {0}", eulaUrl));
-                    return false;
-                }
-            }
-            Box box = Box.createVerticalBox();
-            htmlPane.setEditable(false);
-            JScrollPane scrollPane = new JScrollPane(htmlPane);
-            scrollPane.setPreferredSize(new Dimension(400, 400));
-            box.add(scrollPane);
-            int option = JOptionPane.showConfirmDialog(MainApplication.getMainFrame(), box,
-                    tr("Please abort if you are not sure"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (option == JOptionPane.YES_OPTION) {
-                return true;
-            }
-        } catch (MalformedURLException e2) {
-            JOptionPane.showMessageDialog(gui, tr("Malformed URL for the EULA licence: {0}", eulaUrl));
-        }
-        return false;
     }
 }

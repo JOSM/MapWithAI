@@ -112,7 +112,6 @@ public class MissingConnectionTags extends AbstractConflationCommand {
 
     protected void fixErrors(String prefKey, Collection<Command> commands, Collection<TestError> issues) {
         for (TestError issue : issues) {
-            issue.getHighlighted();
             if (!issue.isFixable() || issue.getFix() == null
                     || issue.getPrimitives().parallelStream().anyMatch(IPrimitive::isDeleted)) {
                 continue;
@@ -154,15 +153,12 @@ public class MissingConnectionTags extends AbstractConflationCommand {
                 way.getDataSet().searchNodes(searchBBox).stream().filter(MissingConnectionTags::noConflationKey)
                         .forEach(duplicateNodeTest::visit);
                 duplicateNodeTest.endTest();
-                if (duplicateNodeTest.getErrors().isEmpty()) {
-                    continue;
-                }
                 List<OsmPrimitive> dupeNodes = duplicateNodeTest.getErrors().stream()
                         .filter(e -> e.getPrimitives().contains(node)).flatMap(e -> e.getPrimitives().stream())
                         .distinct()
                         .filter(p -> !p.isDeleted() && !p.equals(node) && noConflationKey(p) && p.getOsmId() > 0)
                         .collect(Collectors.toList());
-                if (dupeNodes.isEmpty()) {
+                if (duplicateNodeTest.getErrors().isEmpty() || dupeNodes.isEmpty()) {
                     continue;
                 }
                 List<String> dupes = duplicateNodeTest.getErrors().stream()
@@ -256,7 +252,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         if (Geometry.getDistance(node, way) < precision) {
             WaySegment seg = Geometry.getClosestWaySegment(way, node);
             List<OsmPrimitive> prims = Arrays.asList(way, seg.getFirstNode(), seg.getSecondNode());
-            if (seg != null && prims.stream().allMatch(p -> p.getOsmId() > 0)) {
+            if (prims.stream().allMatch(p -> p.getOsmId() > 0)) {
                 return new ChangePropertyCommand(node, "conn", String.join(",",
                         prims.stream().map(p -> p.getPrimitiveId().toString()).collect(Collectors.toList())));
             }
@@ -322,6 +318,20 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     @Override
     public boolean keyShouldNotExistInOSM() {
         return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof MissingConnectionTags) {
+            MissingConnectionTags omct = (MissingConnectionTags) o;
+            return Objects.equals(omct.precision, this.precision) && super.equals(o);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(precision);
     }
 
 }

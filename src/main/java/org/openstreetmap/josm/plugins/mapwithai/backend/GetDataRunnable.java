@@ -277,6 +277,17 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     /**
      * Replace tags in a dataset with a set of replacement tags
      *
+     * @param dataSet The dataset with primitives to change
+     * @param map     The tags to replace
+     */
+    public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
+        replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
+                .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())).forEach(prim -> prim.put(replace)));
+    }
+
+    /**
+     * Replace tags in a dataset with a set of replacement tags
+     *
      * @param dataSet     The dataset with primitives to change
      * @param replaceKeys The keys to replace (does not replace values)
      */
@@ -286,17 +297,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                     p.put(e.getValue(), p.get(e.getKey()));
                     p.remove(e.getKey());
                 }));
-    }
-
-    /**
-     * Replace tags in a dataset with a set of replacement tags
-     *
-     * @param dataSet The dataset with primitives to change
-     * @param map     The tags to replace
-     */
-    public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
-        replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
-                .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())).forEach(prim -> prim.put(replace)));
     }
 
     private static void cleanupDataSet(DataSet dataSet) {

@@ -18,8 +18,11 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class AddMapWithAIPanelTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().territories().projection()
             .assertionsInEDT();
 
@@ -40,7 +43,6 @@ public class AddMapWithAIPanelTest {
         JosmTextArea rawUrl = (JosmTextArea) rawUrlField.get(panel);
         JosmTextField name = (JosmTextField) nameField.get(panel);
         MapWithAIInfo info = (MapWithAIInfo) infoField.get(panel);
-        MapWithAIParametersPanel parametersTable = (MapWithAIParametersPanel) parametersTableField.get(panel);
 
         assertSame(oldInfo, info);
         assertTrue(rawUrl.getText().isEmpty());

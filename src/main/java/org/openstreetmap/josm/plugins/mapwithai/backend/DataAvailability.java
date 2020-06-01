@@ -31,7 +31,7 @@ import org.openstreetmap.josm.tools.Utils;
 
 public class DataAvailability {
     /** This points to a list of default sources that can be used with MapWithAI */
-    public static String DEFAULT_SERVER_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
+    private static String defaultServerUrl = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
     /** A map of tag -&gt; message of possible data types */
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
@@ -68,7 +68,7 @@ public class DataAvailability {
      * Initialize the class
      */
     private static void initialize() {
-        try (CachedFile jsonFile = new CachedFile(DEFAULT_SERVER_URL);
+        try (CachedFile jsonFile = new CachedFile(defaultServerUrl);
                 JsonParser jsonParser = Json.createParser(jsonFile.getContentReader());) {
             jsonFile.setMaxAge(604_800);
             jsonParser.next();
@@ -276,6 +276,13 @@ public class DataAvailability {
      * @param url The URL which serves MapWithAI servers
      */
     public static void setReleaseUrl(String url) {
-        DEFAULT_SERVER_URL = url;
+        defaultServerUrl = url;
+    }
+
+    /**
+     * @param url The URL which serves MapWithAI servers
+     */
+    public static String getReleaseUrl() {
+        return defaultServerUrl;
     }
 }

@@ -27,7 +27,7 @@ import org.openstreetmap.josm.tools.Pair;
 public class MapWithAIParametersPanel extends JPanel {
 
     private final class ParametersTableModel extends AbstractTableModel {
-        private Set<Integer> disabledRows = new HashSet<>();
+        private final Set<Integer> disabledRows = new HashSet<>();
 
         @Override
         public String getColumnName(int column) {
@@ -109,8 +109,8 @@ public class MapWithAIParametersPanel extends JPanel {
         }
     }
 
-    private List<Object[]> headers;
-    private ParametersTableModel model;
+    private final List<Object[]> headers;
+    private final ParametersTableModel model;
 
     /**
      * Creates empty table

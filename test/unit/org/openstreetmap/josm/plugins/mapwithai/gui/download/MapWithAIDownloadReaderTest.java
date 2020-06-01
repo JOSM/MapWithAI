@@ -29,8 +29,11 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.ImageProvider;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class MapWithAIDownloadReaderTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rules = new MapWithAITestRules().wiremock().projection().territories();
 
     @Test

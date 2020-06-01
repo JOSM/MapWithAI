@@ -30,10 +30,12 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsM
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.integration.TestRunnerDecorator;
 
 public class MissingConnectionTagsTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules josmTestRules = new JOSMTestRules().projection().main();
     private DataSet ds;
     private MissingConnectionTags missing;

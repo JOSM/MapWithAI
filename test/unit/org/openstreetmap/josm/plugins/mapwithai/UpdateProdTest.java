@@ -18,6 +18,8 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.OpenBrowserMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Test the update prod
  *
@@ -25,6 +27,7 @@ import org.openstreetmap.josm.testutils.mockers.WindowMocker;
  */
 public class UpdateProdTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new JOSMTestRules().preferences();
 
     @Test

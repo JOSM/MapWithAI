@@ -27,7 +27,7 @@ import org.openstreetmap.josm.tools.GBC;
 public class MapWithAIDownloadOptions extends JPanel implements DownloadSelection, Destroyable, PropertyChangeListener {
     private final JPanel optionPanel;
     private DownloadDialog iGui;
-    private MapWithAIProvidersPanel mapwithaiProvidersPanel;
+    private final MapWithAIProvidersPanel mapwithaiProvidersPanel;
 
     public MapWithAIDownloadOptions() {
         optionPanel = new JPanel(new GridBagLayout());

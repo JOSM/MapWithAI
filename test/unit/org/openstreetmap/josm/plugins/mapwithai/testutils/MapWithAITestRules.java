@@ -105,7 +105,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
             assertTrue(requests.isEmpty());
             resetMapWithAILayerInfo();
-            DataAvailability.setReleaseUrl(DataAvailability.DEFAULT_SERVER_URL);
+            DataAvailability.setReleaseUrl(DataAvailability.getReleaseUrl());
             Config.getPref().put("osm-server.url", null);
         }
         if (workerExceptions) {

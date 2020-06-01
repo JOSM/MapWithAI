@@ -10,6 +10,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import javax.swing.Icon;
@@ -30,6 +31,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelpe
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.Logging;
 
 public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownloadReader.MapWithAIDownloadData> {
 
@@ -45,7 +47,14 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         task.setZoomAfterDownload(settings.zoomToData());
         DownloadParams params = new DownloadParams();
         params.withNewLayer(settings.asNewLayer());
-        task.download(params, area, null);
+        try {
+            task.download(params, area, null).get();
+        } catch (InterruptedException e) {
+            Logging.error(e);
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+            Logging.error(e);
+        }
     }
 
     @Override

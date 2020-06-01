@@ -21,7 +21,12 @@ public class MapWithAIInfoTest {
         assertEquals(type, i.getSourceType());
     }
 
-    private static Stream<Arguments> provideMapWithAIInfoInitializers() {
+    /**
+     * Provide initializers for the tests, along with expected arguments.
+     *
+     * @return A stream of arguments for assertInitializersWorked
+     */
+    protected static Stream<Arguments> provideMapWithAIInfoInitializers() {
         String name = "TEST";
         String url = "https://test.url";
         String id = "a;lkdjfadl;ksfj";

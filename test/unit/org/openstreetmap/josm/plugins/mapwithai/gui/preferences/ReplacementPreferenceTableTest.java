@@ -17,6 +17,7 @@ import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 import mockit.MockUp;
 
@@ -26,12 +27,17 @@ import mockit.MockUp;
  */
 public class ReplacementPreferenceTableTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new JOSMTestRules().preferences();
     ReplacementPreferenceTable test;
 
-    private static final class ReplacementPreferenceTableMock extends MockUp<ReplacementPreferenceTable> {
+    protected static final class ReplacementPreferenceTableMock extends MockUp<ReplacementPreferenceTable> {
         private boolean set;
 
+        /**
+         * @param set the return value for
+         *            {@link ReplacementPreferenceTableMock#askAddSetting}
+         */
         public ReplacementPreferenceTableMock(boolean set) {
             this.set = set;
         }
@@ -39,6 +45,14 @@ public class ReplacementPreferenceTableTest {
         @Mock
         protected boolean askAddSetting(JComponent gui, JPanel p) {
             return set;
+        }
+
+        /**
+         * @param set the return value for
+         *            {@link ReplacementPreferenceTableMock#askAddSetting}
+         */
+        public void setAskAddSetting(boolean set) {
+            this.set = set;
         }
     }
 

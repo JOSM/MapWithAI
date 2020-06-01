@@ -72,6 +72,16 @@ public class MapWithAISourceReader implements Closeable {
     }
 
     /**
+     * Parses MapWithAI entry sources
+     *
+     * @param jsonObject The json of the data sources
+     * @return The parsed entries
+     */
+    public static List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
+        return jsonObject.entrySet().stream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
+    }
+
+    /**
      * Parses MapWithAI source.
      *
      * @return list of source info
@@ -91,16 +101,6 @@ public class MapWithAISourceReader implements Closeable {
             }
             return entries;
         }
-    }
-
-    /**
-     * Parses MapWithAI entry sources
-     *
-     * @param jsonObject The json of the data sources
-     * @return The parsed entries
-     */
-    public static List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
-        return jsonObject.entrySet().stream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
     }
 
     private static MapWithAIInfo parse(Map.Entry<String, JsonValue> entry) {

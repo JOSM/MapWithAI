@@ -32,8 +32,11 @@ import org.openstreetmap.josm.tools.Geometry;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class GetDataRunnableTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new MapWithAITestRules().wiremock().projection().fakeAPI().territories();
 
     public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {

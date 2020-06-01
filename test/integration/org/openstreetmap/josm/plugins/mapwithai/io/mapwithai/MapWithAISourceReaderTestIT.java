@@ -16,13 +16,16 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIType;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class MapWithAISourceReaderTestIT {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new JOSMTestRules().preferences().territories().projection();
 
     @Test
     public void testDefaultSourceIT() throws IOException {
-        try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.DEFAULT_SERVER_URL)) {
+        try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.getReleaseUrl())) {
             List<MapWithAIInfo> infoList = source.parse();
             assertFalse(infoList.isEmpty());
             for (MapWithAIType type : Arrays.asList(MapWithAIType.FACEBOOK, MapWithAIType.THIRD_PARTY)) {

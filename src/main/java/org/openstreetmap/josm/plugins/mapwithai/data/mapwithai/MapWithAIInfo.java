@@ -110,10 +110,10 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             }
             // fuzzy match
             if (s != null && !s.trim().isEmpty()) {
-                s = s.toLowerCase();
+                s = s.toLowerCase(Locale.ROOT);
                 for (MapWithAICategory type : MapWithAICategory.values()) {
-                    if (s.contains(type.getDescription().toLowerCase())
-                            || type.getDescription().toLowerCase().contains(s)) {
+                    if (s.contains(type.getDescription().toLowerCase(Locale.ROOT))
+                            || type.getDescription().toLowerCase(Locale.ROOT).contains(s)) {
                         return type;
                     }
                 }
@@ -405,7 +405,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             bounds = new ImageryBounds(e.bounds, ",");
             if (e.shapes != null) {
                 try {
-                    for (String s : e.shapes.split(";")) {
+                    for (String s : e.shapes.split(";", -1)) {
                         bounds.addShape(new Shape(s, ","));
                     }
                 } catch (IllegalArgumentException ex) {
@@ -800,6 +800,14 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         return getParametersString(parameters);
     }
 
+    private static List<String> getParametersString(JsonArray parameters) {
+        return parameters == null ? Collections.emptyList()
+                : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
+                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
+                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
+
+    }
+
     /**
      * Get the conflation parameters as a string
      *
@@ -807,14 +815,6 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      */
     public List<String> getConflationParameterString() {
         return getParametersString(this.conflationParameters);
-    }
-
-    private static List<String> getParametersString(JsonArray parameters) {
-        return parameters == null ? Collections.emptyList()
-                : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
-                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
-                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
-
     }
 
     public String getUrlExpanded() {
@@ -847,7 +847,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             sb.append(url);
             if (MapWithAIType.ESRI_FEATURE_SERVER.equals(type)) {
                 if (!url.endsWith("/")) {
-                    sb.append("/");
+                    sb.append('/');
                 }
                 sb.append("query?geometryType=esriGeometryEnvelope&geometry={bbox}&inSR=4326&f=geojson&outfields=*");
             }

@@ -26,7 +26,7 @@ import org.openstreetmap.josm.tools.Utils;
 import org.xml.sax.SAXException;
 
 public class DownloadMapWithAITask extends DownloadOsmTask {
-    private List<MapWithAIInfo> urls;
+    private final List<MapWithAIInfo> urls;
 
     public DownloadMapWithAITask() {
         urls = MapWithAILayerInfo.getInstance().getLayers();

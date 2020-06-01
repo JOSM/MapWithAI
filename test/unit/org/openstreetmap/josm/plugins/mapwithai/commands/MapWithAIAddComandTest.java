@@ -248,7 +248,7 @@ public class MapWithAIAddComandTest {
         assertNotNull(osmData.getPrimitiveById(176232378, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(176220609, OsmPrimitiveType.NODE));
         assertNotNull(osmData.getPrimitiveById(way));
-        Awaitility.await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS);
+        Awaitility.await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).until(() -> true);
         List<Future<?>> futures = new ArrayList<>(swingMocker.futureTasks);
         Assertions.assertDoesNotThrow(() -> {
             for (Future<?> future : futures) {

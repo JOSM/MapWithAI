@@ -49,7 +49,6 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     private final List<PrefEntry> replacementTableDisplayData;
     private MapWithAILayerInfo info;
     private static final int MAX_SELECTED_TO_EDIT = 1;
-    private static final String SOURCE = "source";
 
     public MapWithAIPreferences() {
         super("mapwithai", tr("MapWithAI preferences"), tr("Modify MapWithAI preferences"), false, new JTabbedPane());

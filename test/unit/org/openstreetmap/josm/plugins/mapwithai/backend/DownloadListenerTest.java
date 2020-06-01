@@ -20,8 +20,11 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class DownloadListenerTest {
     @Rule
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().projection();
 
     @Test
@@ -46,7 +49,7 @@ public class DownloadListenerTest {
         // Test when MapWithAI layer isn't continuous downloading
         ds.addDataSource(new DataSource(bounds, "Test bounds 2"));
 
-        layer.getDataSet().isEmpty();
+        assertTrue(layer.getDataSet().isEmpty());
         Awaitility.await().atMost(Durations.FIVE_SECONDS).until(() -> !layer.getDataSet().isEmpty());
         assertFalse(layer.getDataSet().isEmpty());
 
