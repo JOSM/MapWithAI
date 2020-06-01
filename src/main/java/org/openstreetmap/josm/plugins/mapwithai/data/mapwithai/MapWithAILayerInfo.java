@@ -20,6 +20,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
@@ -28,6 +29,7 @@ import javax.json.JsonReader;
 import javax.json.JsonString;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
+
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
@@ -284,16 +286,13 @@ public class MapWithAILayerInfo {
                             newInfo.setAttributionImageURL(url + "content/items/" + newInfo.getId() + "/info/"
                                     + feature.getString("thumbnail"));
                         }
-                        // TODO: change this to streams
-                        MapWithAICategory category = null;
-                        for (JsonString elem : feature.getJsonArray("groupCategories").getValuesAs(JsonString.class)) {
-                            category = MapWithAICategory.fromString(elem.getString().replace("/Categories/", ""));
-                            if (category != null) {
-                                break;
-                            }
-
+                        if (feature.containsKey("groupCategories")) {
+                            MapWithAICategory category = feature.getJsonArray("groupCategories")
+                                    .getValuesAs(JsonString.class).stream().map(JsonString::getString)
+                                    .map(s -> s.replace("/Categories/", "")).map(MapWithAICategory::fromString)
+                                    .filter(Objects::nonNull).findFirst().orElse(MapWithAICategory.OTHER);
+                            newInfo.setCategory(category);
                         }
-                        newInfo.setCategory(category);
                         newInfo.setDescription(feature.getString("snippet"));
                         information.add(newInfo);
                     }
