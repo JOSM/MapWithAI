@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
@@ -12,7 +13,6 @@ import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
@@ -29,13 +29,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  */
 public class MapWithAIRemoteControlTest {
-
-    /**
-     * Rule used for tests throwing exceptions.
-     */
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     /**
      * Setup test.
      */
@@ -58,9 +51,9 @@ public class MapWithAIRemoteControlTest {
      */
     @Test
     public void testBadRequestInvalidUrl() throws Exception {
-        thrown.expect(RequestHandlerBadRequestException.class);
-        thrown.expectMessage("MalformedURLException: no protocol: invalid_url");
-        newHandler("https://localhost?url=invalid_url").handle();
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
+                () -> newHandler("https://localhost?url=invalid_url").handle());
+        assertEquals("MalformedURLException: no protocol: invalid_url", exception.getMessage());
     }
 
     private static BBox getTestBBox() {
@@ -98,10 +91,10 @@ public class MapWithAIRemoteControlTest {
         assertNotEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
 
         final String badUrl2 = "NothingToSeeHere";
-        thrown.expect(RequestHandlerBadRequestException.class);
-        thrown.expectMessage("MalformedURLException: no protocol: " + badUrl2);
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
+                () -> newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl2)).handle());
+        assertEquals("MalformedURLException: no protocol: " + badUrl2, exception.getMessage());
 
-        newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl2)).handle();
     }
 
     @Test
@@ -118,10 +111,11 @@ public class MapWithAIRemoteControlTest {
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
         assertNotEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
 
-        thrown.expect(RequestHandlerBadRequestException.class);
-        thrown.expectMessage("NumberFormatException (For input string: \"BAD_VALUE\")");
-        newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE")
-                .handle();
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
+                () -> newHandler(
+                        "http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE")
+                                .handle());
+        assertEquals("NumberFormatException (For input string: \"BAD_VALUE\")", exception.getMessage());
     }
 
     @Test
@@ -140,11 +134,14 @@ public class MapWithAIRemoteControlTest {
         assertTrue(temp.bounds(added));
 
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
-        temp = new BBox(39.0621223, -108.4625421, 39.0633059, -108.4594728);
-        thrown.expect(RequestHandlerBadRequestException.class);
-        thrown.expectMessage(
-                "Bad bbox: 39.0621223,-108.4625421,39.0633059,-108.4594728 (converted to [ x: 39.0621223 -> 39.0633059, y: -108.4625421 -> -108.4594728 ])");
-        newHandler("http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp.toStringCSV(","))).handle();
+        BBox temp2 = new BBox(39.0621223, -108.4625421, 39.0633059, -108.4594728);
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
+                () -> newHandler(
+                        "http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp2.toStringCSV(",")))
+                                .handle());
+        assertEquals(
+                "Bad bbox: 39.0621223,-108.4625421,39.0633059,-108.4594728 (converted to [ x: 39.0621223 -> 39.0633059, y: -108.4625421 -> -108.4594728 ])",
+                exception.getMessage());
     }
 
     @Test
