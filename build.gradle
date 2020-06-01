@@ -18,6 +18,9 @@ plugins {
   //id 'de.aaschmid.cpd' version '2.0'
 }
 
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.targetCompatibility = JavaVersion.VERSION_1_8
+
 // Set up Errorprone
 tasks.withType(JavaCompile).configureEach {
   options.errorprone {
