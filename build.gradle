@@ -60,6 +60,10 @@ sourceSets {
     }
   }
   intTest {
+    compileClasspath += sourceSets.main.output
+    compileClasspath += sourceSets.test.output
+    runtimeClasspath += sourceSets.main.output
+    runtimeClasspath += sourceSets.test.output
     java {
       srcDirs = ["test/integration"]
     }
@@ -100,8 +104,8 @@ dependencies {
 }
 
 configurations {
-    intTestImplementation.extendsFrom testImplementation
     intTestRuntimeOnly.extendsFrom testRuntimeOnly
+    intTestImplementation.extendsFrom testImplementation
 }
 
 // Add dependencies from ivy.xml
