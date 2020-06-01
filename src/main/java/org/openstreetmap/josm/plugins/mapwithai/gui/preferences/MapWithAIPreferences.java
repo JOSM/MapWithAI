@@ -83,7 +83,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
 
     private Component getServerList(PreferenceTabbedPane gui) {
         info = new MapWithAILayerInfo(MapWithAILayerInfo.instance);
-        return new MapWithAIProvidersPanel(gui, info);
+        return new MapWithAIProvidersPanel(gui, info, true);
     }
 
     private Component getSettingsPanel(PreferenceTabbedPane gui) {

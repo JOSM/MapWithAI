@@ -31,11 +31,11 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
 
     public MapWithAIDownloadOptions() {
         optionPanel = new JPanel(new GridBagLayout());
-        JPanel favorites = new JPanel();
-        favorites.add(new JLabel("TODO: Favorites go here!")); // TODO
-        optionPanel.add(favorites, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
-        mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this, MapWithAILayerInfo.getInstance());
-        optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.CENTER));
+        JPanel infoHeader = new JPanel();
+        infoHeader.add(new JLabel("Browse and download extra data sets to facilitate your mapping needs."));
+        optionPanel.add(infoHeader, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
+        mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this, MapWithAILayerInfo.getInstance(), false);
+        optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.BOTH).anchor(GBC.CENTER));
         mapwithaiProvidersPanel.defaultMap.addPropertyChangeListener(this);
     }
 
@@ -47,6 +47,8 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
 
     @Override
     public void setDownloadArea(Bounds area) {
+        // This is (currently) never called.
+        // See https://josm.openstreetmap.de/ticket/19310
         mapwithaiProvidersPanel.setCurrentBounds(area);
     }
 
