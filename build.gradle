@@ -11,10 +11,10 @@ plugins {
   id "maven-publish"
   id "pmd"
   id "com.github.ben-manes.versions" version "0.28.0"
-  id "com.github.spotbugs" version "4.2.0"
+  id "com.github.spotbugs" version "4.2.4"
   id "org.openstreetmap.josm" version "0.7.0"
-  id "net.ltgt.errorprone" version "1.1.1"
-  id "com.diffplug.gradle.spotless" version "3.30.0"
+  id "net.ltgt.errorprone" version "1.2.1"
+  id "com.diffplug.gradle.spotless" version "4.1.0"
   //id 'de.aaschmid.cpd' version '2.0'
 }
 
@@ -34,10 +34,6 @@ tasks.withType(JavaCompile).configureEach {
     check("PrivateConstructorForUtilityClass", CheckSeverity.WARN)
     check("UngroupedOverloads", CheckSeverity.WARN)
     check("WildcardImport", CheckSeverity.WARN)
-    // TODO remove this on errorprone update
-    if ((JavaVersion.current().majorVersion as Integer) > 11) {
-      check('Finally', CheckSeverity.OFF)
-    }
   }
 }
 
