@@ -77,6 +77,16 @@ assemble with java 14:
       - build/
   allow_failure: true
 
+assemble with java 15:
+  stage: build
+  image: registry.gitlab.com/josm/docker-library/openjdk-15-josmplugin:latest
+  script:
+    - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/
+  allow_failure: true
+
 
 ##############
 # Test stage #
@@ -158,6 +168,17 @@ build with java 14:
   only:
     - schedules
 
+build with java 15:
+  stage: test
+  image: registry.gitlab.com/josm/docker-library/openjdk-15-josmplugin:latest
+  script:
+    - ./gradlew build
+  dependencies:
+    - assemble with java 15
+  allow_failure: true
+  only:
+    - schedules
+
 ################
 # Deploy stage #
 ################
@@ -228,26 +249,26 @@ release hotfix:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: always
 
-publish master update site:
+publish update site:
   stage: deploy
   environment:
     name: pages branch / snapshot update site
-    url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}/snapshot/master/update-site
+    url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}/snapshot/${CI_COMMIT_REF_NAME}/update-site
   script:
   - *clone_pages_branch
   - |
     commitHash=`git rev-parse HEAD`
-    commitMessage="Make latest commit from master available via JOSM update site ($commitHash)"
+    commitMessage="Make latest commit from ${CI_COMMIT_REF_NAME} available via JOSM update site ($commitHash)"
   - |
-    rm -vrf "pages/public/snapshot/master"
-    mkdir -pv "pages/public/snapshot/master"
-    cp -v "build/snapshot-update-site" "pages/public/snapshot/master/update-site"
-    cp -v "build/dist/"* "pages/public/snapshot/master"
+    rm -vrf "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
+    mkdir -pv "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
+    cp -v "build/snapshot-update-site" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/update-site"
+    cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
   - *push_pages_branch
   dependencies:
   - build
   rules:
-    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_REF_NAME != null'
       when: always
 
 publish to / GitLab.com packages:
