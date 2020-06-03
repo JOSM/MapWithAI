@@ -2,7 +2,7 @@
   "id" : "d0e9831e-6eff-4f7e-83ee-f09bad38c40d",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_flagstaff_az_addresses_featureserver_0",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Flagstaff_AZ_Addresses/FeatureServer/0?f=pjson",
+    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Flagstaff_AZ_Addresses/FeatureServer/0?f=json",
     "method" : "GET"
   },
   "response" : {

@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,6 +64,7 @@ import org.openstreetmap.josm.gui.widgets.HtmlPanel;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
@@ -577,8 +579,12 @@ public class MapWithAIProvidersPanel extends JPanel {
                 try {
                     MapWithAIInfo info = p.getSourceInfo();
                     if (MapWithAIInfo.MapWithAIType.ESRI.equals(info.getSourceType())) {
-                        for (MapWithAIInfo i : MapWithAILayerInfo.addEsriLayer(info)) {
-                            activeModel.addRow(i);
+                        try (ESRISourceReader reader = new ESRISourceReader(info)) {
+                            for (MapWithAIInfo i : reader.parse()) {
+                                activeModel.addRow(i);
+                            }
+                        } catch (IOException e) {
+                            Logging.error(e);
                         }
                     } else {
                         activeModel.addRow(info);

@@ -2,7 +2,7 @@
   "id" : "ffce8d3a-c21a-410b-9303-2b59875b76aa",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_alexandria_va_addresses_featureserver",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Alexandria_VA_Addresses/FeatureServer?f=pjson",
+    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Alexandria_VA_Addresses/FeatureServer?f=json",
     "method" : "GET"
   },
   "response" : {

@@ -3,13 +3,11 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,28 +16,16 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
 
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
-import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
+import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Logging;
@@ -213,7 +199,11 @@ public class MapWithAILayerInfo {
             defaultLayers.addAll(newLayers);
             for (MapWithAIInfo layer : newLayers) {
                 if (MapWithAIInfo.MapWithAIType.ESRI.equals(layer.getSourceType())) {
-                    allDefaultLayers.addAll(addEsriLayer(layer));
+                    try (ESRISourceReader reader = new ESRISourceReader(layer)) {
+                        allDefaultLayers.addAll(reader.parse());
+                    } catch (IOException e) {
+                        Logging.error(e);
+                    }
                 } else {
                     allDefaultLayers.add(layer);
                 }
@@ -232,115 +222,6 @@ public class MapWithAILayerInfo {
                 listener.onFinish();
             }
         }
-    }
-
-    /**
-     * Take a {@link MapWithAIInfo.MapWithAIType#ESRI} layer and convert it to a
-     * list of "true" layers.
-     *
-     * @param layer The ESRI layer (no checks performed here)
-     * @return The layers to be added instead of the ESRI layer.
-     */
-    public static Collection<MapWithAIInfo> addEsriLayer(MapWithAIInfo layer) {
-        Pattern startReplace = Pattern.compile("\\{start\\}");
-        String search = "/search?sortField=added&sortOrder=desc&num=12&start={start}&f=json";
-        String url = layer.getUrl();
-        String group = layer.getId();
-        if (!url.endsWith("/")) {
-            url = url.concat("/");
-        }
-
-        Collection<MapWithAIInfo> information = new HashSet<>();
-
-        String next = "1";
-        String searchUrl = startReplace.matcher(search).replaceAll(next);
-        while (!next.equals("-1")) {
-            try (CachedFile layers = new CachedFile(url + "content/groups/" + group + searchUrl);
-                    BufferedReader i = layers.getContentReader();
-                    JsonReader reader = Json.createReader(i)) {
-                JsonStructure parser = reader.read();
-                if (parser.getValueType().equals(JsonValue.ValueType.OBJECT)) {
-                    JsonObject obj = parser.asJsonObject();
-                    next = obj.getString("nextStart", "-1");
-                    searchUrl = startReplace.matcher(search).replaceAll(next);
-                    JsonArray features = obj.getJsonArray("results");
-                    for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
-                        // Use the initial esri server information to keep conflation info
-                        MapWithAIInfo newInfo = new MapWithAIInfo(layer);
-                        newInfo.setId(feature.getString("id"));
-                        if (feature.getString("type", "").equals("Feature Service")) {
-                            newInfo.setUrl(featureService(newInfo, feature.getString("url")));
-                        } else {
-                            newInfo.setUrl(feature.getString("url"));
-                        }
-                        newInfo.setName(feature.getString("title", feature.getString("name")));
-                        String[] extent = feature.getJsonArray("extent").getValuesAs(JsonArray.class).stream()
-                                .flatMap(array -> array.getValuesAs(JsonNumber.class).stream())
-                                .map(JsonNumber::doubleValue).map(Object::toString).toArray(String[]::new);
-                        ImageryBounds imageryBounds = new ImageryBounds(
-                                String.join(",", extent[1], extent[0], extent[3], extent[2]), ",");
-                        newInfo.setBounds(imageryBounds);
-                        newInfo.setSourceType(MapWithAIInfo.MapWithAIType.ESRI_FEATURE_SERVER);
-                        newInfo.setTermsOfUseText(feature.getString("licenseInfo", null));
-                        if (feature.containsKey("thumbnail")) {
-                            newInfo.setAttributionImageURL(url + "content/items/" + newInfo.getId() + "/info/"
-                                    + feature.getString("thumbnail"));
-                        }
-                        if (feature.containsKey("groupCategories")) {
-                            MapWithAICategory category = feature.getJsonArray("groupCategories")
-                                    .getValuesAs(JsonString.class).stream().map(JsonString::getString)
-                                    .map(s -> s.replace("/Categories/", "")).map(MapWithAICategory::fromString)
-                                    .filter(Objects::nonNull).findFirst().orElse(MapWithAICategory.OTHER);
-                            newInfo.setCategory(category);
-                        }
-                        newInfo.setDescription(feature.getString("snippet"));
-                        information.add(newInfo);
-                    }
-                }
-            } catch (ClassCastException | IOException e) {
-                Logging.error(e);
-                next = "-1";
-            }
-        }
-        Comparator<MapWithAIInfo> comparator = (o1, o2) -> o1.getCategory().getDescription()
-                .compareTo(o2.getCategory().getDescription());
-        if (information != null) {
-            information = information.stream().sorted(comparator).collect(Collectors.toSet());
-        }
-        return information;
-    }
-
-    private static String featureService(MapWithAIInfo mapwithaiInfo, String url) {
-        String toGet = url.endsWith("pjson") ? url : url.concat("?f=pjson");
-        try (CachedFile featureServer = new CachedFile(toGet);
-                BufferedReader br = featureServer.getContentReader();
-                JsonReader reader = Json.createReader(br)) {
-            JsonObject info = reader.readObject();
-            JsonArray layers = info.getJsonArray("layers");
-            // TODO use all the layers?
-            JsonObject layer = layers.get(0).asJsonObject();
-            String partialUrl = (url.endsWith("/") ? url : url + "/") + layer.getInt("id");
-            mapwithaiInfo.setReplacementTags(getReplacementTags(partialUrl));
-
-            return partialUrl;
-        } catch (IOException e) {
-            Logging.error(e);
-            return null;
-        }
-    }
-
-    private static Map<String, String> getReplacementTags(String layerUrl) {
-        String toGet = layerUrl.endsWith("?f=pjson") ? layerUrl : layerUrl.concat("?f=pjson");
-        try (CachedFile featureServer = new CachedFile(toGet);
-                BufferedReader br = featureServer.getContentReader();
-                JsonReader reader = Json.createReader(br)) {
-
-            return reader.readObject().getJsonArray("fields").getValuesAs(JsonObject.class).stream()
-                    .collect(Collectors.toMap(o -> o.getString("name"), o -> o.getString("alias", null)));
-        } catch (IOException e) {
-            Logging.error(e);
-        }
-        return Collections.emptyMap();
     }
 
     /**

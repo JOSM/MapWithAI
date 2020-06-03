@@ -2,7 +2,7 @@
   "id" : "ee758a6b-79d6-48a2-8af6-df2afe4ba8d8",
   "name" : "sharing_rest_content_groups_bdf6c800b3ae453b9db239e03d7c1727_search",
   "request" : {
-    "url" : "/sharing/rest/content/groups/bdf6c800b3ae453b9db239e03d7c1727/search?sortField=added&sortOrder=desc&num=12&start=1&f=json",
+    "url" : "/sharing/rest/content/groups/bdf6c800b3ae453b9db239e03d7c1727/search?f=json&sortField=added&sortOrder=desc&num=12&start=1",
     "method" : "GET"
   },
   "response" : {

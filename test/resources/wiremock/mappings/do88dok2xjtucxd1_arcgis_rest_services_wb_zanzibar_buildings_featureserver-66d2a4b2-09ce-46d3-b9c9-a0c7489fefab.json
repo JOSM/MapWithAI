@@ -2,7 +2,7 @@
   "id" : "66d2a4b2-09ce-46d3-b9c9-a0c7489fefab",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_wb_zanzibar_buildings_featureserver",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/WB_Zanzibar_Buildings/FeatureServer?f=pjson",
+    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/WB_Zanzibar_Buildings/FeatureServer?f=json",
     "method" : "GET"
   },
   "response" : {

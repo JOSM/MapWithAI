@@ -2,7 +2,7 @@
   "id" : "50f13bcb-6c47-4133-acd6-2def98086289",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_riverside_ca_buildings_featureserver_0",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Riverside_CA_Buildings/FeatureServer/0?f=pjson",
+    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Riverside_CA_Buildings/FeatureServer/0?f=json",
     "method" : "GET"
   },
   "response" : {

@@ -2,7 +2,7 @@
   "id" : "1ab90e03-6781-4f0b-97c0-9e66b728c81c",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_sarpy_county_ne_buildings_featureserver",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Sarpy_County_NE_Buildings/FeatureServer?f=pjson",
+    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Sarpy_County_NE_Buildings/FeatureServer?f=json",
     "method" : "GET"
   },
   "response" : {

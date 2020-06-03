@@ -23,7 +23,6 @@ import javax.json.JsonStructure;
 import javax.json.JsonValue;
 
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.osm.BBox;
@@ -90,7 +89,6 @@ public class MapWithAISourceReader implements Closeable {
     public List<MapWithAIInfo> parse() throws IOException {
         List<MapWithAIInfo> entries = Collections.emptyList();
         cachedFile = new CachedFile(source);
-        cachedFile.setParam(String.join(",", ImageryInfo.getActiveIds()));
         cachedFile.setFastFail(fastFail);
         try (JsonReader reader = Json.createReader(cachedFile.setMaxAge(CachedFile.DAYS)
                 .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
