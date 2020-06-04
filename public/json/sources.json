@@ -1,8 +1,44 @@
 {
-    "ESRI OpenStreetMap Curated Data": {
+    "(Update JOSM and MapWithAI Plugin -- currently only supported on development builds) Esri OpenStreetMap Curated Data": {
         "type": "esri",
         "url": "https://openstreetmap.maps.arcgis.com/sharing/rest/",
-        "id": "bdf6c800b3ae453b9db239e03d7c1727"
+        "id": "bdf6c800b3ae453b9db239e03d7c1727",
+        "conflate": true,
+        "conflationUrl": "https://www.mapwith.ai/maps/ml_roads?bbox={bbox}&building_source=esri&esri_id={id}",
+        "conflationParameters": [{
+            "description": "buildings",
+            "enabled": true,
+            "parameter": "result_type=road_building_vector_xml"
+        },
+        {
+            "description": "Conflate with OpenStreetMap",
+            "enabled": true,
+            "parameter": "conflate_with_osm=true"
+        },
+        {
+            "description": "Type of dataset (theme)",
+            "enabled": true,
+            "permanent": true,
+            "parameter": "theme=ml_road_vector"
+        },
+        {
+            "description": "MapWithAI Collaborator",
+            "enabled": true,
+            "permanent": true,
+            "parameter": "collaborator=josm"
+        },
+        {
+            "description": "MapWithAI Token",
+            "enabled": true,
+            "permanent": true,
+            "parameter": "token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m"
+        },
+        {
+            "description": "MapWithAI Hash",
+            "enabled": true,
+            "permanent": true,
+            "parameter": "hash=ASawRla3rBcwEjY4HIY"
+        }]
     },
     "Statewide Aggregate Addresses in Colorado 2019 (Public)": {
         "id": "colorado_public_aggregate_addresses",
