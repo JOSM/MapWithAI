@@ -734,7 +734,7 @@ public class MapWithAIProvidersPanel extends JPanel {
                 });
             } else {
                 selected.stream().mapToInt(activeModel::getRowIndex).filter(i -> i >= 0).boxed()
-                        .sorted(Collections.reverseOrder()).sorted().forEach(activeModel::removeRow);
+                        .sorted(Collections.reverseOrder()).forEach(activeModel::removeRow);
             }
             updateEnabledState();
         }
