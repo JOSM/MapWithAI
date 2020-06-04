@@ -2,7 +2,16 @@
   "id" : "4df1e72e-a62e-48b6-806d-99fd74956742",
   "name" : "maps_ml_roads",
   "request" : {
-    "url" : "/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox=-108.4625,39.0621,-108.4594,39.0633&result_type=road_building_vector_xml",
+    "urlPath" : "/maps/ml_roads",
+    "queryParameters": {
+        "bbox": { "equalTo": "-108.4625,39.0621,-108.4594,39.0633"},
+        "result_type": { "equalTo": "road_building_vector_xml"},
+        "conflate_with_osm": { "equalTo": "true"},
+        "theme": { "equalTo": "ml_road_vector"},
+        "collaborator": { "equalTo": "josm"},
+        "token": { "equalTo": "ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m"},
+        "hash": {"equalTo": "ASawRla3rBcwEjY4HIY"}
+    },
     "method" : "GET"
   },
   "response" : {
