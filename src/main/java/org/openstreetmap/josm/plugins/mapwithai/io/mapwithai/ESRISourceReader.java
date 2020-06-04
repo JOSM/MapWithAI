@@ -153,6 +153,7 @@ public class ESRISourceReader implements Closeable {
             JsonObject info = reader.readObject();
             JsonArray layers = info.getJsonArray("layers");
             // TODO use all the layers?
+
             JsonObject layer = layers.get(0).asJsonObject();
             String partialUrl = (url.endsWith("/") ? url : url + "/") + layer.getInt("id");
             mapwithaiInfo.setReplacementTags(getReplacementTags(partialUrl));
@@ -169,13 +170,19 @@ public class ESRISourceReader implements Closeable {
         try (CachedFile featureServer = new CachedFile(toGet);
                 BufferedReader br = featureServer.getContentReader();
                 JsonReader reader = Json.createReader(br)) {
-
             return reader.readObject().getJsonArray("fields").getValuesAs(JsonObject.class).stream()
-                    .collect(Collectors.toMap(o -> o.getString("name"), o -> o.getString("alias", null)));
+                    .collect(Collectors.toMap(o -> o.getString("name"), ESRISourceReader::getReplacementTag));
         } catch (IOException e) {
             Logging.error(e);
         }
         return Collections.emptyMap();
+    }
+
+    private static String getReplacementTag(JsonObject tag) {
+        if (tag.getBoolean("editable", true) && !"esriFieldTypeOID".equals(tag.getString("type", null))) {
+            return tag.getString("alias", "");
+        }
+        return "";
     }
 
     /**
