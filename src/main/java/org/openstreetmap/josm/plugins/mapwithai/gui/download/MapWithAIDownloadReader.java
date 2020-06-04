@@ -11,6 +11,8 @@ import java.awt.GridBagLayout;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import javax.swing.Icon;
@@ -47,14 +49,16 @@ public class MapWithAIDownloadReader implements DownloadSource<MapWithAIDownload
         task.setZoomAfterDownload(settings.zoomToData());
         DownloadParams params = new DownloadParams();
         params.withNewLayer(settings.asNewLayer());
-        try {
-            task.download(params, area, null).get();
-        } catch (InterruptedException e) {
-            Logging.error(e);
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            Logging.error(e);
-        }
+        MapWithAIDataUtils.getForkJoinPool().execute(() -> {
+            try {
+                task.download(params, area, null).get(300, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Logging.error(e);
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException | TimeoutException e) {
+                Logging.error(e);
+            }
+        });
     }
 
     @Override
