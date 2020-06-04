@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -16,12 +17,14 @@ import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.io.OsmServerReader;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Utils;
 import org.xml.sax.SAXException;
 
@@ -35,9 +38,16 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
     @Override
     public Future<?> download(OsmServerReader reader, DownloadParams settings, Bounds downloadArea,
             ProgressMonitor progressMonitor) {
-        DownloadTask task = new DownloadTask(settings, tr("MapWithAI Download"), progressMonitor, false, false,
-                downloadArea);
-        return MainApplication.worker.submit(task);
+        if (!urls.isEmpty()) {
+            DownloadTask task = new DownloadTask(settings, tr("MapWithAI Download"), progressMonitor, false, false,
+                    downloadArea);
+            return MainApplication.worker.submit(task);
+        }
+        Notification n = new Notification();
+        n.setIcon(ImageProvider.get("mapwithai"));
+        n.setContent(tr("No MapWithAI layers were selected. Please select at least one."));
+        n.show();
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
