@@ -33,6 +33,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
 
     public DownloadMapWithAITask() {
         urls = MapWithAILayerInfo.getInstance().getLayers();
+        MapWithAILayerInfo.getInstance().save(); // Save preferences between downloads.
     }
 
     @Override
