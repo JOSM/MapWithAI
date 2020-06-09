@@ -311,7 +311,7 @@ public final class MapWithAIDataUtils {
 
         final MapWithAILayer tLayer = layer;
         if (!MainApplication.getLayerManager().getLayers().contains(tLayer) && create) {
-            GuiHelper.runInEDT(() -> MainApplication.getLayerManager().addLayer(tLayer));
+            GuiHelper.runInEDTAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
         }
 
         return layer;
