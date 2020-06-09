@@ -4,10 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.Image;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -16,7 +13,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.json.Json;
@@ -25,27 +21,28 @@ import javax.json.JsonObject;
 import javax.json.stream.JsonParser;
 import javax.swing.ImageIcon;
 
-import org.openstreetmap.gui.jmapviewer.interfaces.Attributed;
-import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
-import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.data.StructUtils.StructEntry;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
+import org.openstreetmap.josm.data.sources.ISourceCategory;
+import org.openstreetmap.josm.data.sources.ISourceType;
+import org.openstreetmap.josm.data.sources.SourceInfo;
+import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 import org.openstreetmap.josm.tools.Logging;
-import org.openstreetmap.josm.tools.Utils;
 
-public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithAIInfo>, Attributed {
+public class MapWithAIInfo extends
+        SourceInfo<MapWithAIInfo.MapWithAICategory, MapWithAIInfo.MapWithAIType, ImageryInfo.ImageryBounds, MapWithAIInfo.MapWithAIPreferenceEntry> {
 
     /**
      * Type of MapWithAI entry
      */
-    public enum MapWithAIType {
+    public enum MapWithAIType implements ISourceType<MapWithAIType> {
         FACEBOOK("facebook"), THIRD_PARTY("thirdParty"), ESRI("esri"), ESRI_FEATURE_SERVER("esriFeatureServer");
 
         private final String typeString;
@@ -54,6 +51,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             this.typeString = typeString;
         }
 
+        @Override
         public String getTypeString() {
             return typeString;
         }
@@ -66,9 +64,19 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             }
             return null;
         }
+
+        @Override
+        public MapWithAIType getDefault() {
+            return THIRD_PARTY;
+        }
+
+        @Override
+        public MapWithAIType getFromString(String s) {
+            return fromString(s);
+        }
     }
 
-    public enum MapWithAICategory implements Comparable<MapWithAICategory> {
+    public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
 
         BUILDING("data/closedway", "buildings", marktr("Buildings")),
         HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),
@@ -88,14 +96,17 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             this.description = description;
         }
 
+        @Override
         public final String getCategoryString() {
             return category;
         }
 
+        @Override
         public final String getDescription() {
             return description;
         }
 
+        @Override
         public final ImageIcon getIcon(ImageSizes size) {
             return iconCache
                     .computeIfAbsent(size, x -> Collections.synchronizedMap(new EnumMap<>(MapWithAICategory.class)))
@@ -128,65 +139,18 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                 return (o1 == null || o2 == null) ? 1 : o1.getDescription().compareTo(o2.getDescription());
             }
         }
+
+        @Override
+        public MapWithAICategory getDefault() {
+            return OTHER;
+        }
+
+        @Override
+        public MapWithAICategory getFromString(String s) {
+            return fromString(s);
+        }
     }
 
-    /**
-     * original name of the service entry in case of translation call, for multiple
-     * languages English when possible
-     */
-    /**
-     * original name of the imagery entry in case of translation call, for multiple
-     * languages English when possible
-     */
-    private String origName;
-    /** (original) language of the translated name entry */
-    private String langName;
-    /** whether this is a entry activated by default or not */
-    private boolean defaultEntry;
-    /**
-     * Whether this service requires a explicit EULA acceptance before it can be
-     * activated
-     */
-    private String eulaAcceptanceRequired;
-    /** data boundaries, displayed in preferences and used for automatic download */
-    private ImageryInfo.ImageryBounds bounds;
-    /**
-     * description of the imagery entry, should contain notes what type of data it
-     * is
-     */
-    private String description;
-    /** language of the description entry */
-    private String langDescription;
-    /** Text of a text attribution displayed when using the service */
-    private String attributionText;
-    /** Link to the privacy policy of the operator */
-    private String privacyPolicyURL;
-    /** Link to a reference stating the permission for OSM usage */
-    private String permissionReferenceURL;
-    /** Link behind the text attribution displayed when using the service */
-    private String attributionLinkURL;
-    /** Image of a graphical attribution displayed when using the service */
-    private String attributionImage;
-    /** Link behind the graphical attribution displayed when using the service */
-    private String attributionImageURL;
-    /** Text with usage terms displayed when using the service */
-    private String termsOfUseText;
-    /** Link behind the text with usage terms displayed when using the service */
-    private String termsOfUseURL;
-    /** country code of the service (for country specific service) */
-    private String countryCode = "";
-    /**
-     * creation date of the data (in the form YYYY-MM-DD;YYYY-MM-DD, where DD and MM
-     * as well as a second date are optional).
-     */
-    private String date;
-    /** icon used in menu */
-    private String icon;
-    /** HTTP headers **/
-    private Map<String, String> customHttpHeaders = Collections.emptyMap();
-    /** category of the service */
-    private MapWithAICategory category;
-    private MapWithAIType type;
     private JsonArray parameters;
     private Map<String, String> replacementTags;
     private boolean conflate;
@@ -203,50 +167,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      * {@link #equalsPref(MapWithAIPreferenceEntry) equalsPref method}
      **/
 
-    public static class MapWithAIPreferenceEntry {
-
-        @StructEntry
-        String name;
-        @StructEntry
-        String d;
-        @StructEntry
-        String id;
-        @StructEntry
-        String type;
-        @StructEntry
-        String url;
-        @StructEntry
-        String eula;
-        @StructEntry
-        String attribution_text;
-        @StructEntry
-        String attribution_url;
-        @StructEntry
-        String permission_reference_url;
-        @StructEntry
-        String logo_image;
-        @StructEntry
-        String logo_url;
-        @StructEntry
-        String terms_of_use_text;
-        @StructEntry
-        String terms_of_use_url;
-        @StructEntry
-        String country_code = "";
-        @StructEntry
-        String date;
-        @StructEntry
-        String cookies;
-        @StructEntry
-        String bounds;
-        @StructEntry
-        String shapes;
-        @StructEntry
-        String icon;
-        @StructEntry
-        String description;
-        @StructEntry
-        String category;
+    public static class MapWithAIPreferenceEntry extends SourcePreferenceEntry<MapWithAIInfo> {
         @StructEntry
         String parameters;
         @StructEntry
@@ -272,23 +193,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
          * @param i The corresponding imagery info
          */
         public MapWithAIPreferenceEntry(MapWithAIInfo i) {
-            name = i.name;
-            id = i.id;
-            type = i.type.getTypeString();
-            url = i.url;
-            eula = i.eulaAcceptanceRequired;
-            attribution_text = i.attributionText;
-            attribution_url = i.attributionLinkURL;
-            permission_reference_url = i.permissionReferenceURL;
-            date = i.date;
-            logo_image = i.attributionImage;
-            logo_url = i.attributionImageURL;
-            terms_of_use_text = i.termsOfUseText;
-            terms_of_use_url = i.termsOfUseURL;
-            country_code = i.countryCode;
-            cookies = i.cookies;
-            icon = intern(i.icon);
-            description = i.description;
+            super(i);
             if (i.parameters != null) {
                 parameters = i.parameters.toString();
             }
@@ -297,20 +202,6 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             }
             if (i.replacementTags != null) {
                 replacementTags = i.replacementTags;
-            }
-            category = i.category != null ? i.category.getCategoryString() : null;
-            if (i.bounds != null) {
-                bounds = i.bounds.encodeAsString(",");
-                StringBuilder shapesString = new StringBuilder();
-                for (Shape s : i.bounds.getShapes()) {
-                    if (shapesString.length() > 0) {
-                        shapesString.append(';');
-                    }
-                    shapesString.append(s.encodeAsString(","));
-                }
-                if (shapesString.length() > 0) {
-                    shapes = shapesString.toString();
-                }
             }
             conflate = i.conflate;
             conflationUrl = i.conflationUrl;
@@ -351,10 +242,10 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
 
     public MapWithAIInfo(String name, String baseUrl, String id) {
         super();
-        this.name = name;
-        this.url = baseUrl;
-        this.id = id;
-        this.type = MapWithAIType.THIRD_PARTY;
+        setName(name);
+        setUrl(baseUrl);
+        setId(id);
+        setSourceType(MapWithAIType.THIRD_PARTY);
     }
 
     /**
@@ -370,13 +261,15 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
      * @throws IllegalArgumentException if type refers to an unknown service type
      */
     public MapWithAIInfo(String name, String url, String type, String eulaAcceptanceRequired, String id) {
-        this(name, url, id);
+        super(name, url, id);
         MapWithAIType t = MapWithAIType.fromString(type);
-        this.eulaAcceptanceRequired = eulaAcceptanceRequired;
+        this.setEulaAcceptanceRequired(eulaAcceptanceRequired);
         if (t != null) {
-            this.type = t;
+            super.setSourceType(t);
         } else if (type != null && !type.isEmpty()) {
             throw new IllegalArgumentException("unknown type: " + type);
+        } else {
+            super.setSourceType(MapWithAIType.THIRD_PARTY.getDefault());
         }
     }
 
@@ -384,21 +277,21 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         this(e.name, e.url, e.id);
         CheckParameterUtil.ensureParameterNotNull(e.name, "name");
         CheckParameterUtil.ensureParameterNotNull(e.url, "url");
-        description = e.description;
-        cookies = e.cookies;
-        eulaAcceptanceRequired = e.eula;
+        setDescription(e.description);
+        setCookies(e.cookies);
+        setEulaAcceptanceRequired(e.eula);
         if (e.parameters != null) {
             try (JsonParser parser = Json.createParser(new StringReader(e.parameters))) {
                 if (parser.hasNext() && JsonParser.Event.START_ARRAY.equals(parser.next())) {
-                    parameters = parser.getArray();
+                    setParameters(parser.getArray());
                 }
             }
         }
         if (e.replacementTags != null) {
-            replacementTags = e.replacementTags;
+            setReplacementTags(e.replacementTags);
         }
-        type = MapWithAIType.fromString(e.type);
-        if (type == null) {
+        setSourceType(MapWithAIType.fromString(e.type));
+        if (getSourceType() == null) {
             throw new IllegalArgumentException("unknown type");
         }
         if (e.bounds != null) {
@@ -413,23 +306,23 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
                 }
             }
         }
-        attributionText = intern(e.attribution_text);
-        attributionLinkURL = e.attribution_url;
-        permissionReferenceURL = e.permission_reference_url;
-        attributionImage = e.logo_image;
-        attributionImageURL = e.logo_url;
-        date = e.date;
-        termsOfUseText = e.terms_of_use_text;
-        termsOfUseURL = e.terms_of_use_url;
-        countryCode = intern(e.country_code);
-        icon = intern(e.icon);
-        category = MapWithAICategory.fromString(e.category);
-        conflate = e.conflate;
-        conflationUrl = e.conflationUrl;
+        setAttributionText(e.attribution_text);
+        setAttributionLinkURL(e.attribution_url);
+        setPermissionReferenceURL(e.permission_reference_url);
+        setAttributionImage(e.logo_image);
+        setAttributionImageURL(e.logo_url);
+        setDate(e.date);
+        setTermsOfUseText(e.terms_of_use_text);
+        setTermsOfUseURL(e.terms_of_use_url);
+        setCountryCode(e.country_code);
+        setIcon(e.icon);
+        setCategory(MapWithAICategory.fromString(e.category));
+        setConflation(e.conflate);
+        setConflationUrl(e.conflationUrl);
         if (e.conflationParameters != null) {
             try (JsonParser parser = Json.createParser(new StringReader(e.conflationParameters))) {
                 if (parser.hasNext() && JsonParser.Event.START_ARRAY.equals(parser.next())) {
-                    conflationParameters = parser.getArray();
+                    setConflationParameters(parser.getArray());
                 }
             }
         }
@@ -437,14 +330,14 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
 
     public MapWithAIInfo(MapWithAIInfo i) {
         this(i.name, i.url, i.id);
-        this.cookies = i.cookies;
+        setCookies(i.cookies);
 
         this.origName = i.origName;
         this.langName = i.langName;
-        this.defaultEntry = i.defaultEntry;
-        this.eulaAcceptanceRequired = null;
-        this.bounds = i.bounds;
-        this.description = i.description;
+        setDefaultEntry(i.defaultEntry);
+        setEulaAcceptanceRequired(i.getEulaAcceptanceRequired());
+        setBounds(i.getBounds());
+        setDescription(i.getDescription());
         this.langDescription = i.langDescription;
         this.attributionText = i.attributionText;
         this.privacyPolicyURL = i.privacyPolicyURL;
@@ -454,11 +347,11 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         this.attributionImageURL = i.attributionImageURL;
         this.termsOfUseText = i.termsOfUseText;
         this.termsOfUseURL = i.termsOfUseURL;
-        this.type = i.type;
+        this.sourceType = i.sourceType;
         this.countryCode = i.countryCode;
         this.date = i.date;
-        this.icon = intern(i.icon);
-        setCustomHttpHeaders(i.customHttpHeaders);
+        this.setIcon(i.icon);
+        this.setCustomHttpHeaders(i.customHttpHeaders);
         this.category = i.category;
         this.replacementTags = i.replacementTags;
         this.conflate = i.conflate;
@@ -468,7 +361,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
 
     @Override
     public int hashCode() {
-        return Objects.hash(url, type);
+        return Objects.hash(url, sourceType);
     }
 
     public boolean equalsPref(MapWithAIInfo other) {
@@ -477,80 +370,15 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         }
 
         // CHECKSTYLE.OFF: BooleanExpressionComplexity
-        return Objects.equals(this.name, other.name) && Objects.equals(this.id, other.id)
-                && Objects.equals(this.url, other.url)
-                && Objects.equals(this.eulaAcceptanceRequired, other.eulaAcceptanceRequired)
-                && Objects.equals(this.bounds, other.bounds)
-                && Objects.equals(this.attributionText, other.attributionText)
-                && Objects.equals(this.attributionLinkURL, other.attributionLinkURL)
-                && Objects.equals(this.permissionReferenceURL, other.permissionReferenceURL)
-                && Objects.equals(this.attributionImageURL, other.attributionImageURL)
-                && Objects.equals(this.attributionImage, other.attributionImage)
-                && Objects.equals(this.termsOfUseText, other.termsOfUseText)
-                && Objects.equals(this.termsOfUseURL, other.termsOfUseURL)
-                && Objects.equals(this.countryCode, other.countryCode) && Objects.equals(this.date, other.date)
-                && Objects.equals(this.icon, other.icon) && Objects.equals(this.description, other.description)
-                && Objects.equals(this.category, other.category)
-                && Objects.equals(this.replacementTags, other.replacementTags)
+        return super.equalsPref(other) && Objects.equals(this.replacementTags, other.replacementTags)
                 && Objects.equals(this.conflationUrl, other.conflationUrl)
                 && Objects.equals(this.conflationParameters, other.conflationParameters);
         // CHECKSTYLE.ON: BooleanExpressionComplexity
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MapWithAIInfo that = (MapWithAIInfo) o;
-        return type == that.type && Objects.equals(url, that.url);
-    }
-
     private static final Map<String, String> localizedCountriesCache = new HashMap<>();
     static {
         localizedCountriesCache.put("", tr("Worldwide"));
-    }
-
-    @Override
-    public String toString() {
-        // Used in preferences filtering, so must be efficient
-        return new StringBuilder(name).append('[').append(countryCode)
-                // appending the localized country in toString() allows us to filter imagery
-                // preferences table with it!
-                .append("] ('").append(ImageryInfo.getLocalizedCountry(countryCode)).append(')').append(" - ")
-                .append(url).append(" - ").append(type).toString();
-    }
-
-    @Override
-    public int compareTo(MapWithAIInfo in) {
-        int i = countryCode.compareTo(in.countryCode);
-        if (i == 0) {
-            i = name.toLowerCase(Locale.ENGLISH).compareTo(in.name.toLowerCase(Locale.ENGLISH));
-        }
-        if (i == 0) {
-            i = url.compareTo(in.url);
-        }
-        return i;
-    }
-
-    public boolean equalsBaseValues(MapWithAIInfo in) {
-        return url.equals(in.url);
-    }
-
-    private static String intern(String string) {
-        return string == null ? null : string.intern();
-    }
-
-    /**
-     * Sets the imagery polygonial bounds.
-     *
-     * @param b The imagery bounds (non-rectangular)
-     */
-    public void setBounds(ImageryBounds b) {
-        this.bounds = b;
     }
 
     public void setCategory(MapWithAICategory category) {
@@ -561,226 +389,8 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         this.description = description;
     }
 
-    /**
-     * Returns the imagery polygonial bounds.
-     *
-     * @return The imagery bounds (non-rectangular)
-     */
-    public ImageryBounds getBounds() {
-        return bounds;
-    }
-
-    @Override
-    public boolean requiresAttribution() {
-        return attributionText != null || attributionLinkURL != null || attributionImage != null
-                || termsOfUseText != null || termsOfUseURL != null;
-    }
-
-    @Override
-    public String getAttributionText(int zoom, ICoordinate topLeft, ICoordinate botRight) {
-        return attributionText;
-    }
-
-    @Override
-    public String getAttributionLinkURL() {
-        return attributionLinkURL;
-    }
-
-    /**
-     * Return the permission reference URL.
-     *
-     * @return The url
-     * @see #setPermissionReferenceURL
-     * @since 11975
-     */
-    public String getPermissionReferenceURL() {
-        return permissionReferenceURL;
-    }
-
-    /**
-     * Return the privacy policy URL.
-     *
-     * @return The url
-     * @see #setPrivacyPolicyURL
-     * @since 16127
-     */
-    public String getPrivacyPolicyURL() {
-        return privacyPolicyURL;
-    }
-
-    @Override
-    public Image getAttributionImage() {
-        ImageIcon i = ImageProvider.getIfAvailable(attributionImage);
-        if (i != null) {
-            return i.getImage();
-        }
-        return null;
-    }
-
-    /**
-     * Return the raw attribution logo information (an URL to the image).
-     *
-     * @return The url text
-     * @since 12257
-     */
-    public String getAttributionImageRaw() {
-        return attributionImage;
-    }
-
-    @Override
-    public String getAttributionImageURL() {
-        return attributionImageURL;
-    }
-
-    @Override
-    public String getTermsOfUseText() {
-        return termsOfUseText;
-    }
-
-    @Override
-    public String getTermsOfUseURL() {
-        return termsOfUseURL;
-    }
-
-    /**
-     * Set the attribution text
-     *
-     * @param text The text
-     * @see #getAttributionText(int, ICoordinate, ICoordinate)
-     */
-    public void setAttributionText(String text) {
-        attributionText = intern(text);
-    }
-
-    /**
-     * Set the attribution image
-     *
-     * @param url The url of the image.
-     * @see #getAttributionImageURL()
-     */
-    public void setAttributionImageURL(String url) {
-        attributionImageURL = url;
-    }
-
-    /**
-     * Set the image for the attribution
-     *
-     * @param res The image resource
-     * @see #getAttributionImage()
-     */
-    public void setAttributionImage(String res) {
-        attributionImage = res;
-    }
-
-    /**
-     * Sets the URL the attribution should link to.
-     *
-     * @param url The url.
-     * @see #getAttributionLinkURL()
-     */
-    public void setAttributionLinkURL(String url) {
-        attributionLinkURL = url;
-    }
-
-    /**
-     * Sets the permission reference URL.
-     *
-     * @param url The url.
-     * @see #getPermissionReferenceURL()
-     * @since 11975
-     */
-    public void setPermissionReferenceURL(String url) {
-        permissionReferenceURL = url;
-    }
-
-    /**
-     * Sets the privacy policy URL.
-     *
-     * @param url The url.
-     * @see #getPrivacyPolicyURL()
-     * @since 16127
-     */
-    public void setPrivacyPolicyURL(String url) {
-        privacyPolicyURL = url;
-    }
-
-    /**
-     * Sets the text to display to the user as terms of use.
-     *
-     * @param text The text
-     * @see #getTermsOfUseText()
-     */
-    public void setTermsOfUseText(String text) {
-        termsOfUseText = text;
-    }
-
-    /**
-     * Sets a url that links to the terms of use text.
-     *
-     * @param text The url.
-     * @see #getTermsOfUseURL()
-     */
-    public void setTermsOfUseURL(String text) {
-        termsOfUseURL = text;
-    }
-
-    public void clearId() {
-        if (this.id != null) {
-            Collection<String> newAddedIds = new TreeSet<>(
-                    Config.getPref().getList(MapWithAILayerInfo.CONFIG_PREFIX + "addedIds"));
-            newAddedIds.add(this.id);
-            Config.getPref().putList(MapWithAILayerInfo.CONFIG_PREFIX + "addedIds", new ArrayList<>(newAddedIds));
-        }
-        setId(null);
-    }
-
     public MapWithAICategory getCategory() {
         return category;
-    }
-
-    public boolean isDefaultEntry() {
-        return defaultEntry;
-    }
-
-    public void setDefaultEntry(boolean defaultEntry) {
-        this.defaultEntry = defaultEntry;
-    }
-
-    public String getToolTipText() {
-        StringBuilder res = new StringBuilder(getName());
-        boolean html = false;
-        if (category != null && category.getDescription() != null) {
-            res.append("<br>").append(tr("Imagery category: {0}", category.getDescription()));
-            html = true;
-        }
-        if (html) {
-            res.insert(0, "<html>").append("</html>");
-        }
-        return res.toString();
-    }
-
-    public String getCountryCode() {
-        return countryCode;
-    }
-
-    /**
-     * Returns custom HTTP headers that should be sent with request towards imagery
-     * provider
-     *
-     * @return headers
-     */
-    public Map<String, String> getCustomHttpHeaders() {
-        return customHttpHeaders;
-    }
-
-    /**
-     * Sets custom HTTP headers that should be sent with request towards imagery
-     * provider
-     *
-     * @param customHttpHeaders http headers
-     */
-    public void setCustomHttpHeaders(Map<String, String> customHttpHeaders) {
-        this.customHttpHeaders = Utils.toUnmodifiableMap(customHttpHeaders);
     }
 
     public void setParameters(JsonArray parameters) {
@@ -845,7 +455,7 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
         StringBuilder sb = new StringBuilder();
         if (url != null && !url.trim().isEmpty()) {
             sb.append(url);
-            if (MapWithAIType.ESRI_FEATURE_SERVER.equals(type)) {
+            if (MapWithAIType.ESRI_FEATURE_SERVER.equals(sourceType)) {
                 if (!url.endsWith("/")) {
                     sb.append('/');
                 }
@@ -858,20 +468,6 @@ public class MapWithAIInfo extends TileSourceInfo implements Comparable<MapWithA
             }
         }
         return sb;
-    }
-
-    /**
-     * @param type Set the source type
-     */
-    public void setSourceType(MapWithAIType type) {
-        this.type = type;
-    }
-
-    /**
-     * @return The type of the source
-     */
-    public MapWithAIType getSourceType() {
-        return this.type;
     }
 
     /**
