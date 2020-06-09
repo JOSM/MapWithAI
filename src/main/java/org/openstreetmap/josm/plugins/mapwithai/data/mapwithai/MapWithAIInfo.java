@@ -29,6 +29,7 @@ import org.openstreetmap.josm.data.sources.ISourceCategory;
 import org.openstreetmap.josm.data.sources.ISourceType;
 import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
+import org.openstreetmap.josm.gui.tagging.presets.TaggingPresets;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
@@ -81,6 +82,8 @@ public class MapWithAIInfo extends
         BUILDING("data/closedway", "buildings", marktr("Buildings")),
         HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),
         ADDRESS("presets/misc/housenumber_small", "addresses", marktr("Addresses")),
+        POWER("presets/power/pole", "pole", marktr("Power")), PRESET("dialogs/search", "presets", marktr("Presets")),
+        FEATURED("presets/service/network-wireless.svg", "featured", marktr("Featured")),
         OTHER(null, "other", marktr("Other"));
 
         private static final Map<ImageSizes, Map<MapWithAICategory, ImageIcon>> iconCache = Collections
@@ -119,17 +122,22 @@ public class MapWithAIInfo extends
                     return category;
                 }
             }
-            // fuzzy match
             if (s != null && !s.trim().isEmpty()) {
-                s = s.toLowerCase(Locale.ROOT);
+                // fuzzy match
+                String tmp = s.toLowerCase(Locale.ROOT);
                 for (MapWithAICategory type : MapWithAICategory.values()) {
-                    if (s.contains(type.getDescription().toLowerCase(Locale.ROOT))
-                            || type.getDescription().toLowerCase(Locale.ROOT).contains(s)) {
+                    if (tmp.contains(type.getDescription().toLowerCase(Locale.ROOT))
+                            || type.getDescription().toLowerCase(Locale.ROOT).contains(tmp)) {
                         return type;
                     }
                 }
+                // Check if it matches a preset
+                if (TaggingPresets.getPresetKeys().stream().map(String::toLowerCase)
+                        .anyMatch(m -> tmp.contains(m) || m.contains(tmp))) {
+                    return PRESET;
+                }
             }
-            return null;
+            return OTHER;
         }
 
         public static class DescriptionComparator implements Comparator<MapWithAICategory> {
@@ -151,6 +159,7 @@ public class MapWithAIInfo extends
         }
     }
 
+    private List<MapWithAICategory> categories;
     private JsonArray parameters;
     private Map<String, String> replacementTags;
     private boolean conflate;
@@ -178,6 +187,8 @@ public class MapWithAIInfo extends
         String conflationUrl;
         @StructEntry
         String conflationParameters;
+        @StructEntry
+        List<String> categories;
 
         /**
          * Constructs a new empty {@MapWithAIPreferenceEntry}
@@ -205,6 +216,10 @@ public class MapWithAIInfo extends
             }
             conflate = i.conflate;
             conflationUrl = i.conflationUrl;
+            if (i.categories != null) {
+                categories = i.categories.stream().map(MapWithAICategory::getCategoryString)
+                        .collect(Collectors.toList());
+            }
         }
 
         @Override
@@ -317,6 +332,10 @@ public class MapWithAIInfo extends
         setCountryCode(e.country_code);
         setIcon(e.icon);
         setCategory(MapWithAICategory.fromString(e.category));
+        if (e.categories != null) {
+            setAdditionalCategories(
+                    e.categories.stream().map(MapWithAICategory::fromString).distinct().collect(Collectors.toList()));
+        }
         setConflation(e.conflate);
         setConflationUrl(e.conflationUrl);
         if (e.conflationParameters != null) {
@@ -353,15 +372,11 @@ public class MapWithAIInfo extends
         this.setIcon(i.icon);
         this.setCustomHttpHeaders(i.customHttpHeaders);
         this.category = i.category;
+        this.categories = i.categories;
         this.replacementTags = i.replacementTags;
         this.conflate = i.conflate;
         this.conflationUrl = i.conflationUrl;
         this.conflationParameters = i.conflationParameters;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(url, sourceType);
     }
 
     public boolean equalsPref(MapWithAIInfo other) {
@@ -372,7 +387,8 @@ public class MapWithAIInfo extends
         // CHECKSTYLE.OFF: BooleanExpressionComplexity
         return super.equalsPref(other) && Objects.equals(this.replacementTags, other.replacementTags)
                 && Objects.equals(this.conflationUrl, other.conflationUrl)
-                && Objects.equals(this.conflationParameters, other.conflationParameters);
+                && Objects.equals(this.conflationParameters, other.conflationParameters)
+                && Objects.equals(this.categories, other.categories);
         // CHECKSTYLE.ON: BooleanExpressionComplexity
     }
 
@@ -501,7 +517,26 @@ public class MapWithAIInfo extends
         this.conflationUrl = conflationUrl;
     }
 
+    /**
+     * @param parameters Set the conflation parameters
+     */
     public void setConflationParameters(JsonArray parameters) {
         this.conflationParameters = parameters;
+    }
+
+    /**
+     * Set any additional categories
+     *
+     * @param categories The categories to set
+     */
+    public void setAdditionalCategories(List<MapWithAICategory> categories) {
+        this.categories = categories;
+    }
+
+    /**
+     * @return Any additional categories
+     */
+    public List<MapWithAICategory> getAdditionalCategories() {
+        return this.categories != null ? Collections.unmodifiableList(this.categories) : Collections.emptyList();
     }
 }

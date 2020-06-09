@@ -131,11 +131,15 @@ public class ESRISourceReader implements Closeable {
                     source.getUrl() + "content/items/" + newInfo.getId() + "/info/" + feature.getString("thumbnail"));
         }
         if (feature.containsKey("groupCategories")) {
-            MapWithAICategory category = feature.getJsonArray("groupCategories").getValuesAs(JsonString.class).stream()
-                    .map(JsonString::getString).map(s -> s.replace("/Categories/", ""))
-                    .map(MapWithAICategory::fromString).filter(Objects::nonNull).findFirst()
-                    .orElse(MapWithAICategory.OTHER);
+            List<MapWithAICategory> categories = feature.getJsonArray("groupCategories").getValuesAs(JsonString.class)
+                    .stream().map(JsonString::getString).map(s -> s.replace("/Categories/", ""))
+                    .map(MapWithAICategory::fromString).filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            MapWithAICategory category = categories.stream().filter(c -> !MapWithAICategory.FEATURED.equals(c))
+                    .findFirst().orElse(MapWithAICategory.OTHER);
             newInfo.setCategory(category);
+            categories.remove(category);
+            newInfo.setAdditionalCategories(categories);
         }
 
         if (feature.containsKey("accessInformation")) {

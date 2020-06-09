@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -238,11 +239,11 @@ public class MapWithAIProvidersPanel extends JPanel {
      * class to render the country information of MapWithAI source
      */
     private static class MapWithAITypeTableCellRenderer
-            extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<MapWithAICategory> {
+            extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<List<String>> {
         private static final long serialVersionUID = 5975643008500799758L;
 
         MapWithAITypeTableCellRenderer(MapWithAIProvidersPanel panel) {
-            super(panel, MapWithAICategory::getDescription, i -> null, MapWithAICategory::getDescription, null, false);
+            super(panel, list -> String.join(",", list), i -> null, list -> String.join(",", list), null, false);
         }
     }
 
@@ -891,12 +892,19 @@ public class MapWithAIProvidersPanel extends JPanel {
         public MapWithAIDefaultLayerTableModel() {
             setColumnIdentifiers(new String[] { "", tr("Menu Name (Default)"), tr("Type"),
                     tr("MapWithAI URL (Default)"), tr("Provider") });
-            columnTypes = Stream.of(MapWithAICategory.class, MapWithAIInfo.class, MapWithAICategory.class, String.class,
-                    String.class).collect(Collectors.toCollection(ArrayList::new));
+            columnTypes = Stream
+                    .of(MapWithAICategory.class, MapWithAIInfo.class, List.class, String.class, String.class)
+                    .collect(Collectors.toCollection(ArrayList::new));
             columnDataRetrieval = new ArrayList<>();
             columnDataRetrieval.add(info -> Optional.ofNullable(info.getCategory()).orElse(MapWithAICategory.OTHER));
             columnDataRetrieval.add(info -> info);
-            columnDataRetrieval.add(info -> Optional.ofNullable(info.getCategory()).orElse(MapWithAICategory.OTHER));
+            columnDataRetrieval.add(info -> {
+                List<String> categories = Stream
+                        .concat(Stream.of(info.getCategory()), info.getAdditionalCategories().stream())
+                        .filter(Objects::nonNull).map(MapWithAICategory::getDescription).collect(Collectors.toList());
+                return categories.isEmpty() ? Collections.singletonList(MapWithAICategory.OTHER.getDescription())
+                        : categories;
+            });
             columnDataRetrieval.add(MapWithAIInfo::getUrl);
             columnDataRetrieval.add(i -> i.getAttributionText(0, null, null));
         }
