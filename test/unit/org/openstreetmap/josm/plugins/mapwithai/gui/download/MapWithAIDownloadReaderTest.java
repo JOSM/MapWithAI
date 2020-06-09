@@ -9,11 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
 
-import org.awaitility.Awaitility;
-import org.awaitility.Durations;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,10 +58,8 @@ public class MapWithAIDownloadReaderTest {
                 MapWithAIPreferenceHelper.getMapWithAIUrl(), errors -> {
                 });
         reader.doDownload(data, settings);
-        Awaitility.await().atMost(Durations.TEN_SECONDS).until(() -> MapWithAIDataUtils.getLayer(false) != null);
+        MapWithAIDataUtils.getForkJoinPool().awaitQuiescence(1000, TimeUnit.SECONDS);
         assertNotNull(MapWithAIDataUtils.getLayer(false));
-        Awaitility.await().atMost(Durations.TEN_SECONDS)
-                .until(() -> !MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
         assertFalse(MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().isEmpty());
         assertTrue(settings.getDownloadBounds().get().toBBox().bboxIsFunctionallyEqual(
                 MapWithAIDataUtils.getLayer(false).getDataSet().getDataSourceBounds().get(0).toBBox(), 0.0001));
