@@ -11,10 +11,10 @@ plugins {
   id "maven-publish"
   id "pmd"
   id "com.github.ben-manes.versions" version "0.28.0"
-  id "com.github.spotbugs" version "4.2.4"
+  id "com.github.spotbugs" version "4.3.0"
   id "org.openstreetmap.josm" version "0.7.0"
   id "net.ltgt.errorprone" version "1.2.1"
-  id "com.diffplug.gradle.spotless" version "4.1.0"
+  id "com.diffplug.gradle.spotless" version "4.3.0"
   //id 'de.aaschmid.cpd' version '2.0'
 }
 
@@ -70,13 +70,13 @@ sourceSets {
 }
 
 def versions = [
-  awaitility: "4.0.2",
+  awaitility: "4.0.3",
   errorprone: "2.3.4",
   jacoco: "0.8.5",
   jmockit: "1.46",
   junit: "5.6.2",
   pmd: "6.20.0",
-  spotbugs: "4.0.3",
+  spotbugs: "4.0.4",
   wiremock: "2.26.3",
   findsecbugs: "1.10.1",
 ]
