@@ -11,7 +11,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 /**
  * The table model for source layer list
  */
-public class MapWithAILayerTableModel extends DefaultTableModel {
+class MapWithAILayerTableModel extends DefaultTableModel {
     private static final long serialVersionUID = 60378230494588007L;
 
     /**

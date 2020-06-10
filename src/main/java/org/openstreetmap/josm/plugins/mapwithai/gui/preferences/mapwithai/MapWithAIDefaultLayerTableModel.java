@@ -21,7 +21,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 /**
  * The table model for the default imagery layer list
  */
-public class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
+class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
     private static final long serialVersionUID = -2966437364160797385L;
     private final List<Class<?>> columnTypes;
     private final transient List<Function<MapWithAIInfo, Object>> columnDataRetrieval;

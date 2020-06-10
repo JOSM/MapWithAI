@@ -24,7 +24,13 @@ import javax.swing.table.TableModel;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.Pair;
 
-public class MapWithAIParametersPanel extends JPanel {
+/**
+ * Parameters panel for adding MapWithAI URLs
+ *
+ * @author Taylor Smock
+ *
+ */
+class MapWithAIParametersPanel extends JPanel {
 
     private final class ParametersTableModel extends AbstractTableModel {
         private final Set<Integer> disabledRows = new HashSet<>();
@@ -149,6 +155,9 @@ public class MapWithAIParametersPanel extends JPanel {
                 .collect(Collectors.toMap(x -> (String) x[0], x -> new Pair<>((String) x[1], (Boolean) x[2])));
     }
 
+    /**
+     * @param parameters The initial parameters to show in the dialog
+     */
     public void setParameters(JsonArray parameters) {
         int i = 0;
         for (JsonObject obj : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
@@ -165,12 +174,17 @@ public class MapWithAIParametersPanel extends JPanel {
         model.fireTableDataChanged();
     }
 
+    /**
+     * @param l A TableModelListener for the backing model
+     */
     public void addListener(TableModelListener l) {
         model.addTableModelListener(l);
     }
 
+    /**
+     * @return The table model used to display parameters
+     */
     public TableModel getModel() {
         return model;
     }
-
 }

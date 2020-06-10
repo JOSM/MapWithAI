@@ -22,9 +22,10 @@ import org.openstreetmap.josm.tools.GBC;
 /**
  * @author Taylor Smock
  */
-public class ReplacementPreferenceTable extends PreferencesTable {
-    private static final long serialVersionUID = 8057277761625324262L;
-
+class ReplacementPreferenceTable extends PreferencesTable {
+    /**
+     * @param displayData The initial preference entries to display
+     */
     public ReplacementPreferenceTable(List<PrefEntry> displayData) {
         super(displayData);
     }

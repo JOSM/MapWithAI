@@ -44,7 +44,7 @@ import org.openstreetmap.josm.tools.Pair;
 /**
  * An panel used to add MapWithAI sources.
  */
-public class AddMapWithAIPanel extends JPanel {
+class AddMapWithAIPanel extends JPanel {
     private static final long serialVersionUID = -2838267045934203122L;
     private final transient JPanel layerPanel = new JPanel(new GridBagLayout());
 

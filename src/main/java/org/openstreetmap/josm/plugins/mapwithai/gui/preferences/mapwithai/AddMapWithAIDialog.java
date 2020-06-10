@@ -15,7 +15,7 @@ import org.openstreetmap.josm.gui.util.WindowGeometry;
  * Dialog shown to add a new source from preferences.
  *
  */
-public class AddMapWithAIDialog extends ExtendedDialog implements ContentValidationListener {
+class AddMapWithAIDialog extends ExtendedDialog implements ContentValidationListener {
     private static final long serialVersionUID = 7513676077181970148L;
 
     /**
