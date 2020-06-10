@@ -8,9 +8,11 @@ import javax.swing.event.ChangeListener;
 
 import org.openstreetmap.josm.actions.downloadtasks.AbstractDownloadTask;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
 import org.openstreetmap.josm.gui.download.IDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadMapWithAITask;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 
 public class MapWithAIDownloadSourceType implements IDownloadSourceType {
     static final BooleanProperty IS_ENABLED = new BooleanProperty("download.mapwithai.data", false);
@@ -42,7 +44,22 @@ public class MapWithAIDownloadSourceType implements IDownloadSourceType {
 
     @Override
     public boolean isDownloadAreaTooLarge(Bounds bound) {
-        return MapWithAIDownloadReader.MapWithAIDownloadPanel.isDownloadAreaTooLarge(bound);
+        return isDownloadAreaTooLargeStatic(bound);
+    }
+
+    /**
+     * Check if the download area is too large
+     *
+     * @param bound The bound to check
+     * @return {@code true} if the area is too large
+     */
+    public static boolean isDownloadAreaTooLargeStatic(Bounds bound) {
+        double width = Math.max(bound.getMin().greatCircleDistance(new LatLon(bound.getMinLat(), bound.getMaxLon())),
+                bound.getMax().greatCircleDistance(new LatLon(bound.getMaxLat(), bound.getMinLon())));
+        double height = Math.max(bound.getMin().greatCircleDistance(new LatLon(bound.getMaxLat(), bound.getMinLon())),
+                bound.getMax().greatCircleDistance(new LatLon(bound.getMinLat(), bound.getMaxLon())));
+        return height > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS
+                || width > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS;
     }
 
 }

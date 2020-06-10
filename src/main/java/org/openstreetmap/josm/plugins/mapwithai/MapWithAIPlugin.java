@@ -43,7 +43,6 @@ import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddr
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StubEndsTest;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadOptions;
-import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadReader;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -58,8 +57,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     private static String versionInfo;
 
     private final PreferenceSetting preferenceSetting;
-
-    private final MapWithAIDownloadReader mapWithAIDownloadReader;
 
     private final List<Destroyable> destroyables;
 
@@ -114,8 +111,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         new MapWithAIRemoteControl(); // instantiate to get action into Remote Control Preferences
         destroyables.add(new MapWithAIUploadHook(info));
         mapFrameInitialized(null, MainApplication.getMap());
-        mapWithAIDownloadReader = new MapWithAIDownloadReader();
-        DownloadDialog.addDownloadSource(mapWithAIDownloadReader);
         OSMDownloadSource.addDownloadType(new MapWithAIDownloadSourceType());
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));
     }
@@ -178,7 +173,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         }
 
         destroyables.forEach(Destroyable::destroy);
-        DownloadDialog.removeDownloadSource(mapWithAIDownloadReader);
         OSMDownloadSource.removeDownloadType(OSMDownloadSource.getDownloadType(MapWithAIDownloadSourceType.class));
         VALIDATORS.forEach(OsmValidator::removeTest);
         DownloadListener.destroyAll();
