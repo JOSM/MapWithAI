@@ -23,7 +23,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.tools.HttpClient;
 
-public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
+class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private final String url;
     private final boolean crop;
 
