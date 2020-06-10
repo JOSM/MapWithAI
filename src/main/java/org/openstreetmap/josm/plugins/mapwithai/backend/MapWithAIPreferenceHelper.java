@@ -66,6 +66,8 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
+     * Check if the user wants to merge buildings and addresses
+     *
      * @return {@code true} if we want to automatically merge buildings with
      *         pre-existing addresses
      */
@@ -74,6 +76,8 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
+     * Check if the user wants to switch layers automatically after adding data.
+     *
      * @return {@code true} if we want to automatically switch layers
      */
     public static boolean isSwitchLayers() {
@@ -85,6 +89,13 @@ public final class MapWithAIPreferenceHelper {
         return returnBoolean;
     }
 
+    /**
+     * Add a MapWithAI url. If both boolean parameters are false, nothing happens.
+     *
+     * @param info      The info to add
+     * @param enabled   If it should be enabled
+     * @param permanent If it should be added permanently
+     */
     public static void setMapWithAIUrl(MapWithAIInfo info, boolean enabled, boolean permanent) {
         if (permanent && enabled) {
             MapWithAILayerInfo.instance.add(info);
@@ -162,6 +173,8 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
+     * Get the tags to replace
+     *
      * @return A map of tags to replacement tags (use {@link Tag#ofString} to parse)
      */
     public static Map<String, String> getReplacementTags() {
@@ -172,6 +185,8 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
+     * Set the tags to replace
+     *
      * @param tagsToReplace set the tags to replace
      */
     public static void setReplacementTags(Map<String, String> tagsToReplace) {

@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,229 +33,221 @@ public final class Access {
         ALL_TRANSPORT_TYPE("all"),
 
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:access">Key:access</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:access">Key:access</a>
          */
         ACCESS_KEY("access", ALL_TRANSPORT_TYPE),
 
         // Access tag values
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dyes">Tag:access%3Dyes</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dyes">Tag:access%3Dyes</a>
          */
         YES("yes"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dofficial">Tag:access%3Dofficial</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dofficial">Tag:access%3Dofficial</a>
          */
         OFFICIAL("official"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddesignated">Tag:access%3Ddesignated</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddesignated">Tag:access%3Ddesignated</a>
          */
         DESIGNATED("designated"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddestination">Tag:access%3Ddestination</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddestination">Tag:access%3Ddestination</a>
          */
         DESTINATION("destination"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddelivery">Tag:access%3Ddelivery</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddelivery">Tag:access%3Ddelivery</a>
          */
         DELIVERY("delivery"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dcustomers">Tag:access%3Dcustomers</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dcustomers">Tag:access%3Dcustomers</a>
          */
         CUSTOMERS("customers"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dpermissive">Tag:access%3Dpermissive</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dpermissive">Tag:access%3Dpermissive</a>
          */
         PERMISSIVE("permissive"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dagricultural">Tag:access%3Dagricultural</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dagricultural">Tag:access%3Dagricultural</a>
          */
         AGRICULTURAL("agricultural"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dforestry">Tag:access%3Dforestry</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dforestry">Tag:access%3Dforestry</a>
          */
         FORESTRY("forestry"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dprivate">Tag:access%3Dprivate</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dprivate">Tag:access%3Dprivate</a>
          */
         PRIVATE("private"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Dno">Tag:access%3Dno</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Dno">Tag:access%3Dno</a>
          */
         NO("no"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddiscouraged">Tag:access%3Ddiscouraged</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddiscouraged">Tag:access%3Ddiscouraged</a>
          */
         DISCOURAGED("discouraged"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Duse_sidepath">Tag:access%3Duse_sidepath</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Duse_sidepath">Tag:access%3Duse_sidepath</a>
          */
         USE_SIDEPATH("use_sidepath"),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddismount">Tag:access%3Ddismount</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddismount">Tag:access%3Ddismount</a>
          */
         DISMOUNT("dismount"),
         // Land
         /** Land transport types */
         LAND_TRANSPORT_TYPE("land", ALL_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:vehicle">Key:vehicle</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:vehicle">Key:vehicle</a>
          */
         VEHICLE("vehicle", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:motor_vehicle">Key:motor_vehicle</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:motor_vehicle">Key:motor_vehicle</a>
          */
         MOTOR_VEHICLE("motor_vehicle", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:trailer">Key:trailer</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:trailer">Key:trailer</a>
          */
         TRAILER("trailer", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:foot">Key:foot</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:foot">Key:foot</a> */
         FOOT("foot", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
         SKI("ski", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:inline_skates">Key:inline_skates</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:inline_skates">Key:inline_skates</a>
          */
         INLINE_SKATES("inline_skates", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:ice_skates">Key:ice_skates</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:ice_skates">Key:ice_skates</a>
          */
         ICE_SKATES("ice_skates", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:horse">Key:horse</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:horse">Key:horse</a>
          */
         HORSE("horse", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:bicycle">Key:bicycle</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:bicycle">Key:bicycle</a>
          */
         BICYCLE("bicycle", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:carriage">Key:carriage</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:carriage">Key:carriage</a>
          */
         CARRIAGE("carriage", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:caravan">Key:caravan</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:caravan">Key:caravan</a>
          */
         CARAVAN("caravan", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:motorcycle">Key:motorcycle</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:motorcycle">Key:motorcycle</a>
          */
         MOTORCYCLE("motorcycle", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:moped">Key:moped</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:moped">Key:moped</a>
          */
         MOPED("moped", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:mofa">Key:mofa</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:mofa">Key:mofa</a> */
         MOFA("mofa", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:motorcar">Key:motorcar</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:motorcar">Key:motorcar</a>
          */
         MOTORCAR("motorcar", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:motorhome">Key:motorhome</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:motorhome">Key:motorhome</a>
          */
         MOTORHOME("motorhome", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:psv">Key:psv</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:psv">Key:psv</a> */
         PSV("psv", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:bus">Key:bus</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:bus">Key:bus</a> */
         BUS("bus", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:taxi">Key:taxi</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:taxi">Key:taxi</a> */
         TAXI("taxi", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:tourist_bus">Key:tourist_bus</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:tourist_bus">Key:tourist_bus</a>
          */
         TOURIST_BUS("tourist_bus", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:goods">Key:goods</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:goods">Key:goods</a>
          */
         GOODS("goods", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:hgv">Key:hgv</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:hgv">Key:hgv</a> */
         HGV("hgv", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:atv">Key:atv</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:atv">Key:atv</a> */
         ATV("atv", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:snowmobile">Key:snowmobile</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:snowmobile">Key:snowmobile</a>
          */
         SNOWMOBILE("snowmobile", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:hgv_articulated">Key:hgv_articulated</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:hgv_articulated">Key:hgv_articulated</a>
          */
         HGV_ARTICULATED("hgv_articulated", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
         SKI_NORDIC("ski:nordic", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
         SKI_ALPINE("ski:alpine", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:ski">Key:ski</a> */
         SKI_TELEMARK("ski:telemark", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:coach">Key:coach</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:coach">Key:coach</a>
          */
         COACH("coach", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:golf_cart">Key:golf_cart</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:golf_cart">Key:golf_cart</a>
          */
         GOLF_CART("golf_cart", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:minibus">Key:minibus</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:minibus">Key:minibus</a>
          */
         MINIBUS("minibus", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:share_taxi">Key:share_taxi</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:share_taxi">Key:share_taxi</a>
          */
         SHARE_TAXI("share_taxi", LAND_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:hov">Key:hov</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:hov">Key:hov</a> */
         HOV("hov", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:car_sharing">Key:car_sharing</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:car_sharing">Key:car_sharing</a>
          */
         CAR_SHARING("car_sharing", LAND_TRANSPORT_TYPE),
         /**
          * Routers should default to {@code yes}, regardless of higher access rules,
          * assuming it is navigatible by vehicle
          *
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:emergency">Key:emergency</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:emergency">Key:emergency</a>
          */
         EMERGENCY("emergency", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:hazmat">Key:hazmat</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:hazmat">Key:hazmat</a>
          */
         HAZMAT("hazmat", LAND_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:disabled">Key:disabled</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:disabled">Key:disabled</a>
          */
         DISABLED("disabled", LAND_TRANSPORT_TYPE),
 
@@ -264,71 +255,69 @@ public final class Access {
         /** Water transport type */
         WATER_TRANSPORT_TYPE("water", ALL_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:swimming">Key:swimming</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:swimming">Key:swimming</a>
          */
         SWIMMING("swimming", WATER_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:boat">Key:boat</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:boat">Key:boat</a> */
         BOAT("boat", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:fishing_vessel">Key:fishing_vessel</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:fishing_vessel">Key:fishing_vessel</a>
          */
         FISHING_VESSEL("fishing_vessel", WATER_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:ship">Key:ship</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:ship">Key:ship</a> */
         SHIP("ship", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:motorboat">Key:motorboat</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:motorboat">Key:motorboat</a>
          */
         MOTORBOAT("motorboat", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:sailboat">Key:sailboat</a>
+         * <a href= "https://wiki.openstreetmap.org/wiki/Key:sailboat">Key:sailboat</a>
          */
         SAILBOAT("sailboat", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:canoe">Key:canoe</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:canoe">Key:canoe</a>
          */
         CANOE("canoe", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:passenger">Key:passenger</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:passenger">Key:passenger</a>
          */
         PASSENGER("passenger", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:cargo">Key:cargo</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:cargo">Key:cargo</a>
          */
         CARGO("cargo", WATER_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:isps">Key:isps</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:isps">Key:isps</a> */
         ISPS("isps", WATER_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:bulk">Key:bulk</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:bulk">Key:bulk</a> */
         BULK("bulk", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
          */
         TANKER("tanker", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href=
-         *      "https://wiki.openstreetmap.org/wiki/Key:container">Key:container</a>
+         * <a href=
+         * "https://wiki.openstreetmap.org/wiki/Key:container">Key:container</a>
          */
         CONTAINER("container", WATER_TRANSPORT_TYPE),
-        /** @see <a href="https://wiki.openstreetmap.org/wiki/Key:imdg">Key:imdg</a> */
+        /** <a href="https://wiki.openstreetmap.org/wiki/Key:imdg">Key:imdg</a> */
         IMDG("imdg", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
          */
         TANKER_GAS("tanker:gas", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
          */
         TANKER_OIL("tanker:oil", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
          */
         TANKER_CHEMICAL("tanker:chemical", WATER_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:tanker">Key:tanker</a>
          */
         TANKER_SINGLEHULL("tanker:singlehull", WATER_TRANSPORT_TYPE),
 
@@ -336,7 +325,7 @@ public final class Access {
         /** Rail transport type */
         RAIL_TRANSPORT_TYPE("rail", ALL_TRANSPORT_TYPE),
         /**
-         * @see <a href="https://wiki.openstreetmap.org/wiki/Key:train">Key:train</a>
+         * <a href="https://wiki.openstreetmap.org/wiki/Key:train">Key:train</a>
          */
         TRAIN("train", RAIL_TRANSPORT_TYPE);
 
@@ -354,13 +343,17 @@ public final class Access {
         }
 
         /**
-         * @return The key for the enum
+         * Get the key for the enum
+         *
+         * @return The OpenStreetMap key
          */
         public String getKey() {
             return key;
         }
 
         /**
+         * Get the generic type of transport
+         *
          * @return The AccessTags transport type
          *         (RAIL_TRANSPORT_TYPE/WATER_TRANSPORT_TYPE/etc)
          */
@@ -452,8 +445,9 @@ public final class Access {
     }
 
     /**
-     * Create the default access inheritance, as defined at
-     * {@link "https://wiki.openstreetmap.org/wiki/Key:access#Transport_mode_restrictions"}
+     * Create the default access inheritance, as defined at <a href=
+     * "https://wiki.openstreetmap.org/wiki/Key:access#Transport_mode_restrictions">
+     * Key:access#Transport_mod_restrictions </a>
      */
     private static void defaultInheritance() {
         addMode(null, AccessTags.ACCESS_KEY);
@@ -612,9 +606,8 @@ public final class Access {
     /**
      * Get the valid restriction values ({@code unknown} is not included). See
      *
-     * @return Valid values for restrictions (unmodifiable)
-     * @see <a href=
-     *      "https://wiki.openstreetmap.org/wiki/Key:access#List_of_possible_values">Key:access#List_of_possible_values</a>
+     * @return Valid values for restrictions (unmodifiable) <a href=
+     *         "https://wiki.openstreetmap.org/wiki/Key:access#List_of_possible_values">Key:access#List_of_possible_values</a>
      */
     public static Set<String> getRestrictionValues() {
         return Collections.unmodifiableSet(RESTRICTION_VALUES);
@@ -623,29 +616,11 @@ public final class Access {
     /**
      * Get the valid transport modes. See
      *
-     * @return Value transport modes (unmodifiable)
-     * @see <a href=
-     *      "https://wiki.openstreetmap.org/wiki/Key:access#Transport_mode_restrictions">Key:access#Transport_mode_restrictions</a>
+     * @return Value transport modes (unmodifiable) <a href=
+     *         "https://wiki.openstreetmap.org/wiki/Key:access#Transport_mode_restrictions">Key:access#Transport_mode_restrictions</a>
      */
     public static Set<String> getTransportModes() {
         return Collections.unmodifiableSet(TRANSPORT_MODES);
-    }
-
-    /**
-     * Get the access method hierarchy.
-     *
-     * @return The hierarchy for access modes (unmodifiable)
-     * @see <a href=
-     *      "https://wiki.openstreetmap.org/wiki/Key:access#Transport_mode_restrictions">Key:access#Transport_mode_restrictions</a>
-     */
-    public static Map<String, Map<String, List<String>>> getAccessMethods() {
-        Map<String, Map<String, List<String>>> map = new HashMap<>();
-        for (Entry<String, Map<String, List<String>>> entry : map.entrySet()) {
-            Map<String, List<String>> tMap = new HashMap<>();
-            entry.getValue().forEach((key, list) -> tMap.put(key, Collections.unmodifiableList(list)));
-            map.put(entry.getKey(), Collections.unmodifiableMap(tMap));
-        }
-        return Collections.unmodifiableMap(map);
     }
 
     /**

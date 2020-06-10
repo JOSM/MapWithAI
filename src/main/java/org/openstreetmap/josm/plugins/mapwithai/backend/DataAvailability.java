@@ -75,7 +75,7 @@ public class DataAvailability {
             jsonFile.setMaxAge(SEVEN_DAYS_IN_SECONDS);
             jsonParser.next();
             JsonObject jsonObject = jsonParser.getObject();
-            for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
+            for (Map.Entry<String, JsonValue> entry : jsonObject.entrySet()) {
                 Logging.debug("{0}: {1}", entry.getKey(), entry.getValue());
                 if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()
                         && entry.getValue().asJsonObject().containsKey("countries")) {
@@ -156,6 +156,8 @@ public class DataAvailability {
     }
 
     /**
+     * Get the global i nstance that should be used to check for data availability
+     *
      * @return the unique instance
      */
     public static DataAvailability getInstance() {
@@ -167,6 +169,8 @@ public class DataAvailability {
     }
 
     /**
+     * Check if a bbox may have data
+     *
      * @param bbox An area that may have data
      * @return True if one of the corners of the {@code bbox} is in a country with
      *         available data.
@@ -177,10 +181,13 @@ public class DataAvailability {
         corners.add(new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon()));
         corners.add(bbox.getTopLeft());
         corners.add(new LatLon(bbox.getTopLeftLat(), bbox.getBottomRightLon()));
+        corners.add(bbox.getCenter());
         return corners.parallelStream().anyMatch(this::hasData);
     }
 
     /**
+     * Check if a latlon point may have data
+     *
      * @param latLon A point that may have data from MapWithAI
      * @return true if it is in an ares with data from MapWithAI
      */
@@ -274,7 +281,7 @@ public class DataAvailability {
     }
 
     /**
-     * Set the URL to use to get MapWithAI information
+     * Set the URL to use to get MapWithAI information (`sources.json`)
      *
      * @param url The URL which serves MapWithAI servers
      */
@@ -283,7 +290,9 @@ public class DataAvailability {
     }
 
     /**
-     * @param url The URL which serves MapWithAI servers
+     * Get the URL for the `sources.json`.
+     *
+     * @return The URL which serves MapWithAI servers
      */
     public static String getReleaseUrl() {
         return defaultServerUrl;

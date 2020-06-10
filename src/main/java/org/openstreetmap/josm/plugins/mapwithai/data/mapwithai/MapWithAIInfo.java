@@ -25,7 +25,6 @@ import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Logging;
@@ -43,11 +42,12 @@ public class MapWithAIInfo extends
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
      * MapWithAIPreferenceEntry object}
-     * {@link #MapWithAIPreferenceEntry#MapWithAIPreferenceEntry(MapWithAIInfo)
+     * {@link MapWithAIPreferenceEntry#MapWithAIPreferenceEntry(MapWithAIInfo)
      * MapWithAIPreferenceEntry constructor}
-     * {@link #MapWithAIInfo(MapWithAIPreferenceEntry) ImageryInfo constructor}
-     * {@link #MapWithAIInfo(ImageryInfo) MapWithAIInfo constructor}
-     * {@link #equalsPref(MapWithAIPreferenceEntry) equalsPref method}
+     * {@link MapWithAIInfo#MapWithAIInfo(MapWithAIPreferenceEntry) ImageryInfo
+     * constructor} {@link MapWithAIInfo#MapWithAIInfo(ImageryInfo) MapWithAIInfo
+     * constructor} {@link MapWithAIInfo#equalsPref(MapWithAIPreferenceEntry)
+     * equalsPref method}
      **/
     public static class MapWithAIPreferenceEntry extends SourcePreferenceEntry<MapWithAIInfo> {
         @StructEntry
@@ -64,7 +64,7 @@ public class MapWithAIInfo extends
         String categories;
 
         /**
-         * Constructs a new empty {@MapWithAIPreferenceEntry}
+         * Constructs a new empty {@link MapWithAIPreferenceEntry}
          */
         public MapWithAIPreferenceEntry() {
             // Do nothing
@@ -369,13 +369,19 @@ public class MapWithAIInfo extends
     }
 
     /**
-     * @return The required replacement tags (run first)
+     * Get the requested tags to replace. These should be run before user requested
+     * replacements.
+     *
+     * @return The required replacement tags
      */
     public Map<String, String> getReplacementTags() {
         return replacementTags;
     }
 
     /**
+     * Set whether or not we should perform conflation using the specified
+     * conflation URL
+     *
      * @param conflation If true, try to use the conflation URL
      */
     public void setConflation(boolean conflation) {
@@ -383,6 +389,8 @@ public class MapWithAIInfo extends
     }
 
     /**
+     * Set the URL to use for conflation purposes.
+     *
      * @param conflationUrl Set the conflation url to use. null will disable, but
      *                      you should use {@link MapWithAIInfo#setConflation}.
      */
@@ -391,6 +399,8 @@ public class MapWithAIInfo extends
     }
 
     /**
+     * Set any parameters that are required/useful for the conflation URL
+     *
      * @param parameters Set the conflation parameters
      */
     public void setConflationParameters(JsonArray parameters) {
@@ -407,6 +417,9 @@ public class MapWithAIInfo extends
     }
 
     /**
+     * Set additional categories (you can duplicate the primary category here, but
+     * you shouldn't)
+     *
      * @return Any additional categories
      */
     public List<MapWithAICategory> getAdditionalCategories() {
