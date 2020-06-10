@@ -20,13 +20,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.Box;
@@ -42,7 +39,6 @@ import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
@@ -88,6 +84,8 @@ public class MapWithAIProvidersPanel extends JPanel {
     public final JTable defaultTable;
     /** The filter of default providers **/
     private final FilterField defaultFilter;
+    /** The directory for dialog images */
+    private static final String DIALOG_IMAGES_DIR = "dialogs";
     /**
      * The selection listener synchronizing map display with table of default
      * providers
@@ -125,23 +123,19 @@ public class MapWithAIProvidersPanel extends JPanel {
      * @param <T> type of information
      */
     private static class MapWithAITableCellRenderer<T> extends DefaultTableCellRenderer implements AreaListener {
-        private static final long serialVersionUID = 1739280307217707613L;
-
         private static final NamedColorProperty IMAGERY_BACKGROUND_COLOR = new NamedColorProperty(
                 marktr("MapWithAI Background: Default"), new Color(200, 255, 200));
         private static final NamedColorProperty MAPWITHAI_AREA_BACKGROUND_COLOR = new NamedColorProperty(
                 marktr("MapWithAI Background: Layer in area"), Color.decode("#f1ffc7"));
 
-        private final Function<T, Object> mapper;
-        private final Function<T, String> tooltip;
-        private final BiConsumer<T, JLabel> decorator;
-        private final Function<Object, MapWithAIInfo> reverseMapper;
+        private final transient Function<T, Object> mapper;
+        private final transient Function<T, String> tooltip;
+        private final transient BiConsumer<T, JLabel> decorator;
+        private final transient Function<Object, MapWithAIInfo> reverseMapper;
 
         private final boolean highlightIfActive;
 
         private transient Bounds area;
-
-        private MapWithAIProvidersPanel provider;
 
         /**
          * Initialize a cell renderer with specific rules
@@ -152,10 +146,8 @@ public class MapWithAIProvidersPanel extends JPanel {
          * @param decorator         The decorator
          * @param highlightIfActive If true, highlight when the entry is activated
          */
-        MapWithAITableCellRenderer(MapWithAIProvidersPanel panel, Function<T, Object> mapper,
-                Function<Object, MapWithAIInfo> reverseMapper, Function<T, String> tooltip,
-                BiConsumer<T, JLabel> decorator, boolean highlightIfActive) {
-            this.provider = panel;
+        MapWithAITableCellRenderer(Function<T, Object> mapper, Function<Object, MapWithAIInfo> reverseMapper,
+                Function<T, String> tooltip, BiConsumer<T, JLabel> decorator, boolean highlightIfActive) {
             this.mapper = mapper;
             this.reverseMapper = reverseMapper;
             this.tooltip = tooltip;
@@ -180,7 +172,7 @@ public class MapWithAIProvidersPanel extends JPanel {
                 if (info == null) {
                     GuiHelper.setBackgroundReadable(label, defaultColor);
                 } else {
-                    if (provider.activeModel.contains(info)) {
+                    if (MapWithAILayerTableModel.contains(info)) {
                         Color t = IMAGERY_BACKGROUND_COLOR.get();
                         GuiHelper.setBackgroundReadable(label, isSelected ? t.darker() : t);
                     } else if (this.area != null && (this.area.intersects(info.getBounds())
@@ -202,6 +194,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             return label;
         }
 
+        @SuppressWarnings("hiding")
         @Override
         public void updateArea(Bounds area) {
             this.area = area;
@@ -214,10 +207,9 @@ public class MapWithAIProvidersPanel extends JPanel {
      * @since 8065
      */
     private static class MapWithAIURLTableCellRenderer extends MapWithAITableCellRenderer<String> {
-        private static final long serialVersionUID = 184934756853356357L;
 
-        MapWithAIURLTableCellRenderer(MapWithAIProvidersPanel panel) {
-            super(panel, s -> s, u -> MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
+        MapWithAIURLTableCellRenderer() {
+            super(s -> s, u -> MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
                     .filter(i -> u.equals(i.getUrl())).findFirst().orElse(null), u -> u, null, true);
         }
     }
@@ -227,10 +219,9 @@ public class MapWithAIProvidersPanel extends JPanel {
      */
     private static class MapWithAICategoryTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<MapWithAICategory> {
-        private static final long serialVersionUID = -6729184413815746598L;
 
-        MapWithAICategoryTableCellRenderer(MapWithAIProvidersPanel panel) {
-            super(panel, cat -> null, i -> null, cat -> tr("MapWithAI category: {0}", cat.getDescription()),
+        MapWithAICategoryTableCellRenderer() {
+            super(cat -> null, i -> null, cat -> tr("MapWithAI category: {0}", cat.getDescription()),
                     (cat, label) -> label.setIcon(cat.getIcon(ImageSizes.TABLE)), false);
         }
     }
@@ -240,10 +231,9 @@ public class MapWithAIProvidersPanel extends JPanel {
      */
     private static class MapWithAITypeTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<List<String>> {
-        private static final long serialVersionUID = 5975643008500799758L;
 
-        MapWithAITypeTableCellRenderer(MapWithAIProvidersPanel panel) {
-            super(panel, list -> String.join(",", list), i -> null, list -> String.join(",", list), null, false);
+        MapWithAITypeTableCellRenderer() {
+            super(list -> String.join(",", list), i -> null, list -> String.join(",", list), null, false);
         }
     }
 
@@ -252,10 +242,9 @@ public class MapWithAIProvidersPanel extends JPanel {
      */
     private static class MapWithAIProviderTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<String> {
-        private static final long serialVersionUID = -3824289458721409139L;
 
-        MapWithAIProviderTableCellRenderer(MapWithAIProvidersPanel panel) {
-            super(panel, s -> s, s -> null, s -> s, null, false);
+        MapWithAIProviderTableCellRenderer() {
+            super(s -> s, s -> null, s -> s, null, false);
         }
 
     }
@@ -267,8 +256,8 @@ public class MapWithAIProvidersPanel extends JPanel {
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<MapWithAIInfo> {
         private static final long serialVersionUID = 6669934435517244629L;
 
-        MapWithAINameTableCellRenderer(MapWithAIProvidersPanel panel, boolean showActive) {
-            super(panel, info -> info == null ? null : info.getName(), i -> null, MapWithAIInfo::getToolTipText, null,
+        MapWithAINameTableCellRenderer(boolean showActive) {
+            super(info -> info == null ? null : info.getName(), i -> null, MapWithAIInfo::getToolTipText, null,
                     showActive);
         }
     }
@@ -310,37 +299,11 @@ public class MapWithAIProvidersPanel extends JPanel {
         defaultModel.addTableModelListener(e -> activeTable.repaint());
         activeModel.addTableModelListener(e -> defaultTable.repaint());
 
-        int tenXWidth = activeTable.getFontMetrics(activeTable.getFont()).stringWidth("XXXXXXXXXX");
-        TableColumnModel mod = defaultTable.getColumnModel();
-        int urlWidth = (showActive ? 3 : 0) * tenXWidth;
-        mod.getColumn(4).setPreferredWidth((showActive ? 2 : 0) * tenXWidth);
-        mod.getColumn(4).setCellRenderer(new MapWithAIProviderTableCellRenderer(this));
-        mod.getColumn(3).setPreferredWidth(urlWidth);
-        MapWithAIURLTableCellRenderer defaultUrlTableCellRenderer = new MapWithAIURLTableCellRenderer(this);
-        mod.getColumn(3).setCellRenderer(defaultUrlTableCellRenderer);
-        mod.getColumn(2).setPreferredWidth((int) ((showActive ? 0 : 0.3) * tenXWidth));
+        setupDefaultTable(this, defaultTable, showActive, areaListeners);
 
-        mod.getColumn(2).setCellRenderer(new MapWithAITypeTableCellRenderer(this));
-
-        MapWithAINameTableCellRenderer defaultNameTableCellRenderer = new MapWithAINameTableCellRenderer(this,
-                !showActive);
-        mod.getColumn(1).setCellRenderer(defaultNameTableCellRenderer);
-        mod.getColumn(1).setPreferredWidth((showActive ? 3 : 2) * tenXWidth);
-        mod.getColumn(0).setCellRenderer(new MapWithAICategoryTableCellRenderer(this));
-        mod.getColumn(0).setMaxWidth(ImageProvider.ImageSizes.MENU.getAdjustedWidth() + 5);
-
-        if (showActive) {
-            defaultTable.removeColumn(mod.getColumn(4));
-            defaultTable.removeColumn(mod.getColumn(2));
-            areaListeners.addListener(defaultUrlTableCellRenderer);
-        } else {
-            defaultTable.removeColumn(mod.getColumn(3));
-            areaListeners.addListener(defaultNameTableCellRenderer);
-        }
-
-        mod = activeTable.getColumnModel();
+        TableColumnModel mod = activeTable.getColumnModel();
         mod.getColumn(1).setPreferredWidth(800);
-        MapWithAIURLTableCellRenderer activeTableCellRenderer = new MapWithAIURLTableCellRenderer(this);
+        MapWithAIURLTableCellRenderer activeTableCellRenderer = new MapWithAIURLTableCellRenderer();
         areaListeners.addListener(activeTableCellRenderer);
         mod.getColumn(1).setCellRenderer(activeTableCellRenderer);
         mod.getColumn(0).setMaxWidth(200);
@@ -440,6 +403,36 @@ public class MapWithAIProvidersPanel extends JPanel {
         }
     }
 
+    private static void setupDefaultTable(MapWithAIProvidersPanel panel, JTable defaultTable, boolean showActive,
+            ListenerList<AreaListener> areaListeners) {
+        int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
+        TableColumnModel mod = defaultTable.getColumnModel();
+        int urlWidth = (showActive ? 3 : 0) * tenXWidth;
+        mod.getColumn(4).setPreferredWidth((showActive ? 2 : 0) * tenXWidth);
+        mod.getColumn(4).setCellRenderer(new MapWithAIProviderTableCellRenderer());
+        mod.getColumn(3).setPreferredWidth(urlWidth);
+        MapWithAIURLTableCellRenderer defaultUrlTableCellRenderer = new MapWithAIURLTableCellRenderer();
+        mod.getColumn(3).setCellRenderer(defaultUrlTableCellRenderer);
+        mod.getColumn(2).setPreferredWidth((int) ((showActive ? 0 : 0.3) * tenXWidth));
+
+        mod.getColumn(2).setCellRenderer(new MapWithAITypeTableCellRenderer());
+
+        MapWithAINameTableCellRenderer defaultNameTableCellRenderer = new MapWithAINameTableCellRenderer(!showActive);
+        mod.getColumn(1).setCellRenderer(defaultNameTableCellRenderer);
+        mod.getColumn(1).setPreferredWidth((showActive ? 3 : 2) * tenXWidth);
+        mod.getColumn(0).setCellRenderer(new MapWithAICategoryTableCellRenderer());
+        mod.getColumn(0).setMaxWidth(ImageProvider.ImageSizes.MENU.getAdjustedWidth() + 5);
+
+        if (showActive) {
+            defaultTable.removeColumn(mod.getColumn(4));
+            defaultTable.removeColumn(mod.getColumn(2));
+            areaListeners.addListener(defaultUrlTableCellRenderer);
+        } else {
+            defaultTable.removeColumn(mod.getColumn(3));
+            areaListeners.addListener(defaultNameTableCellRenderer);
+        }
+    }
+
     /**
      * @param The current area to highlight data from
      */
@@ -502,7 +495,7 @@ public class MapWithAIProvidersPanel extends JPanel {
          * @param i model index
          */
         private void updateBoundsAndShapes(int i) {
-            ImageryBounds bounds = defaultModel.getRow(i).getBounds();
+            ImageryBounds bounds = MapWithAIDefaultLayerTableModel.getRow(i).getBounds();
             if (bounds != null) {
                 int viewIndex = defaultTable.convertRowIndexToView(i);
                 List<Shape> shapes = bounds.getShapes();
@@ -567,7 +560,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             putValue(NAME, type.toString());
             putValue(SHORT_DESCRIPTION, tr("Add a new {0} entry by entering the URL", type.toString()));
             String icon = /* ICON(dialogs/) */ "add";
-            new ImageProvider("dialogs", icon).getResource().attachImageIcon(this, true);
+            new ImageProvider(DIALOG_IMAGES_DIR, icon).getResource().attachImageIcon(this, true);
         }
 
         @Override
@@ -579,7 +572,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             if (addDialog.getValue() == 1) {
                 try {
                     MapWithAIInfo info = p.getSourceInfo();
-                    if (MapWithAIInfo.MapWithAIType.ESRI.equals(info.getSourceType())) {
+                    if (MapWithAIInfo.MapWithAIType.ESRI == info.getSourceType()) {
                         try (ESRISourceReader reader = new ESRISourceReader(info)) {
                             for (MapWithAIInfo i : reader.parse()) {
                                 activeModel.addRow(i);
@@ -593,10 +586,9 @@ public class MapWithAIProvidersPanel extends JPanel {
                 } catch (IllegalArgumentException ex) {
                     if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
                         throw ex;
-                    } else {
-                        JOptionPane.showMessageDialog(MainApplication.getMainFrame(), ex.getMessage(), tr("Error"),
-                                JOptionPane.ERROR_MESSAGE);
                     }
+                    JOptionPane.showMessageDialog(MainApplication.getMainFrame(), ex.getMessage(), tr("Error"),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -611,7 +603,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         EditEntryAction() {
             putValue(NAME, tr("Edit"));
             putValue(SHORT_DESCRIPTION, tr("Edit entry"));
-            new ImageProvider("dialogs", "edit").getResource().attachImageIcon(this, true);
+            new ImageProvider(DIALOG_IMAGES_DIR, "edit").getResource().attachImageIcon(this, true);
             updateEnabledState();
         }
 
@@ -627,7 +619,8 @@ public class MapWithAIProvidersPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (activeTable.getSelectedRow() != -1) {
-                final AddMapWithAIPanel p = new AddMapWithAIPanel(activeModel.getRow(activeTable.getSelectedRow()));
+                final AddMapWithAIPanel p = new AddMapWithAIPanel(
+                        MapWithAILayerTableModel.getRow(activeTable.getSelectedRow()));
                 final AddMapWithAIDialog addDialog = new AddMapWithAIDialog(gui, p);
                 addDialog.showDialog();
                 if (addDialog.getValue() == 1) {
@@ -646,7 +639,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         RemoveEntryAction() {
             putValue(NAME, tr("Remove"));
             putValue(SHORT_DESCRIPTION, tr("Remove entry"));
-            new ImageProvider("dialogs", "delete").getResource().attachImageIcon(this, true);
+            new ImageProvider(DIALOG_IMAGES_DIR, "delete").getResource().attachImageIcon(this, true);
             updateEnabledState();
         }
 
@@ -670,8 +663,8 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     private class ActivateAction extends AbstractAction implements ListSelectionListener {
         private static final long serialVersionUID = -452335751201424801L;
-        private final ImageResource activate;
-        private final ImageResource deactivate;
+        private final transient ImageResource activate;
+        private final transient ImageResource deactivate;
 
         /**
          * Constructs a new {@code ActivateAction}.
@@ -687,9 +680,9 @@ public class MapWithAIProvidersPanel extends JPanel {
         protected void updateEnabledState() {
             setEnabled(defaultTable.getSelectedRowCount() > 0);
             List<MapWithAIInfo> selected = Arrays.stream(defaultTable.getSelectedRows())
-                    .map(defaultTable::convertRowIndexToModel).mapToObj(defaultModel::getRow)
+                    .map(defaultTable::convertRowIndexToModel).mapToObj(MapWithAIDefaultLayerTableModel::getRow)
                     .collect(Collectors.toList());
-            if (selected.stream().anyMatch(activeModel::doesNotContain)) {
+            if (selected.stream().anyMatch(MapWithAILayerTableModel::doesNotContain)) {
                 activate.attachImageIcon(this, true);
                 putValue(NAME, tr("Activate"));
                 putValue(SHORT_DESCRIPTION,
@@ -716,10 +709,10 @@ public class MapWithAIProvidersPanel extends JPanel {
                 return;
             }
             List<MapWithAIInfo> selected = Arrays.stream(defaultTable.getSelectedRows())
-                    .map(defaultTable::convertRowIndexToModel).mapToObj(defaultModel::getRow)
+                    .map(defaultTable::convertRowIndexToModel).mapToObj(MapWithAIDefaultLayerTableModel::getRow)
                     .collect(Collectors.toList());
-            if (selected.stream().anyMatch(activeModel::doesNotContain)) {
-                List<MapWithAIInfo> toAdd = selected.stream().filter(activeModel::doesNotContain)
+            if (selected.stream().anyMatch(MapWithAILayerTableModel::doesNotContain)) {
+                List<MapWithAIInfo> toAdd = selected.stream().filter(MapWithAILayerTableModel::doesNotContain)
                         .collect(Collectors.toList());
                 activeTable.getSelectionModel().clearSelection();
                 for (MapWithAIInfo info : toAdd) {
@@ -749,7 +742,7 @@ public class MapWithAIProvidersPanel extends JPanel {
          */
         ReloadAction() {
             putValue(SHORT_DESCRIPTION, tr("Update default entries"));
-            new ImageProvider("dialogs", "refresh").getResource().attachImageIcon(this, true);
+            new ImageProvider(DIALOG_IMAGES_DIR, "refresh").getResource().attachImageIcon(this, true);
         }
 
         @Override
@@ -764,193 +757,4 @@ public class MapWithAIProvidersPanel extends JPanel {
         }
     }
 
-    /**
-     * The table model for source layer list
-     */
-    public class MapWithAILayerTableModel extends DefaultTableModel {
-        private static final long serialVersionUID = 60378230494588007L;
-
-        /**
-         * Constructs a new {@code MapWithAILayerTableModel}.
-         */
-        public MapWithAILayerTableModel() {
-            setColumnIdentifiers(new String[] { tr("Default Source Value"), tr("MapWithAI URL") });
-        }
-
-        /**
-         * Returns the source info at the given row number.
-         *
-         * @param row The row number
-         * @return The source info at the given row number
-         */
-        public MapWithAIInfo getRow(int row) {
-            return layerInfo.getLayers().get(row);
-        }
-
-        /**
-         * Adds a new imagery info as the last row.
-         *
-         * @param i The imagery info to add
-         */
-        public void addRow(MapWithAIInfo i) {
-            layerInfo.add(i);
-            int p = getRowCount() - 1;
-            fireTableRowsInserted(p, p);
-        }
-
-        @Override
-        public void removeRow(int i) {
-            layerInfo.remove(getRow(i));
-            fireTableRowsDeleted(i, i);
-        }
-
-        @Override
-        public int getRowCount() {
-            return layerInfo.getLayers().size();
-        }
-
-        @Override
-        public Object getValueAt(int row, int column) {
-            MapWithAIInfo info = layerInfo.getLayers().get(row);
-            switch (column) {
-            case 0:
-                return info.getName();
-            case 1:
-                return info.getUrl();
-            default:
-                throw new ArrayIndexOutOfBoundsException(Integer.toString(column));
-            }
-        }
-
-        @Override
-        public void setValueAt(Object o, int row, int column) {
-            if (layerInfo.getLayers().size() <= row) {
-                return;
-            }
-            MapWithAIInfo info = layerInfo.getLayers().get(row);
-            switch (column) {
-            case 0:
-                info.setName((String) o);
-                info.clearId();
-                break;
-            case 1:
-                info.setUrl((String) o);
-                info.clearId();
-                break;
-            default:
-                throw new ArrayIndexOutOfBoundsException(Integer.toString(column));
-            }
-        }
-
-        /**
-         * Check if the active table contains the MapWithAIInfo object
-         *
-         * @param info The info to check
-         * @return {@code true} if any of the active layers is functionally equal
-         */
-        public boolean contains(MapWithAIInfo info) {
-            return layerInfo.getLayers().stream().anyMatch(info::equalsBaseValues);
-        }
-
-        /**
-         * Check if the active table does not contain the MapWithAIInfo object
-         *
-         * @param info The info to check
-         * @return {@code true} if none of the active layers is functionally equal
-         */
-        public boolean doesNotContain(MapWithAIInfo info) {
-            return !contains(info);
-        }
-
-        /**
-         * Get the index that a specified MapWithAIInfo resides at
-         *
-         * @param info The MapWithAIInfo to find
-         * @return The row index, or -1 if it isn't in the model
-         */
-        public int getRowIndex(MapWithAIInfo info) {
-            for (int j = 0; j < getRowCount(); j++) {
-                if (info.equalsBaseValues(getRow(j))) {
-                    return j;
-                }
-            }
-            return -1;
-        }
-    }
-
-    /**
-     * The table model for the default imagery layer list
-     */
-    public class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
-        private static final long serialVersionUID = -2966437364160797385L;
-        private final List<Class<?>> columnTypes;
-        private final List<Function<MapWithAIInfo, Object>> columnDataRetrieval;
-
-        /**
-         * Constructs a new {@code MapWithAIDefaultLayerTableModel}.
-         */
-        public MapWithAIDefaultLayerTableModel() {
-            setColumnIdentifiers(new String[] { "", tr("Menu Name (Default)"), tr("Type"),
-                    tr("MapWithAI URL (Default)"), tr("Provider") });
-            columnTypes = Stream
-                    .of(MapWithAICategory.class, MapWithAIInfo.class, List.class, String.class, String.class)
-                    .collect(Collectors.toCollection(ArrayList::new));
-            columnDataRetrieval = new ArrayList<>();
-            columnDataRetrieval.add(info -> Optional.ofNullable(info.getCategory()).orElse(MapWithAICategory.OTHER));
-            columnDataRetrieval.add(info -> info);
-            columnDataRetrieval.add(info -> {
-                List<String> categories = Stream
-                        .concat(Stream.of(info.getCategory()), info.getAdditionalCategories().stream())
-                        .filter(Objects::nonNull).map(MapWithAICategory::getDescription).collect(Collectors.toList());
-                return categories.isEmpty() ? Collections.singletonList(MapWithAICategory.OTHER.getDescription())
-                        : categories;
-            });
-            columnDataRetrieval.add(MapWithAIInfo::getUrl);
-            columnDataRetrieval.add(i -> i.getAttributionText(0, null, null));
-        }
-
-        /**
-         * Returns the imagery info at the given row number.
-         *
-         * @param row The row number
-         * @return The imagery info at the given row number
-         */
-        public MapWithAIInfo getRow(int row) {
-            return layerInfo.getAllDefaultLayers().get(row);
-        }
-
-        @Override
-        public void removeRow(int row) {
-            columnTypes.remove(row);
-            columnDataRetrieval.remove(row);
-            super.removeRow(row);
-        }
-
-        @Override
-        public int getRowCount() {
-            return layerInfo.getAllDefaultLayers().size();
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex < columnTypes.size()) {
-                return columnTypes.get(columnIndex);
-            }
-            return super.getColumnClass(columnIndex);
-        }
-
-        @Override
-        public Object getValueAt(int row, int column) {
-            MapWithAIInfo info = layerInfo.getAllDefaultLayers().get(row);
-            if (column < columnDataRetrieval.size()) {
-                return columnDataRetrieval.get(column).apply(info);
-            }
-            return null;
-        }
-
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-    }
 }
