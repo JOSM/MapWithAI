@@ -71,7 +71,7 @@ sourceSets {
 
 def versions = [
   awaitility: "4.0.3",
-  errorprone: "2.3.4",
+  errorprone: "2.4.0",
   jacoco: "0.8.5",
   jmockit: "1.46",
   junit: "5.6.2",
