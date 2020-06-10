@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -188,7 +189,7 @@ public class MapWithAIInfo extends
         @StructEntry
         String conflationParameters;
         @StructEntry
-        List<String> categories;
+        String categories;
 
         /**
          * Constructs a new empty {@MapWithAIPreferenceEntry}
@@ -218,7 +219,7 @@ public class MapWithAIInfo extends
             conflationUrl = i.conflationUrl;
             if (i.categories != null) {
                 categories = i.categories.stream().map(MapWithAICategory::getCategoryString)
-                        .collect(Collectors.toList());
+                        .collect(Collectors.joining(";"));
             }
         }
 
@@ -333,8 +334,8 @@ public class MapWithAIInfo extends
         setIcon(e.icon);
         setCategory(MapWithAICategory.fromString(e.category));
         if (e.categories != null) {
-            setAdditionalCategories(
-                    e.categories.stream().map(MapWithAICategory::fromString).distinct().collect(Collectors.toList()));
+            setAdditionalCategories(Stream.of(e.categories.split(";", -1)).map(MapWithAICategory::fromString).distinct()
+                    .collect(Collectors.toList()));
         }
         setConflation(e.conflate);
         setConflationUrl(e.conflationUrl);
