@@ -26,7 +26,9 @@ public class StubEndsTest extends Test {
     private static final String HIGHWAY = "highway";
     private static final List<String> BAD_HIGHWAYS = Arrays.asList("services", "rest_area");
     private static final double DEFAULT_MAX_LENGTH = 5.0;
-    private double max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
+    private static final int ERROR_CODE = 333_300_239;
+    // Initialize for use with just a `visit` statement
+    private double maxLength = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
 
     public StubEndsTest() {
         super(tr("Stub Ends ({0})", MapWithAIPlugin.NAME), tr("Look for short ends on ways"));
@@ -35,7 +37,8 @@ public class StubEndsTest extends Test {
     @Override
     public void startTest(ProgressMonitor monitor) {
         super.startTest(monitor);
-        max_length = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
+        // Ensure that we pick up changes made to the preference on a per-run basis
+        maxLength = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
     }
 
     @Override
@@ -48,19 +51,19 @@ public class StubEndsTest extends Test {
     private void checkEnds(Way way) {
         List<Node> nodesToFirstConnection = new ArrayList<>();
         double distanceToFirstConnection = distanceToFirstConnection(way, nodesToFirstConnection);
-        if (distanceToFirstConnection < max_length && !nodesToFirstConnection.isEmpty()) {
+        if (distanceToFirstConnection < maxLength && !nodesToFirstConnection.isEmpty()) {
             errors.add(createError(way, nodesToFirstConnection, distanceToFirstConnection));
         }
 
         List<Node> nodesToLastConnection = new ArrayList<>();
         double distanceToLastConnection = distanceToLastConnection(way, nodesToLastConnection);
-        if (distanceToLastConnection < max_length && !nodesToLastConnection.isEmpty()) {
+        if (distanceToLastConnection < maxLength && !nodesToLastConnection.isEmpty()) {
             errors.add(createError(way, nodesToLastConnection, distanceToLastConnection));
         }
     }
 
     private TestError createError(Way way, List<Node> nodes, double distance) {
-        TestError.Builder error = TestError.builder(this, Severity.ERROR, 333300239)
+        TestError.Builder error = TestError.builder(this, Severity.ERROR, ERROR_CODE)
                 .message(tr("{0} (experimental)", MapWithAIPlugin.NAME), marktr("Stub end ({0}m)"),
                         Math.round(distance))
                 .primitives(way).highlight(nodes);
