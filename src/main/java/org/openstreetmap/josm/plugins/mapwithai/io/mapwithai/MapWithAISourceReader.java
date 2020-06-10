@@ -28,6 +28,7 @@ import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.DefaultGeoProperty;
 import org.openstreetmap.josm.tools.GeoPropertyIndex;
 import org.openstreetmap.josm.tools.HttpClient;
@@ -48,6 +49,9 @@ public class MapWithAISourceReader implements Closeable {
     private final String source;
     private CachedFile cachedFile;
     private boolean fastFail;
+
+    private static final int MIN_NODE_FOR_CLOSED_WAY = 2;
+    private static final int COORD_ARRAY_SIZE = 6;
 
     /**
      * Constructs a {@code ImageryReader} from a given filename, URL or internal
@@ -93,7 +97,7 @@ public class MapWithAISourceReader implements Closeable {
         try (JsonReader reader = Json.createReader(cachedFile.setMaxAge(CachedFile.DAYS)
                 .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
             JsonStructure struct = reader.read();
-            if (JsonValue.ValueType.OBJECT.equals(struct.getValueType())) {
+            if (JsonValue.ValueType.OBJECT == struct.getValueType()) {
                 JsonObject jsonObject = struct.asJsonObject();
                 entries = parseJson(jsonObject);
             }
@@ -103,17 +107,17 @@ public class MapWithAISourceReader implements Closeable {
 
     private static MapWithAIInfo parse(Map.Entry<String, JsonValue> entry) {
         String name = entry.getKey();
-        if (JsonValue.ValueType.OBJECT.equals(entry.getValue().getValueType())) {
+        if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()) {
             JsonObject values = entry.getValue().asJsonObject();
             String url = values.getString("url", "");
-            String type = values.getString("type", MapWithAIInfo.MapWithAIType.THIRD_PARTY.getTypeString());
+            String type = values.getString("type", MapWithAIType.THIRD_PARTY.getTypeString());
             String eula = values.getString("eula", "");
             boolean conflation = values.getBoolean("conflate", false);
             String conflationUrl = values.getString("conflationUrl", null);
             String id = values.getString("id", name.replace(" ", "_"));
             JsonValue countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
             List<ImageryBounds> bounds = new ArrayList<>();
-            if (JsonValue.ValueType.OBJECT.equals(countries.getValueType())) {
+            if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
                 Set<String> codes = Territories.getKnownIso3166Codes();
                 for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
                     if (codes.contains(country.getKey())) {
@@ -159,14 +163,14 @@ public class MapWithAISourceReader implements Closeable {
         Collection<Shape> shapes = new ArrayList<>();
         float[] moveTo = null;
         while (!iterator.isDone()) {
-            float[] coords = new float[6];
+            float[] coords = new float[COORD_ARRAY_SIZE];
             int type = iterator.currentSegment(coords);
             if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
                 if (type == PathIterator.SEG_MOVETO) {
                     moveTo = coords;
                 }
                 defaultShape.addPoint(Float.toString(coords[1]), Float.toString(coords[0]));
-            } else if (type == PathIterator.SEG_CLOSE && moveTo != null && moveTo.length >= 2) {
+            } else if (type == PathIterator.SEG_CLOSE && moveTo != null && moveTo.length >= MIN_NODE_FOR_CLOSED_WAY) {
                 defaultShape.addPoint(Float.toString(moveTo[1]), Float.toString(moveTo[0]));
                 shapes.add(defaultShape);
                 defaultShape = new Shape();

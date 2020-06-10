@@ -198,12 +198,8 @@ public class MapWithAILayerInfo {
             allDefaultLayers.clear();
             defaultLayers.addAll(newLayers);
             for (MapWithAIInfo layer : newLayers) {
-                if (MapWithAIInfo.MapWithAIType.ESRI.equals(layer.getSourceType())) {
-                    try (ESRISourceReader reader = new ESRISourceReader(layer)) {
-                        allDefaultLayers.addAll(reader.parse());
-                    } catch (IOException e) {
-                        Logging.error(e);
-                    }
+                if (MapWithAIType.ESRI == layer.getSourceType()) {
+                    allDefaultLayers.addAll(parseEsri(layer));
                 } else {
                     allDefaultLayers.add(layer);
                 }
@@ -222,30 +218,45 @@ public class MapWithAILayerInfo {
                 listener.onFinish();
             }
         }
-    }
 
-    /**
-     * Build the mapping of unique ids to {@link ImageryInfo}s.
-     *
-     * @param lst   input list
-     * @param idMap output map
-     */
-    private static void buildIdMap(List<MapWithAIInfo> lst, Map<String, MapWithAIInfo> idMap) {
-        idMap.clear();
-        Set<String> notUnique = new HashSet<>();
-        for (MapWithAIInfo i : lst) {
-            if (i.getId() != null) {
-                if (idMap.containsKey(i.getId())) {
-                    notUnique.add(i.getId());
-                    Logging.error("Id ''{0}'' is not unique - used by ''{1}'' and ''{2}''!", i.getId(), i.getName(),
-                            idMap.get(i.getId()).getName());
-                    continue;
-                }
-                idMap.put(i.getId(), i);
+        /**
+         * Parse an Esri layer
+         *
+         * @param layer The layer to parse
+         * @return The Feature Servers for the ESRI layer
+         */
+        private Collection<MapWithAIInfo> parseEsri(MapWithAIInfo layer) {
+            try (ESRISourceReader esriReader = new ESRISourceReader(layer)) {
+                return esriReader.parse();
+            } catch (IOException e) {
+                Logging.error(e);
             }
+            return Collections.emptyList();
         }
-        for (String i : notUnique) {
-            idMap.remove(i);
+
+        /**
+         * Build the mapping of unique ids to {@link ImageryInfo}s.
+         *
+         * @param lst   input list
+         * @param idMap output map
+         */
+        private void buildIdMap(List<MapWithAIInfo> lst, Map<String, MapWithAIInfo> idMap) {
+            idMap.clear();
+            Set<String> notUnique = new HashSet<>();
+            for (MapWithAIInfo i : lst) {
+                if (i.getId() != null) {
+                    if (idMap.containsKey(i.getId())) {
+                        notUnique.add(i.getId());
+                        Logging.error("Id ''{0}'' is not unique - used by ''{1}'' and ''{2}''!", i.getId(), i.getName(),
+                                idMap.get(i.getId()).getName());
+                        continue;
+                    }
+                    idMap.put(i.getId(), i);
+                }
+            }
+            for (String i : notUnique) {
+                idMap.remove(i);
+            }
         }
     }
 

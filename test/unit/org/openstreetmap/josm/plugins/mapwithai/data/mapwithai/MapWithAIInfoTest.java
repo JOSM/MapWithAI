@@ -13,8 +13,7 @@ public class MapWithAIInfoTest {
 
     @ParameterizedTest
     @MethodSource("provideMapWithAIInfoInitializers")
-    public void assertInitializersWorked(MapWithAIInfo i, String name, String url, String id,
-            MapWithAIInfo.MapWithAIType type) {
+    public void assertInitializersWorked(MapWithAIInfo i, String name, String url, String id, MapWithAIType type) {
         assertEquals(name, i.getName());
         assertEquals(id, i.getId());
         assertEquals(url, i.getUrl());
@@ -31,8 +30,8 @@ public class MapWithAIInfoTest {
         String url = "https://test.url";
         String id = "a;lkdjfadl;ksfj";
         String eula = "";
-        MapWithAIInfo.MapWithAIType type = MapWithAIInfo.MapWithAIType.FACEBOOK;
-        MapWithAIInfo.MapWithAIType defaultType = MapWithAIInfo.MapWithAIType.THIRD_PARTY;
+        MapWithAIType type = MapWithAIType.FACEBOOK;
+        MapWithAIType defaultType = MapWithAIType.THIRD_PARTY;
         MapWithAIInfo tempInfo = new MapWithAIInfo(name, url, id);
         return Stream.of(Arguments.of(new MapWithAIInfo(), null, null, null, defaultType),
                 Arguments.of(new MapWithAIInfo(name), name, null, null, defaultType),

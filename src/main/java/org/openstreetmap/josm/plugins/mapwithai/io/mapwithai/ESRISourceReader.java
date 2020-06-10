@@ -24,8 +24,9 @@ import javax.json.JsonValue;
 
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.io.CachedFile;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAICategory;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
@@ -86,7 +87,7 @@ public class ESRISourceReader implements Closeable {
                     JsonReader reader = Json.createReader(i)) {
                 layers.setFastFail(fastFail);
                 JsonStructure parser = reader.read();
-                if (parser.getValueType().equals(JsonValue.ValueType.OBJECT)) {
+                if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
                     JsonObject obj = parser.asJsonObject();
                     next = obj.getString("nextStart", "-1");
                     searchUrl = startReplace.matcher(search).replaceAll(next);
@@ -124,7 +125,7 @@ public class ESRISourceReader implements Closeable {
         ImageryBounds imageryBounds = new ImageryBounds(String.join(",", extent[1], extent[0], extent[3], extent[2]),
                 ",");
         newInfo.setBounds(imageryBounds);
-        newInfo.setSourceType(MapWithAIInfo.MapWithAIType.ESRI_FEATURE_SERVER);
+        newInfo.setSourceType(MapWithAIType.ESRI_FEATURE_SERVER);
         newInfo.setTermsOfUseText(feature.getString("licenseInfo", null));
         if (feature.containsKey("thumbnail")) {
             newInfo.setAttributionImageURL(
@@ -135,8 +136,8 @@ public class ESRISourceReader implements Closeable {
                     .stream().map(JsonString::getString).map(s -> s.replace("/Categories/", ""))
                     .map(MapWithAICategory::fromString).filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
-            MapWithAICategory category = categories.stream().filter(c -> !MapWithAICategory.FEATURED.equals(c))
-                    .findFirst().orElse(MapWithAICategory.OTHER);
+            MapWithAICategory category = categories.stream().filter(c -> MapWithAICategory.FEATURED != c).findFirst()
+                    .orElse(MapWithAICategory.OTHER);
             newInfo.setCategory(category);
             categories.remove(category);
             newInfo.setAdditionalCategories(categories);

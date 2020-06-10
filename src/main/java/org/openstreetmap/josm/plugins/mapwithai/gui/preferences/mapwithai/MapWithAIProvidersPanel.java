@@ -58,9 +58,10 @@ import org.openstreetmap.josm.gui.preferences.imagery.ImageryProvidersPanel;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.gui.widgets.FilterField;
 import org.openstreetmap.josm.gui.widgets.HtmlPanel;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -392,7 +393,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         activeToolbar.setFloatable(false);
         activeToolbar.setBorderPainted(false);
         activeToolbar.setOpaque(false);
-        activeToolbar.add(new NewEntryAction(MapWithAIInfo.MapWithAIType.THIRD_PARTY));
+        activeToolbar.add(new NewEntryAction(MapWithAIType.THIRD_PARTY));
         activeToolbar.add(edit);
         activeToolbar.add(remove);
         if (showActive) {
@@ -556,7 +557,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     private class NewEntryAction extends AbstractAction {
         private static final long serialVersionUID = 7451336680150337942L;
 
-        NewEntryAction(MapWithAIInfo.MapWithAIType type) {
+        NewEntryAction(MapWithAIType type) {
             putValue(NAME, type.toString());
             putValue(SHORT_DESCRIPTION, tr("Add a new {0} entry by entering the URL", type.toString()));
             String icon = /* ICON(dialogs/) */ "add";
@@ -572,7 +573,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             if (addDialog.getValue() == 1) {
                 try {
                     MapWithAIInfo info = p.getSourceInfo();
-                    if (MapWithAIInfo.MapWithAIType.ESRI == info.getSourceType()) {
+                    if (MapWithAIType.ESRI == info.getSourceType()) {
                         try (ESRISourceReader reader = new ESRISourceReader(info)) {
                             for (MapWithAIInfo i : reader.parse()) {
                                 activeModel.addRow(i);

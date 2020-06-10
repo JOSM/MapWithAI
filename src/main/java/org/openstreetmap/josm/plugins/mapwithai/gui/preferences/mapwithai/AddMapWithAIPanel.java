@@ -36,7 +36,7 @@ import org.openstreetmap.josm.gui.preferences.imagery.HeadersTable;
 import org.openstreetmap.josm.gui.widgets.JosmTextArea;
 import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIType;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
@@ -59,10 +59,10 @@ class AddMapWithAIPanel extends JPanel {
     private JSpinner minimumCacheExpiry;
     private JComboBox<String> minimumCacheExpiryUnit;
     private TimeUnit currentUnit;
-    private MapWithAIInfo.MapWithAIType type;
+    private MapWithAIType type;
 
     private MapWithAIInfo info;
-    private JComboBox<MapWithAIInfo.MapWithAIType> typeBox;
+    private JComboBox<MapWithAIType> typeBox;
 
     protected AddMapWithAIPanel(LayoutManager layout) {
         super(layout);
@@ -120,8 +120,8 @@ class AddMapWithAIPanel extends JPanel {
         add(new JLabel(tr("{0} Enter name for this source", "3.")), GBC.eol());
         add(name, GBC.eol().fill(GBC.HORIZONTAL));
         add(new JLabel(tr("{0} What is the type of this source?", "4.")), GBC.eol());
-        typeBox = new JComboBox<>(MapWithAIInfo.MapWithAIType.values());
-        typeBox.setSelectedItem(MapWithAIInfo.MapWithAIType.THIRD_PARTY);
+        typeBox = new JComboBox<>(MapWithAIType.values());
+        typeBox.setSelectedItem(MapWithAIType.THIRD_PARTY);
         typeBox.addItemListener(l -> {
             type = (MapWithAIType) typeBox.getSelectedItem();
             notifyListeners();

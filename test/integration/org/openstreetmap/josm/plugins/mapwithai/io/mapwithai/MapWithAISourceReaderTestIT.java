@@ -13,7 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIType;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -27,7 +27,7 @@ public class MapWithAISourceReaderTestIT {
     public void testDefaultSourceIT() throws IOException {
         try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.getReleaseUrl())) {
             List<MapWithAIInfo> infoList = source.parse();
-            assertFalse(infoList.isEmpty());
+            assertFalse(infoList.isEmpty(), "There should be viable sources");
             for (MapWithAIType type : Arrays.asList(MapWithAIType.FACEBOOK, MapWithAIType.THIRD_PARTY)) {
                 assertTrue(infoList.stream().filter(i -> type.equals(i.getSourceType())).count() > 0,
                         tr("Type {0} should have more than 0 sources", type.getTypeString()));

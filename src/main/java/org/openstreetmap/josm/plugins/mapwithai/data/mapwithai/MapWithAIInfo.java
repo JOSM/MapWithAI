@@ -1,16 +1,14 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
-import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,145 +18,20 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.stream.JsonParser;
-import javax.swing.ImageIcon;
 
 import org.openstreetmap.josm.data.StructUtils.StructEntry;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
-import org.openstreetmap.josm.data.sources.ISourceCategory;
-import org.openstreetmap.josm.data.sources.ISourceType;
 import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
-import org.openstreetmap.josm.gui.tagging.presets.TaggingPresets;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
-import org.openstreetmap.josm.tools.ImageProvider;
-import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 import org.openstreetmap.josm.tools.Logging;
 
 public class MapWithAIInfo extends
-        SourceInfo<MapWithAIInfo.MapWithAICategory, MapWithAIInfo.MapWithAIType, ImageryInfo.ImageryBounds, MapWithAIInfo.MapWithAIPreferenceEntry> {
-
-    /**
-     * Type of MapWithAI entry
-     */
-    public enum MapWithAIType implements ISourceType<MapWithAIType> {
-        FACEBOOK("facebook"), THIRD_PARTY("thirdParty"), ESRI("esri"), ESRI_FEATURE_SERVER("esriFeatureServer");
-
-        private final String typeString;
-
-        MapWithAIType(String typeString) {
-            this.typeString = typeString;
-        }
-
-        @Override
-        public String getTypeString() {
-            return typeString;
-        }
-
-        public static MapWithAIType fromString(String s) {
-            for (MapWithAIType type : MapWithAIType.values()) {
-                if (type.getTypeString().equals(s)) {
-                    return type;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public MapWithAIType getDefault() {
-            return THIRD_PARTY;
-        }
-
-        @Override
-        public MapWithAIType getFromString(String s) {
-            return fromString(s);
-        }
-    }
-
-    public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
-
-        BUILDING("data/closedway", "buildings", marktr("Buildings")),
-        HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),
-        ADDRESS("presets/misc/housenumber_small", "addresses", marktr("Addresses")),
-        POWER("presets/power/pole", "pole", marktr("Power")), PRESET("dialogs/search", "presets", marktr("Presets")),
-        FEATURED("presets/service/network-wireless.svg", "featured", marktr("Featured")),
-        OTHER(null, "other", marktr("Other"));
-
-        private static final Map<ImageSizes, Map<MapWithAICategory, ImageIcon>> iconCache = Collections
-                .synchronizedMap(new EnumMap<>(ImageSizes.class));
-
-        private final String category;
-        private final String description;
-        private final String icon;
-
-        MapWithAICategory(String icon, String category, String description) {
-            this.category = category;
-            this.icon = icon == null || icon.trim().isEmpty() ? "mapwithai" : icon;
-            this.description = description;
-        }
-
-        @Override
-        public final String getCategoryString() {
-            return category;
-        }
-
-        @Override
-        public final String getDescription() {
-            return description;
-        }
-
-        @Override
-        public final ImageIcon getIcon(ImageSizes size) {
-            return iconCache
-                    .computeIfAbsent(size, x -> Collections.synchronizedMap(new EnumMap<>(MapWithAICategory.class)))
-                    .computeIfAbsent(this, x -> ImageProvider.get(x.icon, size));
-        }
-
-        public static MapWithAICategory fromString(String s) {
-            for (MapWithAICategory category : MapWithAICategory.values()) {
-                if (category.getCategoryString().equals(s)) {
-                    return category;
-                }
-            }
-            if (s != null && !s.trim().isEmpty()) {
-                // fuzzy match
-                String tmp = s.toLowerCase(Locale.ROOT);
-                for (MapWithAICategory type : MapWithAICategory.values()) {
-                    if (tmp.contains(type.getDescription().toLowerCase(Locale.ROOT))
-                            || type.getDescription().toLowerCase(Locale.ROOT).contains(tmp)) {
-                        return type;
-                    }
-                }
-                // Check if it matches a preset
-                if (TaggingPresets.getPresetKeys().stream().map(String::toLowerCase)
-                        .anyMatch(m -> tmp.contains(m) || m.contains(tmp))) {
-                    return PRESET;
-                }
-            }
-            return OTHER;
-        }
-
-        public static class DescriptionComparator implements Comparator<MapWithAICategory> {
-
-            @Override
-            public int compare(MapWithAICategory o1, MapWithAICategory o2) {
-                return (o1 == null || o2 == null) ? 1 : o1.getDescription().compareTo(o2.getDescription());
-            }
-        }
-
-        @Override
-        public MapWithAICategory getDefault() {
-            return OTHER;
-        }
-
-        @Override
-        public MapWithAICategory getFromString(String s) {
-            return fromString(s);
-        }
-    }
+        SourceInfo<MapWithAICategory, MapWithAIType, ImageryInfo.ImageryBounds, MapWithAIInfo.MapWithAIPreferenceEntry> {
 
     private List<MapWithAICategory> categories;
     private JsonArray parameters;
@@ -176,7 +49,6 @@ public class MapWithAIInfo extends
      * {@link #MapWithAIInfo(ImageryInfo) MapWithAIInfo constructor}
      * {@link #equalsPref(MapWithAIPreferenceEntry) equalsPref method}
      **/
-
     public static class MapWithAIPreferenceEntry extends SourcePreferenceEntry<MapWithAIInfo> {
         @StructEntry
         String parameters;
@@ -298,7 +170,7 @@ public class MapWithAIInfo extends
         setEulaAcceptanceRequired(e.eula);
         if (e.parameters != null) {
             try (JsonParser parser = Json.createParser(new StringReader(e.parameters))) {
-                if (parser.hasNext() && JsonParser.Event.START_ARRAY.equals(parser.next())) {
+                if (parser.hasNext() && JsonParser.Event.START_ARRAY == parser.next()) {
                     setParameters(parser.getArray());
                 }
             }
@@ -341,7 +213,7 @@ public class MapWithAIInfo extends
         setConflationUrl(e.conflationUrl);
         if (e.conflationParameters != null) {
             try (JsonParser parser = Json.createParser(new StringReader(e.conflationParameters))) {
-                if (parser.hasNext() && JsonParser.Event.START_ARRAY.equals(parser.next())) {
+                if (parser.hasNext() && JsonParser.Event.START_ARRAY == parser.next()) {
                     setConflationParameters(parser.getArray());
                 }
             }
@@ -411,11 +283,11 @@ public class MapWithAIInfo extends
     }
 
     public void setParameters(JsonArray parameters) {
-        this.parameters = parameters;
+        this.parameters = parameters != null ? Json.createArrayBuilder(parameters).build() : null;
     }
 
     public JsonArray getParameters() {
-        return parameters;
+        return parameters != null ? Json.createArrayBuilder(parameters).build() : null;
     }
 
     /**
@@ -472,7 +344,7 @@ public class MapWithAIInfo extends
         StringBuilder sb = new StringBuilder();
         if (url != null && !url.trim().isEmpty()) {
             sb.append(url);
-            if (MapWithAIType.ESRI_FEATURE_SERVER.equals(sourceType)) {
+            if (MapWithAIType.ESRI_FEATURE_SERVER == sourceType) {
                 if (!url.endsWith("/")) {
                     sb.append('/');
                 }
@@ -522,7 +394,7 @@ public class MapWithAIInfo extends
      * @param parameters Set the conflation parameters
      */
     public void setConflationParameters(JsonArray parameters) {
-        this.conflationParameters = parameters;
+        this.conflationParameters = parameters != null ? Json.createArrayBuilder(parameters).build() : null;
     }
 
     /**
@@ -531,7 +403,7 @@ public class MapWithAIInfo extends
      * @param categories The categories to set
      */
     public void setAdditionalCategories(List<MapWithAICategory> categories) {
-        this.categories = categories;
+        this.categories = categories != null ? new ArrayList<>(categories) : null;
     }
 
     /**

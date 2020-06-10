@@ -21,6 +21,7 @@ import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.OsmReaderCustom;
 import org.openstreetmap.josm.tools.HttpClient;
 
@@ -96,7 +97,7 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         String contentType = this.activeConnection.getResponse().getHeaderField("Content-Type");
         if (contentType.contains("text/xml")) {
             ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
-        } else if (MapWithAIInfo.MapWithAIType.ESRI_FEATURE_SERVER.equals(this.info.getSourceType())) {
+        } else if (MapWithAIType.ESRI_FEATURE_SERVER == this.info.getSourceType()) {
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
                 GetDataRunnable.replaceKeys(ds, info.getReplacementTags());

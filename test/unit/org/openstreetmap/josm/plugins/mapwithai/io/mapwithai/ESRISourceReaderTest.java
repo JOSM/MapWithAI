@@ -11,13 +11,19 @@ import java.util.Collection;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIType;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 
 public class ESRISourceReaderTest {
     @Rule
     public MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().wiremock().projection();
 
+    /**
+     * Test that ESRI servers are properly added
+     *
+     * @throws IOException If there is an issue with reading the network
+     *                     file/wiremocked file
+     */
     @Test
     public void testAddEsriLayer() throws IOException {
         // TODO wiremock
@@ -28,9 +34,11 @@ public class ESRISourceReaderTest {
             info.setUrl(url);
             try (ESRISourceReader reader = new ESRISourceReader(info)) {
                 Collection<MapWithAIInfo> layers = reader.parse();
-                assertFalse(layers.isEmpty());
-                assertTrue(layers.stream().noneMatch(i -> info.getUrl().equals(i.getUrl())));
-                assertTrue(layers.stream().allMatch(i -> MapWithAIType.ESRI_FEATURE_SERVER.equals(i.getSourceType())));
+                assertFalse(layers.isEmpty(), "There should be a MapWithAI layer");
+                assertTrue(layers.stream().noneMatch(i -> info.getUrl().equals(i.getUrl())),
+                        "The ESRI server should be expanded to feature servers");
+                assertTrue(layers.stream().allMatch(i -> MapWithAIType.ESRI_FEATURE_SERVER.equals(i.getSourceType())),
+                        "There should only be ESRI feature servers");
             }
         }
     }

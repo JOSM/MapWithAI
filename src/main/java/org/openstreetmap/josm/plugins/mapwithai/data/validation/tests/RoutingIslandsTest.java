@@ -106,7 +106,7 @@ public class RoutingIslandsTest extends Test {
                         .message(tr("MapWithAI (experimental)"), marktr("Routable way not connected to other ways"))
                         .build());
             } else if ((ValidatorPrefHelper.PREF_OTHER.get() || ValidatorPrefHelper.PREF_OTHER_UPLOAD.get()
-                    || !Severity.OTHER.equals(SEVERITY_MAP.get(ROUTING_ISLAND))) && !isBeforeUpload) {
+                    || Severity.OTHER != SEVERITY_MAP.get(ROUTING_ISLAND)) && !isBeforeUpload) {
                 if (way.hasKey(HIGHWAY) && !IGNORE_TAGS_HIGHWAY.contains(way.get(HIGHWAY))) {
                     potentialHighways.add(way);
                 }
