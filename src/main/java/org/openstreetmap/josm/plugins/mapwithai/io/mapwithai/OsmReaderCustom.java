@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai.backend;
+package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
 import java.io.InputStream;
 

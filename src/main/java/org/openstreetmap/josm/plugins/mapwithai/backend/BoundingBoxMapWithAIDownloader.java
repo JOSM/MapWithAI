@@ -21,6 +21,7 @@ import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.OsmReaderCustom;
 import org.openstreetmap.josm.tools.HttpClient;
 
 class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
