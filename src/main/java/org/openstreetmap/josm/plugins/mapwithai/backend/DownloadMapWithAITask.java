@@ -65,11 +65,11 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         return null;
     }
 
-    protected class DownloadTask extends AbstractInternalTask {
+    class DownloadTask extends AbstractInternalTask {
         BoundingBoxMapWithAIDownloader downloader;
         final Bounds bounds;
 
-        public DownloadTask(DownloadParams settings, String title, boolean ignoreException, boolean zoomAfterDownload,
+        DownloadTask(DownloadParams settings, String title, boolean ignoreException, boolean zoomAfterDownload,
                 Bounds bounds) {
             this(settings, title, NullProgressMonitor.INSTANCE, ignoreException, zoomAfterDownload, bounds);
         }
