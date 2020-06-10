@@ -3,7 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,6 +55,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private final List<BBox> bbox;
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
+    private static final float DEGREE_BUFFER = 0.001f;
+    private static final int MAX_LATITUDE = 90;
+    private static final int MAX_LONGITUDE = 180;
 
     private Integer maximumDimensions;
 
@@ -141,11 +143,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {
+        Bounds boundsToUse;
         if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
-            bounds = dataSet.getDataSourceBounds().get(0);
-            dataSet.getDataSourceBounds().forEach(bounds::extend);
+            boundsToUse = dataSet.getDataSourceBounds().get(0);
+            dataSet.getDataSourceBounds().forEach(boundsToUse::extend);
         } else if (bounds == null) {
-            bounds = new Bounds(0, 0, 0, 0);
+            boundsToUse = new Bounds(0, 0, 0, 0);
+        } else {
+            boundsToUse = bounds;
         }
         replaceTags(dataSet);
         removeCommonTags(dataSet);
@@ -154,13 +159,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         cleanupDataSet(dataSet);
         mergeWays(dataSet);
         removeAlreadyAddedData(dataSet);
-        List<Way> ways = dataSet.searchWays(bounds.toBBox()).stream().filter(w -> w.hasKey("highway"))
+        List<Way> ways = dataSet.searchWays(boundsToUse.toBBox()).stream().filter(w -> w.hasKey("highway"))
                 .collect(Collectors.toList());
         if (!ways.isEmpty()) {
             new MergeDuplicateWays(dataSet, ways).executeCommand();
         }
-        (bounds.isCollapsed() || bounds.isOutOfTheWorld() ? dataSet.getWays() : dataSet.searchWays(bounds.toBBox()))
-                .parallelStream().filter(way -> !way.isDeleted()).forEach(GetDataRunnable::cleanupArtifacts);
+        (boundsToUse.isCollapsed() || boundsToUse.isOutOfTheWorld() ? dataSet.getWays()
+                : dataSet.searchWays(boundsToUse.toBBox())).parallelStream().filter(way -> !way.isDeleted())
+                        .forEach(GetDataRunnable::cleanupArtifacts);
     }
 
     /**
@@ -170,13 +176,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param bounds  The bounds to remove the empty tags from (performance)
      */
     public static void removeEmptyTags(DataSet dataSet, Bounds bounds) {
+        Bounds boundsToUse;
         if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
-            bounds = dataSet.getDataSourceBounds().get(0);
-            dataSet.getDataSourceBounds().forEach(bounds::extend);
+            boundsToUse = dataSet.getDataSourceBounds().get(0);
+            dataSet.getDataSourceBounds().forEach(boundsToUse::extend);
         } else if (bounds == null) {
-            bounds = new Bounds(-90, -180, 90, 180);
+            boundsToUse = new Bounds(-MAX_LATITUDE, -MAX_LONGITUDE, MAX_LATITUDE, MAX_LONGITUDE);
+        } else {
+            boundsToUse = bounds;
         }
-        dataSet.searchPrimitives(bounds.toBBox()).forEach(GetDataRunnable::realRemoveEmptyTags);
+        dataSet.searchPrimitives(boundsToUse.toBBox()).forEach(GetDataRunnable::realRemoveEmptyTags);
     }
 
     /**
@@ -250,7 +259,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         List<OsmPrimitive> returnList = Collections.emptyList();
         if (primitive instanceof OsmPrimitive) {
             final BBox tBBox = new BBox();
-            tBBox.addPrimitive((OsmPrimitive) primitive, 0.001);
+            tBBox.addPrimitive((OsmPrimitive) primitive, DEGREE_BUFFER);
             if (primitive instanceof Node) {
                 returnList = new ArrayList<>(ds.searchNodes(tBBox));
             } else if (primitive instanceof Way) {
@@ -351,7 +360,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static List<Node> nearbyNodes(DataSet ds, Node nearNode) {
         final BBox bbox = new BBox();
-        bbox.addPrimitive(nearNode, 0.001);
+        bbox.addPrimitive(nearNode, DEGREE_BUFFER);
         return ds.searchNodes(bbox).parallelStream().filter(node -> usableNode(nearNode, node))
                 .collect(Collectors.toList());
     }
@@ -388,7 +397,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
             final BBox bbox = new BBox();
-            bbox.addPrimitive(way1, 0.001);
+            bbox.addPrimitive(way1, DEGREE_BUFFER);
             final List<Way> nearbyWays = dataSet.searchWays(bbox).parallelStream().filter(
                     way -> way.getNodes().parallelStream().filter(node -> way1.getNodes().contains(node)).count() > 1)
                     .collect(Collectors.toList());
@@ -439,7 +448,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
         if ((way.getNodesCount() == 2) && (way.getDataSet() != null)) {
             final BBox tBBox = new BBox();
-            tBBox.addPrimitive(way, 0.001);
+            tBBox.addPrimitive(way, DEGREE_BUFFER);
             if (way.getDataSet().searchWays(tBBox).parallelStream()
                     .filter(tWay -> !way.equals(tWay) && !tWay.isDeleted())
                     .anyMatch(tWay -> way.getNodes().parallelStream().filter(
@@ -531,14 +540,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static boolean checkIfMapWithAISourceShouldBeAdded(OsmPrimitive prim) {
         return !prim.isDeleted() && !prim.hasTag(MAPWITHAI_SOURCE_TAG_KEY);
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
     }
 
 }
