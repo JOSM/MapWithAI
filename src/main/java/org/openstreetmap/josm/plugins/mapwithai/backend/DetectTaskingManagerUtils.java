@@ -22,7 +22,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
  * @author Taylor Smock
  *
  */
-public final class DetectTaskingManagerUtils {
+final class DetectTaskingManagerUtils {
     public static final String MAPWITHAI_CROP_AREA = tr("{0}: Crop Area", MapWithAIPlugin.NAME);
     private static final List<Pattern> PATTERNS = new ArrayList<>();
     static {
