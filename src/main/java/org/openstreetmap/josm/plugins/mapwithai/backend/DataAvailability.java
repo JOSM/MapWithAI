@@ -36,6 +36,8 @@ public class DataAvailability {
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
     private static final String PROVIDES = "provides";
+    private static final String EMPTY_STRING = "";
+    private static final int SEVEN_DAYS_IN_SECONDS = 604_800;
 
     /**
      * Map&lt;Source,
@@ -70,12 +72,12 @@ public class DataAvailability {
     private static void initialize() {
         try (CachedFile jsonFile = new CachedFile(defaultServerUrl);
                 JsonParser jsonParser = Json.createParser(jsonFile.getContentReader());) {
-            jsonFile.setMaxAge(604_800);
+            jsonFile.setMaxAge(SEVEN_DAYS_IN_SECONDS);
             jsonParser.next();
             JsonObject jsonObject = jsonParser.getObject();
             for (Entry<String, JsonValue> entry : jsonObject.entrySet()) {
                 Logging.debug("{0}: {1}", entry.getKey(), entry.getValue());
-                if (JsonValue.ValueType.OBJECT.equals(entry.getValue().getValueType())
+                if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()
                         && entry.getValue().asJsonObject().containsKey("countries")) {
                     JsonValue countries = entry.getValue().asJsonObject().get("countries");
                     parseCountries(COUNTRIES, countries, entry.getValue());
@@ -104,7 +106,7 @@ public class DataAvailability {
      */
     private static void parseCountries(Map<String, Map<String, Boolean>> countriesMap, JsonValue countries,
             JsonValue information) {
-        if (JsonValue.ValueType.OBJECT.equals(countries.getValueType())) {
+        if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
             parseCountriesObject(countriesMap, countries.asJsonObject(), information);
         } else {
             Logging.error("MapWithAI: Check format of countries map from MapWithAI");
@@ -123,18 +125,18 @@ public class DataAvailability {
         for (Entry<String, JsonValue> entry : countryObject.entrySet()) {
             Map<String, Boolean> providesMap = countriesMap.getOrDefault(entry.getKey(), new TreeMap<>());
             countriesMap.putIfAbsent(entry.getKey(), providesMap);
-            if (JsonValue.ValueType.ARRAY.equals(entry.getValue().getValueType())) {
+            if (JsonValue.ValueType.ARRAY == entry.getValue().getValueType()) {
                 for (String provide : entry.getValue().asJsonArray().parallelStream()
-                        .filter(c -> JsonValue.ValueType.STRING.equals(c.getValueType())).map(JsonValue::toString)
+                        .filter(c -> JsonValue.ValueType.STRING == c.getValueType()).map(JsonValue::toString)
                         .map(DataAvailability::stripQuotes).collect(Collectors.toList())) {
                     providesMap.put(provide, true);
                 }
             }
-            if (providesMap.isEmpty() && JsonValue.ValueType.OBJECT.equals(information.getValueType())
+            if (providesMap.isEmpty() && JsonValue.ValueType.OBJECT == information.getValueType()
                     && information.asJsonObject().containsKey(PROVIDES)
-                    && JsonValue.ValueType.ARRAY.equals(information.asJsonObject().get(PROVIDES).getValueType())) {
+                    && JsonValue.ValueType.ARRAY == information.asJsonObject().get(PROVIDES).getValueType()) {
                 for (String provide : information.asJsonObject().getJsonArray(PROVIDES).stream()
-                        .filter(val -> JsonValue.ValueType.STRING.equals(val.getValueType())).map(JsonValue::toString)
+                        .filter(val -> JsonValue.ValueType.STRING == val.getValueType()).map(JsonValue::toString)
                         .map(DataAvailability::stripQuotes).collect(Collectors.toList())) {
                     providesMap.put(provide, Boolean.TRUE);
                 }
@@ -150,7 +152,7 @@ public class DataAvailability {
      * @return A string that doesn't have quotes at the beginning or end
      */
     public static String stripQuotes(String string) {
-        return string.replaceAll("(^\"|\"$)", "");
+        return string.replaceAll("(^\"|\"$)", EMPTY_STRING);
     }
 
     /**
@@ -220,16 +222,17 @@ public class DataAvailability {
      * @return The url or ""
      */
     public String getTermsOfUseUrl() {
-        return "";
+        return EMPTY_STRING;
     }
 
     /**
-     * Get the Terms Of Use Url
+     * Get the Privacy Policy Url
      *
-     * @return The url or ""
+     * @return The url or the TOS url (sometimes a privacy policy is in the TOS).
+     *         The TOS url may be an empty string.
      */
     public String getPrivacyPolicyUrl() {
-        return "";
+        return getTermsOfUseUrl();
     }
 
     /**
@@ -246,7 +249,7 @@ public class DataAvailability {
                             | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                         Logging.debug(e);
                     }
-                    return "";
+                    return EMPTY_STRING;
                 })).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty())
                 .collect(Collectors.toList());
     }
@@ -265,7 +268,7 @@ public class DataAvailability {
                             | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                         Logging.debug(e);
                     }
-                    return "";
+                    return EMPTY_STRING;
                 })).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).distinct()
                 .collect(Collectors.toList());
     }
