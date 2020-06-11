@@ -42,6 +42,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     public void addGui(DownloadDialog gui) {
         iGui = gui;
         iGui.addDownloadAreaSelector(optionPanel, tr("Browse Data Sources"));
+        iGui.addDownloadAreaListener(this);
     }
 
     @Override
@@ -55,6 +56,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     public void destroy() {
         if (this.iGui != null) {
             this.iGui.remove(this);
+            this.iGui.removeDownloadAreaListener(this);
         }
     }
 
