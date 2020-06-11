@@ -68,7 +68,9 @@ public class MapWithAIAddCommand extends Command implements Runnable {
         this.primitives = new HashSet<>(selection);
         this.primitives.addAll(nodeReferrers);
         sources = selection.parallelStream()
-                .map(prim -> new Pair<OsmPrimitive, String>(prim, prim.get(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY)))
+                .map(prim -> new Pair<OsmPrimitive, String>(prim,
+                        prim.hasKey("source") ? prim.get("source")
+                                : prim.get(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY)))
                 .filter(pair -> pair.b != null).collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
     }
 
