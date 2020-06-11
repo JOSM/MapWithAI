@@ -46,6 +46,9 @@ import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 
 /**
+ * This layer shows MapWithAI data. For various reasons, we currently only allow
+ * one to be created, although this may change.
+ *
  * @author Taylor Smock
  *
  */
@@ -258,6 +261,8 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     }
 
     /**
+     * Check if we want to download data continuously
+     *
      * @return {@code true} indicates that we should attempt to keep it in sync with
      *         the data layer(s)
      */
@@ -273,7 +278,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
      */
     public static class ContinuousDownloadAction extends AbstractAction implements LayerAction {
         private static final long serialVersionUID = -3528632887550700527L;
-        private final MapWithAILayer layer;
+        private final transient MapWithAILayer layer;
 
         public ContinuousDownloadAction(MapWithAILayer layer) {
             super(tr("Continuous download"));

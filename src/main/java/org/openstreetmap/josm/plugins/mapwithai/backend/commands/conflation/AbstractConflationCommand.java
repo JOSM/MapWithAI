@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -29,6 +28,12 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.tools.Pair;
 
+/**
+ * This is an abstract class for conflation commands
+ *
+ * @author Taylor Smock
+ *
+ */
 public abstract class AbstractConflationCommand extends Command {
     protected Collection<OsmPrimitive> possiblyAffectedPrimitives;
 
@@ -43,16 +48,25 @@ public abstract class AbstractConflationCommand extends Command {
     }
 
     /**
+     * Only return Node/Way/Relation here. It can be any combination.
+     *
      * @return The types of primitive that the command is interested in
      */
     public abstract Collection<Class<? extends OsmPrimitive>> getInterestedTypes();
 
     /**
+     * Return the key that the command uses to perform conflation. For example,
+     * `conn` or `dupe`.
+     *
      * @return The key that the command is interested in
      */
     public abstract String getKey();
 
     /**
+     * Get the actual command to run. This should not be normally overriden by
+     * subclasses. Override {@link AbstractConflationCommand#getRealCommand}
+     * instead.
+     *
      * @param primitives The primitives to run the command on
      * @return The command that will be run (may be {@code null})
      */
@@ -62,6 +76,8 @@ public abstract class AbstractConflationCommand extends Command {
     }
 
     /**
+     * A command that performs the conflation steps.
+     *
      * @return The command to do whatever is required for the result
      */
     public abstract Command getRealCommand();
@@ -96,7 +112,7 @@ public abstract class AbstractConflationCommand extends Command {
             Map<Integer, Pair<Long, OsmPrimitiveType>> missingPrimitives) {
         if (!missingPrimitives.isEmpty()) {
             final Map<PrimitiveId, Integer> ids = missingPrimitives.entrySet().stream().collect(Collectors
-                    .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Entry::getKey));
+                    .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Map.Entry::getKey));
             final List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
             final Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager()
                     .getLayersOfType(OsmDataLayer.class).parallelStream()
@@ -119,7 +135,7 @@ public abstract class AbstractConflationCommand extends Command {
             final DownloadPrimitivesTask downloadPrimitivesTask = new DownloadPrimitivesTask(layer, toFetch, true,
                     monitor);
             downloadPrimitivesTask.run();
-            for (final Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
+            for (final Map.Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
                 final int index = entry.getValue().intValue();
                 final OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
                 primitiveConnections[index] = primitive;
@@ -132,17 +148,27 @@ public abstract class AbstractConflationCommand extends Command {
     }
 
     /**
+     * Use this to ensure that something that cannot be undone without errors isn't
+     * undone.
+     *
      * @return true if the command should show as a separate command in the
      *         undo/redo lists
      */
     public abstract boolean allowUndo();
 
     /**
+     * `conn` and `dupe` should not exist in OSM, but `addr:street` should. This is
+     * used in a validation test.
+     *
      * @return {@code true} if the key should not exist in OpenStreetMap
      */
     public abstract boolean keyShouldNotExistInOSM();
 
     /**
+     * If another command conflicts with this command, it should be returned here.
+     * For example, if one command adds an addr node to a building, and another
+     * command does the reverse, they conflict.
+     *
      * @return Conflation commands that conflict with this conflation command
      */
     public Collection<Class<? extends AbstractConflationCommand>> conflictedCommands() {

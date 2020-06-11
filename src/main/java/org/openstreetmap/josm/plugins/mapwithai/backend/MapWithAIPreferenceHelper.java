@@ -14,14 +14,6 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
-    /** This is the default MapWithAI URL */
-    public static final String DEFAULT_MAPWITHAI_API = "https://www.mapwith.ai/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}";
-
-    /**
-     * These are the default parameters for
-     * {@link MapWithAIPreferenceHelper#DEFAULT_MAPWITHAI_API}
-     */
-    public static final String DEFAULT_MAPWITHAI_API_PARAMETERS = "[{\"parameter\": \"result_type=road_building_vector_xml\", \"description\": \"buildings\", \"enabled\": true}]";
     private static final int DEFAULT_MAXIMUM_ADDITION = 5;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
@@ -32,7 +24,9 @@ public final class MapWithAIPreferenceHelper {
     }
 
     /**
-     * @return The default maximum number of objects to add.
+     * The default maximum number of objects to add
+     *
+     * @return {@link MapWithAIPreferenceHelper#DEFAULT_MAXIMUM_ADDITION}
      */
     public static int getDefaultMaximumAddition() {
         return DEFAULT_MAXIMUM_ADDITION;

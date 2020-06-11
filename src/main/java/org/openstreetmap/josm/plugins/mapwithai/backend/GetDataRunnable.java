@@ -317,13 +317,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 .collect(Collectors.toMap(prim -> prim, prim -> prim.get(SERVER_ID_KEY)));
 
         final List<OsmPrimitive> toDelete = origIds.entrySet().parallelStream()
-                .filter(entry -> serverIds.containsValue(entry.getValue())).map(Entry::getKey)
+                .filter(entry -> serverIds.containsValue(entry.getValue())).map(Map.Entry::getKey)
                 .collect(Collectors.toList());
         if (!toDelete.isEmpty()) {
             new DeleteCommand(toDelete).executeCommand();
         }
         origIds = origIds.entrySet().parallelStream().filter(entry -> !toDelete.contains(entry.getKey()))
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         serverIds.forEach((prim, str) -> prim.remove(SERVER_ID_KEY));
         origIds.forEach((prim, str) -> prim.remove(MergeDuplicateWays.ORIG_ID));
     }
@@ -523,6 +523,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     /**
+     * Add source tags to primitives
+     *
      * @param dataSet The dataset to add the mapwithai source tag to
      * @param source  The source to associate with the data
      * @return The dataset for easy chaining

@@ -19,6 +19,8 @@ import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 
 /**
+ * Various methods to simplify detection of tasking manager tasks
+ *
  * @author Taylor Smock
  *
  */
@@ -35,6 +37,8 @@ final class DetectTaskingManagerUtils {
     }
 
     /**
+     * Check for a tasking manager layer
+     *
      * @return True if there is a tasking manager layer
      */
     public static boolean hasTaskingManagerLayer() {
@@ -42,6 +46,8 @@ final class DetectTaskingManagerUtils {
     }
 
     /**
+     * Get a tasking manager layer
+     *
      * @return A {@link Layer} that matches a pattern defined in
      *         {@link DetectTaskingManagerUtils#PATTERNS} or {@code null}.
      */
@@ -52,6 +58,8 @@ final class DetectTaskingManagerUtils {
     }
 
     /**
+     * Get the bbox from the tasking manager layer
+     *
      * @return A {@link BBox} made from a tasking manager layer, or one that is not
      *         valid.
      */
@@ -67,6 +75,8 @@ final class DetectTaskingManagerUtils {
     }
 
     /**
+     * Create a GpxData that can be used to define a crop area
+     *
      * @param bbox A bbox to crop data to
      * @return A gpx layer that can be used to crop data from MapWithAI
      */

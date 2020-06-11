@@ -19,11 +19,17 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
 import org.openstreetmap.josm.tools.Shortcut;
 
 /**
+ * An action that attempts to merge duplicate ways
+ *
  * @author Taylor Smock
  */
 public class MergeDuplicateWaysAction extends JosmAction {
     private static final long serialVersionUID = 8971004636405132635L;
     private static final String DESCRIPTION = "Attempt to merge potential duplicate ways";
+    /**
+     * If there are 2 ways, we directly compare them to see if they are duplicates
+     */
+    private static final int COMPARE_WAYS_NUMBER = 2;
 
     public MergeDuplicateWaysAction() {
         super(tr("{0}: ".concat(DESCRIPTION), MapWithAIPlugin.NAME), "mapwithai", tr(DESCRIPTION),
@@ -41,7 +47,7 @@ public class MergeDuplicateWaysAction extends JosmAction {
             Command command = null;
             int i = 0;
             do {
-                if (ways.size() == 2) {
+                if (ways.size() == COMPARE_WAYS_NUMBER) {
                     command = new MergeDuplicateWays(ways.get(0), ways.get(1));
                 } else if (ways.size() == 1) {
                     command = new MergeDuplicateWays(ways.get(0));

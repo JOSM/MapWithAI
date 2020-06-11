@@ -42,6 +42,8 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 /**
+ * Various utility methods
+ *
  * @author Taylor Smock
  *
  */
@@ -82,6 +84,8 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Check for the existance of a MapWithAI paint style
+     *
      * @return true if a MapWithAI paint style exists
      */
     public static boolean checkIfMapWithAIPaintStyleExists() {
@@ -99,6 +103,8 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Get any MapWithAI paint style
+     *
      * @return get the MapWithAI Paint style
      */
     public static StyleSource getMapWithAIPaintStyle() {
@@ -265,6 +271,8 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Get a ForkJoinPool that is safe for use in Webstart
+     *
      * @return The {@link ForkJoinPool} for MapWithAI use.
      */
     public static ForkJoinPool getForkJoinPool() {
@@ -437,6 +445,12 @@ public final class MapWithAIDataUtils {
         return (lonDupeCount + latDupeCount) > 1;
     }
 
+    /**
+     * Get the width of a bbox
+     *
+     * @param bbox The bbox to get the width of
+     * @return See {@link LatLon#greatCircleDistance}
+     */
     public static double getWidth(BBox bbox) {
         // Lat is y, Lon is x
         final LatLon bottomRight = bbox.getBottomRight();
@@ -451,6 +465,8 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Reduce a bbox to the specified dimensions, returning a list of bboxes.
+     *
      * @param bbox              The bbox to reduce to a set maximum dimension
      * @param maximumDimensions The maximum side dimensions of the bbox
      * @return A list of BBoxes that have a dimension no more than
@@ -482,15 +498,19 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Reduce a list of bboxes to {@link MapWithAIDataUtils#MAXIMUM_SIDE_DIMENSIONS}
+     *
      * @param bboxes The bboxes to reduce to a set maximum dimension
      * @return A list of BBoxes that have a dimension no more than
-     *         {@link MAXIMUM_SIDE_DIMENSIONS}
+     *         {@link MapWithAIDataUtils#MAXIMUM_SIDE_DIMENSIONS}
      */
     public static List<BBox> reduceBBoxSize(List<BBox> bboxes) {
         return reduceBBoxSize(bboxes, MAXIMUM_SIDE_DIMENSIONS);
     }
 
     /**
+     * Reduce a list of bboxes to a specified size
+     *
      * @param bboxes            The bboxes to reduce to a set maximum dimension
      * @param maximumDimensions The maximum width/height dimensions
      * @return A list of BBoxes that have a dimension no more than the
@@ -527,6 +547,9 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Get the number of whole objects added from the MapWithAI layer. A whole
+     * object is an object with tags or not a member of another object.
+     *
      * @return The number of objects added from the MapWithAI data layer
      */
     public static Long getAddedObjects() {
@@ -536,6 +559,8 @@ public final class MapWithAIDataUtils {
     }
 
     /**
+     * Get source tags for objects added from the MapWithAI data layer
+     *
      * @return The source tags for Objects added from the MapWithAI data layer
      */
     public static List<String> getAddedObjectsSource() {

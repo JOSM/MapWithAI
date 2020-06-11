@@ -15,6 +15,13 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.GBC;
 
+/**
+ * Show the number of MapWithAI objects that have been added since the last time
+ * the command stack was cleared. The stack is usually cleared on upload.
+ *
+ * @author Taylor Smock
+ *
+ */
 public class MapWithAIObject implements CommandQueueListener, Destroyable {
     private final JosmTextField mapWithAIObjects;
     private final List<MapStatus> statusLines;
@@ -29,6 +36,8 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
     }
 
     /**
+     * Adds a new status line to the map status
+     *
      * @param mapStatus The status bar to add a count to
      */
     public void addMapStatus(MapStatus mapStatus) {
@@ -37,6 +46,8 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
     }
 
     /**
+     * Removes a status line from the map status
+     *
      * @param mapStatus The status bar to remove a count from
      */
     public void removeMapStatus(MapStatus mapStatus) {

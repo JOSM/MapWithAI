@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -122,7 +121,7 @@ public class DataAvailability {
      */
     private static void parseCountriesObject(Map<String, Map<String, Boolean>> countriesMap, JsonObject countryObject,
             JsonValue information) {
-        for (Entry<String, JsonValue> entry : countryObject.entrySet()) {
+        for (Map.Entry<String, JsonValue> entry : countryObject.entrySet()) {
             Map<String, Boolean> providesMap = countriesMap.getOrDefault(entry.getKey(), new TreeMap<>());
             countriesMap.putIfAbsent(entry.getKey(), providesMap);
             if (JsonValue.ValueType.ARRAY == entry.getValue().getValueType()) {
@@ -193,10 +192,10 @@ public class DataAvailability {
      */
     public boolean hasData(LatLon latLon) {
         boolean returnBoolean = false;
-        for (final Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
+        for (final Map.Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
             Logging.debug(entry.getKey());
             if (Territories.isIso3166Code(entry.getKey(), latLon)) {
-                returnBoolean = entry.getValue().entrySet().parallelStream().anyMatch(Entry::getValue);
+                returnBoolean = entry.getValue().entrySet().parallelStream().anyMatch(Map.Entry::getValue);
                 break;
             }
         }
@@ -211,7 +210,7 @@ public class DataAvailability {
      */
     public static Map<String, Boolean> getDataTypes(LatLon latLon) {
         return COUNTRIES.entrySet().parallelStream().filter(entry -> Territories.isIso3166Code(entry.getKey(), latLon))
-                .map(Entry::getValue).findFirst().orElse(Collections.emptyMap());
+                .map(Map.Entry::getValue).findFirst().orElse(Collections.emptyMap());
     }
 
     /**
