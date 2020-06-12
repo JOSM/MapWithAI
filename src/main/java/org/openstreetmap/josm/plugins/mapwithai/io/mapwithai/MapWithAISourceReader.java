@@ -23,6 +23,7 @@ import javax.json.JsonStructure;
 import javax.json.JsonValue;
 
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.osm.BBox;
@@ -117,23 +118,7 @@ public class MapWithAISourceReader implements Closeable {
             String id = values.getString("id", name.replace(" ", "_"));
             String alreadyConflatedKey = values.getString("conflated_key", null);
             JsonValue countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
-            List<ImageryBounds> bounds = new ArrayList<>();
-            if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
-                Set<String> codes = Territories.getKnownIso3166Codes();
-                for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
-                    if (codes.contains(country.getKey())) {
-                        GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country.getKey());
-                        if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
-                            DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
-                            Rectangle2D areaBounds = prop.getArea().getBounds2D();
-                            ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
-                                    areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY()), ","), ",");
-                            areaToShapes(prop.getArea()).forEach(tmp::addShape);
-                            bounds.add(tmp);
-                        }
-                    }
-                }
-            }
+            List<ImageryBounds> bounds = getBounds(countries);
             MapWithAIInfo info = new MapWithAIInfo(name, url, type, eula, id);
             info.setDefaultEntry(values.getBoolean("default", false));
             info.setParameters(values.getJsonArray("parameters"));
@@ -157,6 +142,28 @@ public class MapWithAISourceReader implements Closeable {
             return info;
         }
         return new MapWithAIInfo(name);
+    }
+
+    private static List<ImageryInfo.ImageryBounds> getBounds(JsonValue countries) {
+        if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
+            Set<String> codes = Territories.getKnownIso3166Codes();
+            List<ImageryBounds> bounds = new ArrayList<>();
+            for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
+                if (codes.contains(country.getKey())) {
+                    GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country.getKey());
+                    if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
+                        DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
+                        Rectangle2D areaBounds = prop.getArea().getBounds2D();
+                        ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
+                                areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY()), ","), ",");
+                        areaToShapes(prop.getArea()).forEach(tmp::addShape);
+                        bounds.add(tmp);
+                    }
+                }
+            }
+            return bounds;
+        }
+        return Collections.emptyList();
     }
 
     private static Collection<Shape> areaToShapes(java.awt.Shape shape) {
