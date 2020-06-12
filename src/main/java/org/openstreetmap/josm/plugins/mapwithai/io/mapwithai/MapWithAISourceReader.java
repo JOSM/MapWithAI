@@ -115,6 +115,7 @@ public class MapWithAISourceReader implements Closeable {
             boolean conflation = values.getBoolean("conflate", false);
             String conflationUrl = values.getString("conflationUrl", null);
             String id = values.getString("id", name.replace(" ", "_"));
+            String alreadyConflatedKey = values.getString("conflated_key", null);
             JsonValue countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
             List<ImageryBounds> bounds = new ArrayList<>();
             if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
@@ -139,6 +140,7 @@ public class MapWithAISourceReader implements Closeable {
             info.setConflationParameters(values.getJsonArray("conflationParameters"));
             info.setConflation(conflation);
             info.setConflationUrl(conflationUrl);
+            info.setAlreadyConflatedKey(alreadyConflatedKey);
             if (values.containsKey("terms_of_use_url")) {
                 info.setTermsOfUseURL(values.getString("terms_of_use_url"));
             }

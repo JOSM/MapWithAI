@@ -388,7 +388,7 @@ public final class MapWithAIDataUtils {
                 lock.lock();
                 try {
                     mapWithAISet.mergeFrom(newData);
-                    GetDataRunnable.cleanup(mapWithAISet, null);
+                    GetDataRunnable.cleanup(mapWithAISet, null, null);
                 } finally {
                     lock.unlock();
                 }

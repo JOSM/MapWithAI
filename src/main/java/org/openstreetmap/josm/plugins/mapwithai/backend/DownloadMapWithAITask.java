@@ -116,7 +116,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                 synchronized (DownloadMapWithAITask.DownloadTask.class) {
                     MapWithAIDataUtils.getLayer(true).getDataSet().mergeFrom(downloadedData);
                 }
-                GetDataRunnable.cleanup(MapWithAIDataUtils.getLayer(true).getDataSet(), null);
+                GetDataRunnable.cleanup(MapWithAIDataUtils.getLayer(true).getDataSet(), null, null);
             }
         }
 

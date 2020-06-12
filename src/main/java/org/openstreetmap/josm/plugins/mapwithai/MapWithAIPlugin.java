@@ -37,6 +37,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.ConnectingNodeInformationTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIslandsTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressOrder;
@@ -110,6 +111,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
         new MapWithAIRemoteControl(); // instantiate to get action into Remote Control Preferences
         destroyables.add(new MapWithAIUploadHook(info));
+        destroyables.add(new PreConflatedDataUtils());
         mapFrameInitialized(null, MainApplication.getMap());
         OSMDownloadSource.addDownloadType(new MapWithAIDownloadSourceType());
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));

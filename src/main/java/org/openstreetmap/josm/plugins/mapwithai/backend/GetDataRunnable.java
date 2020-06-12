@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
@@ -40,7 +39,9 @@ import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
@@ -60,6 +61,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static final int MAX_LONGITUDE = 180;
 
     private Integer maximumDimensions;
+    private MapWithAIInfo info;
 
     private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
     private static final String SERVER_ID_KEY = "server_id";
@@ -126,7 +128,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         // This can technically be included in the above block, but it is here so that
         // cancellation is a little faster
         if (!monitor.isCanceled() && !bboxes.isEmpty()) {
-            cleanup(dataSet, new Bounds(bboxes.get(0).getBottomRight(), bboxes.get(0).getTopLeft()));
+            cleanup(dataSet, new Bounds(bboxes.get(0).getBottomRight(), bboxes.get(0).getTopLeft()), info);
         }
         monitor.finishTask();
         return dataSet;
@@ -137,12 +139,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      *
      * @param dataSet The dataset to cleanup
      * @param bounds  The newly added bounds to the dataset. May be {@code null}.
+     * @param info    The information used to download the data
      */
-    public static void cleanup(DataSet dataSet, Bounds bounds) {
-        GuiHelper.runInEDTAndWait(() -> realCleanup(dataSet, bounds));
+    public static void cleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
+        GuiHelper.runInEDTAndWait(() -> realCleanup(dataSet, bounds, info));
     }
 
-    private static synchronized void realCleanup(DataSet dataSet, Bounds bounds) {
+    private static synchronized void realCleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
         Bounds boundsToUse;
         if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
             boundsToUse = dataSet.getDataSourceBounds().get(0);
@@ -158,6 +161,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         mergeNodes(dataSet);
         cleanupDataSet(dataSet);
         mergeWays(dataSet);
+        PreConflatedDataUtils.removeConflatedData(dataSet, info);
         removeAlreadyAddedData(dataSet);
         List<Way> ways = dataSet.searchWays(boundsToUse.toBBox()).stream().filter(w -> w.hasKey("highway"))
                 .collect(Collectors.toList());
@@ -542,6 +546,15 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static boolean checkIfMapWithAISourceShouldBeAdded(OsmPrimitive prim) {
         return !prim.isDeleted() && !prim.hasTag(MAPWITHAI_SOURCE_TAG_KEY);
+    }
+
+    /**
+     * Set the info that is being used to download data
+     *
+     * @param info The info being used
+     */
+    public void setMapWithAIInfo(MapWithAIInfo info) {
+        this.info = info;
     }
 
 }

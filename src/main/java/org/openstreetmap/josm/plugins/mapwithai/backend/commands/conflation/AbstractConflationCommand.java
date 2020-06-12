@@ -26,10 +26,12 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
+import org.openstreetmap.josm.plugins.mapwithai.commands.CreateConnectionsCommand;
 import org.openstreetmap.josm.tools.Pair;
 
 /**
- * This is an abstract class for conflation commands
+ * This is an abstract class for conflation commands. This class is primarily
+ * used in {@link CreateConnectionsCommand#createConnections}.
  *
  * @author Taylor Smock
  *

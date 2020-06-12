@@ -74,6 +74,7 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
         DataSet ds = new DataSet();
         GetDataRunnable runnable = new GetDataRunnable(downloadArea.toBBox(), ds, NullProgressMonitor.INSTANCE);
+        runnable.setMapWithAIInfo(info);
         MainApplication.worker.execute(() -> {
             try {
                 // It seems that the server has issues if I make a request soon
@@ -109,7 +110,7 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         if (url != null && info.getUrl() != null && !info.getUrl().trim().isEmpty()) {
             GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(info));
         }
-        GetDataRunnable.cleanup(ds, downloadArea);
+        GetDataRunnable.cleanup(ds, downloadArea, info);
         return ds;
     }
 

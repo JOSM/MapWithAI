@@ -209,7 +209,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
      */
     public void onPostDownloadFromServer(Bounds bounds) {
         super.onPostDownloadFromServer();
-        GetDataRunnable.cleanup(getDataSet(), bounds);
+        GetDataRunnable.cleanup(getDataSet(), bounds, null);
     }
 
     @Override

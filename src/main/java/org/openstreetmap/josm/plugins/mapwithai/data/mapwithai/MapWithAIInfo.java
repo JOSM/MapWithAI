@@ -38,6 +38,7 @@ public class MapWithAIInfo extends
     private boolean conflate;
     private String conflationUrl;
     private JsonArray conflationParameters;
+    private String alreadyConflatedKey;
 
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
@@ -62,6 +63,8 @@ public class MapWithAIInfo extends
         String conflationParameters;
         @StructEntry
         String categories;
+        @StructEntry
+        String alreadyConflatedKey;
 
         /**
          * Constructs a new empty {@link MapWithAIPreferenceEntry}
@@ -93,6 +96,7 @@ public class MapWithAIInfo extends
                 categories = i.categories.stream().map(MapWithAICategory::getCategoryString)
                         .collect(Collectors.joining(";"));
             }
+            alreadyConflatedKey = i.alreadyConflatedKey;
         }
 
         @Override
@@ -218,6 +222,7 @@ public class MapWithAIInfo extends
                 }
             }
         }
+        alreadyConflatedKey = e.alreadyConflatedKey;
     }
 
     public MapWithAIInfo(MapWithAIInfo i) {
@@ -250,6 +255,7 @@ public class MapWithAIInfo extends
         this.conflate = i.conflate;
         this.conflationUrl = i.conflationUrl;
         this.conflationParameters = i.conflationParameters;
+        this.alreadyConflatedKey = i.alreadyConflatedKey;
     }
 
     public boolean equalsPref(MapWithAIInfo other) {
@@ -261,7 +267,8 @@ public class MapWithAIInfo extends
         return super.equalsPref(other) && Objects.equals(this.replacementTags, other.replacementTags)
                 && Objects.equals(this.conflationUrl, other.conflationUrl)
                 && Objects.equals(this.conflationParameters, other.conflationParameters)
-                && Objects.equals(this.categories, other.categories);
+                && Objects.equals(this.categories, other.categories)
+                && Objects.equals(this.alreadyConflatedKey, other.alreadyConflatedKey);
         // CHECKSTYLE.ON: BooleanExpressionComplexity
     }
 
@@ -424,5 +431,24 @@ public class MapWithAIInfo extends
      */
     public List<MapWithAICategory> getAdditionalCategories() {
         return this.categories != null ? Collections.unmodifiableList(this.categories) : Collections.emptyList();
+    }
+
+    /**
+     * Set the key that indicates an object is already conflated, and if so, to what
+     *
+     * @param key The key returned by the server indicating the conflation object
+     */
+    public void setAlreadyConflatedKey(String key) {
+        alreadyConflatedKey = key;
+    }
+
+    /**
+     * Get the key that indicates an object is already conflated, and if so, to what
+     * Please note that it may be `true`/`false` instead of an object id.
+     *
+     * return The key returned by the server indicating the conflation object
+     */
+    public String getAlreadyConflatedKey() {
+        return alreadyConflatedKey;
     }
 }
