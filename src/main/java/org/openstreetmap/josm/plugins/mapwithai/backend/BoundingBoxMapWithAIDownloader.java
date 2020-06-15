@@ -18,11 +18,11 @@ import org.openstreetmap.josm.io.BoundingBoxDownloader;
 import org.openstreetmap.josm.io.GeoJSONReader;
 import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmApiException;
+import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
-import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.OsmReaderCustom;
 import org.openstreetmap.josm.tools.HttpClient;
 
 class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
@@ -97,7 +97,8 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         DataSet ds;
         String contentType = this.activeConnection.getResponse().getHeaderField("Content-Type");
         if (contentType.contains("text/xml")) {
-            ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
+            ds = OsmReader.parseDataSet(source, progressMonitor, OsmReader.Options.CONVERT_UNKNOWN_TO_TAGS,
+                    OsmReader.Options.SAVE_ORIGINAL_ID);
         } else if (MapWithAIType.ESRI_FEATURE_SERVER == this.info.getSourceType()) {
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
@@ -105,7 +106,8 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             }
         } else {
             // Fall back to XML parsing
-            ds = OsmReaderCustom.parseDataSet(source, progressMonitor, true);
+            ds = OsmReader.parseDataSet(source, progressMonitor, OsmReader.Options.CONVERT_UNKNOWN_TO_TAGS,
+                    OsmReader.Options.SAVE_ORIGINAL_ID);
         }
         if (url != null && info.getUrl() != null && !info.getUrl().trim().isEmpty()) {
             GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(info));
