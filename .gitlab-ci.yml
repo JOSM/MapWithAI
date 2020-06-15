@@ -264,6 +264,7 @@ publish update site:
     mkdir -pv "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     cp -v "build/snapshot-update-site" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/update-site"
     cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
+    cp -v "build/dist/mapwithai.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/mapwithai-dev.jar"
   - *push_pages_branch
   dependencies:
   - build
