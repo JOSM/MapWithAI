@@ -28,6 +28,7 @@ import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.io.CachedFile;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.DefaultGeoProperty;
@@ -111,7 +112,9 @@ public class MapWithAISourceReader implements Closeable {
         if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()) {
             JsonObject values = entry.getValue().asJsonObject();
             String url = values.getString("url", "");
-            String type = values.getString("type", MapWithAIType.THIRD_PARTY.getTypeString());
+            String type = values.getString("type", MapWithAIType.values()[0].getDefault().getTypeString());
+            String category = values.getString("category",
+                    MapWithAICategory.values()[0].getDefault().getCategoryString());
             String eula = values.getString("eula", "");
             boolean conflation = values.getBoolean("conflate", false);
             String conflationUrl = values.getString("conflationUrl", null);
@@ -126,6 +129,7 @@ public class MapWithAISourceReader implements Closeable {
             info.setConflation(conflation);
             info.setConflationUrl(conflationUrl);
             info.setAlreadyConflatedKey(alreadyConflatedKey);
+            info.setCategory(MapWithAICategory.fromString(category));
             if (values.containsKey("terms_of_use_url")) {
                 info.setTermsOfUseURL(values.getString("terms_of_use_url"));
             }
