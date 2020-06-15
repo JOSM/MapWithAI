@@ -34,6 +34,7 @@ public class MapWithAITestRules extends JOSMTestRules {
     private WireMockServer wireMock;
     private boolean workerExceptions = true;
     private UncaughtExceptionHandler currentExceptionHandler;
+    private String currentReleaseUrl;
 
     public MapWithAITestRules() {
         super();
@@ -79,6 +80,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             setupMapWithAILayerInfo(wireMock);
             MapWithAIDataUtils.setPaintStyleUrl(MapWithAIDataUtils.getPaintStyleUrl()
                     .replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
+            currentReleaseUrl = DataAvailability.getReleaseUrl();
             DataAvailability.setReleaseUrl(wireMock.baseUrl() + "/JOSM_MapWithAI/json/sources.json");
             Config.getPref().put("osm-server.url", wireMock.baseUrl());
             try {
@@ -105,7 +107,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
             assertTrue(requests.isEmpty());
             resetMapWithAILayerInfo();
-            DataAvailability.setReleaseUrl(DataAvailability.getReleaseUrl());
+            DataAvailability.setReleaseUrl(currentReleaseUrl);
             Config.getPref().put("osm-server.url", null);
         }
         if (workerExceptions) {
