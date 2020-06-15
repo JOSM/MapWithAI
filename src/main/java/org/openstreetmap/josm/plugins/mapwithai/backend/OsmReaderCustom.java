@@ -23,7 +23,7 @@ import org.openstreetmap.josm.tools.Logging;
 public class OsmReaderCustom extends OsmReader {
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
-        super(convertUnknownToTags);
+        super(Options.CONVERT_UNKNOWN_TO_TAGS);
     }
 
     // check every so often to see if I can keep original negative ids
