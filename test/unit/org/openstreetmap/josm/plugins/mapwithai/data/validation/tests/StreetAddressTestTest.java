@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.AbstractPrimitive;
@@ -23,14 +23,14 @@ import org.openstreetmap.josm.tools.Pair;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class StreetAddressTestTest {
+class StreetAddressTestTest {
     private final static String ADDR_STREET = "addr:street";
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
+    JOSMTestRules test = new JOSMTestRules().projection();
 
     @Test
-    public void testVisitWay() throws ReflectiveOperationException {
+    void testVisitWay() throws ReflectiveOperationException {
         StreetAddressTest test = new StreetAddressTest();
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         DataSet ds = new DataSet();
@@ -79,7 +79,7 @@ public class StreetAddressTestTest {
     }
 
     @Test
-    public void testDistanceToWay() {
+    void testDistanceToWay() {
         Node node1 = new Node(new LatLon(0, 0));
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         Pair<Way, Double> distance = StreetAddressTest.distanceToWay(way1, node1);
@@ -93,7 +93,7 @@ public class StreetAddressTestTest {
     }
 
     @Test
-    public void testIsHighway() {
+    void testIsHighway() {
         Node node = new Node(new LatLon(0, 0));
         assertFalse(StreetAddressTest.isHighway(node));
         node.put(ADDR_STREET, "Test Road 1");
@@ -106,7 +106,7 @@ public class StreetAddressTestTest {
     }
 
     @Test
-    public void testHasStreetAddressTags() {
+    void testHasStreetAddressTags() {
         Node node = new Node(new LatLon(0, 0));
         assertFalse(StreetAddressTest.hasStreetAddressTags(node));
         node.put(ADDR_STREET, "Test Road 1");
@@ -114,7 +114,7 @@ public class StreetAddressTestTest {
     }
 
     @Test
-    public void testExpandBBox() {
+    void testExpandBBox() {
         BBox bbox = new BBox();
         bbox.add(0, 0);
         assertSame(bbox, StreetAddressTest.expandBBox(bbox, 0.01));

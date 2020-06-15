@@ -13,9 +13,9 @@ import java.util.concurrent.Future;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -40,20 +40,20 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 import mockit.MockUp;
 
-public class MapWithAIMoveActionTest {
+class MapWithAIMoveActionTest {
     MapWithAIMoveAction moveAction;
     DataSet mapWithAIData;
     OsmDataLayer osmLayer;
     Way way1;
     Way way2;
 
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
+    JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
             .assertionsInEDT();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         moveAction = new MapWithAIMoveAction();
         final DataSet osmData = new DataSet();
         mapWithAIData = new DataSet();
@@ -76,7 +76,7 @@ public class MapWithAIMoveActionTest {
     }
 
     @Test
-    public void testMoveAction() {
+    void testMoveAction() {
         new MissingConnectionTagsMocker();
 
         mapWithAIData.addSelected(way1);
@@ -91,12 +91,12 @@ public class MapWithAIMoveActionTest {
     }
 
     @Test
-    public void testMoveEmptyAction() {
+    void testMoveEmptyAction() {
         assertDoesNotThrow(() -> moveAction.actionPerformed(null));
     }
 
     @Test
-    public void testConflationDupeKeyRemoval() {
+    void testConflationDupeKeyRemoval() {
         new MissingConnectionTagsMocker();
         mapWithAIData.unlock();
         way1.lastNode().put(DuplicateCommand.KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
@@ -121,7 +121,7 @@ public class MapWithAIMoveActionTest {
     }
 
     @Test
-    public void testConflationConnKeyRemoval() {
+    void testConflationConnKeyRemoval() {
         new MissingConnectionTagsMocker();
         mapWithAIData.unlock();
         way1.lastNode().put(ConnectedCommand.KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
@@ -144,16 +144,16 @@ public class MapWithAIMoveActionTest {
     }
 
     private static class NotificationMocker extends MockUp<Notification> {
-        public boolean shown;
+        boolean shown;
 
         @Mock
-        public void show() {
+        void show() {
             shown = true;
         }
     }
 
     @Test
-    public void testMaxAddNotification() {
+    void testMaxAddNotification() {
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
         new MissingConnectionTagsMocker();
@@ -180,7 +180,7 @@ public class MapWithAIMoveActionTest {
      * <a href="https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/79">Issue #79</a>
      */
     @Test
-    public void testBuildingAndAddressAdd() {
+    void testBuildingAndAddressAdd() {
         // Required to avoid an NPE in Territories.getRegionalTaginfoUrls
         Future<?> territoriesRegionalTaginfo = MainApplication.worker.submit(() -> Territories.initialize());
         DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
@@ -211,7 +211,7 @@ public class MapWithAIMoveActionTest {
     }
 
     @Test
-    public void testAddSimplifiedWay() {
+    void testAddSimplifiedWay() {
         Node ma1 = new Node(new LatLon(39.1210737, -108.6162804));
         Node ma2 = new Node(new LatLon(39.1210363, -108.6162804));
         Node ma3 = new Node(new LatLon(39.1210196, -108.6162804));

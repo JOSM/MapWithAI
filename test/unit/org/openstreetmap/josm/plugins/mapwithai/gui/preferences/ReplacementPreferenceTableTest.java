@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -25,10 +25,10 @@ import mockit.MockUp;
  * @author Taylor Smock
  *
  */
-public class ReplacementPreferenceTableTest {
-    @Rule
+class ReplacementPreferenceTableTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().preferences();
+    JOSMTestRules rule = new JOSMTestRules().preferences();
     ReplacementPreferenceTable test;
 
     static class ReplacementPreferenceTableMock extends MockUp<ReplacementPreferenceTable> {
@@ -40,7 +40,7 @@ public class ReplacementPreferenceTableTest {
          * @param set the return value for
          *            {@link ReplacementPreferenceTableMock#askAddSetting}
          */
-        public ReplacementPreferenceTableMock(boolean set) {
+        ReplacementPreferenceTableMock(boolean set) {
             this.set = set;
         }
 
@@ -55,20 +55,20 @@ public class ReplacementPreferenceTableTest {
          * @param set the new return value for
          *            {@link ReplacementPreferenceTableMock#askAddSetting}
          */
-        public void setAskAddSetting(boolean set) {
+        void setAskAddSetting(boolean set) {
             this.set = set;
         }
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
         test = new ReplacementPreferenceTable(new ArrayList<PrefEntry>());
     }
 
     @Test
-    public void test() {
+    void test() {
         new ReplacementPreferenceTableMock(true);
         assertNotNull(test.addPreference(new JPanel()));
         new ReplacementPreferenceTableMock(false);

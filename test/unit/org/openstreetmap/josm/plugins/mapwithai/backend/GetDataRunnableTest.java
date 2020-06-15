@@ -1,7 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import static org.junit.Assume.assumeTrue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,14 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -35,21 +35,21 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class GetDataRunnableTest {
-    @Rule
+class GetDataRunnableTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection().fakeAPI().territories();
+    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection().fakeAPI().territories();
 
-    public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
+    static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
         return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.mapwith.ai");
     }
 
-    public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url, String wireMockReplace) {
+    static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url, String wireMockReplace) {
         return url.replace(wireMockReplace, wireMock.baseUrl());
     }
 
     @Test
-    public void testAddMissingElement() {
+    void testAddMissingElement() {
         Way way1 = TestUtils.newWay("", new Node(new LatLon(-5.7117803, 34.5011898)),
                 new Node(new LatLon(-5.7111915, 34.5013994)), new Node(new LatLon(-5.7104175, 34.5016354)));
         Way way2 = new Way();
@@ -78,7 +78,7 @@ public class GetDataRunnableTest {
     }
 
     @Test
-    public void testCleanupArtifacts() {
+    void testCleanupArtifacts() {
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         Way way2 = TestUtils.newWay("", way1.firstNode(), new Node(new LatLon(-1, -1)));
         DataSet ds = new DataSet();
@@ -100,7 +100,7 @@ public class GetDataRunnableTest {
     }
 
     @Test
-    public void testRegressionTicket46() {
+    void testRegressionTicket46() {
         DataSet ds = new DataSet();
         GetDataRunnable getData = new GetDataRunnable(
                 Arrays.asList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
@@ -112,7 +112,7 @@ public class GetDataRunnableTest {
     }
 
     @Test
-    public void testAlreadyAddedElements() {
+    void testAlreadyAddedElements() {
         Way addedWay = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         Way duplicateWay = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         Way nonDuplicateWay = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 2)));
@@ -141,7 +141,7 @@ public class GetDataRunnableTest {
      * href=https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/90>#90</a>
      */
     @Test
-    public void testEmptyTagReplacement() {
+    void testEmptyTagReplacement() {
         MapWithAIPreferenceHelper.setReplacementTags(Collections.singletonMap("", ""));
         DataSet ds = new DataSet();
         assertDoesNotThrow(() -> GetDataRunnable.replaceTags(ds));

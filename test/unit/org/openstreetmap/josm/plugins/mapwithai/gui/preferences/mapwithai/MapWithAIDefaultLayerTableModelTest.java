@@ -18,12 +18,12 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
-public class MapWithAIDefaultLayerTableModelTest {
+class MapWithAIDefaultLayerTableModelTest {
     @RegisterExtension
     JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().projection();
 
     @Test
-    public void testGetRow() {
+    void testGetRow() {
         List<MapWithAIInfo> infos = MapWithAILayerInfo.getInstance().getAllDefaultLayers();
         assertFalse(infos.isEmpty());
         for (int i = 0; i < infos.size(); i++) {
@@ -32,7 +32,7 @@ public class MapWithAIDefaultLayerTableModelTest {
     }
 
     @Test
-    public void testRetrieval() {
+    void testRetrieval() {
         List<MapWithAIInfo> infos = new ArrayList<>(MapWithAILayerInfo.getInstance().getAllDefaultLayers());
         assertFalse(infos.isEmpty());
         Collections.shuffle(infos);

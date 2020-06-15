@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -39,17 +39,17 @@ public class MapWithAIDataUtilsTest {
     /** This is the default MapWithAI URL */
     private static final String DEFAULT_MAPWITHAI_API = "https://www.mapwith.ai/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}";
 
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection()
-            .fakeAPI().territories();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection().fakeAPI()
+            .territories();
 
     /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to
      * OSM.
      */
     @Test
-    public void testGetData() {
+    void testGetData() {
         final Bounds testBBox = getTestBounds();
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(testBBox));
         assertEquals(1, ds.getWays().size(), "There should only be one way in the testBBox");
@@ -59,7 +59,7 @@ public class MapWithAIDataUtilsTest {
      * Test that getting multiple bboxes does not create an exception
      */
     @Test
-    public void testGetDataMultiple() {
+    void testGetDataMultiple() {
         final Bounds testBounds1 = getTestBounds();
         final Bounds testBounds2 = new Bounds(39.095376, -108.4495519, 39.0987811, -108.4422314);
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBounds1, testBounds2)));
@@ -72,7 +72,7 @@ public class MapWithAIDataUtilsTest {
      * OSM.
      */
     @Test
-    public void testGetDataCropped() {
+    void testGetDataCropped() {
         final Bounds testBounds = getTestBounds();
         final GpxData gpxData = new GpxData();
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0735205, -108.5711561)));
@@ -88,7 +88,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     @Test
-    public void testAddSourceTags() {
+    void testAddSourceTags() {
         final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0.1, 0.1)));
         final DataSet ds = new DataSet(way1.firstNode(), way1.lastNode(), way1);
@@ -110,7 +110,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     @Test
-    public void testAddPrimitivesToCollection() {
+    void testAddPrimitivesToCollection() {
         final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0, 0.1)));
         final Collection<OsmPrimitive> collection = new TreeSet<>();
@@ -119,7 +119,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     @Test
-    public void testRemovePrimitivesFromDataSet() {
+    void testRemovePrimitivesFromDataSet() {
         final Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0, 0.1)));
         final DataSet ds1 = new DataSet();
@@ -134,7 +134,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     @Test
-    public void testMapWithAIURLPreferences() {
+    void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
         assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .noneMatch(map -> fakeUrl.equals(map.getUrl())), "fakeUrl shouldn't be in the current MapWithAI urls");
@@ -152,7 +152,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     @Test
-    public void testSplitBounds() {
+    void testSplitBounds() {
         final Bounds bounds = new Bounds(0, 0, 0.0001, 0.0001);
         for (Double i : Arrays.asList(0.0001, 0.001, 0.01, 0.1)) {
             bounds.extend(i, i);
@@ -166,7 +166,7 @@ public class MapWithAIDataUtilsTest {
     }
 
     @Test
-    public void testDoubleAddLayer() {
+    void testDoubleAddLayer() {
         Logging.clearLastErrorAndWarnings();
         assertNull(MapWithAIDataUtils.getLayer(false));
         assertNotNull(MapWithAIDataUtils.getLayer(true));

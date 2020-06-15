@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -34,17 +34,18 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @author Taylor Smock
  */
-public class CreateConnectionsCommandTest {
-    @Rule
+@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+class CreateConnectionsCommandTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection();
 
     /**
      * Test method for
      * {@link CreateConnectionsCommand#createConnections(DataSet, Collection)}.
      */
     @Test
-    public void testCreateConnections() {
+    void testCreateConnections() {
         final Node node1 = new Node(new LatLon(0, 0));
         final Node node2 = new Node(new LatLon(1, 0));
         final Node node3 = new Node(new LatLon(0.5, 0));
@@ -106,7 +107,7 @@ public class CreateConnectionsCommandTest {
      * {@link CreateConnectionsCommand#addNodesToWay(Node, Node, Node, Node)}.
      */
     @Test
-    public void testAddNodesToWay() {
+    void testAddNodesToWay() {
         final Node wayNode1 = new Node(new LatLon(0, 0));
         final Node wayNode2 = new Node(new LatLon(1, 0));
         final Node toAddNode = new Node(new LatLon(0.5, 0));
@@ -141,7 +142,7 @@ public class CreateConnectionsCommandTest {
      * Test method for {@link CreateConnectionsCommand#replaceNode(Node, Node)}.
      */
     @Test
-    public void testReplaceNode() {
+    void testReplaceNode() {
         final Node node1 = new Node(new LatLon(0, 0));
         final Node node2 = new Node(new LatLon(0, 0));
         new DataSet(node1, node2);
@@ -160,7 +161,7 @@ public class CreateConnectionsCommandTest {
      * Test if we get missing primitives
      */
     @Test
-    public void testGetMissingPrimitives() {
+    void testGetMissingPrimitives() {
         final Node node1 = new Node(new LatLon(39.0674124, -108.5592645));
         final DataSet dataSet = new DataSet(node1);
         node1.put(DuplicateCommand.KEY, "n6146500887");
@@ -199,7 +200,7 @@ public class CreateConnectionsCommandTest {
      * Test method for {@link CreateConnectionsCommand#getDescriptionText()}.
      */
     @Test
-    public void testGetDescriptionText() {
+    void testGetDescriptionText() {
         final String text = new CreateConnectionsCommand(new DataSet(), Collections.emptyList()).getDescriptionText();
         assertNotNull(text, "There should be a description for the command");
         assertFalse(text.isEmpty(), "The description should not be an empty string");

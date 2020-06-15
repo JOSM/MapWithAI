@@ -1,15 +1,17 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands.conflation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -25,35 +27,36 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class MergeAddressBuildingsTest {
-    @Rule
+@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+class MergeAddressBuildingsTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().projection().main();
+    JOSMTestRules test = new JOSMTestRules().preferences().projection().main();
 
     private MergeAddressBuildings command;
     private DataSet ds;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         ds = new DataSet();
         command = new MergeAddressBuildings(ds);
     }
 
     @Test
-    public void testGetInterestedTypes() {
+    void testGetInterestedTypes() {
         Collection<Class<? extends OsmPrimitive>> primitiveTypes = command.getInterestedTypes();
-        Assert.assertEquals(2, primitiveTypes.size());
-        Assert.assertTrue(primitiveTypes.contains(Way.class));
-        Assert.assertTrue(primitiveTypes.contains(Relation.class));
+        assertEquals(2, primitiveTypes.size());
+        assertTrue(primitiveTypes.contains(Way.class));
+        assertTrue(primitiveTypes.contains(Relation.class));
     }
 
     @Test
-    public void testGetKey() {
-        Assert.assertEquals("building", command.getKey());
+    void testGetKey() {
+        assertEquals("building", command.getKey());
     }
 
     @Test
-    public void testGetRealCommand() {
+    void testGetRealCommand() {
         // Not yet closed building
         Way building = TestUtils.newWay("building=yes", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 0)),
                 new Node(new LatLon(1, 1)), new Node(new LatLon(0, 1)));
@@ -67,22 +70,22 @@ public class MergeAddressBuildingsTest {
         command = new MergeAddressBuildings(ds);
         address.setCoor(new LatLon(0.5, 0.5));
         Command newCommand = command.getCommand(Arrays.asList(building));
-        Assert.assertNull(newCommand);
+        assertNull(newCommand);
 
         building.addNode(building.firstNode());
         newCommand = command.getCommand(Arrays.asList(building));
 
         newCommand.executeCommand();
 
-        Assert.assertEquals(5, ds.allNonDeletedPrimitives().size());
+        assertEquals(5, ds.allNonDeletedPrimitives().size());
         newCommand.undoCommand();
-        Assert.assertEquals(6, ds.allNonDeletedPrimitives().size());
+        assertEquals(6, ds.allNonDeletedPrimitives().size());
 
         address.setCoor(new LatLon(-1, -1));
 
         newCommand = command.getCommand(Arrays.asList(building));
-        Assert.assertNull(newCommand);
-        Assert.assertEquals(6, ds.allNonDeletedPrimitives().size());
+        assertNull(newCommand);
+        assertEquals(6, ds.allNonDeletedPrimitives().size());
 
         address.setCoor(new LatLon(.75, .75));
 
@@ -91,13 +94,13 @@ public class MergeAddressBuildingsTest {
         ds.addPrimitive(address2);
 
         newCommand = command.getCommand(Arrays.asList(building));
-        Assert.assertNull(newCommand);
-        Assert.assertEquals(7, ds.allNonDeletedPrimitives().size());
+        assertNull(newCommand);
+        assertEquals(7, ds.allNonDeletedPrimitives().size());
     }
 
     @Test
-    public void testGetDescriptionText() {
-        Assert.assertEquals(tr("Merge added buildings with existing address nodes"), command.getDescriptionText());
+    void testGetDescriptionText() {
+        assertEquals(tr("Merge added buildings with existing address nodes"), command.getDescriptionText());
     }
 
 }

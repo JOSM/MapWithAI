@@ -1,11 +1,11 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -22,13 +22,13 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
  * @author Taylor Smock
  *
  */
-public class PreConflatedDataUtilsTest {
-    @Rule
-    public JOSMTestRules rules = new JOSMTestRules().preferences().projection();
+class PreConflatedDataUtilsTest {
+    @RegisterExtension
+    JOSMTestRules rules = new JOSMTestRules().preferences().projection();
     private DataSet ds;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
         ds = layer.getDataSet();
         Node node1 = new Node(LatLon.ZERO);
@@ -40,7 +40,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testRemoveConflatedData() {
+    void testRemoveConflatedData() {
         MapWithAIInfo info = new MapWithAIInfo();
         info.setAlreadyConflatedKey("test_conflation");
         ds.addPrimitive(TestUtils.newNode("test_conflation=test"));
@@ -52,7 +52,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testRemoveConflatedDataNoKey() {
+    void testRemoveConflatedDataNoKey() {
         MapWithAIInfo info = new MapWithAIInfo();
         ds.addPrimitive(TestUtils.newNode("test_conflation=test"));
         assertEquals(1, ds.allPrimitives().stream().filter(p -> p.hasTag("test_conflation")).count());
@@ -63,7 +63,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testRemoveConflatedDataEmptyKey() {
+    void testRemoveConflatedDataEmptyKey() {
         MapWithAIInfo info = new MapWithAIInfo();
         info.setAlreadyConflatedKey(" ");
         ds.addPrimitive(TestUtils.newNode("test_conflation=test"));
@@ -75,7 +75,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testRemoveConflatedDataNull() {
+    void testRemoveConflatedDataNull() {
         ds.addPrimitive(TestUtils.newNode("test_conflation=test"));
         assertEquals(1, ds.allPrimitives().stream().filter(p -> p.hasTag("test_conflation")).count());
         PreConflatedDataUtils.removeConflatedData(ds, null);
@@ -85,7 +85,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testHideConflatedData() {
+    void testHideConflatedData() {
         PreConflatedDataUtils.hideConflatedData(ds);
         assertEquals(1, ds.allPrimitives().stream().filter(OsmPrimitive::isDisabled).count());
         Config.getPref().putBoolean(PreConflatedDataUtils.PREF_KEY, false);
@@ -94,7 +94,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testPreferenceChanged() {
+    void testPreferenceChanged() {
         PreConflatedDataUtils util = new PreConflatedDataUtils();
         PreConflatedDataUtils.hideConflatedData(ds);
         assertEquals(1, ds.allPrimitives().stream().filter(OsmPrimitive::isDisabled).count());
@@ -104,7 +104,7 @@ public class PreConflatedDataUtilsTest {
     }
 
     @Test
-    public void testDestroy() {
+    void testDestroy() {
         new PreConflatedDataUtils().destroy();
         Config.getPref().putBoolean(PreConflatedDataUtils.PREF_KEY, true);
         assertEquals(0, ds.allPrimitives().stream().filter(OsmPrimitive::isDisabled).count());

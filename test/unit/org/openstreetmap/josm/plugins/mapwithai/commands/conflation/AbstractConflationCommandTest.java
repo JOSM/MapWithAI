@@ -7,13 +7,13 @@ import org.junit.jupiter.api.Test;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.plugins.mapwithai.commands.AbstractConflationCommand;
 
-public class AbstractConflationCommandTest {
+class AbstractConflationCommandTest {
     /**
      * Non-regression test for
      * <a href="https://josm.openstreetmap.de/ticket/19495">#19495</a>
      */
     @Test
-    public void testBadPrimitive() {
+    void testBadPrimitive() {
         assertDoesNotThrow(() -> AbstractConflationCommand.getPrimitives(new DataSet(), "Linie 401699530"));
     }
 }

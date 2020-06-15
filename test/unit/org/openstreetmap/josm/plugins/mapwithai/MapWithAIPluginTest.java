@@ -15,10 +15,10 @@ import javax.swing.JMenu;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.plugins.PluginInformation;
@@ -34,13 +34,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * @author Taylor Smock
  */
-public class MapWithAIPluginTest {
-    @Rule
+class MapWithAIPluginTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection();
 
-    public PluginInformation info;
-    public MapWithAIPlugin plugin;
+    PluginInformation info;
+    MapWithAIPlugin plugin;
 
     private static final String VERSION = "no-such-version";
 
@@ -49,16 +49,16 @@ public class MapWithAIPluginTest {
      *
      * @throws java.lang.Exception if something goes wrong
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         new WindowMocker();
         final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
         info = new PluginInformation(in, "MapWithAI", null);
         info.localversion = VERSION;
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         if (plugin != null) {
             plugin.destroy();
             plugin = null;
@@ -69,7 +69,7 @@ public class MapWithAIPluginTest {
      * Test method for {@link MapWithAIPlugin#getPreferenceSetting()}.
      */
     @Test
-    public void testGetPreferenceSetting() {
+    void testGetPreferenceSetting() {
         plugin = new MapWithAIPlugin(info);
         assertTrue(plugin.getPreferenceSetting() instanceof MapWithAIPreferences,
                 "We didn't get the expected Preference class");
@@ -84,7 +84,7 @@ public class MapWithAIPluginTest {
      * @throws IllegalArgumentException see {@link java.lang.reflect.Field#get}
      */
     @Test
-    public void testMapWithAIPlugin() throws ReflectiveOperationException {
+    void testMapWithAIPlugin() throws ReflectiveOperationException {
         Field menuEntries = MapWithAIPlugin.class.getDeclaredField("MENU_ENTRIES");
         menuEntries.setAccessible(true);
         // + 1 comes from the preferences panel
@@ -130,7 +130,7 @@ public class MapWithAIPluginTest {
      * Test method for {@link MapWithAIPlugin#getVersionInfo()}.
      */
     @Test
-    public void testGetVersionInfo() {
+    void testGetVersionInfo() {
         plugin = new MapWithAIPlugin(info); // needs to be called for version info to be initialized.
         assertEquals(VERSION, MapWithAIPlugin.getVersionInfo(), "We didn't get the expected version");
     }

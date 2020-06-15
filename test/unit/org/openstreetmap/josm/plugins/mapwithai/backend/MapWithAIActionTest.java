@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.awaitility.Durations;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -28,30 +28,30 @@ import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class MapWithAIActionTest {
-    @Rule
+class MapWithAIActionTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories()
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories()
             .timeout(100000);
 
     private MapWithAIAction action;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         action = new MapWithAIAction();
         LatLon temp = new LatLon(40, -100);
         await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
     }
 
     @Test
-    public void testEnabled() {
+    void testEnabled() {
         assertFalse(action.isEnabled());
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "temporary", null));
         assertTrue(action.isEnabled());
     }
 
     @Test
-    public void testDownload() {
+    void testDownload() {
         assertTrue(MainApplication.getLayerManager().getLayers().isEmpty());
         action.actionPerformed(null);
         assertTrue(MainApplication.getLayerManager().getLayers().isEmpty());
@@ -71,7 +71,7 @@ public class MapWithAIActionTest {
     }
 
     @Test
-    public void testToggleLayer() {
+    void testToggleLayer() {
         MapWithAIAction.toggleLayer(null);
         Layer layer = new OsmDataLayer(new DataSet(), "Test layer", null);
         assertNull(MainApplication.getLayerManager().getActiveLayer());
@@ -92,7 +92,7 @@ public class MapWithAIActionTest {
     }
 
     @Test
-    public void testCreateNotification() {
+    void testCreateNotification() {
         Notification notification = MapWithAIAction.createMessageDialog();
         assertNull(notification);
 

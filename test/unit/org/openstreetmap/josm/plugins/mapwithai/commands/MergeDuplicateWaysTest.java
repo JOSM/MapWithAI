@@ -20,8 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -37,16 +37,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * @author Taylor Smock
  */
-public class MergeDuplicateWaysTest {
-    @Rule
+@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+class MergeDuplicateWaysTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
+    JOSMTestRules test = new JOSMTestRules().projection();
 
     /**
      * Test method for {@link MergeDuplicateWays#removeCommonTags(DataSet)}.
      */
     @Test
-    public void testRemoveCommonTags() {
+    void testRemoveCommonTags() {
         final DataSet ds1 = new DataSet(TestUtils.newNode("orig_id=2222 highway=secondary"));
         GetDataRunnable.removeCommonTags(ds1);
         assertEquals(1, ds1.allPrimitives().stream().mapToInt(prim -> prim.getKeys().size()).sum(),
@@ -60,7 +61,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#filterDataSet(DataSet)}.
      */
     @Test
-    public void testFilterDataSet() {
+    void testFilterDataSet() {
         final DataSet ds1 = new DataSet();
         final Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 1)), new Node(new LatLon(1, 2)));
         final Way way2 = TestUtils.newWay("", new Node(new LatLon(1, 1)), new Node(new LatLon(1, 2)),
@@ -90,7 +91,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#mergeWays(Way, Way, Set)}.
      */
     @Test
-    public void testMergeWays() {
+    void testMergeWays() {
         final int undoRedoTries = 10;
 
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
@@ -195,7 +196,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#checkDirection(Set)}.
      */
     @Test
-    public void testCheckDirection() {
+    void testCheckDirection() {
         final LinkedHashSet<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> set = new LinkedHashSet<>();
         final Pair<Pair<Integer, Node>, Pair<Integer, Node>> pair1 = new Pair<>(
                 new Pair<>(0, new Node(new LatLon(0, 0))), new Pair<>(0, new Node(new LatLon(0, 0))));
@@ -232,7 +233,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#sorted(List)}.
      */
     @Test
-    public void testSorted() {
+    void testSorted() {
         List<Integer> integerList = Arrays.asList(1, 2, 3, 4, 6, 7, 8, 9, 5);
         assertFalse(MergeDuplicateWays.sorted(integerList), "The list is not yet sorted");
         integerList = integerList.stream().sorted().collect(Collectors.toList());
@@ -248,7 +249,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#getDuplicateNodes(Way, Way)}.
      */
     @Test
-    public void testGetDuplicateNodes() {
+    void testGetDuplicateNodes() {
         final Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         final Way way2 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
 
@@ -283,7 +284,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#getDescriptionText}
      */
     @Test
-    public void testGetDescriptionText() {
+    void testGetDescriptionText() {
         final Command command = new MergeDuplicateWays(new DataSet());
         assertNotNull(command.getDescriptionText(), "The description should not be null");
         assertFalse(command.getDescriptionText().isEmpty(), "The description should not be empty");
@@ -293,7 +294,7 @@ public class MergeDuplicateWaysTest {
      * Test method for {@link MergeDuplicateWays#nodeInCompressed}
      */
     @Test
-    public void testNodeInCompressed() {
+    void testNodeInCompressed() {
         final Node testNode = new Node();
         assertThrows(NullPointerException.class, () -> MergeDuplicateWays.nodeInCompressed(testNode, null),
                 "Throw an NPE if the compressed collection is null");
@@ -322,7 +323,7 @@ public class MergeDuplicateWaysTest {
      * href=https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/81>#81</a>.
      */
     @Test
-    public void testDeletedNode() {
+    void testDeletedNode() {
         Way way1 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
         Way way2 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
         DataSet ds = new DataSet();
@@ -340,7 +341,7 @@ public class MergeDuplicateWaysTest {
      * href=https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/81>#81</a>.
      */
     @Test
-    public void testDeletedWay() {
+    void testDeletedWay() {
         Way way1 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
         Way way2 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
         DataSet ds = new DataSet();

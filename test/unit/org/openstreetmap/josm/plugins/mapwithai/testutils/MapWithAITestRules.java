@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,6 +21,7 @@ import org.awaitility.Durations;
 import org.junit.jupiter.api.extension.InvocationInterceptor.Invocation;
 import org.junit.runners.model.InitializationError;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmApi;
 import org.openstreetmap.josm.io.OsmApiInitializationException;
 import org.openstreetmap.josm.io.OsmTransferCanceledException;
@@ -47,7 +50,8 @@ public class MapWithAITestRules extends JOSMTestRules {
 
     private boolean sources;
     private boolean wiremock;
-    private WireMockServer wireMock;
+    private static WireMockServer wireMock;
+    private static final List<Object> wireMockUsers = Collections.synchronizedList(new ArrayList<>());
     private boolean workerExceptions = true;
     private UncaughtExceptionHandler currentExceptionHandler;
     private String currentReleaseUrl;
@@ -116,29 +120,34 @@ public class MapWithAITestRules extends JOSMTestRules {
         if (mapwithaiLayerInfoMocker != null) {
             mapwithaiLayerInfoMocker.run();
         }
-        if (wiremock) {
-            wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
-                    .extensions(new WireMockUrlTransformer()).dynamicPort());
-            wireMock.start();
-            MapPaintUtils.setPaintStyleUrl(replaceUrl(wireMock, MapPaintUtils.getPaintStyleUrl()));
-            // Avoid cases where tests could write the wiremock url to some fields.
-            if (currentReleaseUrl == null) {
-                currentReleaseUrl = DataAvailability.getReleaseUrl();
-            }
-            DataAvailability.setReleaseUrl(replaceUrl(wireMock, DataAvailability.getReleaseUrl()));
-            Config.getPref().put("osm-server.url", wireMock.baseUrl());
-            // Avoid cases where tests could write the wiremock url to some fields.
-            if (sourceSites == null) {
-                sourceSites = MapWithAILayerInfo.getImageryLayersSites();
-            }
-            MapWithAILayerInfo.setImageryLayersSites(sourceSites.stream().map(t -> replaceUrl(wireMock, t))
-                    .filter(Objects::nonNull).collect(Collectors.toList()));
-            MapWithAIConflationCategory.setConflationJsonLocation(
-                    replaceUrl(wireMock, MapWithAIConflationCategory.getConflationJsonLocation()));
-            try {
-                OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
-            } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
-                Logging.error(e);
+        synchronized (wireMockUsers) {
+            if (wiremock && wireMock == null) {
+                wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
+                        .extensions(new WireMockUrlTransformer()).dynamicPort());
+                wireMock.start();
+                MapPaintUtils.setPaintStyleUrl(replaceUrl(wireMock, MapPaintUtils.getPaintStyleUrl()));
+                // Avoid cases where tests could write the wiremock url to some fields.
+                if (currentReleaseUrl == null) {
+                    currentReleaseUrl = DataAvailability.getReleaseUrl();
+                }
+                DataAvailability.setReleaseUrl(replaceUrl(wireMock, DataAvailability.getReleaseUrl()));
+                Config.getPref().put("osm-server.url", wireMock.baseUrl());
+                // Avoid cases where tests could write the wiremock url to some fields.
+                if (sourceSites == null) {
+                    sourceSites = MapWithAILayerInfo.getImageryLayersSites();
+                }
+                MapWithAILayerInfo.setImageryLayersSites(sourceSites.stream().map(t -> replaceUrl(wireMock, t))
+                        .filter(Objects::nonNull).collect(Collectors.toList()));
+                MapWithAIConflationCategory.setConflationJsonLocation(
+                        replaceUrl(wireMock, MapWithAIConflationCategory.getConflationJsonLocation()));
+                try {
+                    OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
+                } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
+                    Logging.error(e);
+                }
+                wireMockUsers.add(this);
+            } else if (wiremock) {
+                wireMockUsers.add(this);
             }
         }
         if (sources) {
@@ -170,24 +179,29 @@ public class MapWithAITestRules extends JOSMTestRules {
     @Override
     protected void after() throws ReflectiveOperationException {
         super.after();
-        if (wiremock) {
-            MapPaintUtils.removeMapWithAIPaintStyles();
-            wireMock.stop();
-            List<LoggedRequest> requests = wireMock.findUnmatchedRequests().getRequests();
-            requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
-            assertTrue(requests.isEmpty());
-            Config.getPref().put("osm-server.url", null);
-            // Avoid cases where tests could write the wiremock url to some fields.
-            if (currentReleaseUrl != null) {
-                DataAvailability.setReleaseUrl(currentReleaseUrl);
-                currentReleaseUrl = null;
+        synchronized (wireMockUsers) {
+            wireMockUsers.remove(this);
+            if (wiremock && wireMockUsers.isEmpty()) {
+                MapPaintUtils.removeMapWithAIPaintStyles();
+                // Run in EDT to avoid stopping wiremock server before wiremock requests finish.
+                GuiHelper.runInEDTAndWait(wireMock::stop);
+                List<LoggedRequest> requests = wireMock.findUnmatchedRequests().getRequests();
+                wireMock = null;
+                requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
+                assertTrue(requests.isEmpty());
+                Config.getPref().put("osm-server.url", null);
+                // Avoid cases where tests could write the wiremock url to some fields.
+                if (currentReleaseUrl != null) {
+                    DataAvailability.setReleaseUrl(currentReleaseUrl);
+                    currentReleaseUrl = null;
+                }
+                if (sourceSites != null) {
+                    MapWithAILayerInfo.setImageryLayersSites(sourceSites);
+                    sourceSites = null;
+                }
+                MapWithAIConflationCategory.resetConflationJsonLocation();
+                resetMapWithAILayerInfo();
             }
-            if (sourceSites != null) {
-                MapWithAILayerInfo.setImageryLayersSites(sourceSites);
-                sourceSites = null;
-            }
-            MapWithAIConflationCategory.resetConflationJsonLocation();
-            resetMapWithAILayerInfo();
         }
         if (workerExceptions) {
             Thread.setDefaultUncaughtExceptionHandler(currentExceptionHandler);
@@ -229,7 +243,7 @@ public class MapWithAITestRules extends JOSMTestRules {
      * @return The WireMock
      */
     public WireMockServer getWireMock() {
-        return this.wireMock;
+        return wireMock;
     }
 
     /**
@@ -237,7 +251,7 @@ public class MapWithAITestRules extends JOSMTestRules {
      *
      * @author Taylor Smock
      */
-    private class WireMockUrlTransformer extends ResponseTransformer {
+    private static class WireMockUrlTransformer extends ResponseTransformer {
 
         @Override
         public String getName() {

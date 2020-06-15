@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -18,16 +18,16 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class DuplicateCommandTest {
+class DuplicateCommandTest {
     /**
      * Setup test.
      */
-    @Rule
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().projection();
+    @RegisterExtension
+    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
+    JOSMTestRules rule = new JOSMTestRules().projection();
 
     @Test
-    public void testVariousConditions() {
+    void testVariousConditions() {
         DataSet ds = new DataSet();
         DuplicateCommand dupe = new DuplicateCommand(ds);
 

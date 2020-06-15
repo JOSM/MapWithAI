@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.testutils;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.swing.JOptionPane;
 
@@ -48,8 +49,11 @@ public class MissingConnectionTagsMocker extends MockUp<MissingConnectionTags> {
     @Mock
     protected void fixErrors(Invocation inv, String prefKey, Collection<Command> commands,
             Collection<TestError> issues) {
-        issues.stream().filter(TestError::isFixable).map(t -> t.getFix().getDescriptionText())
-                .forEach(m -> map.putIfAbsent(m, defaultOption));
+        /*
+         * This has caused issues in the past, where mocks are not properly cleaned up.
+         */
+        issues.stream().filter(TestError::isFixable).map(TestError::getFix).filter(Objects::nonNull)
+                .map(Command::getDescriptionText).forEach(m -> map.putIfAbsent(m, defaultOption));
         inv.proceed(prefKey, commands, issues);
     }
 

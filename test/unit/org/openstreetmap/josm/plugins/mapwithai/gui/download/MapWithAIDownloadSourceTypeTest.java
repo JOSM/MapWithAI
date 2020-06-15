@@ -10,24 +10,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JCheckBox;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class MapWithAIDownloadSourceTypeTest {
-    @Rule
+class MapWithAIDownloadSourceTypeTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rules = new JOSMTestRules().projection();
+    JOSMTestRules rules = new JOSMTestRules().projection();
 
     /**
      * Check that we are appropriately checking that downloads are the correct size
      */
     @Test
-    public void testMapWithAIDownloadDataSizeCheck() {
+    void testMapWithAIDownloadDataSizeCheck() {
         MapWithAIDownloadSourceType type = new MapWithAIDownloadSourceType();
         assertFalse(type.isDownloadAreaTooLarge(MapWithAIDataUtilsTest.getTestBounds()),
                 "The download area shouldn't be too large");
@@ -43,7 +43,7 @@ public class MapWithAIDownloadSourceTypeTest {
      * Test that the listener works properly
      */
     @Test
-    public void testMapWithAIDownloadSourceTypeListener() {
+    void testMapWithAIDownloadSourceTypeListener() {
         MapWithAIDownloadSourceType type = new MapWithAIDownloadSourceType();
         JCheckBox checkbox = type.getCheckBox();
         assertNotNull(checkbox);

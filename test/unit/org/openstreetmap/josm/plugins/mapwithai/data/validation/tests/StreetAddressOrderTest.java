@@ -13,8 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -31,14 +31,14 @@ import org.openstreetmap.josm.tools.Geometry;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class StreetAddressOrderTest {
+class StreetAddressOrderTest {
     private static final String ADDR_STREET = "addr:street";
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
+    JOSMTestRules test = new JOSMTestRules().projection();
 
     @Test
-    public void testVisitWay() {
+    void testVisitWay() {
         Way way = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         DataSet ds = new DataSet();
         way.getNodes().forEach(ds::addPrimitive);
@@ -87,7 +87,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testCreateError() {
+    void testCreateError() {
         StreetAddressOrder test = new StreetAddressOrder();
         test.createError(new Node(new LatLon(0, 0)).save(), Collections.emptyList());
         assertTrue(test.getErrors().isEmpty());
@@ -105,7 +105,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testConvertAddrHouseNumberToDouble() {
+    void testConvertAddrHouseNumberToDouble() {
         assertEquals(24.5, StreetAddressOrder.convertAddrHouseNumberToDouble("24 1/2"));
         assertEquals(24.5, StreetAddressOrder.convertAddrHouseNumberToDouble("24.5"));
         assertEquals(24, StreetAddressOrder.convertAddrHouseNumberToDouble("24"));
@@ -115,7 +115,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testCheckOrdering() {
+    void testCheckOrdering() {
         List<IPrimitive> primitives = new ArrayList<>();
         primitives.add(new Node(new LatLon(0, 0)));
         primitives.add(new Node(new LatLon(1, 1)));
@@ -128,7 +128,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testGetAddressesInDirection() {
+    void testGetAddressesInDirection() {
         Way way1 = TestUtils.newWay("", new Node(new LatLon(-1, -1)), new Node(new LatLon(1, 1)));
 
         List<OsmPrimitive> addresses = new ArrayList<>();
@@ -150,7 +150,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testGetCentroid() {
+    void testGetCentroid() {
         Node node1 = new Node(new LatLon(0, 0));
         assertSame(node1, StreetAddressOrder.getCentroid(node1));
         assertNull(StreetAddressOrder.getCentroid(node1.save()));
@@ -169,7 +169,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testGetNeighbors() {
+    void testGetNeighbors() {
         List<IPrimitive> primitives = new ArrayList<>();
         primitives.add(new Node(new LatLon(0, 0)));
         assertTrue(StreetAddressOrder.getNeighbors(primitives.get(0), primitives).isEmpty());
@@ -194,7 +194,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testGetNearbyAddresses() {
+    void testGetNearbyAddresses() {
         Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         DataSet ds = new DataSet();
         way1.getNodes().forEach(ds::addPrimitive);
@@ -227,7 +227,7 @@ public class StreetAddressOrderTest {
     }
 
     @Test
-    public void testIsNearestRoad() {
+    void testIsNearestRoad() {
         Node node1 = new Node(new LatLon(0, 0));
         DataSet ds = new DataSet(node1);
         double boxCorners = 0.0009;

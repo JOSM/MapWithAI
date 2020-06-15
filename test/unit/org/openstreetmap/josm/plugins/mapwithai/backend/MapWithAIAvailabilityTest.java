@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 
 import org.awaitility.Durations;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -22,28 +22,28 @@ import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class MapWithAIAvailabilityTest {
+class MapWithAIAvailabilityTest {
     private DataAvailability instance;
 
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection().territories();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection().territories();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         instance = DataAvailability.getInstance();
         LatLon temp = new LatLon(40, -100);
         await().atMost(Durations.TEN_SECONDS).until(() -> Territories.isIso3166Code("US", temp));
     }
 
     @Test
-    public void testHasDataBBox() {
+    void testHasDataBBox() {
         assertFalse(instance.hasData(new Bounds(0, 0, 0.1, 0.1)), "There shouldn't be data in the ocean");
         assertTrue(instance.hasData(new Bounds(39.9, -99.9, 40.1, 100.1)), "There should be data in the US");
     }
 
     @Test
-    public void testHasDataLatLon() {
+    void testHasDataLatLon() {
         assertFalse(instance.hasData(new LatLon(0, 0)), "There should not be data in the ocean");
         assertTrue(instance.hasData(new LatLon(40, -100)), "There should be data in the US");
         assertTrue(instance.hasData(new LatLon(45.424722, -75.695)), "There should be data in Canada");
@@ -51,7 +51,7 @@ public class MapWithAIAvailabilityTest {
     }
 
     @Test
-    public void testgetDataLatLon() {
+    void testgetDataLatLon() {
         assertTrue(DataAvailability.getDataTypes(new LatLon(0, 0)).isEmpty(), "There should not be data in the ocean");
         assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("highway", false),
                 "The US should have highway data");
@@ -68,7 +68,7 @@ public class MapWithAIAvailabilityTest {
     }
 
     @Test
-    public void testNoURLs() {
+    void testNoURLs() {
         new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())
                 .forEach(i -> MapWithAILayerInfo.getInstance().remove(i));
         DataAvailability.getInstance();
@@ -82,17 +82,17 @@ public class MapWithAIAvailabilityTest {
     }
 
     @Test
-    public void testGetPrivacyUrls() {
+    void testGetPrivacyUrls() {
         assertFalse(DataAvailability.getPrivacyPolicy().isEmpty());
     }
 
     @Test
-    public void testGetTOSUrls() {
+    void testGetTOSUrls() {
         assertFalse(DataAvailability.getTermsOfUse().isEmpty());
     }
 
     @Test
-    public void testDefaultUrlImplementations() {
+    void testDefaultUrlImplementations() {
         DataAvailability instance = DataAvailability.getInstance();
         assertNull(instance.getUrl());
         assertEquals("", instance.getPrivacyPolicyUrl());

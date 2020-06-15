@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -20,16 +20,16 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class MergeBuildingAddressTest {
+class MergeBuildingAddressTest {
     /**
      * Setup test.
      */
-    @Rule
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().projection();
+    @RegisterExtension
+    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
+    JOSMTestRules rule = new JOSMTestRules().projection();
 
     @Test
-    public void testSingleAddress() {
+    void testSingleAddress() {
         DataSet ds = new DataSet();
         Node addr = new Node(new LatLon(0, 0));
         ds.addPrimitive(addr);
@@ -64,7 +64,7 @@ public class MergeBuildingAddressTest {
     }
 
     @Test
-    public void testMultiAddress() {
+    void testMultiAddress() {
         DataSet ds = new DataSet();
         Node addr = new Node(new LatLon(0, 0));
         Node addr2 = new Node(new LatLon(0.00005, 0.00005));

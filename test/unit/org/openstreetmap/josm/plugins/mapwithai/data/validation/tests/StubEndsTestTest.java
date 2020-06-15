@@ -8,10 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -22,16 +22,16 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class StubEndsTestTest {
-    @Rule
+class StubEndsTestTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
+    JOSMTestRules test = new JOSMTestRules().projection();
     private Way nonStaticWay;
     private Way staticWay;
     private StubEndsTest tester;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         staticWay = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0.01, 0.01)));
         DataSet ds = new DataSet();
@@ -47,13 +47,13 @@ public class StubEndsTestTest {
         tester.startTest(NullProgressMonitor.INSTANCE);
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         tester.endTest();
     }
 
     @Test
-    public void testStartEnd() {
+    void testStartEnd() {
         tester.visit(staticWay);
         assertTrue(tester.getErrors().isEmpty());
 
@@ -66,7 +66,7 @@ public class StubEndsTestTest {
     }
 
     @Test
-    public void testEndEnd() {
+    void testEndEnd() {
         List<Node> nodes = nonStaticWay.getNodes();
         Collections.reverse(nodes);
         nonStaticWay.setNodes(nodes);

@@ -11,11 +11,12 @@ import java.util.List;
 
 import javax.swing.SpinnerNumberModel;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.ImageProviderMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -24,10 +25,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  *
  */
-public class MapWithAIPreferencesTest {
-    @Rule
+class MapWithAIPreferencesTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().timeout(100_000);
+    JOSMTestRules test = new JOSMTestRules().preferences().main().timeout(100_000);
 
     private MapWithAIPreferences preferences;
 
@@ -36,8 +37,8 @@ public class MapWithAIPreferencesTest {
      *
      * @throws Exception if something goes wrong with set up
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         preferences = new MapWithAIPreferences();
     }
 
@@ -47,7 +48,8 @@ public class MapWithAIPreferencesTest {
      * @throws ReflectiveOperationException If a reflexive operation fails
      */
     @Test
-    public void testAddGui() throws ReflectiveOperationException {
+    void testAddGui() throws ReflectiveOperationException {
+        new ImageProviderMocker();
         final PreferenceTabbedPane pane = new PreferenceTabbedPane();
         pane.buildGui();
         Field tab = PreferenceTabbedPane.class.getDeclaredField("tabs");
@@ -92,7 +94,7 @@ public class MapWithAIPreferencesTest {
      * Test method for {@link MapWithAIPreferences#isExpert()}.
      */
     @Test
-    public void testIsExpert() {
+    void testIsExpert() {
         assertFalse(preferences.isExpert(), "This is not an expert only preference panel");
     }
 }

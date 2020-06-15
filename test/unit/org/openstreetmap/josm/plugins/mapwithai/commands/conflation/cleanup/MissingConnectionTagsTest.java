@@ -1,8 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands.conflation.cleanup;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -12,10 +12,9 @@ import java.util.Map;
 
 import javax.swing.JOptionPane;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -27,35 +26,30 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnectionTags;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.WoundedTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import mockit.integration.TestRunnerDecorator;
 
-public class MissingConnectionTagsTest {
-    @Rule
+@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+class MissingConnectionTagsTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules josmTestRules = new JOSMTestRules().projection().main();
+    JOSMTestRules josmTestRules = new JOSMTestRules().projection().main();
     private DataSet ds;
     private MissingConnectionTags missing;
 
-    @Before
-    public void setUp() {
-        TestRunnerDecorator.cleanUpAllMocks();
+    @BeforeEach
+    void setUp() {
         ds = new DataSet();
         // Required to avoid an NPE in AutoScaleAction
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(ds, "Test Layer", null));
         missing = new MissingConnectionTags(ds);
     }
 
-    @After
-    public void tearDown() {
-        TestRunnerDecorator.cleanUpAllMocks();
-    }
-
     @Test
-    public void testUndoable() {
+    void testUndoable() {
         /*
          * If we allow undo, issues occur due to dataset issues. If removing this test,
          * add an broader test to check for what happens when the move command is used
@@ -65,8 +59,14 @@ public class MissingConnectionTagsTest {
         assertFalse(missing.allowUndo());
     }
 
-    @Test
-    public void testDupeNode() {
+    /**
+     * This method checks for duplicate nodes, and creates commands to fix it. This
+     * method has been wounded by
+     * {@link org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddComandTest#testCreateConnectionsUndo}.
+     * Specifically, this is due to mocks not being cleared between tests.
+     */
+    @WoundedTest
+    void testDupeNode() {
         new WindowMocker();
         Map<String, Object> actions = new HashMap<>();
         actions.put("Set dupe=node 1 for node 'node'", JOptionPane.YES_OPTION);

@@ -21,12 +21,12 @@ import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 
-public class MapPaintUtilsTest {
+class MapPaintUtilsTest {
     @RegisterExtension
     MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().wiremock().projection();
 
     @Test
-    public void testAddPaintStyle() {
+    void testAddPaintStyle() {
         MapPaintUtils.removeMapWithAIPaintStyles();
         Awaitility.await().atMost(Durations.TEN_SECONDS).until(() -> !MapPaintUtils.checkIfMapWithAIPaintStyleExists());
         List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
@@ -40,7 +40,7 @@ public class MapPaintUtilsTest {
 
     @Disabled("Some kind of race condition causes failures in CI")
     @Test
-    public void testStableSource() throws IOException {
+    void testStableSource() throws IOException {
         synchronized (MapPaintUtils.class) {
             MapPaintUtils.removeMapWithAIPaintStyles();
             MapPaintUtils.addMapWithAIPaintStyles();

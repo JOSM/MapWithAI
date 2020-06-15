@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import org.awaitility.Durations;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
@@ -29,13 +29,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  *
  */
-public class MapWithAIRemoteControlTest {
+class MapWithAIRemoteControlTest {
     /**
      * Setup test.
      */
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories();
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();
@@ -51,7 +51,7 @@ public class MapWithAIRemoteControlTest {
      * @throws Exception if any error occurs
      */
     @Test
-    public void testBadRequestInvalidUrl() throws Exception {
+    void testBadRequestInvalidUrl() throws Exception {
         MapWithAIRemoteControl handler = assertDoesNotThrow(() -> newHandler("https://localhost?url=invalid_url"));
         Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);
         assertEquals("MalformedURLException: no protocol: invalid_url", exception.getMessage());
@@ -67,7 +67,7 @@ public class MapWithAIRemoteControlTest {
      * @throws Exception if any error occurs
      */
     @Test
-    public void testNominalRequest() throws Exception {
+    void testNominalRequest() throws Exception {
         newHandler("https://localhost?url="
                 + Utils.encodeUrl(MapWithAILayerInfo.getInstance().getLayers().get(0).getUrl())).handle();
         await().atMost(Durations.ONE_SECOND)
@@ -79,7 +79,7 @@ public class MapWithAIRemoteControlTest {
     }
 
     @Test
-    public void testTemporaryUrl() throws Exception {
+    void testTemporaryUrl() throws Exception {
         final String badUrl = "https://bad.url";
         newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl)).handle();
         await().atMost(Durations.ONE_SECOND)
@@ -100,7 +100,7 @@ public class MapWithAIRemoteControlTest {
     }
 
     @Test
-    public void testTemporaryMaxAdd() throws Exception {
+    void testTemporaryMaxAdd() throws Exception {
         final Integer maxObj = 1;
         newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj="
                 + maxObj.toString()).handle();
@@ -119,7 +119,7 @@ public class MapWithAIRemoteControlTest {
     }
 
     @Test
-    public void testBBox() throws Exception {
+    void testBBox() throws Exception {
         BBox temp = getTestBBox();
         newHandler("http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp.toStringCSV(","))).handle();
         await().atMost(Durations.TWO_SECONDS)
@@ -144,12 +144,12 @@ public class MapWithAIRemoteControlTest {
     }
 
     @Test
-    public void testGetUsage() throws Exception {
+    void testGetUsage() throws Exception {
         assertEquals(tr("downloads {0} data", MapWithAIPlugin.NAME), newHandler(null).getUsage());
     }
 
     @Test
-    public void testGetPermissionMessage() throws Exception {
+    void testGetPermissionMessage() throws Exception {
         MapWithAIRemoteControl handler = newHandler(null);
         assertEquals(tr(
                 "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of null objects at one time"),
@@ -183,7 +183,7 @@ public class MapWithAIRemoteControlTest {
     }
 
     @Test
-    public void testGetUsageExamples() throws Exception {
+    void testGetUsageExamples() throws Exception {
         assertEquals(6, newHandler(null).getUsageExamples().length);
     }
 }

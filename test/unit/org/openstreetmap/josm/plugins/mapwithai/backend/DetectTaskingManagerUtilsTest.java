@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
@@ -24,15 +24,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  *
  */
-public class DetectTaskingManagerUtilsTest {
+class DetectTaskingManagerUtilsTest {
     private static final String LAYER_NAME = "Task Boundaries";
 
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+    JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
 
     @Test
-    public void testHasTaskingManagerLayer() {
+    void testHasTaskingManagerLayer() {
         assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "No TM layer exists yet");
         MainApplication.getLayerManager().addLayer(new GpxLayer(new GpxData()));
         assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "No TM layer exists yet");
@@ -41,7 +41,7 @@ public class DetectTaskingManagerUtilsTest {
     }
 
     @Test
-    public void testGetTaskingManagerLayer() {
+    void testGetTaskingManagerLayer() {
         assertNull(DetectTaskingManagerUtils.getTaskingManagerLayer(), "No TM layer exists yet");
         final GpxLayer layer = new GpxLayer(new GpxData(), LAYER_NAME);
         MainApplication.getLayerManager().addLayer(layer);
@@ -49,7 +49,7 @@ public class DetectTaskingManagerUtilsTest {
     }
 
     @Test
-    public void testGetTaskingManagerBounds() {
+    void testGetTaskingManagerBounds() {
         assertTrue(DetectTaskingManagerUtils.getTaskingManagerBounds().isCollapsed(), "No TM layer exists yet");
 
         final GpxLayer layer = new GpxLayer(new GpxData(), LAYER_NAME);
@@ -68,7 +68,7 @@ public class DetectTaskingManagerUtilsTest {
     }
 
     @Test
-    public void testCreateTaskingManagerGpxBounds() {
+    void testCreateTaskingManagerGpxBounds() {
         assertFalse(DetectTaskingManagerUtils.hasTaskingManagerLayer(), "No TM layer exists yet");
 
         final Bounds bounds = new Bounds(0, 0, 1, 1);

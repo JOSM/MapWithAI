@@ -13,9 +13,9 @@ import java.util.stream.Stream;
 
 import javax.swing.text.JTextComponent;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.JOSMFixture;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -33,17 +33,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  *
  */
-public class MapWithAIObjectTest {
-    @Rule
+class MapWithAIObjectTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().main().projection();
+    JOSMTestRules rule = new JOSMTestRules().main().projection();
 
     private MapWithAIObject mapWithAIObject;
     private MapStatus statusLine;
     private OsmDataLayer osmData;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         JOSMFixture.initToolbar();
         mapWithAIObject = new MapWithAIObject();
         osmData = new OsmDataLayer(new DataSet(), "", null);
@@ -57,7 +57,7 @@ public class MapWithAIObjectTest {
      * {@link org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject#addMapStatus(org.openstreetmap.josm.gui.MapStatus)}.
      */
     @Test
-    public void testAddMapStatus() {
+    void testAddMapStatus() {
         int initialComponents = statusLine.getComponentCount();
         for (int i = 0; i < 10; i++) {
             mapWithAIObject.addMapStatus(statusLine);
@@ -70,7 +70,7 @@ public class MapWithAIObjectTest {
      * {@link org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject#removeMapStatus(org.openstreetmap.josm.gui.MapStatus)}.
      */
     @Test
-    public void testRemoveMapStatus() {
+    void testRemoveMapStatus() {
         testAddMapStatus();
         int addedComponents = statusLine.getComponentCount();
         for (int i = 0; i < 10; i++) {
@@ -84,7 +84,7 @@ public class MapWithAIObjectTest {
      * {@link org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject#commandChanged(int, int)}.
      */
     @Test
-    public void testCommandChanged() {
+    void testCommandChanged() {
         List<Component> initialComponents = Arrays.asList(statusLine.getComponents());
         testAddMapStatus();
         JTextComponent text = Stream.of(statusLine.getComponents()).filter(JTextComponent.class::isInstance)
@@ -109,7 +109,7 @@ public class MapWithAIObjectTest {
      * {@link org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject#destroy()}.
      */
     @Test
-    public void testDestroy() {
+    void testDestroy() {
         testAddMapStatus();
         int addedComponents = statusLine.getComponentCount();
         mapWithAIObject.destroy();

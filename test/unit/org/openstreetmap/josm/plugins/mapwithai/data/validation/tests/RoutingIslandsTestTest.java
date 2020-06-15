@@ -1,11 +1,11 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
@@ -35,20 +35,20 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  * @since xxx
  */
-public class RoutingIslandsTestTest {
+class RoutingIslandsTestTest {
     /**
      * Setup test.
      */
-    @Rule
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().projection().preferences().timeout(30000);
+    @RegisterExtension
+    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
+    JOSMTestRules rule = new JOSMTestRules().projection().preferences().timeout(30000);
 
     /**
      * Test method for {@link RoutingIslandsTest#RoutingIslandsTest()} and the
      * testing apparatus
      */
     @Test
-    public void testRoutingIslandsTest() {
+    void testRoutingIslandsTest() {
         RoutingIslandsTest.setErrorLevel(RoutingIslandsTest.ROUTING_ISLAND, Severity.WARNING);
         RoutingIslandsTest test = new RoutingIslandsTest();
         test.startTest(null);
@@ -118,7 +118,7 @@ public class RoutingIslandsTestTest {
      * Test roundabouts
      */
     @Test
-    public void testRoundabouts() {
+    void testRoundabouts() {
         RoutingIslandsTest test = new RoutingIslandsTest();
         Way roundabout = TestUtils.newWay("highway=residential junction=roundabout oneway=yes",
                 new Node(new LatLon(39.119582, -108.5262686)), new Node(new LatLon(39.1196494, -108.5260935)),
@@ -151,7 +151,7 @@ public class RoutingIslandsTestTest {
      * Test method for {@link RoutingIslandsTest#checkForUnconnectedWays}.
      */
     @Test
-    public void testCheckForUnconnectedWaysIncoming() {
+    void testCheckForUnconnectedWaysIncoming() {
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), Collections.emptySet(), null);
         Way way1 = TestUtils.newWay("highway=residential oneway=yes", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(1, 1)));
@@ -194,7 +194,7 @@ public class RoutingIslandsTestTest {
      * Test method for {@link RoutingIslandsTest#checkForUnconnectedWays}.
      */
     @Test
-    public void testCheckForUnconnectedWaysOutgoing() {
+    void testCheckForUnconnectedWaysOutgoing() {
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), Collections.emptySet(), null);
         Way way1 = TestUtils.newWay("highway=residential oneway=yes", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(1, 1)));
@@ -237,7 +237,7 @@ public class RoutingIslandsTestTest {
      * Test method for {@link RoutingIslandsTest#outsideConnections(Node)}.
      */
     @Test
-    public void testOutsideConnections() {
+    void testOutsideConnections() {
         Node node = new Node(new LatLon(0, 0));
         DataSet ds = new DataSet(node);
         ds.addDataSource(new DataSource(new Bounds(-0.1, -0.1, -0.01, -0.01), "Test bounds"));
@@ -253,7 +253,7 @@ public class RoutingIslandsTestTest {
      * Test method for {@link RoutingIslandsTest#isOneway(Way, String)}.
      */
     @Test
-    public void testIsOneway() {
+    void testIsOneway() {
         Way way = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         assertEquals(Integer.valueOf(0), RoutingIslandsTest.isOneway(way, null));
         assertEquals(Integer.valueOf(0), RoutingIslandsTest.isOneway(way, " "));
@@ -288,7 +288,7 @@ public class RoutingIslandsTestTest {
      * Test method for {@link RoutingIslandsTest#firstNode(Way, String)}.
      */
     @Test
-    public void testFirstNode() {
+    void testFirstNode() {
         Way way = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         assertEquals(way.firstNode(), RoutingIslandsTest.firstNode(way, null));
         way.put("oneway", "yes");
@@ -310,7 +310,7 @@ public class RoutingIslandsTestTest {
      * Test method for {@link RoutingIslandsTest#lastNode(Way, String)}.
      */
     @Test
-    public void testLastNode() {
+    void testLastNode() {
         Way way = TestUtils.newWay("highway=residential", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         assertEquals(way.lastNode(), RoutingIslandsTest.lastNode(way, null));
         way.put("oneway", "yes");
@@ -332,7 +332,7 @@ public class RoutingIslandsTestTest {
      * Test with a way that by default does not give access to motor vehicles
      */
     @Test
-    public void testNoAccessWay() {
+    void testNoAccessWay() {
         Way i70w = TestUtils.newWay("highway=motorway hgv=designated", new Node(new LatLon(39.1058104, -108.5258586)),
                 new Node(new LatLon(39.1052235, -108.5293733)));
         Way i70e = TestUtils.newWay("highway=motorway hgv=designated", new Node(new LatLon(39.1049905, -108.5293074)),

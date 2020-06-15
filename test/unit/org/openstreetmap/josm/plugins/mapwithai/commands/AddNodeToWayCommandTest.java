@@ -8,29 +8,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.Command;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class AddNodeToWayCommandTest {
+@Command
+class AddNodeToWayCommandTest {
     private Node toAdd;
     private Way way;
     private AddNodeToWayCommand command;
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().projection();
+    JOSMTestRules test = new JOSMTestRules().projection();
 
-    @Before
-    public void setupArea() {
+    @BeforeEach
+    void setupArea() {
         toAdd = new Node(new LatLon(0, 0));
         way = TestUtils.newWay("", new Node(new LatLon(0.1, 0.1)), new Node(new LatLon(-0.1, -0.1)));
         new DataSet(toAdd, way.firstNode(), way.lastNode(), way);
@@ -38,7 +40,7 @@ public class AddNodeToWayCommandTest {
     }
 
     @Test
-    public void testAddNodeToWay() {
+    void testAddNodeToWay() {
         command.executeCommand();
         assertEquals(3, way.getNodesCount(), "A node should have been added to the way");
 
@@ -55,12 +57,12 @@ public class AddNodeToWayCommandTest {
     }
 
     @Test
-    public void testDescription() {
+    void testDescription() {
         assertNotNull(command.getDescriptionText(), "The command should have a description");
     }
 
     @Test
-    public void testModifiedAddedDeleted() {
+    void testModifiedAddedDeleted() {
         final List<OsmPrimitive> added = new ArrayList<>();
         final List<OsmPrimitive> modified = new ArrayList<>();
         final List<OsmPrimitive> deleted = new ArrayList<>();
@@ -71,7 +73,7 @@ public class AddNodeToWayCommandTest {
     }
 
     @Test
-    public void testMultiAddConnections() {
+    void testMultiAddConnections() {
         command.executeCommand();
         Node tNode = new Node(new LatLon(0.01, 0.01));
         way.getDataSet().addPrimitive(tNode);

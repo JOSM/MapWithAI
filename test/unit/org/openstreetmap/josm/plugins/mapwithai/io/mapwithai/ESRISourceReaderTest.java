@@ -8,15 +8,15 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 
-public class ESRISourceReaderTest {
-    @Rule
-    public MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().sources().wiremock().projection();
+class ESRISourceReaderTest {
+    @RegisterExtension
+    MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().wiremock().projection();
 
     /**
      * Test that ESRI servers are properly added
@@ -25,7 +25,7 @@ public class ESRISourceReaderTest {
      *                     file/wiremocked file
      */
     @Test
-    public void testAddEsriLayer() throws IOException {
+    void testAddEsriLayer() throws IOException {
         // TODO wiremock
         MapWithAIInfo info = new MapWithAIInfo("TEST", "test_url", "bdf6c800b3ae453b9db239e03d7c1727");
         info.setSourceType(MapWithAIType.ESRI);

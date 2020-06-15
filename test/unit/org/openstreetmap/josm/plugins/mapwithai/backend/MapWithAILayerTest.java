@@ -22,9 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.awaitility.Durations;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
@@ -54,22 +54,22 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  *
  */
-public class MapWithAILayerTest {
-    @Rule
+class MapWithAILayerTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection()
-            .fakeAPI().territories();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection().fakeAPI()
+            .territories();
 
     MapWithAILayer layer;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         layer = new MapWithAILayer(new DataSet(), "test", null);
         Territories.initialize(); // Required to avoid an NPE (see JOSM-19132)
     }
 
     @Test
-    public void testGetSource() {
+    void testGetSource() {
         assertNull(layer.getChangesetSourceTag(), "The source tag should be null");
         DataSet to = new DataSet();
         DataSet from = new DataSet();
@@ -86,7 +86,7 @@ public class MapWithAILayerTest {
     }
 
     @Test
-    public void testGetInfoComponent() {
+    void testGetInfoComponent() {
         final Object tObject = layer.getInfoComponent();
         assertTrue(tObject instanceof JPanel, "The info component should be a JPanel instead of a string");
 
@@ -122,7 +122,7 @@ public class MapWithAILayerTest {
     }
 
     @Test
-    public void testGetLayer() {
+    void testGetLayer() {
         Layer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
         assertNull(mapWithAILayer, "There should be no MapWithAI layer yet");
 
@@ -138,7 +138,7 @@ public class MapWithAILayerTest {
     }
 
     @Test
-    public void testSelection() throws InvocationTargetException, InterruptedException {
+    void testSelection() throws InvocationTargetException, InterruptedException {
         MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         DataSet ds = mapWithAILayer.getDataSet();
         GetDataRunnable getData = new GetDataRunnable(
@@ -156,7 +156,7 @@ public class MapWithAILayerTest {
     }
 
     @Test
-    public void testGetData() {
+    void testGetData() {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         final OsmDataLayer osm = new OsmDataLayer(new DataSet(), "test", null);
         MainApplication.getLayerManager().addLayer(osm);
@@ -191,7 +191,7 @@ public class MapWithAILayerTest {
     }
 
     @Test
-    public void testGetMenuEntries() {
+    void testGetMenuEntries() {
         Layer layer = MapWithAIDataUtils.getLayer(true);
         await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         Action[] actions = layer.getMenuEntries();
@@ -200,7 +200,7 @@ public class MapWithAILayerTest {
     }
 
     @Test
-    public void testLayerSwitch() {
+    void testLayerSwitch() {
         MapPaintUtils.addMapWithAIPaintStyles();
         Layer osm = new OsmDataLayer(new DataSet(), "TEST", null);
         MainApplication.getLayerManager().addLayer(osm);

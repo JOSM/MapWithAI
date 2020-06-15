@@ -1,18 +1,18 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -23,13 +23,13 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class DownloadListenerTest {
-    @Rule
+class DownloadListenerTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().projection();
+    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().projection();
 
     @Test
-    public void testDataSourceChange() {
+    void testDataSourceChange() {
         DataSet ds = new DataSet();
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(ds, "Test Data", null));
         Bounds bounds = MapWithAIDataUtilsTest.getTestBounds();
@@ -62,7 +62,7 @@ public class DownloadListenerTest {
     }
 
     @Test
-    public void testDestroy() {
+    void testDestroy() {
         DataSet ds = new DataSet();
         DownloadListener listener = new DownloadListener(ds);
 
@@ -74,7 +74,7 @@ public class DownloadListenerTest {
     }
 
     @Test
-    public void testDestroyAll() throws ReflectiveOperationException {
+    void testDestroyAll() throws ReflectiveOperationException {
         DataSet ds = new DataSet();
         DownloadListener listener = new DownloadListener(ds);
         Field listenerDs = DownloadListener.class.getDeclaredField("ds");

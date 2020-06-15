@@ -18,10 +18,10 @@ import java.util.concurrent.Future;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.actions.SaveActionBase;
 import org.openstreetmap.josm.command.MoveCommand;
@@ -36,6 +36,8 @@ import org.openstreetmap.josm.data.validation.tests.SharpAngles;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.BleedTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.Command;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.PleaseWaitDialogMocker;
@@ -47,19 +49,20 @@ import org.openstreetmap.josm.tools.Logging;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 
-public class MapWithAIAddComandTest {
+@Command
+class MapWithAIAddComandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
 
-    @Rule
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection().assertionsInEDT().main();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection().assertionsInEDT().main();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         // Required to avoid an NPE with AutoZoomHandler
         new WindowMocker() {
             @Mock
-            public void pack() {
+            void pack() {
                 // Do nothing
             }
         };
@@ -67,7 +70,7 @@ public class MapWithAIAddComandTest {
     }
 
     @Test
-    public void testMoveCollection() {
+    void testMoveCollection() {
         final DataSet ds1 = new DataSet();
         final DataSet ds2 = new DataSet();
         final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
@@ -106,7 +109,7 @@ public class MapWithAIAddComandTest {
     }
 
     @Test
-    public void testCreateConnections() {
+    void testCreateConnections() {
         new PleaseWaitDialogMocker();
         final DataSet ds1 = new DataSet();
         final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
@@ -142,8 +145,8 @@ public class MapWithAIAddComandTest {
         assertTrue(way3Node1.isDeleted(), "way3 should be deleted");
     }
 
-    @Test
-    public void testCreateConnectionsUndo() {
+    @BleedTest
+    void testCreateConnectionsUndo() {
         new MissingConnectionTagsMocker();
 
         final DataSet osmData = new DataSet();
@@ -158,7 +161,6 @@ public class MapWithAIAddComandTest {
         mapWithAIData.addPrimitive(way1);
         mapWithAIData.setSelected(way1);
         way2.lastNode().setOsmId(1, 1);
-
         MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
         Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> mapWithAIData.allNonDeletedPrimitives().isEmpty());
@@ -187,7 +189,7 @@ public class MapWithAIAddComandTest {
     }
 
     @Test
-    public void testMultipleUndoRedoWithMove() {
+    void testMultipleUndoRedoWithMove() {
         final DataSet to = new DataSet();
         final DataSet from = new DataSet();
         final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
@@ -226,7 +228,7 @@ public class MapWithAIAddComandTest {
      * @throws InvocationTargetException if some checked exception occurs
      */
     @Test
-    public void testRegression18351() throws InvocationTargetException, InterruptedException {
+    void testRegression18351() throws InvocationTargetException, InterruptedException {
         System.getProperty("java.awt.headless", "true");
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
@@ -270,7 +272,7 @@ public class MapWithAIAddComandTest {
     }
 
     @Test
-    public void testMultiConnectionsSimultaneous() {
+    void testMultiConnectionsSimultaneous() {
         SharpAngles test = new SharpAngles();
         Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(3.4186753, 102.0559126)),
                 new Node(new LatLon(3.4185682, 102.0555264)));

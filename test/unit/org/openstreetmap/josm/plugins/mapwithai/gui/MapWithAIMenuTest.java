@@ -31,18 +31,18 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  *
  */
-public class MapWithAIMenuTest {
+class MapWithAIMenuTest {
     @RegisterExtension
     static JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().territories().projection().main();
     private static MapWithAIMenu menu;
 
     @BeforeAll
-    public static void setUp() {
+    static void setUp() {
         menu = new MapWithAIMenu();
     }
 
     @Test
-    public void testMapView() {
+    void testMapView() {
         menu.setSelected(true);
         assertEquals(1, getActiveActions(menu).size());
         menu.setSelected(false);

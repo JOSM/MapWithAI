@@ -13,9 +13,9 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -29,14 +29,14 @@ import org.openstreetmap.josm.tools.ListenerList;
  *
  * @author Taylor Smock
  */
-public class MapWithAIProvidersPanelTest {
-    @Rule
-    public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection();
+class MapWithAIProvidersPanelTest {
+    @RegisterExtension
+    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection();
 
     private MapWithAIProvidersPanel mapwithaiProvidersPanel;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         JComponent jcomponent = new JPanel();
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(jcomponent, MapWithAIProvidersPanel.Options.values());
     }
@@ -54,7 +54,7 @@ public class MapWithAIProvidersPanelTest {
      *                                  (update the test!)
      */
     @Test
-    public void testSetCurrentBounds() throws ReflectiveOperationException {
+    void testSetCurrentBounds() throws ReflectiveOperationException {
         Field areaListenersField = mapwithaiProvidersPanel.getClass().getDeclaredField("areaListeners");
         areaListenersField.setAccessible(true);
         @SuppressWarnings("unchecked")
@@ -84,7 +84,7 @@ public class MapWithAIProvidersPanelTest {
      *                                  (update the test!)
      */
     @Test
-    public void testTicket19473() throws ReflectiveOperationException {
+    void testTicket19473() throws ReflectiveOperationException {
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(new JPanel());
         Field defaultTableField = MapWithAIProvidersPanel.class.getDeclaredField("defaultTable");
         JTable defaultTable = (JTable) defaultTableField.get(mapwithaiProvidersPanel);

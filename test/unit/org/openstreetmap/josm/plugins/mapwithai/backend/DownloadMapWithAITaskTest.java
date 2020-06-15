@@ -11,8 +11,8 @@ import java.net.URL;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -21,14 +21,14 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class DownloadMapWithAITaskTest {
-    @Rule
+class DownloadMapWithAITaskTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().fakeAPI().projection()
+    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().fakeAPI().projection()
             .territories();
 
     @Test
-    public void testDownloadOsmServerReaderDownloadParamsBoundsProgressMonitor()
+    void testDownloadOsmServerReaderDownloadParamsBoundsProgressMonitor()
             throws InterruptedException, ExecutionException {
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         Future<?> future = task.download(
@@ -40,7 +40,7 @@ public class DownloadMapWithAITaskTest {
     }
 
     @Test
-    public void testGetConfirmationMessage() throws MalformedURLException {
+    void testGetConfirmationMessage() throws MalformedURLException {
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         assertAll(
                 () -> assertTrue(task.getConfirmationMessage(new URL("https://fake.api")).contains("fake.api"),

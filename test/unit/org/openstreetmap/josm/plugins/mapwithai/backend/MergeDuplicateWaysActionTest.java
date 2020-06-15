@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -27,20 +27,20 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * @author Taylor Smock
  */
-public class MergeDuplicateWaysActionTest {
-    @Rule
+class MergeDuplicateWaysActionTest {
+    @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rules = new JOSMTestRules().preferences().projection().main();
+    JOSMTestRules rules = new JOSMTestRules().preferences().projection().main();
 
     MergeDuplicateWaysAction action;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         action = new MergeDuplicateWaysAction();
     }
 
     @Test
-    public void testActionPerformed() {
+    void testActionPerformed() {
         action.actionPerformed(null);
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "Test Layer", null));
         DataSet ds = MainApplication.getLayerManager().getActiveDataSet();
@@ -77,7 +77,7 @@ public class MergeDuplicateWaysActionTest {
     }
 
     @Test
-    public void testUpdateEnabledState() {
+    void testUpdateEnabledState() {
         assertFalse(action.isEnabled());
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "Test Layer", null));
         assertTrue(action.isEnabled());
