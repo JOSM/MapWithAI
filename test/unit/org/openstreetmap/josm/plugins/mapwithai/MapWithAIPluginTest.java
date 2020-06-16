@@ -15,6 +15,7 @@ import javax.swing.JMenu;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,6 +55,14 @@ public class MapWithAIPluginTest {
         info.localversion = VERSION;
     }
 
+    @After
+    public void tearDown() {
+        if (plugin != null) {
+            plugin.destroy();
+            plugin = null;
+        }
+    }
+
     /**
      * Test method for {@link MapWithAIPlugin#getPreferenceSetting()}.
      */
@@ -86,6 +95,7 @@ public class MapWithAIPluginTest {
                 MapPaintStyles.getStyles().getStyleSources().parallelStream()
                         .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
                 "The paint style was not added");
+        plugin.destroy();
 
         for (boolean existed : Arrays.asList(false, true)) { // false, true order is important
             plugin = new MapWithAIPlugin(info);
@@ -109,6 +119,8 @@ public class MapWithAIPluginTest {
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
                             .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
                     "The paint style was added multiple times");
+            plugin.destroy();
+            plugin = null; // required to avoid teardown
         }
     }
 
