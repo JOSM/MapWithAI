@@ -39,6 +39,8 @@ public class MapWithAIInfo extends
     private String conflationUrl;
     private JsonArray conflationParameters;
     private String alreadyConflatedKey;
+    /** This is for categories that cannot be conflated */
+    private ArrayList<MapWithAICategory> conflationIgnoreCategory;
 
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
@@ -450,5 +452,30 @@ public class MapWithAIInfo extends
      */
     public String getAlreadyConflatedKey() {
         return alreadyConflatedKey;
+    }
+
+    /**
+     * Add categories that should not be sent to this MapWithAIInfo's conflation
+     * service
+     *
+     * @param cat The category that cannot be conflated
+     */
+    public void addConflationIgnoreCategory(MapWithAICategory cat) {
+        if (this.conflationIgnoreCategory == null) {
+            this.conflationIgnoreCategory = new ArrayList<>();
+        }
+        this.conflationIgnoreCategory.add(cat);
+    }
+
+    /**
+     * Get categories that should not be sent to the conflation service
+     *
+     * @return An unmodifiable list of non-conflation categories
+     */
+    public List<MapWithAICategory> getConflationIgnoreCategory() {
+        if (this.conflationIgnoreCategory == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(this.conflationIgnoreCategory);
     }
 }

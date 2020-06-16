@@ -13,12 +13,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.JsonString;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
 
@@ -130,6 +133,13 @@ public class MapWithAISourceReader implements Closeable {
             info.setConflationUrl(conflationUrl);
             info.setAlreadyConflatedKey(alreadyConflatedKey);
             info.setCategory(MapWithAICategory.fromString(category));
+            if (values.containsKey("conflation_ignore_categories")) {
+                JsonArray ignore = values.getJsonArray("conflation_ignore_categories");
+                for (MapWithAICategory cat : ignore.getValuesAs(JsonString.class).stream().map(JsonString::getString)
+                        .map(MapWithAICategory::fromString).filter(Objects::nonNull).collect(Collectors.toList())) {
+                    info.addConflationIgnoreCategory(cat);
+                }
+            }
             if (values.containsKey("terms_of_use_url")) {
                 info.setTermsOfUseURL(values.getString("terms_of_use_url"));
             }

@@ -39,6 +39,7 @@ public class ESRISourceReader implements Closeable {
     private final MapWithAIInfo source;
     private CachedFile cachedFile;
     private boolean fastFail;
+    private List<MapWithAICategory> ignoreConflationCategories;
     private static final String JSON_QUERY_PARAM = "?f=json";
 
     /**
@@ -60,6 +61,7 @@ public class ESRISourceReader implements Closeable {
      */
     public ESRISourceReader(MapWithAIInfo source) {
         this.source = source;
+        this.ignoreConflationCategories = source.getConflationIgnoreCategory();
     }
 
     /**
@@ -143,6 +145,9 @@ public class ESRISourceReader implements Closeable {
             newInfo.setAdditionalCategories(categories);
         }
 
+        if (this.ignoreConflationCategories.contains(newInfo.getCategory())) {
+            newInfo.setConflation(false);
+        }
         if (feature.containsKey("accessInformation")) {
             newInfo.setAttributionText(feature.getString("accessInformation"));
         }
