@@ -3,6 +3,8 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.util.stream.Stream;
+
 import javax.swing.JCheckBox;
 import javax.swing.event.ChangeListener;
 
@@ -13,10 +15,14 @@ import org.openstreetmap.josm.data.preferences.BooleanProperty;
 import org.openstreetmap.josm.gui.download.IDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadMapWithAITask;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo.LayerChangeListener;
 
-public class MapWithAIDownloadSourceType implements IDownloadSourceType {
+public class MapWithAIDownloadSourceType implements IDownloadSourceType, LayerChangeListener {
     static final BooleanProperty IS_ENABLED = new BooleanProperty("download.mapwithai.data", false);
     JCheckBox cbDownloadMapWithAIData;
+    private static MapWithAIDownloadSourceType INSTANCE;
 
     @Override
     public JCheckBox getCheckBox(ChangeListener checkboxChangeListener) {
@@ -25,6 +31,7 @@ public class MapWithAIDownloadSourceType implements IDownloadSourceType {
             cbDownloadMapWithAIData
                     .setToolTipText(tr("Select to download MapWithAI data in the selected download area."));
             cbDownloadMapWithAIData.getModel().addChangeListener(checkboxChangeListener);
+            MapWithAILayerInfo.getInstance().addListener(this);
         }
         if (checkboxChangeListener != null) {
             cbDownloadMapWithAIData.getModel().addChangeListener(checkboxChangeListener);
@@ -60,6 +67,18 @@ public class MapWithAIDownloadSourceType implements IDownloadSourceType {
                 bound.getMax().greatCircleDistance(new LatLon(bound.getMinLat(), bound.getMaxLon())));
         return height > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS
                 || width > MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS;
+    }
+
+    @Override
+    public void changeEvent(MapWithAIInfo modified) {
+        if (Stream.of(Thread.currentThread().getStackTrace()).map(p -> p.getClassName())
+                .noneMatch(p -> p.contains("PreferenceDialog"))) {
+            if (MapWithAILayerInfo.getInstance().getLayers().contains(modified)) {
+                this.cbDownloadMapWithAIData.setSelected(true);
+            } else if (MapWithAILayerInfo.getInstance().getLayers().isEmpty()) {
+                this.cbDownloadMapWithAIData.setSelected(false);
+            }
+        }
     }
 
 }

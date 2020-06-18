@@ -62,6 +62,7 @@ import org.openstreetmap.josm.gui.widgets.HtmlPanel;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo.LayerChangeListener;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.tools.GBC;
@@ -670,7 +671,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         }
     }
 
-    private class ActivateAction extends AbstractAction implements ListSelectionListener {
+    private class ActivateAction extends AbstractAction implements ListSelectionListener, LayerChangeListener {
         private static final long serialVersionUID = -452335751201424801L;
         private final transient ImageResource activate;
         private final transient ImageResource deactivate;
@@ -684,6 +685,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             activate = new ImageProvider("svpDown").setMaxSize(ImageProvider.ImageSizes.MENU).getResource();
             activate.attachImageIcon(this, true);
             deactivate = new ImageProvider("svpUp").setMaxSize(ImageProvider.ImageSizes.MENU).getResource();
+            MapWithAILayerInfo.getInstance().addListener(this);
         }
 
         protected void updateEnabledState() {
@@ -743,6 +745,11 @@ public class MapWithAIProvidersPanel extends JPanel {
             if (Stream.of(options).noneMatch(Options.SHOW_ACTIVE::equals)) {
                 MapWithAILayerInfo.getInstance().save();
             }
+        }
+
+        @Override
+        public void changeEvent(MapWithAIInfo modified) {
+            updateEnabledState();
         }
     }
 

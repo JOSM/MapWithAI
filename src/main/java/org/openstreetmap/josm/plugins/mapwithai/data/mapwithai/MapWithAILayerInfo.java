@@ -28,6 +28,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.Map
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -40,6 +41,7 @@ public class MapWithAILayerInfo {
     private final List<MapWithAIInfo> layers = Collections.synchronizedList(new ArrayList<>());
     /** List of layer ids of all usable layers */
     private final Map<String, MapWithAIInfo> layerIds = new HashMap<>();
+    private ListenerList<LayerChangeListener> listeners = ListenerList.create();
     /** List of all available default layers */
     static final List<MapWithAIInfo> defaultLayers = new ArrayList<>();
     /** List of all available default layers (including mirrors) */
@@ -381,6 +383,7 @@ public class MapWithAILayerInfo {
      */
     public void add(MapWithAIInfo info) {
         layers.add(info);
+        this.listeners.fireEvent(l -> l.changeEvent(info));
     }
 
     /**
@@ -390,6 +393,7 @@ public class MapWithAILayerInfo {
      */
     public void remove(MapWithAIInfo info) {
         layers.remove(info);
+        this.listeners.fireEvent(l -> l.changeEvent(info));
     }
 
     /**
@@ -479,5 +483,31 @@ public class MapWithAILayerInfo {
          * Called when information is finished loading
          */
         void onFinish();
+    }
+
+    /**
+     * Add a listener that is called on layer change events. Only fires on single
+     * add/remove events.
+     *
+     * @param listener The listener to be called.
+     */
+    public void addListener(LayerChangeListener listener) {
+        this.listeners.addListener(listener);
+    }
+
+    /**
+     * An interface to tell listeners what info object has changed
+     *
+     * @author Taylor Smock
+     *
+     */
+    public interface LayerChangeListener {
+        /**
+         * Fired when an info object has been added/removed to the layer list
+         *
+         * @param modified A MapWithAIInfo object that has been removed or added to the
+         *                 layers
+         */
+        void changeEvent(MapWithAIInfo modified);
     }
 }
