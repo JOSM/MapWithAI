@@ -1,11 +1,14 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.concurrent.Future;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -28,6 +31,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.Dupl
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
@@ -42,7 +46,7 @@ public class MapWithAIMoveActionTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().territories();
 
     @Before
     public void setUp() {
@@ -164,5 +168,41 @@ public class MapWithAIMoveActionTest {
         }
         assertTrue(notification.shown);
         notification.shown = false;
+    }
+
+    /**
+     * This is a non-regression test. There used to be an AssertionError when an
+     * address and building were added, and then was undone. See
+     * <a href="https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/79">Issue #79</a>
+     */
+    @Test
+    public void testBuildingAndAddressAdd() {
+        // Required to avoid an NPE in Territories.getRegionalTaginfoUrls
+        Future<?> territoriesRegionalTaginfo = MainApplication.worker.submit(() -> Territories.initialize());
+        DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
+        Way building = TestUtils.newWay("building=yes", new Node(new LatLon(38.236811, -104.62571)),
+                new Node(new LatLon(38.236811, -104.625493)), new Node(new LatLon(38.236716, -104.625493)),
+                new Node(new LatLon(38.236716, -104.62571)));
+        building.getNodes().forEach(ds::addPrimitive);
+        ds.addPrimitive(building);
+        building.addNode(building.firstNode());
+        Node address = TestUtils.newNode(
+                "addr:city=Pueblo addr:housenumber=1901 addr:postcode=81004 addr:street=\"Lake Avenue\" mapwithai:source=\"Statewide Aggregate Addresses in Colorado 2019 (Public)\"");
+        address.setCoor(new LatLon(38.2367599, -104.6255641));
+        ds.addPrimitive(address);
+
+        DataSet ds2 = new DataSet();
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(ds2, "TEST LAYER", null));
+
+        // The building/address need to be selected separately
+        // This is due to only allowing 1 additional selection at a time.
+        ds.setSelected(building);
+        ds.addSelected(address);
+        // Wait for territories to finish
+        assertDoesNotThrow(() -> territoriesRegionalTaginfo.get());
+        GuiHelper.runInEDTAndWaitWithException(() -> moveAction.actionPerformed(null));
+        while (UndoRedoHandler.getInstance().hasUndoCommands()) {
+            assertDoesNotThrow(() -> UndoRedoHandler.getInstance().undo());
+        }
     }
 }

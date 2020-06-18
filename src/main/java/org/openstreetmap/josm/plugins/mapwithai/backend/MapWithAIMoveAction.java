@@ -24,6 +24,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.tools.Shortcut;
@@ -75,7 +76,7 @@ public class MapWithAIMoveAction extends JosmAction {
                     && (MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER))
                     || (maxAddition == 0 && ExpertToggleAction.isExpert())) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
-                UndoRedoHandler.getInstance().add(command);
+                GuiHelper.runInEDTAndWait(() -> UndoRedoHandler.getInstance().add(command));
                 if (MapWithAIPreferenceHelper.isSwitchLayers()) {
                     MainApplication.getLayerManager().setActiveLayer(editLayer);
                 }

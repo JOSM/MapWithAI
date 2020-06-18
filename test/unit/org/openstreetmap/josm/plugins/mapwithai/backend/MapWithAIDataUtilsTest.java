@@ -140,7 +140,7 @@ public class MapWithAIDataUtilsTest {
     @Test
     public void testAddPaintStyle() {
         MapWithAIDataUtils.removeMapWithAIPaintStyles();
-        Awaitility.await().atMost(Durations.FIVE_SECONDS)
+        Awaitility.await().atMost(Durations.TEN_SECONDS)
                 .until(() -> !MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
         List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
         for (int i = 0; i < 10; i++) {
