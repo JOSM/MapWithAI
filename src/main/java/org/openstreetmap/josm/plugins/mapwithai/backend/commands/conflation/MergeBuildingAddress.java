@@ -24,6 +24,12 @@ import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.tools.Geometry;
 
+/**
+ * Merge addresses with pre-existing buildings
+ *
+ * @author Taylor Smock
+ *
+ */
 public class MergeBuildingAddress extends AbstractConflationCommand {
     public static final String KEY = "addr:housenumber";
 

@@ -23,6 +23,12 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelpe
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import org.openstreetmap.josm.tools.Geometry;
 
+/**
+ * Merge buildings with pre-existing addresses
+ *
+ * @author Taylor Smock
+ *
+ */
 public class MergeAddressBuildings extends AbstractConflationCommand {
     public static final String KEY = "building";
 
