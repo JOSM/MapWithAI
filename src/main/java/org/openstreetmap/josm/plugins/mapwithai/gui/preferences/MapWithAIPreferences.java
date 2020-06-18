@@ -47,7 +47,6 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     private final JSpinner maximumAdditionSpinner;
     private final ReplacementPreferenceTable replacementPreferenceTable;
     private final List<PrefEntry> replacementTableDisplayData;
-    private MapWithAILayerInfo info;
     private static final int MAX_SELECTED_TO_EDIT = 1;
 
     public MapWithAIPreferences() {
@@ -82,8 +81,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     }
 
     private Component getServerList(PreferenceTabbedPane gui) {
-        info = new MapWithAILayerInfo(MapWithAILayerInfo.instance);
-        return new MapWithAIProvidersPanel(gui, info, true);
+        return new MapWithAIProvidersPanel(gui, MapWithAIProvidersPanel.Options.SHOW_ACTIVE);
     }
 
     private Component getSettingsPanel(PreferenceTabbedPane gui) {
@@ -207,9 +205,9 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         if (value instanceof Number) {
             MapWithAIPreferenceHelper.setMaximumAddition(((Number) value).intValue(), true);
         }
-        info.save();
-        MapWithAILayerInfo.instance.clear();
-        MapWithAILayerInfo.instance.load(false);
+        MapWithAILayerInfo.getInstance().save();
+        MapWithAILayerInfo.getInstance().clear();
+        MapWithAILayerInfo.getInstance().load(false);
         MapWithAIPreferenceHelper.setReplacementTags(convertReplacementPrefToMap(replacementTableDisplayData));
         return false;
     }

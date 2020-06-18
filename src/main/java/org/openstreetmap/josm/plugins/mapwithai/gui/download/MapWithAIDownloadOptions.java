@@ -14,7 +14,6 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.gui.bbox.BBoxChooser;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
 import org.openstreetmap.josm.gui.download.DownloadSelection;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWithAIProvidersPanel;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.GBC;
@@ -34,7 +33,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
         JPanel infoHeader = new JPanel();
         infoHeader.add(new JLabel("Browse and download extra data sets to facilitate your mapping needs."));
         optionPanel.add(infoHeader, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
-        mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this, MapWithAILayerInfo.getInstance(), false);
+        mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this);
         optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.BOTH).anchor(GBC.CENTER));
         mapwithaiProvidersPanel.defaultMap.addPropertyChangeListener(this);
     }

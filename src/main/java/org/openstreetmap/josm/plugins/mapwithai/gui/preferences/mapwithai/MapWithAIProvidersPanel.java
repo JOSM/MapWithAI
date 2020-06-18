@@ -24,6 +24,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.Box;
@@ -77,6 +78,11 @@ import org.openstreetmap.josm.tools.Logging;
  * @since 15115 (extracted from ImageryPreferences)
  */
 public class MapWithAIProvidersPanel extends JPanel {
+    public enum Options {
+        /** Hide the active table */
+        SHOW_ACTIVE
+    }
+
     private static final long serialVersionUID = -5876039771496409422L;
     // Public JTables and JosmMapViewer
     /** The table of active providers **/
@@ -97,9 +103,11 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     // Public models
     /** The model of active providers **/
-    public final MapWithAILayerTableModel activeModel;
+    private static final MapWithAILayerTableModel ACTIVE_MODEL = new MapWithAILayerTableModel();
+    public final MapWithAILayerTableModel activeModel = ACTIVE_MODEL;
     /** The model of default providers **/
-    public final MapWithAIDefaultLayerTableModel defaultModel;
+    private static final MapWithAIDefaultLayerTableModel DEFAULT_MODEL = new MapWithAIDefaultLayerTableModel();
+    public final MapWithAIDefaultLayerTableModel defaultModel = DEFAULT_MODEL;
 
     // Public JToolbars
     /** The toolbar on the right of active providers **/
@@ -111,8 +119,9 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     // Private members
     private final JComponent gui;
-    private final transient MapWithAILayerInfo layerInfo;
     private final transient ListenerList<AreaListener> areaListeners = ListenerList.create();
+    /** Options that were passed to the constructor */
+    private final Options[] options;
 
     private interface AreaListener {
         void updateArea(Bounds area);
@@ -266,15 +275,14 @@ public class MapWithAIProvidersPanel extends JPanel {
     /**
      * Constructs a new {@code MapWithAIProvidersPanel}.
      *
-     * @param gui          The parent preference tab pane
-     * @param layerInfoArg The list of imagery entries to display
-     * @param showActive   If true, show selected entries along with custom entries.
+     * @param gui     The parent preference tab pane
+     * @param options The options for this instance
      */
-    public MapWithAIProvidersPanel(final JComponent gui, MapWithAILayerInfo layerInfoArg, boolean showActive) {
+    public MapWithAIProvidersPanel(final JComponent gui, Options... options) {
         super(new GridBagLayout());
         this.gui = gui;
-        this.layerInfo = layerInfoArg;
-        this.activeModel = new MapWithAILayerTableModel();
+        this.options = options;
+        boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
 
         activeTable = new JTable(activeModel) {
             private static final long serialVersionUID = -6136421378119093719L;
@@ -292,7 +300,6 @@ public class MapWithAIProvidersPanel extends JPanel {
         };
         activeTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
-        defaultModel = new MapWithAIDefaultLayerTableModel();
         defaultTable = new JTable(defaultModel);
         defaultTable.setAutoCreateRowSorter(true);
         defaultFilter = new FilterField().filter(defaultTable, defaultModel);
@@ -300,7 +307,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         defaultModel.addTableModelListener(e -> activeTable.repaint());
         activeModel.addTableModelListener(e -> defaultTable.repaint());
 
-        setupDefaultTable(this, defaultTable, showActive, areaListeners);
+        setupDefaultTable(this, defaultTable, options, areaListeners);
 
         TableColumnModel mod = activeTable.getColumnModel();
         mod.getColumn(1).setPreferredWidth(800);
@@ -404,8 +411,9 @@ public class MapWithAIProvidersPanel extends JPanel {
         }
     }
 
-    private static void setupDefaultTable(MapWithAIProvidersPanel panel, JTable defaultTable, boolean showActive,
+    private static void setupDefaultTable(MapWithAIProvidersPanel panel, JTable defaultTable, Options[] options,
             ListenerList<AreaListener> areaListeners) {
+        boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
         int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
         TableColumnModel mod = defaultTable.getColumnModel();
         int urlWidth = (showActive ? 3 : 0) * tenXWidth;
@@ -732,6 +740,9 @@ public class MapWithAIProvidersPanel extends JPanel {
                         .sorted(Collections.reverseOrder()).forEach(activeModel::removeRow);
             }
             updateEnabledState();
+            if (Stream.of(options).noneMatch(Options.SHOW_ACTIVE::equals)) {
+                MapWithAILayerInfo.getInstance().save();
+            }
         }
     }
 
@@ -748,7 +759,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent evt) {
-            layerInfo.loadDefaults(true, MainApplication.worker, false, () -> {
+            MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () -> {
                 defaultModel.fireTableDataChanged();
                 defaultTable.getSelectionModel().clearSelection();
                 defaultTableListener.clearMap();
@@ -757,5 +768,4 @@ public class MapWithAIProvidersPanel extends JPanel {
             });
         }
     }
-
 }
