@@ -188,6 +188,8 @@ public class MapWithAIDataUtilsTest {
         assertNull(MapWithAIDataUtils.getLayer(false));
         assertNotNull(MapWithAIDataUtils.getLayer(true));
         assertNotNull(MapWithAIDataUtils.getLayer(true));
+        Logging.getLastErrorAndWarnings().stream().filter(str -> !str.contains("Failed to locate image"))
+                .forEach(Logging::error);
         assertTrue(Logging.getLastErrorAndWarnings().stream().filter(str -> !str.contains("Failed to locate image"))
                 .collect(Collectors.toList()).isEmpty());
     }

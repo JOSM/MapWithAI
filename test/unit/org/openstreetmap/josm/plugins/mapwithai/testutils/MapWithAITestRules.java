@@ -5,9 +5,17 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.runners.model.InitializationError;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.io.OsmApi;
@@ -35,6 +43,7 @@ public class MapWithAITestRules extends JOSMTestRules {
     private boolean workerExceptions = true;
     private UncaughtExceptionHandler currentExceptionHandler;
     private String currentReleaseUrl;
+    private Collection<String> sourceSites;
 
     public MapWithAITestRules() {
         super();
@@ -78,8 +87,19 @@ public class MapWithAITestRules extends JOSMTestRules {
             MapWithAIDataUtils.setPaintStyleUrl(MapWithAIDataUtils.getPaintStyleUrl()
                     .replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
             currentReleaseUrl = DataAvailability.getReleaseUrl();
-            DataAvailability.setReleaseUrl(wireMock.baseUrl() + "/JOSM_MapWithAI/json/sources.json");
+            DataAvailability
+                    .setReleaseUrl(wireMock.baseUrl() + "/gokaart/JOSM_MapWithAI/-/raw/pages/public/json/sources.json");
             Config.getPref().put("osm-server.url", wireMock.baseUrl());
+            sourceSites = MapWithAILayerInfo.getImageryLayersSites();
+            MapWithAILayerInfo.setImageryLayersSites(sourceSites.stream().map(t -> {
+                try {
+                    URL temp = new URL(t);
+                    return wireMock.baseUrl() + temp.getFile();
+                } catch (MalformedURLException error) {
+                    Logging.error(error);
+                }
+                return null;
+            }).filter(Objects::nonNull).collect(Collectors.toList()));
             try {
                 OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
             } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
@@ -87,7 +107,13 @@ public class MapWithAITestRules extends JOSMTestRules {
             }
         }
         if (sources) {
-            MapWithAILayerInfo.getInstance().load(false);
+            AtomicBoolean finished = new AtomicBoolean();
+            MapWithAILayerInfo.getInstance().load(false, () -> finished.set(true));
+            Awaitility.await().atMost(Durations.TEN_SECONDS).until(finished::get);
+            if (wiremock) {
+                MapWithAILayerInfo.getInstance().getLayers()
+                        .forEach(l -> l.setUrl(l.getUrl().replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/")));
+            }
         }
         if (workerExceptions) {
             currentExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -109,6 +135,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             resetMapWithAILayerInfo();
             DataAvailability.setReleaseUrl(currentReleaseUrl);
             Config.getPref().put("osm-server.url", null);
+            MapWithAILayerInfo.setImageryLayersSites(sourceSites);
         }
         if (workerExceptions) {
             Thread.setDefaultUncaughtExceptionHandler(currentExceptionHandler);

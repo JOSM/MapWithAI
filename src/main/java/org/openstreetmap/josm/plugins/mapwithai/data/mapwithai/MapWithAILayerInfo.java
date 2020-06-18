@@ -78,6 +78,17 @@ public class MapWithAILayerInfo {
         return Config.getPref().getList(CONFIG_PREFIX + "layers.sites", Arrays.asList(DEFAULT_LAYER_SITES));
     }
 
+    /**
+     * Set the source sites
+     *
+     * @param sites The sites to set
+     * @return See
+     *         {@link org.openstreetmap.josm.spi.preferences.IPreferences#putList}
+     */
+    public static boolean setImageryLayersSites(Collection<String> sites) {
+        return Config.getPref().putList(CONFIG_PREFIX + "layers.sites", new ArrayList<>(sites));
+    }
+
     private MapWithAILayerInfo() {
         load(false);
     }
@@ -106,6 +117,17 @@ public class MapWithAILayerInfo {
      *                 {@link ImageryReader#setFastFail(boolean)}
      */
     public void load(boolean fastFail) {
+        load(fastFail, null);
+    }
+
+    /**
+     * Loads the custom as well as default imagery entries.
+     *
+     * @param fastFail whether opening HTTP connections should fail fast, see
+     *                 {@link ImageryReader#setFastFail(boolean)}
+     * @param listener A listener to call when loading default entries is finished
+     */
+    public void load(boolean fastFail, FinishListener listener) {
         clear();
         List<MapWithAIPreferenceEntry> entries = StructUtils.getListOfStructs(Config.getPref(),
                 CONFIG_PREFIX + "entries", null, MapWithAIPreferenceEntry.class);
