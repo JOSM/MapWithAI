@@ -444,9 +444,7 @@ public class MapWithAILayerInfo {
     }
 
     public static void addLayers(Collection<MapWithAIInfo> infos) {
-        for (MapWithAIInfo i : infos) {
-            instance.add(i);
-        }
+        infos.forEach(instance::add);
         instance.save();
         Collections.sort(instance.layers);
     }

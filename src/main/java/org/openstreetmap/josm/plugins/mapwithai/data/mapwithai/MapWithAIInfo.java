@@ -270,7 +270,9 @@ public class MapWithAIInfo extends
                 && Objects.equals(this.conflationUrl, other.conflationUrl)
                 && Objects.equals(this.conflationParameters, other.conflationParameters)
                 && Objects.equals(this.categories, other.categories)
-                && Objects.equals(this.alreadyConflatedKey, other.alreadyConflatedKey);
+                && Objects.equals(this.alreadyConflatedKey, other.alreadyConflatedKey)
+                && ((this.parameters == null && other.parameters == null)
+                        || Objects.equals(this.parameters, other.parameters));
         // CHECKSTYLE.ON: BooleanExpressionComplexity
     }
 
