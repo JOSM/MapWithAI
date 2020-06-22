@@ -31,6 +31,11 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.common.FileSource;
+import com.github.tomakehurst.wiremock.extension.Parameters;
+import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
+import com.github.tomakehurst.wiremock.http.Request;
+import com.github.tomakehurst.wiremock.http.Response;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
 import mockit.integration.TestRunnerDecorator;
@@ -79,8 +84,10 @@ public class MapWithAITestRules extends JOSMTestRules {
         super.before();
         Logging.getLogger().setFilter(record -> record.getLevel().intValue() >= Level.WARNING.intValue()
                 || record.getSourceClassName().startsWith("org.openstreetmap.josm.plugins.mapwithai"));
+
         if (wiremock) {
-            wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
+            wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
+                    .extensions(new WireMockUrlTransformer()).dynamicPort());
             wireMock.start();
             resetMapWithAILayerInfo();
             setupMapWithAILayerInfo(wireMock);
@@ -100,6 +107,8 @@ public class MapWithAITestRules extends JOSMTestRules {
                 }
                 return null;
             }).filter(Objects::nonNull).collect(Collectors.toList()));
+            MapWithAILayerInfo.getInstance().getLayers()
+                    .forEach(l -> l.setUrl(l.getUrl().replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/")));
             try {
                 OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
             } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
@@ -110,10 +119,6 @@ public class MapWithAITestRules extends JOSMTestRules {
             AtomicBoolean finished = new AtomicBoolean();
             MapWithAILayerInfo.getInstance().load(false, () -> finished.set(true));
             Awaitility.await().atMost(Durations.TEN_SECONDS).until(finished::get);
-            if (wiremock) {
-                MapWithAILayerInfo.getInstance().getLayers()
-                        .forEach(l -> l.setUrl(l.getUrl().replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/")));
-            }
         }
         if (workerExceptions) {
             currentExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -168,5 +173,29 @@ public class MapWithAITestRules extends JOSMTestRules {
      */
     public WireMockServer getWireMock() {
         return this.wireMock;
+    }
+
+    /**
+     * Replace URL's with the wiremock URL
+     *
+     * @author Taylor Smock
+     */
+    private class WireMockUrlTransformer extends ResponseTransformer {
+
+        @Override
+        public String getName() {
+            return "Convert urls in responses to wiremock url";
+        }
+
+        @Override
+        public Response transform(Request request, Response response, FileSource files, Parameters parameters) {
+            if (wireMock != null) {
+                String origBody = response.getBodyAsString();
+                String newBody = origBody.replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/");
+                return Response.Builder.like(response).but().body(newBody).build();
+            }
+            return response;
+        }
+
     }
 }

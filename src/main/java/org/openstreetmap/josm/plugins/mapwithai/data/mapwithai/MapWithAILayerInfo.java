@@ -142,7 +142,7 @@ public class MapWithAILayerInfo {
             }
             Collections.sort(layers);
         }
-        loadDefaults(false, MainApplication.worker, fastFail, null);
+        loadDefaults(false, MainApplication.worker, fastFail, listener);
     }
 
     /**
