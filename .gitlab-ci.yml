@@ -87,6 +87,26 @@ assemble with java 15:
       - build/
   allow_failure: true
 
+code_navigation:
+  stage: build
+  image: maven:3-openjdk-8
+  script:
+    - cat /etc/os-release
+    - apt update && apt install -y git
+    - git clone https://github.com/sourcegraph/lsif-java
+    - cd lsif-java
+    - ./gradlew installDist
+    - cd ..
+    - ./gradlew generatePomFileForJosmPluginPublication
+    - cp ./build/publications/josmPlugin/pom-default.xml ./pom.xml
+    - $(pwd)/lsif-java/build/install/lsifjava/bin/lsifjava -projectRoot . -out dump.lsif -debug
+  artifacts:
+    reports:
+      lsif: dump.lsif
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: always
+  allow_failure: true
 
 ##############
 # Test stage #
