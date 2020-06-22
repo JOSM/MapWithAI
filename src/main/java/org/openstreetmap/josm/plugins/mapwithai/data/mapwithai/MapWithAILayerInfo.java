@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
@@ -114,7 +115,7 @@ public class MapWithAILayerInfo {
             }
             Collections.sort(layers);
         }
-        loadDefaults(false, null, fastFail, null);
+        loadDefaults(false, MainApplication.worker, fastFail, null);
     }
 
     /**

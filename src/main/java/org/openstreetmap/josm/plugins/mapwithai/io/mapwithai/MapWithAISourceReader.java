@@ -160,7 +160,14 @@ public class MapWithAISourceReader implements Closeable {
 
     private static List<ImageryInfo.ImageryBounds> getBounds(JsonValue countries) {
         if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
-            Set<String> codes = Territories.getKnownIso3166Codes();
+            Set<String> codes;
+            try {
+                codes = Territories.getKnownIso3166Codes();
+            } catch (NullPointerException e) {
+                // Fix JOSM-19420
+                Territories.initializeInternalData();
+                codes = Territories.getKnownIso3166Codes();
+            }
             List<ImageryBounds> bounds = new ArrayList<>();
             for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
                 if (codes.contains(country.getKey())) {
