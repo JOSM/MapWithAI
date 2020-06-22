@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -314,5 +315,41 @@ public class MergeDuplicateWaysTest {
         testSet.add(matchPair);
         assertSame(matchPair.a.b, MergeDuplicateWays.nodeInCompressed(testNode, testSet),
                 "If a node has a pairing, then the paired node should be returned");
+    }
+
+    /**
+     * Non-regression test for <a
+     * href=https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/81>#81</a>.
+     */
+    @Test
+    public void testDeletedNode() {
+        Way way1 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
+        Way way2 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
+        DataSet ds = new DataSet();
+        List<Way> ways = Arrays.asList(way1, way2);
+        for (Way way : ways) {
+            way.getNodes().forEach(ds::addPrimitive);
+            ds.addPrimitive(way);
+        }
+        way2.firstNode().setDeleted(true);
+        assertDoesNotThrow(() -> new MergeDuplicateWays(ds, ways).executeCommand());
+    }
+
+    /**
+     * Non-regression test for <a
+     * href=https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/81>#81</a>.
+     */
+    @Test
+    public void testDeletedWay() {
+        Way way1 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
+        Way way2 = TestUtils.newWay("highway=residential", new Node(LatLon.ZERO), new Node(LatLon.NORTH_POLE));
+        DataSet ds = new DataSet();
+        List<Way> ways = Arrays.asList(way1, way2);
+        for (Way way : ways) {
+            way.getNodes().forEach(ds::addPrimitive);
+            ds.addPrimitive(way);
+        }
+        way2.setDeleted(true);
+        assertDoesNotThrow(() -> new MergeDuplicateWays(ds, ways).executeCommand());
     }
 }

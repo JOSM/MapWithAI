@@ -63,8 +63,12 @@ public class MergeDuplicateWays extends Command {
 
     public MergeDuplicateWays(DataSet data, List<Way> ways) {
         super(data);
-        this.ways = ways;
+        this.ways = ways.stream().filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
         this.commands = new ArrayList<>();
+    }
+
+    private static boolean nonDeletedWay(Way way) {
+        return !way.isDeleted() && way.getNodes().stream().noneMatch(OsmPrimitive::isDeleted);
     }
 
     @Override
@@ -125,7 +129,7 @@ public class MergeDuplicateWays extends Command {
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
             final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).parallelStream()
-                    .filter(way -> !way.isDeleted()).collect(Collectors.toList());
+                    .filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
             nearbyWays.remove(way1);
             for (final Way way2 : nearbyWays) {
                 final Command command = checkForDuplicateWays(way1, way2);
@@ -150,7 +154,8 @@ public class MergeDuplicateWays extends Command {
      * @param commands A list of commands to add to
      */
     public static void checkForDuplicateWays(Way way, List<Command> commands) {
-        final Collection<Way> nearbyWays = way.getDataSet().searchWays(way.getBBox());
+        final Collection<Way> nearbyWays = way.getDataSet().searchWays(way.getBBox()).stream()
+                .filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
         nearbyWays.remove(way);
         for (final Way way2 : nearbyWays) {
             if (!way2.isDeleted()) {
