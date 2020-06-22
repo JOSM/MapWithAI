@@ -99,7 +99,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
                     final Command movePrimitivesCommand = new MovePrimitiveDataSetCommand(editable, mapWithAI,
                             primitives, primitiveData);
                     final Command createConnectionsCommand = createConnections(editable, primitiveData);
-                    command = new SequenceCommand(getDescriptionText(), movePrimitivesCommand,
+                    command = SequenceCommand.wrapIfNeeded(getDescriptionText(), movePrimitivesCommand,
                             createConnectionsCommand);
                 }
                 GuiHelper.runInEDTAndWait(command::executeCommand);

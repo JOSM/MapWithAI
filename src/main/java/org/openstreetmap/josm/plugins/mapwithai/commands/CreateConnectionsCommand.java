@@ -124,19 +124,10 @@ public class CreateConnectionsCommand extends Command {
             }
         }
 
-        Command permanentCommand = null;
-        if (permanent.size() == 1) {
-            permanentCommand = permanent.get(0);
-        } else if (!permanent.isEmpty()) {
-            permanentCommand = new SequenceCommand(getRealDescriptionText(), permanent);
-        }
-
-        Command undoCommand = null;
-        if (undoable.size() == 1) {
-            undoCommand = undoable.get(0);
-        } else if (!undoable.isEmpty()) {
-            undoCommand = new SequenceCommand(getRealDescriptionText(), undoable);
-        }
+        Command permanentCommand = permanent.isEmpty() ? null
+                : SequenceCommand.wrapIfNeeded(getRealDescriptionText(), permanent);
+        Command undoCommand = undoable.isEmpty() ? null
+                : SequenceCommand.wrapIfNeeded(getRealDescriptionText(), undoable);
 
         return Arrays.asList(permanentCommand, undoCommand);
     }
