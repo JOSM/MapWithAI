@@ -102,7 +102,7 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
 
     @Override
     public boolean allowUndo() {
-        return true;
+        return false;
     }
 
     @Override
