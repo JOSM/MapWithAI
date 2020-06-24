@@ -5,12 +5,19 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
@@ -21,9 +28,11 @@ import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.io.OsmReader;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.HttpClient;
+import org.openstreetmap.josm.tools.Logging;
 
 class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private final String url;
@@ -33,6 +42,7 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
 
     private final Bounds downloadArea;
     private final MapWithAIInfo info;
+    private DataConflationSender dcs;
 
     private static final int DEFAULT_TIMEOUT = 50_000; // 50 seconds
 
@@ -56,7 +66,28 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     public DataSet parseOsm(ProgressMonitor progressMonitor) throws OsmTransferException {
         long startTime = System.nanoTime();
         try {
-            return super.parseOsm(progressMonitor);
+            DataSet externalData = super.parseOsm(progressMonitor);
+            if (!this.info.isConflated()
+                    && !MapWithAIConflationCategory.conflationUrlFor(this.info.getCategory()).isEmpty()) {
+                if (externalData.getDataSourceBounds().isEmpty()) {
+                    externalData.addDataSource(new DataSource(this.downloadArea, "External Data"));
+                }
+                DataSet toConflate = getConflationData(this.downloadArea);
+                dcs = new DataConflationSender(this.info.getCategory(), toConflate, externalData);
+                dcs.run();
+                try {
+                    DataSet conflatedData = dcs.get(30, TimeUnit.SECONDS);
+                    if (conflatedData != null) {
+                        externalData = conflatedData;
+                    }
+                } catch (InterruptedException e) {
+                    Logging.error(e);
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException | TimeoutException e) {
+                    Logging.error(e);
+                }
+            }
+            return externalData;
         } catch (OsmApiException e) {
             if (!(e.getResponseCode() == 504 && (System.nanoTime() - lastErrorTime) < 120_000_000_000L)) {
                 throw e;
@@ -86,6 +117,21 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             runnable.compute();
         });
         return ds;
+    }
+
+    /**
+     * Get data to send to the conflation server
+     *
+     * @param bound The bounds that we are sending to the server
+     * @return The dataset to send to the server
+     */
+    private static DataSet getConflationData(Bounds bound) {
+        List<OsmDataLayer> layers = MainApplication
+                .getLayerManager().getLayersOfType(OsmDataLayer.class).stream().filter(l -> l.getDataSet()
+                        .getDataSourceBounds().stream().anyMatch(b -> b.toBBox().bounds(bound.toBBox())))
+                .collect(Collectors.toList());
+        return layers.stream().max(Comparator.comparingInt(l -> l.getDataSet().allPrimitives().size()))
+                .map(OsmDataLayer::getDataSet).orElse(null);
     }
 
     private static void updateLastErrorTime(long time) {
@@ -146,5 +192,13 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
         defaultUserAgent.append(tr("/ {0} {1}", MapWithAIPlugin.NAME, MapWithAIPlugin.getVersionInfo()));
         request.setHeader("User-Agent", defaultUserAgent.toString());
+    }
+
+    @Override
+    public void cancel() {
+        super.cancel();
+        if (dcs != null) {
+            dcs.cancel(true);
+        }
     }
 }

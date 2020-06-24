@@ -59,8 +59,8 @@ public class MapWithAISourceReader implements Closeable {
     private static final int COORD_ARRAY_SIZE = 6;
 
     /**
-     * Constructs a {@code ImageryReader} from a given filename, URL or internal
-     * resource.
+     * Constructs a {@code MapWithAISourceReader} from a given filename, URL or
+     * internal resource.
      *
      * @param source can be:
      *               <ul>

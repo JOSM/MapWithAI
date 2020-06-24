@@ -400,6 +400,15 @@ public class MapWithAIInfo extends
     }
 
     /**
+     * Check if this source is being automatically conflated
+     *
+     * @return {@code true} if it should be returned already conflated
+     */
+    public boolean isConflated() {
+        return this.conflate;
+    }
+
+    /**
      * Set the URL to use for conflation purposes.
      *
      * @param conflationUrl Set the conflation url to use. null will disable, but
