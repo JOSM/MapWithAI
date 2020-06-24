@@ -15,13 +15,15 @@ import org.openstreetmap.josm.tools.Logging;
 public class MapWithAIConflationCategory {
     private static final Map<MapWithAICategory, List<String>> CONFLATION_URLS = new EnumMap<>(MapWithAICategory.class);
     private static final String EMPTY_URL = "";
-    protected static final String DEFAULT_CONFLATION_JSON = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/conflation_servers.json";
+    private static final String DEFAULT_CONFLATION_JSON = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/conflation_servers.json";
+    private static String conflationJson = DEFAULT_CONFLATION_JSON;
     static {
         initialize();
     }
 
     static void initialize() {
-        try (ConflationSourceReader reader = new ConflationSourceReader(DEFAULT_CONFLATION_JSON)) {
+        CONFLATION_URLS.clear();
+        try (ConflationSourceReader reader = new ConflationSourceReader(conflationJson)) {
             CONFLATION_URLS.putAll(reader.parse());
         } catch (IOException e) {
             Logging.error(e);
@@ -47,5 +49,31 @@ public class MapWithAIConflationCategory {
     public static void addConflationUrlFor(MapWithAICategory category, String url) {
         Collection<String> list = CONFLATION_URLS.computeIfAbsent(category, i -> new ArrayList<>(1));
         list.add(url);
+    }
+
+    /**
+     * Set the URL to use to get conflation servers
+     *
+     * @param url The URL to use
+     */
+    public static void setConflationJsonLocation(String url) {
+        conflationJson = url;
+        initialize();
+    }
+
+    /**
+     * Reset the conflation json location to the default location
+     */
+    public static void resetConflationJsonLocation() {
+        setConflationJsonLocation(DEFAULT_CONFLATION_JSON);
+    }
+
+    /**
+     * Get the current conflation json location
+     *
+     * @return The URL that is used to build conflation information
+     */
+    public static String getConflationJsonLocation() {
+        return conflationJson;
     }
 }

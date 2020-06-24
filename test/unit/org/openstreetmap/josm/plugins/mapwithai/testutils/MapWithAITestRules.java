@@ -23,6 +23,7 @@ import org.openstreetmap.josm.io.OsmApiInitializationException;
 import org.openstreetmap.josm.io.OsmTransferCanceledException;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -90,22 +91,15 @@ public class MapWithAITestRules extends JOSMTestRules {
             wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
                     .extensions(new WireMockUrlTransformer()).dynamicPort());
             wireMock.start();
-            MapWithAIDataUtils.setPaintStyleUrl(MapWithAIDataUtils.getPaintStyleUrl()
-                    .replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
+            MapWithAIDataUtils.setPaintStyleUrl(replaceUrl(wireMock, MapWithAIDataUtils.getPaintStyleUrl()));
             currentReleaseUrl = DataAvailability.getReleaseUrl();
-            DataAvailability
-                    .setReleaseUrl(wireMock.baseUrl() + "/gokaart/JOSM_MapWithAI/-/raw/pages/public/json/sources.json");
+            DataAvailability.setReleaseUrl(replaceUrl(wireMock, DataAvailability.getReleaseUrl()));
             Config.getPref().put("osm-server.url", wireMock.baseUrl());
             sourceSites = MapWithAILayerInfo.getImageryLayersSites();
-            MapWithAILayerInfo.setImageryLayersSites(sourceSites.stream().map(t -> {
-                try {
-                    URL temp = new URL(t);
-                    return wireMock.baseUrl() + temp.getFile();
-                } catch (MalformedURLException error) {
-                    Logging.error(error);
-                }
-                return null;
-            }).filter(Objects::nonNull).collect(Collectors.toList()));
+            MapWithAILayerInfo.setImageryLayersSites(sourceSites.stream().map(t -> replaceUrl(wireMock, t))
+                    .filter(Objects::nonNull).collect(Collectors.toList()));
+            MapWithAIConflationCategory.setConflationJsonLocation(
+                    replaceUrl(wireMock, MapWithAIConflationCategory.getConflationJsonLocation()));
             try {
                 OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
             } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
@@ -135,6 +129,23 @@ public class MapWithAITestRules extends JOSMTestRules {
         }
     }
 
+    /**
+     * Replace URL servers with wiremock
+     *
+     * @param wireMock The wiremock to point to
+     * @param url      The URL to fix
+     * @return A url that points at the wiremock server
+     */
+    private static String replaceUrl(WireMockServer wireMock, String url) {
+        try {
+            URL temp = new URL(url);
+            return wireMock.baseUrl() + temp.getFile();
+        } catch (MalformedURLException error) {
+            Logging.error(error);
+        }
+        return null;
+    }
+
     @Override
     protected void after() throws ReflectiveOperationException {
         super.after();
@@ -146,6 +157,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             DataAvailability.setReleaseUrl(currentReleaseUrl);
             Config.getPref().put("osm-server.url", null);
             MapWithAILayerInfo.setImageryLayersSites(sourceSites);
+            MapWithAIConflationCategory.resetConflationJsonLocation();
             resetMapWithAILayerInfo();
         }
         if (workerExceptions) {

@@ -1,0 +1,24 @@
+{
+  "id" : "fb2197f1-81fd-445d-bb90-b6219d187af6",
+  "name" : "josm_mapwithai_json_conflation_serversjson",
+  "request" : {
+    "url" : "/JOSM_MapWithAI/json/conflation_servers.json",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\n   \"Taylor's Address Conflation Server\" : {\n      \"categories\" : [\n         \"addresses\"\n      ],\n      \"description\" : \"Originally developed for use with local datasets, it now accepts external datasets for conflation purposes. In the event of a failure, the plugin will use the original dataset.\",\n      \"license\" : \"AGPL\",\n      \"source\" : \"https://gitlab.com/smocktaylor/serve_osm_files/\",\n      \"url\" : \"https://importdata.riverviewtechnologies.com/conflate\"\n   }\n}\n",
+    "headers" : {
+      "Accept-Ranges" : "bytes",
+      "Cache-Control" : "max-age=600",
+      "Content-Type" : "application/json",
+      "Expires" : "Wed, 24 Jun 2020 21:26:07 UTC",
+      "Last-Modified" : "Wed, 24 Jun 2020 17:33:46 GMT",
+      "Vary" : "Origin",
+      "Date" : "Wed, 24 Jun 2020 21:16:07 GMT"
+    }
+  },
+  "uuid" : "fb2197f1-81fd-445d-bb90-b6219d187af6",
+  "persistent" : true,
+  "insertionIndex" : 43
+}
