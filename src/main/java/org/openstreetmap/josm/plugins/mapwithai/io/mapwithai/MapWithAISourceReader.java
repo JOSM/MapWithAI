@@ -163,26 +163,25 @@ public class MapWithAISourceReader implements Closeable {
             Set<String> codes;
             try {
                 codes = Territories.getKnownIso3166Codes();
-            } catch (NullPointerException e) {
-                // Fix JOSM-19420
-                Territories.initializeInternalData();
-                codes = Territories.getKnownIso3166Codes();
-            }
-            List<ImageryBounds> bounds = new ArrayList<>();
-            for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
-                if (codes.contains(country.getKey())) {
-                    GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country.getKey());
-                    if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
-                        DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
-                        Rectangle2D areaBounds = prop.getArea().getBounds2D();
-                        ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
-                                areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY()), ","), ",");
-                        areaToShapes(prop.getArea()).forEach(tmp::addShape);
-                        bounds.add(tmp);
+                List<ImageryBounds> bounds = new ArrayList<>();
+                for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
+                    if (codes.contains(country.getKey())) {
+                        GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country.getKey());
+                        if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
+                            DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
+                            Rectangle2D areaBounds = prop.getArea().getBounds2D();
+                            ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
+                                    areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY()), ","), ",");
+                            areaToShapes(prop.getArea()).forEach(tmp::addShape);
+                            bounds.add(tmp);
+                        }
                     }
                 }
+                return bounds;
+            } catch (NullPointerException e) {
+                Logging.error(e);
             }
-            return bounds;
+
         }
         return Collections.emptyList();
     }
