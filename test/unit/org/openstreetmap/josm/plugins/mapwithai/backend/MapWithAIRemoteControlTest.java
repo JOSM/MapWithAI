@@ -34,7 +34,7 @@ public class MapWithAIRemoteControlTest {
      */
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories();
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();

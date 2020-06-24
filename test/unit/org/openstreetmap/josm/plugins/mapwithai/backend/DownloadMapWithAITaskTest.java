@@ -24,7 +24,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class DownloadMapWithAITaskTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new MapWithAITestRules().wiremock().preferences().fakeAPI().projection().territories();
+    public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().fakeAPI().projection()
+            .territories();
 
     @Test
     public void testDownloadOsmServerReaderDownloadParamsBoundsProgressMonitor()

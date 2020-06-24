@@ -27,7 +27,7 @@ public class MapWithAIAvailabilityTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection().territories();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection().territories();
 
     @Before
     public void setUp() {

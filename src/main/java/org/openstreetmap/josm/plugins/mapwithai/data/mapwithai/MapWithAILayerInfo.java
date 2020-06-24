@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
@@ -62,7 +63,16 @@ public class MapWithAILayerInfo {
     public static MapWithAILayerInfo getInstance() {
         synchronized (DEFAULT_LAYER_SITES) {
             if (instance == null) {
-                instance = new MapWithAILayerInfo();
+                AtomicBoolean finished = new AtomicBoolean();
+                instance = new MapWithAILayerInfo(() -> finished.set(true));
+                while (!finished.get()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        Logging.error(e);
+                        Thread.currentThread().interrupt();
+                    }
+                }
             }
         }
         return instance;
@@ -89,8 +99,8 @@ public class MapWithAILayerInfo {
         return Config.getPref().putList(CONFIG_PREFIX + "layers.sites", new ArrayList<>(sites));
     }
 
-    private MapWithAILayerInfo() {
-        load(false);
+    private MapWithAILayerInfo(FinishListener listener) {
+        load(false, listener);
     }
 
     /**

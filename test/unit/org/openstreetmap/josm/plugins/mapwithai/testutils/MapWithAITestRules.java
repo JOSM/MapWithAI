@@ -22,7 +22,6 @@ import org.openstreetmap.josm.io.OsmApi;
 import org.openstreetmap.josm.io.OsmApiInitializationException;
 import org.openstreetmap.josm.io.OsmTransferCanceledException;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
-import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnableTest;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -38,6 +37,8 @@ import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
+import mockit.Mock;
+import mockit.MockUp;
 import mockit.integration.TestRunnerDecorator;
 
 public class MapWithAITestRules extends JOSMTestRules {
@@ -89,8 +90,6 @@ public class MapWithAITestRules extends JOSMTestRules {
             wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
                     .extensions(new WireMockUrlTransformer()).dynamicPort());
             wireMock.start();
-            resetMapWithAILayerInfo();
-            setupMapWithAILayerInfo(wireMock);
             MapWithAIDataUtils.setPaintStyleUrl(MapWithAIDataUtils.getPaintStyleUrl()
                     .replace(Config.getUrls().getJOSMWebsite(), wireMock.baseUrl()));
             currentReleaseUrl = DataAvailability.getReleaseUrl();
@@ -107,8 +106,6 @@ public class MapWithAITestRules extends JOSMTestRules {
                 }
                 return null;
             }).filter(Objects::nonNull).collect(Collectors.toList()));
-            MapWithAILayerInfo.getInstance().getLayers()
-                    .forEach(l -> l.setUrl(l.getUrl().replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/")));
             try {
                 OsmApi.getOsmApi().initialize(NullProgressMonitor.INSTANCE);
             } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
@@ -119,6 +116,15 @@ public class MapWithAITestRules extends JOSMTestRules {
             AtomicBoolean finished = new AtomicBoolean();
             MapWithAILayerInfo.getInstance().load(false, () -> finished.set(true));
             Awaitility.await().atMost(Durations.TEN_SECONDS).until(finished::get);
+        } else {
+            // This only exists to ensure that if MapWithAILayerInfo is called, things
+            // happen...
+            new MockUp<MapWithAILayerInfo>() {
+                @Mock
+                public MapWithAILayerInfo getInstance() {
+                    return null;
+                }
+            };
         }
         if (workerExceptions) {
             currentExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -137,24 +143,15 @@ public class MapWithAITestRules extends JOSMTestRules {
             List<LoggedRequest> requests = wireMock.findUnmatchedRequests().getRequests();
             requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
             assertTrue(requests.isEmpty());
-            resetMapWithAILayerInfo();
             DataAvailability.setReleaseUrl(currentReleaseUrl);
             Config.getPref().put("osm-server.url", null);
             MapWithAILayerInfo.setImageryLayersSites(sourceSites);
+            resetMapWithAILayerInfo();
         }
         if (workerExceptions) {
             Thread.setDefaultUncaughtExceptionHandler(currentExceptionHandler);
         }
         TestRunnerDecorator.cleanUpAllMocks();
-    }
-
-    private static void setupMapWithAILayerInfo(WireMockServer wireMockServer) {
-        synchronized (MapWithAITestRules.class) {
-            resetMapWithAILayerInfo();
-            MapWithAILayerInfo.getInstance().getLayers().stream().forEach(
-                    i -> i.setUrl(GetDataRunnableTest.getDefaultMapWithAIAPIForTest(wireMockServer, i.getUrl())));
-            MapWithAILayerInfo.getInstance().save();
-        }
     }
 
     private static void resetMapWithAILayerInfo() {

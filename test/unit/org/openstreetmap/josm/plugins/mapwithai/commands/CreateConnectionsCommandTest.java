@@ -39,7 +39,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class CreateConnectionsCommandTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().projection();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection();
 
     /**
      * Test method for

@@ -37,7 +37,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIPluginTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main();
 
     public PluginInformation info;
     public MapWithAIPlugin plugin;

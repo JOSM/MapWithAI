@@ -16,7 +16,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 
 public class ESRISourceReaderTest {
     @Rule
-    public MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().wiremock().projection();
+    public MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().sources().wiremock().projection();
 
     /**
      * Test that ESRI servers are properly added

@@ -37,7 +37,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class GetDataRunnableTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new MapWithAITestRules().wiremock().projection().fakeAPI().territories();
+    public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection().fakeAPI().territories();
 
     public static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
         return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.mapwith.ai");
