@@ -2,7 +2,7 @@
   "id" : "23497750-675c-440a-986a-34dd14b047f8",
   "name" : "josm_mapwithai_json_sourcesjson",
   "request" : {
-    "url" : "/gokaart/JOSM_MapWithAI/-/raw/pages/public/json/sources.json",
+    "urlPattern" : "(\/gokaart)?\/JOSM_MapWithAI\/(-\/raw\/pages\/public\/)?json\/sources.json",
     "method" : "GET"
   },
   "response" : {

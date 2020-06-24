@@ -51,14 +51,32 @@ public class MapWithAITestRules extends JOSMTestRules {
     private UncaughtExceptionHandler currentExceptionHandler;
     private String currentReleaseUrl;
     private Collection<String> sourceSites;
+    private Runnable mapwithaiLayerInfoMocker;
 
     public MapWithAITestRules() {
         super();
         super.assertionsInEDT();
     }
 
+    /**
+     * Use if a fully initialized {@link MapWithAILayerInfo} is required
+     *
+     * @return this, for easy chaining
+     */
     public MapWithAITestRules sources() {
+        return sources(null);
+    }
+
+    /**
+     * Use if you don't need all of {@link MapWithAILayerInfo}
+     *
+     * @param mapwithaiLayerInfoMocker A mocker so that MapWithAILayerInfo isn't
+     *                                 fully instantiated
+     * @return this, for easy chaining
+     */
+    public MapWithAITestRules sources(Runnable mapwithaiLayerInfoMocker) {
         this.sources = true;
+        this.mapwithaiLayerInfoMocker = mapwithaiLayerInfoMocker;
         return this;
     }
 
@@ -87,6 +105,9 @@ public class MapWithAITestRules extends JOSMTestRules {
         Logging.getLogger().setFilter(record -> record.getLevel().intValue() >= Level.WARNING.intValue()
                 || record.getSourceClassName().startsWith("org.openstreetmap.josm.plugins.mapwithai"));
 
+        if (mapwithaiLayerInfoMocker != null) {
+            mapwithaiLayerInfoMocker.run();
+        }
         if (wiremock) {
             wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
                     .extensions(new WireMockUrlTransformer()).dynamicPort());
@@ -129,23 +150,6 @@ public class MapWithAITestRules extends JOSMTestRules {
         }
     }
 
-    /**
-     * Replace URL servers with wiremock
-     *
-     * @param wireMock The wiremock to point to
-     * @param url      The URL to fix
-     * @return A url that points at the wiremock server
-     */
-    private static String replaceUrl(WireMockServer wireMock, String url) {
-        try {
-            URL temp = new URL(url);
-            return wireMock.baseUrl() + temp.getFile();
-        } catch (MalformedURLException error) {
-            Logging.error(error);
-        }
-        return null;
-    }
-
     @Override
     protected void after() throws ReflectiveOperationException {
         super.after();
@@ -173,6 +177,23 @@ public class MapWithAITestRules extends JOSMTestRules {
                     .forEach(MapWithAILayerInfo.getInstance()::add);
             MapWithAILayerInfo.getInstance().save();
         }
+    }
+
+    /**
+     * Replace URL servers with wiremock
+     *
+     * @param wireMock The wiremock to point to
+     * @param url      The URL to fix
+     * @return A url that points at the wiremock server
+     */
+    private static String replaceUrl(WireMockServer wireMock, String url) {
+        try {
+            URL temp = new URL(url);
+            return wireMock.baseUrl() + temp.getFile();
+        } catch (MalformedURLException error) {
+            Logging.error(error);
+        }
+        return null;
     }
 
     /**
