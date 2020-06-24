@@ -511,7 +511,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         final DataSet dataSet = new DataSet();
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
-        new ArrayList<>(MapWithAILayerInfo.instance.getLayers()).parallelStream().forEach(map -> {
+        new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers()).parallelStream().forEach(map -> {
             try {
                 Bounds bound = new Bounds(bbox.getBottomRight());
                 bound.extend(bbox.getTopLeft());

@@ -247,7 +247,7 @@ public class DataAvailability {
      * @return List of terms of use urls
      */
     public static final List<String> getTermsOfUse() {
-        return Stream.concat(MapWithAILayerInfo.instance.getLayers().stream().map(MapWithAIInfo::getTermsOfUseURL),
+        return Stream.concat(MapWithAILayerInfo.getInstance().getLayers().stream().map(MapWithAIInfo::getTermsOfUseURL),
                 DATA_SOURCES.stream().map(clazz -> {
                     try {
                         return clazz.getConstructor().newInstance().getTermsOfUseUrl();
@@ -266,16 +266,18 @@ public class DataAvailability {
      * @return List of privacy policy urls
      */
     public static final List<String> getPrivacyPolicy() {
-        return Stream.concat(MapWithAILayerInfo.instance.getLayers().stream().map(MapWithAIInfo::getPrivacyPolicyURL),
-                DATA_SOURCES.stream().map(clazz -> {
-                    try {
-                        return clazz.getConstructor().newInstance().getPrivacyPolicyUrl();
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                        Logging.debug(e);
-                    }
-                    return EMPTY_STRING;
-                })).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).distinct()
+        return Stream
+                .concat(MapWithAILayerInfo.getInstance().getLayers().stream().map(MapWithAIInfo::getPrivacyPolicyURL),
+                        DATA_SOURCES.stream().map(clazz -> {
+                            try {
+                                return clazz.getConstructor().newInstance().getPrivacyPolicyUrl();
+                            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                                Logging.debug(e);
+                            }
+                            return EMPTY_STRING;
+                        }))
+                .filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).distinct()
                 .collect(Collectors.toList());
     }
 

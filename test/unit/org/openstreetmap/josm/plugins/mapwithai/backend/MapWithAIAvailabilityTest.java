@@ -69,13 +69,14 @@ public class MapWithAIAvailabilityTest {
 
     @Test
     public void testNoURLs() {
-        new ArrayList<>(MapWithAILayerInfo.instance.getLayers()).forEach(i -> MapWithAILayerInfo.instance.remove(i));
+        new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())
+                .forEach(i -> MapWithAILayerInfo.getInstance().remove(i));
         DataAvailability.getInstance();
         testgetDataLatLon();
-        MapWithAILayerInfo.instance.getLayers().forEach(i -> MapWithAILayerInfo.instance.remove(i));
+        MapWithAILayerInfo.getInstance().getLayers().forEach(i -> MapWithAILayerInfo.getInstance().remove(i));
         DataAvailability.getInstance();
         testHasDataLatLon();
-        MapWithAILayerInfo.instance.getLayers().forEach(i -> MapWithAILayerInfo.instance.remove(i));
+        MapWithAILayerInfo.getInstance().getLayers().forEach(i -> MapWithAILayerInfo.getInstance().remove(i));
         DataAvailability.getInstance();
         testHasDataBBox();
     }

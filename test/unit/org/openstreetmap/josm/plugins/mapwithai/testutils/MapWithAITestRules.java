@@ -70,9 +70,6 @@ public class MapWithAITestRules extends JOSMTestRules {
         super.before();
         Logging.getLogger().setFilter(record -> record.getLevel().intValue() >= Level.WARNING.intValue()
                 || record.getSourceClassName().startsWith("org.openstreetmap.josm.plugins.mapwithai"));
-        if (sources) {
-            MapWithAILayerInfo.instance.load(false);
-        }
         if (wiremock) {
             wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
             wireMock.start();
@@ -88,6 +85,9 @@ public class MapWithAITestRules extends JOSMTestRules {
             } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
                 Logging.error(e);
             }
+        }
+        if (sources) {
+            MapWithAILayerInfo.getInstance().load(false);
         }
         if (workerExceptions) {
             currentExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -119,18 +119,18 @@ public class MapWithAITestRules extends JOSMTestRules {
     private static void setupMapWithAILayerInfo(WireMockServer wireMockServer) {
         synchronized (MapWithAITestRules.class) {
             resetMapWithAILayerInfo();
-            MapWithAILayerInfo.instance.getLayers().stream().forEach(
+            MapWithAILayerInfo.getInstance().getLayers().stream().forEach(
                     i -> i.setUrl(GetDataRunnableTest.getDefaultMapWithAIAPIForTest(wireMockServer, i.getUrl())));
-            MapWithAILayerInfo.instance.save();
+            MapWithAILayerInfo.getInstance().save();
         }
     }
 
     private static void resetMapWithAILayerInfo() {
         synchronized (MapWithAILayerInfo.class) {
-            MapWithAILayerInfo.instance.clear();
-            MapWithAILayerInfo.instance.getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
-                    .forEach(MapWithAILayerInfo.instance::add);
-            MapWithAILayerInfo.instance.save();
+            MapWithAILayerInfo.getInstance().clear();
+            MapWithAILayerInfo.getInstance().getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
+                    .forEach(MapWithAILayerInfo.getInstance()::add);
+            MapWithAILayerInfo.getInstance().save();
         }
     }
 

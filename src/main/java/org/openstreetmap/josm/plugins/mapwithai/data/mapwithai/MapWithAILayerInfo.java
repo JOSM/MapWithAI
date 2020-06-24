@@ -57,9 +57,14 @@ public class MapWithAILayerInfo {
             "https://gitlab.com/gokaart/JOSM_MapWithAI/-/raw/pages/public/json/sources.json" };
 
     /** Unique instance -- MUST be after DEFAULT_LAYER_SITES */
-    public static final MapWithAILayerInfo instance = new MapWithAILayerInfo();
+    private static MapWithAILayerInfo instance;
 
     public static MapWithAILayerInfo getInstance() {
+        synchronized (DEFAULT_LAYER_SITES) {
+            if (instance == null) {
+                instance = new MapWithAILayerInfo();
+            }
+        }
         return instance;
     }
 

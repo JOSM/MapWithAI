@@ -67,8 +67,8 @@ public class MapWithAIRemoteControlTest {
      */
     @Test
     public void testNominalRequest() throws Exception {
-        newHandler("https://localhost?url=" + Utils.encodeUrl(MapWithAILayerInfo.instance.getLayers().get(0).getUrl()))
-                .handle();
+        newHandler("https://localhost?url="
+                + Utils.encodeUrl(MapWithAILayerInfo.getInstance().getLayers().get(0).getUrl())).handle();
         Awaitility.await().atMost(Durations.ONE_SECOND)
                 .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 

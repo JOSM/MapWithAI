@@ -194,7 +194,7 @@ public final class MapWithAIDataUtils {
         final List<Bounds> realBounds = realBBoxes.stream()
                 .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox, maximumDimensions).stream())
                 .map(MapWithAIDataUtils::bboxToBounds).collect(Collectors.toList());
-        if (!MapWithAILayerInfo.instance.getLayers().isEmpty()) {
+        if (!MapWithAILayerInfo.getInstance().getLayers().isEmpty()) {
             if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
@@ -228,8 +228,8 @@ public final class MapWithAIDataUtils {
             noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
             GuiHelper.runInEDT(noUrls::show);
             if (MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
-                    && MapWithAILayerInfo.instance.getDefaultLayers().isEmpty()) {
-                MapWithAILayerInfo.instance.loadDefaults(true, MainApplication.worker, false,
+                    && MapWithAILayerInfo.getInstance().getDefaultLayers().isEmpty()) {
+                MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false,
                         () -> Logging.info("MapWithAI Sources: Initialized sources"));
             }
         }

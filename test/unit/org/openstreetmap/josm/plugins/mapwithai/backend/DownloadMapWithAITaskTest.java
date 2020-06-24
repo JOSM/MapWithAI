@@ -32,7 +32,7 @@ public class DownloadMapWithAITaskTest {
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         Future<?> future = task.download(
                 new BoundingBoxMapWithAIDownloader(MapWithAIDataUtilsTest.getTestBounds(),
-                        MapWithAILayerInfo.instance.getLayers().get(0), false),
+                        MapWithAILayerInfo.getInstance().getLayers().get(0), false),
                 new DownloadParams(), MapWithAIDataUtilsTest.getTestBounds(), NullProgressMonitor.INSTANCE);
         future.get();
         assertNotNull(task.getDownloadedData(), "Data should be downloaded");

@@ -41,7 +41,7 @@ public final class MapWithAIPreferenceHelper {
     public static List<MapWithAIInfo> getMapWithAIUrl() {
         return MapWithAIDataUtils.getLayer(false) == null
                 || MapWithAIDataUtils.getLayer(false).getMapWithAIUrl() == null
-                        ? MapWithAILayerInfo.instance.getLayers()
+                        ? MapWithAILayerInfo.getInstance().getLayers()
                         : Collections.singletonList(MapWithAIDataUtils.getLayer(false).getMapWithAIUrl());
     }
 
@@ -92,8 +92,8 @@ public final class MapWithAIPreferenceHelper {
      */
     public static void setMapWithAIUrl(MapWithAIInfo info, boolean enabled, boolean permanent) {
         if (permanent && enabled) {
-            MapWithAILayerInfo.instance.add(info);
-            MapWithAILayerInfo.instance.save();
+            MapWithAILayerInfo.getInstance().add(info);
+            MapWithAILayerInfo.getInstance().save();
         } else if (enabled && MapWithAIDataUtils.getLayer(false) != null) {
             MapWithAIDataUtils.getLayer(false).setMapWithAIUrl(info);
         }
