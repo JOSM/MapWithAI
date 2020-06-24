@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
@@ -59,6 +60,8 @@ public final class MapWithAIDataUtils {
     public static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
 
     private static String paintStyleResourceUrl = DEFAULT_PAINT_STYLE_RESOURCE_URL;
+    private static Pattern TEST_PATTERN = Pattern
+            .compile("https?:\\/\\/(www\\.)?localhost(:[0-9]+)?\\/josmfile\\?page=Styles\\/MapWithAI&zip=1");
 
     private MapWithAIDataUtils() {
         // Hide the constructor
@@ -69,12 +72,12 @@ public final class MapWithAIDataUtils {
      */
     public static void addMapWithAIPaintStyles() {
         // Remove old url's that were automatically added -- remove after Jan 01, 2020
-        final List<String> oldUrls = Arrays.asList(
-                "https://gitlab.com/gokaart/JOSM_MapWithAI/raw/master/src/resources/styles/standard/mapwithai.mapcss",
-                "https://gitlab.com/smocktaylor/rapid/raw/master/src/resources/styles/standard/rapid.mapcss",
-                "resource://styles/standard/mapwithai.mapcss");
+        final List<Pattern> oldUrls = Arrays.asList(Pattern.compile(
+                "https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
+                TEST_PATTERN, Pattern.compile("resource://styles/standard/mapwithai.mapcss"));
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(style -> oldUrls.contains(style.url)).forEach(MapPaintStyles::removeStyle);
+                .filter(style -> oldUrls.stream().anyMatch(p -> p.matcher(style.url).matches()))
+                .forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
             final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
@@ -90,15 +93,16 @@ public final class MapWithAIDataUtils {
      */
     public static boolean checkIfMapWithAIPaintStyleExists() {
         return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
-                .map(MapCSSStyleSource.class::cast).anyMatch(source -> paintStyleResourceUrl.equals(source.url));
+                .map(MapCSSStyleSource.class::cast).anyMatch(source -> paintStyleResourceUrl.equals(source.url)
+                        || TEST_PATTERN.matcher(source.url).matches());
     }
 
     /**
      * Remove MapWithAI paint styles
      */
     public static void removeMapWithAIPaintStyles() {
-        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(source -> paintStyleResourceUrl.equals(source.url))
+        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream().filter(
+                source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
                 .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
     }
 
@@ -108,8 +112,9 @@ public final class MapWithAIDataUtils {
      * @return get the MapWithAI Paint style
      */
     public static StyleSource getMapWithAIPaintStyle() {
-        return MapPaintStyles.getStyles().getStyleSources().parallelStream()
-                .filter(source -> paintStyleResourceUrl.equals(source.url)).findAny().orElse(null);
+        return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(
+                source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
+                .findAny().orElse(null);
     }
 
     /**
