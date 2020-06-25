@@ -27,10 +27,11 @@ public class MapWithAIDownloadSourceType implements IDownloadSourceType, LayerCh
     @Override
     public JCheckBox getCheckBox(ChangeListener checkboxChangeListener) {
         if (cbDownloadMapWithAIData == null) {
-            cbDownloadMapWithAIData = new JCheckBox(tr("MapWithAI data"), true);
+            cbDownloadMapWithAIData = new JCheckBox(tr("MapWithAI data"), getBooleanProperty().get());
             cbDownloadMapWithAIData
                     .setToolTipText(tr("Select to download MapWithAI data in the selected download area."));
-            cbDownloadMapWithAIData.getModel().addChangeListener(checkboxChangeListener);
+            cbDownloadMapWithAIData.getModel()
+                    .addActionListener(l -> getBooleanProperty().put(cbDownloadMapWithAIData.isSelected()));
             MapWithAILayerInfo.getInstance().addListener(this);
         }
         if (checkboxChangeListener != null) {
