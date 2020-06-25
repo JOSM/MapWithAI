@@ -150,6 +150,8 @@ public class MapWithAILayerInfo {
                     Logging.warn("Unable to load imagery preference entry:" + e);
                 }
             }
+            // Remove a remote control commands in layers
+            layers.removeIf(i -> i.getUrl().contains("localhost:8111"));
             Collections.sort(layers);
         }
         loadDefaults(false, MainApplication.worker, fastFail, listener);
