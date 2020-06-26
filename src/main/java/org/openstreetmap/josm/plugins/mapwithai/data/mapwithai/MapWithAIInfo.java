@@ -14,8 +14,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -310,7 +308,6 @@ public class MapWithAIInfo extends
      *
      * @return The desired source tag, or {@code null}.
      */
-    @CheckForNull
     public String getSource() {
         return this.source;
     }
@@ -339,7 +336,6 @@ public class MapWithAIInfo extends
      * @return The primary category (i.e., buildings, featured, preview, addresses,
      *         etc)
      */
-    @Nonnull
     public MapWithAICategory getCategory() {
         return category == null ? MapWithAICategory.OTHER.getDefault() : category;
     }
