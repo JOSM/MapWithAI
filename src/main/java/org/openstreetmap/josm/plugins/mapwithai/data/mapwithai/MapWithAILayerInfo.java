@@ -17,9 +17,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
+import org.openstreetmap.josm.data.preferences.BooleanProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.gui.util.GuiHelper;
@@ -38,6 +40,10 @@ import org.openstreetmap.josm.tools.Utils;
  * Manages the list of imagery entries that are shown in the imagery menu.
  */
 public class MapWithAILayerInfo {
+    /**
+     * A boolean preference used to determine if preview datasets should be shown
+     */
+    private static final BooleanProperty SHOW_PREVIEW = new BooleanProperty("mapwithai.sources.preview", false);
 
     /** List of all usable layers */
     private final List<MapWithAIInfo> layers = Collections.synchronizedList(new ArrayList<>());
@@ -456,7 +462,7 @@ public class MapWithAILayerInfo {
      * @return unmodifiable list containing usable layers
      */
     public List<MapWithAIInfo> getLayers() {
-        return Collections.unmodifiableList(layers);
+        return Collections.unmodifiableList(filterPreview(layers));
     }
 
     /**
@@ -465,7 +471,7 @@ public class MapWithAILayerInfo {
      * @return unmodifiable list containing available default layers
      */
     public List<MapWithAIInfo> getDefaultLayers() {
-        return Collections.unmodifiableList(defaultLayers);
+        return Collections.unmodifiableList(filterPreview(defaultLayers));
     }
 
     /**
@@ -475,7 +481,24 @@ public class MapWithAILayerInfo {
      * @since 11570
      */
     public List<MapWithAIInfo> getAllDefaultLayers() {
-        return Collections.unmodifiableList(allDefaultLayers);
+        return Collections.unmodifiableList(filterPreview(allDefaultLayers));
+    }
+
+    /**
+     * Remove preview layers, if {@link SHOW_PREVIEW} is not {@code true}
+     *
+     * @param layers The layers to filter
+     * @return The layers without any preview layers, if {@link SHOW_PREVIEW} is not
+     *         {@code true}.
+     */
+    private static List<MapWithAIInfo> filterPreview(List<MapWithAIInfo> layers) {
+        if (SHOW_PREVIEW.get()) {
+            return layers;
+        }
+        return layers.stream()
+                .filter(i -> i.getCategory() != MapWithAICategory.PREVIEW
+                        && !i.getAdditionalCategories().contains(MapWithAICategory.PREVIEW))
+                .collect(Collectors.toList());
     }
 
     public static void addLayer(MapWithAIInfo info) {

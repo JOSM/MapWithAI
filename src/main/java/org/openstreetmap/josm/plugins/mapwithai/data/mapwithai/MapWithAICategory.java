@@ -17,7 +17,7 @@ import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 
 /**
- * The category for a MapWithAI source
+ * The category for a MapWithAI source (i.e., buildings/highways/addresses/etc.)
  *
  * @author Taylor Smock
  *
@@ -29,7 +29,7 @@ public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
     ADDRESS("presets/misc/housenumber_small", "addresses", marktr("Addresses")),
     POWER("presets/power/pole", "pole", marktr("Power")), PRESET("dialogs/search", "presets", marktr("Presets")),
     FEATURED("presets/service/network-wireless.svg", "featured", marktr("Featured")),
-    OTHER(null, "other", marktr("Other"));
+    PREVIEW("presets/misc/fixme", "preview", marktr("Preview")), OTHER(null, "other", marktr("Other"));
 
     private static final Map<ImageSizes, Map<MapWithAICategory, ImageIcon>> iconCache = Collections
             .synchronizedMap(new EnumMap<>(ImageSizes.class));
