@@ -152,6 +152,14 @@ public class ESRISourceReader implements Closeable {
             newInfo.setAttributionText(feature.getString("accessInformation"));
         }
         newInfo.setDescription(feature.getString("snippet"));
+        if (newInfo.getSource() != null) {
+            StringBuilder sourceTag = new StringBuilder(newInfo.getSource());
+            if (!sourceTag.toString().endsWith("/")) {
+                sourceTag.append('/');
+            }
+            sourceTag.append(feature.getString("name", newInfo.getId()));
+            newInfo.setSource(sourceTag.toString());
+        }
         return (newInfo);
     }
 

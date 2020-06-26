@@ -61,7 +61,7 @@ public class MapWithAILayerInfo {
     public static final String CONFIG_PREFIX = "mapwithai.sources.";
 
     private static final String[] DEFAULT_LAYER_SITES = {
-            "https://gitlab.com/gokaart/JOSM_MapWithAI/-/raw/pages/public/json/sources.json" };
+            "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json" };
 
     /** Unique instance -- MUST be after DEFAULT_LAYER_SITES */
     private static MapWithAILayerInfo instance;
