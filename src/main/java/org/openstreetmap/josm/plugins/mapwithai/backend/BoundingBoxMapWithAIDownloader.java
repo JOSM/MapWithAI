@@ -156,13 +156,17 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                     OsmReader.Options.SAVE_ORIGINAL_ID);
         }
         if (url != null && info.getUrl() != null && !info.getUrl().trim().isEmpty()) {
-            GetDataRunnable.addMapWithAISourceTag(ds, getSourceTag(info));
+            if (info.getSource() != null) {
+                GetDataRunnable.addSourceTag(ds, info.getSource());
+            } else {
+                GetDataRunnable.addMapWithAISourceTag(ds, getMapWithAISourceTag(info));
+            }
         }
         GetDataRunnable.cleanup(ds, downloadArea, info);
         return ds;
     }
 
-    private static String getSourceTag(MapWithAIInfo info) {
+    private static String getMapWithAISourceTag(MapWithAIInfo info) {
         return info.getName() == null ? MapWithAIPlugin.NAME : info.getName();
     }
 

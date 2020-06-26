@@ -14,6 +14,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -37,6 +39,11 @@ public class MapWithAIInfo extends
     private Map<String, String> replacementTags;
     private boolean conflate;
     private String conflationUrl;
+    /**
+     * The preferred source string for the source. This is added as a source tag on
+     * the object _and_ is added to the changeset tags.
+     */
+    private String source;
     private JsonArray conflationParameters;
     private String alreadyConflatedKey;
     /** This is for categories that cannot be conflated */
@@ -67,6 +74,8 @@ public class MapWithAIInfo extends
         String categories;
         @StructEntry
         String alreadyConflatedKey;
+        @StructEntry
+        String source;
 
         /**
          * Constructs a new empty {@link MapWithAIPreferenceEntry}
@@ -92,6 +101,7 @@ public class MapWithAIInfo extends
             if (i.replacementTags != null) {
                 replacementTags = i.replacementTags;
             }
+            source = i.source;
             conflate = i.conflate;
             conflationUrl = i.conflationUrl;
             if (i.categories != null) {
@@ -181,6 +191,7 @@ public class MapWithAIInfo extends
                 }
             }
         }
+        setSource(e.source);
         if (e.replacementTags != null) {
             setReplacementTags(e.replacementTags);
         }
@@ -237,6 +248,7 @@ public class MapWithAIInfo extends
         setEulaAcceptanceRequired(i.getEulaAcceptanceRequired());
         setBounds(i.getBounds());
         setDescription(i.getDescription());
+        setSource(i.getSource());
         this.langDescription = i.langDescription;
         this.attributionText = i.attributionText;
         this.privacyPolicyURL = i.privacyPolicyURL;
@@ -271,6 +283,7 @@ public class MapWithAIInfo extends
                 && Objects.equals(this.conflationParameters, other.conflationParameters)
                 && Objects.equals(this.categories, other.categories)
                 && Objects.equals(this.alreadyConflatedKey, other.alreadyConflatedKey)
+                && (this.source == null || other.source == null || Objects.equals(this.source, other.source))
                 && ((this.parameters == null && other.parameters == null)
                         || Objects.equals(this.parameters, other.parameters));
         // CHECKSTYLE.ON: BooleanExpressionComplexity
@@ -281,16 +294,54 @@ public class MapWithAIInfo extends
         localizedCountriesCache.put("", tr("Worldwide"));
     }
 
+    /**
+     * Set the desired source for this object. This is added to source tags on
+     * objects and is reported via the source changeset tag.
+     *
+     * @param source The desired source
+     */
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    /**
+     * Get the source string to be used for sources on objects and should be used in
+     * the source changeset tag.
+     *
+     * @return The desired source tag, or {@code null}.
+     */
+    @CheckForNull
+    public String getSource() {
+        return this.source;
+    }
+
+    /**
+     * Set the MapWithAI category
+     *
+     * @param category (i.e., buildings, featured, preview, addresses, etc)
+     */
     public void setCategory(MapWithAICategory category) {
         this.category = category;
     }
 
+    /**
+     * Set the description for the info (may be shown in a mouse hover)
+     *
+     * @param description The description for the source
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
+    /**
+     * Get the MapWithAI category
+     *
+     * @return The primary category (i.e., buildings, featured, preview, addresses,
+     *         etc)
+     */
+    @Nonnull
     public MapWithAICategory getCategory() {
-        return category;
+        return category == null ? MapWithAICategory.OTHER.getDefault() : category;
     }
 
     public void setParameters(JsonArray parameters) {

@@ -68,7 +68,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static final double ARTIFACT_ANGLE = 0.1745; // 10 degrees in radians
 
+    /**
+     * The source tag to be used to populate source values. Not seen on objects
+     * post-upload.
+     */
     public static final String MAPWITHAI_SOURCE_TAG_KEY = "mapwithai:source";
+    /**
+     * The source tag to be added to all objects from the source. Seen on objects
+     * post-upload.
+     */
+    public static final String SOURCE_TAG_KEY = "source";
 
     /**
      * @param bbox    The initial bbox to get data from (don't reduce beforehand --
@@ -529,23 +538,39 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     /**
      * Add source tags to primitives
      *
-     * @param dataSet The dataset to add the mapwithai source tag to
+     * @param dataSet The dataset to add the mapwithai source tag to (not visible on
+     *                object post-upload)
      * @param source  The source to associate with the data
      * @return The dataset for easy chaining
      */
     public static DataSet addMapWithAISourceTag(DataSet dataSet, String source) {
-        dataSet.getNodes().parallelStream().filter(GetDataRunnable::checkIfMapWithAISourceShouldBeAdded)
-                .filter(node -> node.getReferrers().isEmpty())
-                .forEach(node -> node.put(MAPWITHAI_SOURCE_TAG_KEY, source));
-        dataSet.getWays().parallelStream().filter(GetDataRunnable::checkIfMapWithAISourceShouldBeAdded)
-                .forEach(way -> way.put(MAPWITHAI_SOURCE_TAG_KEY, source));
-        dataSet.getRelations().parallelStream().filter(GetDataRunnable::checkIfMapWithAISourceShouldBeAdded)
-                .forEach(rel -> rel.put(MAPWITHAI_SOURCE_TAG_KEY, source));
+        return addTag(dataSet, MAPWITHAI_SOURCE_TAG_KEY, source);
+    }
+
+    /**
+     * Add source tags to primitives
+     *
+     * @param dataSet The dataset to add the source tag to (visible on object
+     *                post-upload)
+     * @param source  The source to associate with the data
+     * @return The dataset for easy chaining
+     */
+    public static DataSet addSourceTag(DataSet dataSet, String source) {
+        return addTag(dataSet, SOURCE_TAG_KEY, source);
+    }
+
+    private static DataSet addTag(DataSet dataSet, String key, String value) {
+        dataSet.getNodes().parallelStream().filter(p -> checkIfMapWithAISourceShouldBeAdded(p, key))
+                .filter(node -> node.getReferrers().isEmpty()).forEach(node -> node.put(key, value));
+        dataSet.getWays().parallelStream().filter(p -> checkIfMapWithAISourceShouldBeAdded(p, key))
+                .forEach(way -> way.put(key, value));
+        dataSet.getRelations().parallelStream().filter(p -> checkIfMapWithAISourceShouldBeAdded(p, key))
+                .forEach(rel -> rel.put(key, value));
         return dataSet;
     }
 
-    private static boolean checkIfMapWithAISourceShouldBeAdded(OsmPrimitive prim) {
-        return !prim.isDeleted() && !prim.hasTag(MAPWITHAI_SOURCE_TAG_KEY);
+    private static boolean checkIfMapWithAISourceShouldBeAdded(OsmPrimitive prim, String key) {
+        return !prim.isDeleted() && !prim.hasTag(key);
     }
 
     /**
