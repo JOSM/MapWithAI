@@ -3,6 +3,7 @@
         "type": "esri",
         "url": "https://openstreetmap.maps.arcgis.com/sharing/rest/",
         "id": "bdf6c800b3ae453b9db239e03d7c1727",
+        "source": "esri-feature-osm",
         "conflate": true,
         "conflation_ignore_categories": ["addresses"],
         "conflationUrl": "https://www.mapwith.ai/maps/ml_roads?bbox={bbox}&building_source=esri&esri_id={id}",
