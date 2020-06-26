@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.ProtocolVersion;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ContentType;
@@ -89,6 +90,11 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
             } else {
                 conflatedData = null;
             }
+            ProtocolVersion protocolVersion = response.getStatusLine().getProtocolVersion();
+            Logging.info(new StringBuilder(request.getMethod()).append(' ').append(url).append(" -> ")
+                    .append(protocolVersion.getProtocol()).append('/').append(protocolVersion.getMajor()).append('.')
+                    .append(protocolVersion.getMinor()).append(' ').append(response.getStatusLine().getStatusCode())
+                    .toString());
             this.done = true;
         } catch (IOException | UnsupportedOperationException | IllegalDataException e) {
             Logging.error(e);
