@@ -19,6 +19,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import javax.swing.SwingUtilities;
+
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
@@ -71,12 +73,15 @@ public class MapWithAILayerInfo {
             if (instance == null) {
                 AtomicBoolean finished = new AtomicBoolean();
                 instance = new MapWithAILayerInfo(() -> finished.set(true));
-                while (!finished.get()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        Logging.error(e);
-                        Thread.currentThread().interrupt();
+                // Avoid a deadlock in the EDT.
+                if (!SwingUtilities.isEventDispatchThread()) {
+                    while (!finished.get()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            Logging.error(e);
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
             }
