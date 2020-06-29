@@ -31,7 +31,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     public MapWithAIDownloadOptions() {
         optionPanel = new JPanel(new GridBagLayout());
         JPanel infoHeader = new JPanel();
-        infoHeader.add(new JLabel("Browse and download extra data sets to facilitate your mapping needs."));
+        infoHeader.add(new JLabel("Browse and activate extra data sets to facilitate your mapping needs."));
         optionPanel.add(infoHeader, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this);
         optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.BOTH).anchor(GBC.CENTER));
@@ -41,7 +41,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     @Override
     public void addGui(DownloadDialog gui) {
         iGui = gui;
-        iGui.addDownloadAreaSelector(optionPanel, tr("Browse Data Sources"));
+        iGui.addDownloadAreaSelector(optionPanel, tr("Browse MapWithAI Data Sources"));
         iGui.addDownloadAreaListener(this);
     }
 
