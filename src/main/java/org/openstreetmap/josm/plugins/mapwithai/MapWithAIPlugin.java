@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
+import org.openstreetmap.josm.actions.PreferencesAction;
 import org.openstreetmap.josm.data.validation.OsmValidator;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -61,6 +64,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     private final List<Destroyable> destroyables;
 
+    private PreferencesAction preferenceAction;
+
     private static final Map<Class<? extends JosmAction>, Boolean> MENU_ENTRIES = new LinkedHashMap<>();
     static {
         MENU_ENTRIES.put(MapWithAIAction.class, false);
@@ -89,6 +94,11 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
                 }
             }
         }
+
+        // Add the preferences last to data
+        preferenceAction = PreferencesAction.forPreferenceTab(tr("MapWithAI Preferences"), tr("MapWithAI Preferences"),
+                MapWithAIPreferences.class);
+        MainMenu.add(dataMenu, preferenceAction);
 
         VALIDATORS.forEach(clazz -> {
             if (!OsmValidator.getAllAvailableTestClasses().contains(clazz)) {
@@ -163,6 +173,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         for (final Entry<Action, Component> action : actions.entrySet()) {
             if (MENU_ENTRIES.containsKey(action.getKey().getClass())) {
+                dataMenu.remove(action.getValue());
+            } else if (action.getKey().equals(preferenceAction)) {
                 dataMenu.remove(action.getValue());
             }
         }
