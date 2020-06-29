@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -131,9 +132,13 @@ public class MovePrimitiveDataSetCommand extends Command {
             delete = DeleteCommand.delete(selection, true, true);
         }
         commands.add(delete);
+        commands.removeIf(Objects::isNull);
 
-        return new SequenceCommand(trn("Move {0} OSM Primitive between data sets",
-                "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
+        if (commands != null && !commands.isEmpty()) {
+            return SequenceCommand.wrapIfNeeded(trn("Move {0} OSM Primitive between data sets",
+                    "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
+        }
+        return null;
     }
 
     @Override
