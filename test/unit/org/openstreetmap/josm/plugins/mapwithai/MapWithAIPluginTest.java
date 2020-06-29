@@ -86,7 +86,8 @@ public class MapWithAIPluginTest {
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         Field menuEntries = MapWithAIPlugin.class.getDeclaredField("MENU_ENTRIES");
         menuEntries.setAccessible(true);
-        final int addedMenuItems = ((Map<?, ?>) menuEntries.get(plugin)).size();
+        // + 1 comes from the preferences panel
+        final int addedMenuItems = ((Map<?, ?>) menuEntries.get(plugin)).size() + 1;
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         final int dataMenuSize = dataMenu.getMenuComponentCount();
         plugin = new MapWithAIPlugin(info);
