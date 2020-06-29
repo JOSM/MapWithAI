@@ -3,10 +3,13 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.stream.Stream;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -55,9 +58,29 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     @Override
     public void destroy() {
         if (this.iGui != null) {
-            this.iGui.remove(this);
+            for (JComponent component : getJComponents(this.iGui.getComponents())) {
+                removeFromComponent(component);
+            }
             this.iGui.removeDownloadAreaListener(this);
+            this.iGui = null;
         }
+    }
+
+    private JComponent[] getJComponents(Component[] components) {
+        return Stream.of(components).filter(JComponent.class::isInstance).map(JComponent.class::cast)
+                .toArray(JComponent[]::new);
+    }
+
+    private boolean removeFromComponent(JComponent component) {
+        for (JComponent newComponent : getJComponents(component.getComponents())) {
+            if (optionPanel.equals(newComponent)) {
+                component.remove(optionPanel);
+                return true;
+            } else if (removeFromComponent(newComponent)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
