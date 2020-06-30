@@ -55,7 +55,6 @@ public class MapWithAITestRules extends JOSMTestRules {
 
     public MapWithAITestRules() {
         super();
-        super.assertionsInEDT();
     }
 
     /**
@@ -113,10 +112,16 @@ public class MapWithAITestRules extends JOSMTestRules {
                     .extensions(new WireMockUrlTransformer()).dynamicPort());
             wireMock.start();
             MapWithAIDataUtils.setPaintStyleUrl(replaceUrl(wireMock, MapWithAIDataUtils.getPaintStyleUrl()));
-            currentReleaseUrl = DataAvailability.getReleaseUrl();
+            // Avoid cases where tests could write the wiremock url to some fields.
+            if (currentReleaseUrl == null) {
+                currentReleaseUrl = DataAvailability.getReleaseUrl();
+            }
             DataAvailability.setReleaseUrl(replaceUrl(wireMock, DataAvailability.getReleaseUrl()));
             Config.getPref().put("osm-server.url", wireMock.baseUrl());
-            sourceSites = MapWithAILayerInfo.getImageryLayersSites();
+            // Avoid cases where tests could write the wiremock url to some fields.
+            if (sourceSites == null) {
+                sourceSites = MapWithAILayerInfo.getImageryLayersSites();
+            }
             MapWithAILayerInfo.setImageryLayersSites(sourceSites.stream().map(t -> replaceUrl(wireMock, t))
                     .filter(Objects::nonNull).collect(Collectors.toList()));
             MapWithAIConflationCategory.setConflationJsonLocation(
@@ -158,9 +163,16 @@ public class MapWithAITestRules extends JOSMTestRules {
             List<LoggedRequest> requests = wireMock.findUnmatchedRequests().getRequests();
             requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));
             assertTrue(requests.isEmpty());
-            DataAvailability.setReleaseUrl(currentReleaseUrl);
             Config.getPref().put("osm-server.url", null);
-            MapWithAILayerInfo.setImageryLayersSites(sourceSites);
+            // Avoid cases where tests could write the wiremock url to some fields.
+            if (currentReleaseUrl != null) {
+                DataAvailability.setReleaseUrl(currentReleaseUrl);
+                currentReleaseUrl = null;
+            }
+            if (sourceSites != null) {
+                MapWithAILayerInfo.setImageryLayersSites(sourceSites);
+                sourceSites = null;
+            }
             MapWithAIConflationCategory.resetConflationJsonLocation();
             resetMapWithAILayerInfo();
         }
