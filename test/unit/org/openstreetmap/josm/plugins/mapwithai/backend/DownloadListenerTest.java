@@ -17,6 +17,7 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -28,25 +29,29 @@ public class DownloadListenerTest {
     public JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().projection();
 
     @Test
-    public void testDataSourceChange()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testDataSourceChange() {
         DataSet ds = new DataSet();
-        DownloadListener listener = new DownloadListener(ds);
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(ds, "Test Data", null));
         Bounds bounds = MapWithAIDataUtilsTest.getTestBounds();
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
+
+        MapWithAILayer.ContinuousDownloadAction continuousDownload = new MapWithAILayer.ContinuousDownloadAction(layer);
+
+        // Now defaults to on, so we need to toggle.
+        continuousDownload.actionPerformed(null);
+
         Awaitility.await().atMost(Durations.ONE_SECOND)
                 .until(() -> MainApplication.getLayerManager().containsLayer(layer));
+
         // Test when MapWithAI layer isn't continuous downloading
         ds.addDataSource(new DataSource(bounds, "Test bounds"));
-        listener.dataSourceChange(null);
         Awaitility.await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.ONE_SECOND)
                 .until(() -> layer.getDataSet().getDataSources().isEmpty());
         assertTrue(layer.getDataSet().getDataSourceBounds().isEmpty());
 
-        MapWithAILayer.ContinuousDownloadAction continuousDownload = new MapWithAILayer.ContinuousDownloadAction(layer);
         continuousDownload.actionPerformed(null);
 
-        // Test when MapWithAI layer isn't continuous downloading
+        // Test when MapWithAI layer is continuous downloading
         ds.addDataSource(new DataSource(bounds, "Test bounds 2"));
 
         assertTrue(layer.getDataSet().isEmpty());
@@ -54,31 +59,18 @@ public class DownloadListenerTest {
         assertFalse(layer.getDataSet().isEmpty());
 
         MainApplication.getLayerManager().removeLayer(layer);
-
-        Field listenerDs = DownloadListener.class.getDeclaredField("ds");
-        listenerDs.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        WeakReference<DataSet> lds = (WeakReference<DataSet>) listenerDs.get(listener);
-        assertNotNull(lds.get());
-        ds.addDataSource(new DataSource(bounds, "Test bounds 3"));
-        assertNull(lds.get());
     }
 
     @Test
-    public void testDestroy()
-            throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
+    public void testDestroy() {
         DataSet ds = new DataSet();
         DownloadListener listener = new DownloadListener(ds);
-        Field listenerDs = DownloadListener.class.getDeclaredField("ds");
-        listenerDs.setAccessible(true);
 
-        @SuppressWarnings("unchecked")
-        WeakReference<DataSet> lds = (WeakReference<DataSet>) listenerDs.get(listener);
-        assertNotNull(lds.get());
+        assertNotNull(listener.ds.get());
         listener.destroy();
-        assertNull(lds.get());
+        assertNull(listener.ds.get());
         listener.destroy();
-        assertNull(lds.get());
+        assertNull(listener.ds.get());
     }
 
     @Test

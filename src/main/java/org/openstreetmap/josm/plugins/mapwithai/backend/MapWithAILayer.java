@@ -56,7 +56,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     private Integer maximumAddition;
     private MapWithAIInfo url;
     private Boolean switchLayers;
-    private boolean continuousDownload;
+    private boolean continuousDownload = true;
     private final Lock lock;
 
     /**
@@ -284,14 +284,21 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
             super(tr("Continuous download"));
             new ImageProvider("download").getResource().attachImageIcon(this, true);
             this.layer = layer;
+            updateListeners();
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             layer.continuousDownload = !layer.continuousDownload;
+            updateListeners();
+        }
+
+        void updateListeners() {
             if (layer.continuousDownload) {
                 for (OsmDataLayer data : MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)) {
-                    new DownloadListener(data.getDataSet());
+                    if (!(data instanceof MapWithAILayer)) {
+                        new DownloadListener(data.getDataSet());
+                    }
                 }
             } else {
                 DownloadListener.destroyAll();

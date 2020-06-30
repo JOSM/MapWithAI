@@ -22,7 +22,7 @@ import org.openstreetmap.josm.tools.Destroyable;
  */
 public final class DownloadListener implements DataSourceListener, Destroyable {
 
-    private final WeakReference<DataSet> ds;
+    final WeakReference<DataSet> ds;
     private static final Collection<DownloadListener> LISTENERS = new HashSet<>();
 
     public DownloadListener(DataSet dataSet) {
