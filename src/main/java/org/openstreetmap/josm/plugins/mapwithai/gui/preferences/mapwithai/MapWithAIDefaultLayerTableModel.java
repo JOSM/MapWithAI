@@ -59,13 +59,6 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
     }
 
     @Override
-    public void removeRow(int row) {
-        columnTypes.remove(row);
-        columnDataRetrieval.remove(row);
-        super.removeRow(row);
-    }
-
-    @Override
     public int getRowCount() {
         return MapWithAILayerInfo.getInstance().getAllDefaultLayers().size();
     }
