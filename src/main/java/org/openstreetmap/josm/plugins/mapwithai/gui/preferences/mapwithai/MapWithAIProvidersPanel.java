@@ -124,7 +124,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     /** Options that were passed to the constructor */
     private final Options[] options;
 
-    private interface AreaListener {
+    protected interface AreaListener {
         void updateArea(Bounds area);
     }
 
