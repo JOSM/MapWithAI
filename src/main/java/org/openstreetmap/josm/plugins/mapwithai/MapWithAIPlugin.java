@@ -1,9 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai;
 
+import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.Component;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,10 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import javax.swing.Action;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
@@ -46,6 +44,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIsl
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressOrder;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StreetAddressTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.StubEndsTest;
+import org.openstreetmap.josm.plugins.mapwithai.gui.MapWithAIMenu;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadOptions;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
@@ -66,6 +65,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     private PreferencesAction preferenceAction;
 
+    private MapWithAIMenu mapwithaiMenu;
+
     private static final Map<Class<? extends JosmAction>, Boolean> MENU_ENTRIES = new LinkedHashMap<>();
     static {
         MENU_ENTRIES.put(MapWithAIAction.class, false);
@@ -81,13 +82,17 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         preferenceSetting = new MapWithAIPreferences();
 
-        final JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        // Add MapWithAI specific menu
+        mapwithaiMenu = new MapWithAIMenu();
+        MainApplication.getMenu().addMenu(mapwithaiMenu, "mapwithai:menu", KeyEvent.VK_M, 9, ht("/Plugin/MapWithAI"));
+
         for (final Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
-            if (Arrays.asList(dataMenu.getMenuComponents()).parallelStream().filter(JMenuItem.class::isInstance)
+            if (Arrays.asList(mapwithaiMenu.getMenuComponents()).parallelStream().filter(JMenuItem.class::isInstance)
                     .map(JMenuItem.class::cast)
                     .noneMatch(component -> entry.getKey().equals(component.getAction().getClass()))) {
                 try {
-                    MainMenu.add(dataMenu, entry.getKey().getDeclaredConstructor().newInstance(), entry.getValue());
+                    MainMenu.add(mapwithaiMenu, entry.getKey().getDeclaredConstructor().newInstance(),
+                            entry.getValue());
                 } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                         | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                     Logging.debug(e);
@@ -98,7 +103,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         // Add the preferences last to data
         preferenceAction = PreferencesAction.forPreferenceTab(tr("MapWithAI Preferences"), tr("MapWithAI Preferences"),
                 MapWithAIPreferences.class);
-        MainMenu.add(dataMenu, preferenceAction);
+        MainMenu.add(mapwithaiMenu, preferenceAction);
 
         VALIDATORS.forEach(clazz -> {
             if (!OsmValidator.getAllAvailableTestClasses().contains(clazz)) {
@@ -166,18 +171,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
      */
     @Override
     public void destroy() {
-        final JMenu dataMenu = MainApplication.getMenu().dataMenu;
-        final Map<Action, Component> actions = Arrays.asList(dataMenu.getMenuComponents()).stream()
-                .filter(JMenuItem.class::isInstance).map(JMenuItem.class::cast)
-                .collect(Collectors.toMap(JMenuItem::getAction, component -> component));
-
-        for (final Entry<Action, Component> action : actions.entrySet()) {
-            if (MENU_ENTRIES.containsKey(action.getKey().getClass())) {
-                dataMenu.remove(action.getValue());
-            } else if (action.getKey().equals(preferenceAction)) {
-                dataMenu.remove(action.getValue());
-            }
-        }
+        MainApplication.getMenu().remove(this.mapwithaiMenu);
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
                 .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));

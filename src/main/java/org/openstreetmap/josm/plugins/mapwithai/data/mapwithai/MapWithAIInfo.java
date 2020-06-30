@@ -536,4 +536,13 @@ public class MapWithAIInfo extends
         }
         return Collections.unmodifiableList(this.conflationIgnoreCategory);
     }
+
+    /**
+     * Get a string usable for toolbars
+     *
+     * @return Currently, the name of the source.
+     */
+    public String getToolbarName() {
+        return this.getName();
+    }
 }

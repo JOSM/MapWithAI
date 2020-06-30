@@ -34,7 +34,12 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 
-class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
+/**
+ * A bounding box downloader for MapWithAI
+ *
+ * @author Taylor Smock
+ */
+public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private final String url;
     private final boolean crop;
 
@@ -46,6 +51,13 @@ class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
 
     private static final int DEFAULT_TIMEOUT = 50_000; // 50 seconds
 
+    /**
+     * Create a new {@link BoundingBoxMapWithAIDownloader} object
+     *
+     * @param downloadArea The area to download
+     * @param info         The info to use to get the url to download
+     * @param crop         Whether or not to crop the download area
+     */
     public BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop) {
         super(downloadArea);
         this.info = info;
