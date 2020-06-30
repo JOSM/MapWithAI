@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.junit.Assume.assumeTrue;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -133,5 +134,16 @@ public class GetDataRunnableTest {
                 () -> duplicateWay.getNodes()
                         .forEach(node -> assertTrue(node.isDeleted(), "The duplicate way nodes should be deleted")),
                 () -> assertFalse(nonDuplicateWay.isDeleted(), "The non-duplicate way should not be deleted"));
+    }
+
+    /**
+     * Non-regression test for <a
+     * href=https://gitlab.com/gokaart/JOSM_MapWithAI/-/issues/90>#90</a>
+     */
+    @Test
+    public void testEmptyTagReplacement() {
+        MapWithAIPreferenceHelper.setReplacementTags(Collections.singletonMap("", ""));
+        DataSet ds = new DataSet();
+        assertDoesNotThrow(() -> GetDataRunnable.replaceTags(ds));
     }
 }
