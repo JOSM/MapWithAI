@@ -9,7 +9,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -58,6 +60,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     private Boolean switchLayers;
     private boolean continuousDownload = true;
     private final Lock lock;
+    private final HashSet<MapWithAIInfo> downloadedInfo = new HashSet<>();
 
     /**
      * Create a new MapWithAI layer
@@ -317,5 +320,33 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
             return item;
         }
 
+    }
+
+    /**
+     * Check if the layer has downloaded a specific data type
+     *
+     * @param info The info to check
+     * @return {@code true} if the info has been added to the layer
+     */
+    public boolean hasDownloaded(MapWithAIInfo info) {
+        return downloadedInfo.contains(info);
+    }
+
+    /**
+     * Indicate an info has been downloaded in this layer
+     *
+     * @param info The info that has been downloaded
+     */
+    public void addDownloadedInfo(MapWithAIInfo info) {
+        downloadedInfo.add(info);
+    }
+
+    /**
+     * Get the info that has been downloaded into this layer
+     *
+     * @return An unmodifiable collection of the downloaded info
+     */
+    public Collection<MapWithAIInfo> getDownloadedInfo() {
+        return Collections.unmodifiableCollection(downloadedInfo);
     }
 }

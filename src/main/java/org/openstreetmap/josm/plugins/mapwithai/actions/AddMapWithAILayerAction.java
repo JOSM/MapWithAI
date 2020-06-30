@@ -90,7 +90,7 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
                 }
             }));
         }
-
+        MapWithAIDataUtils.getLayer(false).addDownloadedInfo(info);
     }
 
     @Override
@@ -100,7 +100,8 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
 
     @Override
     protected void updateEnabledState() {
-        setEnabled(!info.isBlacklisted());
+        setEnabled(!info.isBlacklisted() && (MapWithAIDataUtils.getLayer(false) == null
+                || !MapWithAIDataUtils.getLayer(false).hasDownloaded(info)));
     }
 
     @Override

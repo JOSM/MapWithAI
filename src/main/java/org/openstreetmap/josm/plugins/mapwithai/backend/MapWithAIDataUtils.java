@@ -199,7 +199,7 @@ public final class MapWithAIDataUtils {
         final List<Bounds> realBounds = realBBoxes.stream()
                 .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox, maximumDimensions).stream())
                 .map(MapWithAIDataUtils::bboxToBounds).collect(Collectors.toList());
-        if (!MapWithAILayerInfo.getInstance().getLayers().isEmpty()) {
+        if (!MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
             if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());

@@ -2,6 +2,7 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +39,16 @@ public final class MapWithAIPreferenceHelper {
      * @return A list of enabled MapWithAI urls (maps have source, parameters,
      *         enabled, and the url)
      */
-    public static List<MapWithAIInfo> getMapWithAIUrl() {
-        return MapWithAIDataUtils.getLayer(false) == null
-                || MapWithAIDataUtils.getLayer(false).getMapWithAIUrl() == null
-                        ? MapWithAILayerInfo.getInstance().getLayers()
-                        : Collections.singletonList(MapWithAIDataUtils.getLayer(false).getMapWithAIUrl());
+    public static Collection<MapWithAIInfo> getMapWithAIUrl() {
+        MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+        if (layer != null) {
+            if (!layer.getDownloadedInfo().isEmpty()) {
+                return layer.getDownloadedInfo();
+            } else if (layer.getMapWithAIUrl() != null) {
+                return Collections.singleton(layer.getMapWithAIUrl());
+            }
+        }
+        return MapWithAILayerInfo.getInstance().getLayers();
     }
 
     /**
