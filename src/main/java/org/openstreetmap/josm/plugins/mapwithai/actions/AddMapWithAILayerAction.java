@@ -11,6 +11,7 @@ import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmData;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.preferences.ToolbarPreferences;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
@@ -22,6 +23,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 import org.openstreetmap.josm.tools.ImageResource;
+import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -54,9 +56,16 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
                 }
             });
         } else {
-            ImageResource resource = new ImageResource(
-                    this.info.getSourceCategory().getIcon(ImageSizes.MENU).getImage());
-            resource.attachImageIcon(this);
+            try {
+                ImageResource resource = new ImageResource(
+                        this.info.getSourceCategory().getIcon(ImageSizes.MENU).getImage());
+                resource.attachImageIcon(this);
+            } catch (JosmRuntimeException e) {
+                // Eclipse doesn't like giving applications their resources...
+                if (!e.getMessage().contains("failed to locate image")) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -72,10 +81,10 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
         if (layer != null && !layer.getData().getDataSourceBounds().isEmpty()) {
             ds = layer.getDataSet();
             boundsSource = ds;
-        } else if (MainApplication.getLayerManager().getActiveData() != null
-                && !MainApplication.getLayerManager().getActiveData().getDataSourceBounds().isEmpty()) {
-            boundsSource = MainApplication.getLayerManager().getActiveData();
-            ds = MapWithAIDataUtils.getLayer(true).getDataSet();
+        } else if (getDataLayer() != null && !getDataLayer().getDataSet().getDataSourceBounds().isEmpty()) {
+            boundsSource = getDataLayer().getDataSet();
+            layer = MapWithAIDataUtils.getLayer(true);
+            ds = layer.getDataSet();
         } else {
             boundsSource = null;
             ds = null;
@@ -90,7 +99,14 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
                 }
             }));
         }
-        MapWithAIDataUtils.getLayer(false).addDownloadedInfo(info);
+        if (layer != null) {
+            layer.addDownloadedInfo(info);
+        }
+    }
+
+    private OsmDataLayer getDataLayer() {
+        return MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                .filter(i -> !(i instanceof MapWithAILayer)).findFirst().orElse(null);
     }
 
     @Override

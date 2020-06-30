@@ -219,7 +219,7 @@ public class MapWithAITestRules extends JOSMTestRules {
 
         @Override
         public Response transform(Request request, Response response, FileSource files, Parameters parameters) {
-            if (wireMock != null) {
+            if (wireMock != null && !request.getUrl().endsWith("/capabilities")) {
                 String origBody = response.getBodyAsString();
                 String newBody = origBody.replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/");
                 return Response.Builder.like(response).but().body(newBody).build();
