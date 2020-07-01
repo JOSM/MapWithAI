@@ -68,6 +68,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
     class DownloadTask extends AbstractInternalTask {
         BoundingBoxMapWithAIDownloader downloader;
         final Bounds bounds;
+        private List<MapWithAIInfo> relevantUrls;
 
         DownloadTask(DownloadParams settings, String title, boolean ignoreException, boolean zoomAfterDownload,
                 Bounds bounds) {
@@ -90,8 +91,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
 
         @Override
         protected void realRun() throws SAXException, IOException, OsmTransferException {
-            Collection<MapWithAIInfo> relevantUrls = urls.stream()
-                    .filter(i -> i.getBounds() == null || i.getBounds().intersects(bounds))
+            relevantUrls = urls.stream().filter(i -> i.getBounds() == null || i.getBounds().intersects(bounds))
                     .collect(Collectors.toList());
             ProgressMonitor monitor = getProgressMonitor();
             if (relevantUrls.size() < 5) {
@@ -114,7 +114,9 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         protected void finish() {
             if (!isCanceled() && !isFailed()) {
                 synchronized (DownloadMapWithAITask.DownloadTask.class) {
-                    MapWithAIDataUtils.getLayer(true).getDataSet().mergeFrom(downloadedData);
+                    MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
+                    layer.getDataSet().mergeFrom(downloadedData);
+                    relevantUrls.forEach(layer::addDownloadedInfo);
                 }
                 GetDataRunnable.cleanup(MapWithAIDataUtils.getLayer(true).getDataSet(), null, null);
             }

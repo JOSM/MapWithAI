@@ -1,12 +1,16 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.gui;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trc;
 
 import java.awt.Component;
 import java.awt.GraphicsEnvironment;
 import java.awt.MenuComponent;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
@@ -32,6 +36,8 @@ import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.gui.MenuScroller;
 import org.openstreetmap.josm.gui.preferences.imagery.ImageryPreference;
 import org.openstreetmap.josm.plugins.mapwithai.actions.AddMapWithAILayerAction;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -109,10 +115,15 @@ public class MapWithAIMenu extends JMenu {
         removeDynamicItems();
 
         addDynamicSeparator();
+        // Get layers in use
+        MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+        final Collection<MapWithAIInfo> alreadyInUse = layer == null ? Collections.emptyList()
+                : layer.getDownloadedInfo();
 
         // for each configured ImageryInfo, add a menu entry.
         final List<MapWithAIInfo> savedLayers = new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers());
         savedLayers.sort(alphabeticSourceComparator);
+        savedLayers.removeIf(alreadyInUse::contains);
         for (final MapWithAIInfo u : savedLayers) {
             addDynamic(trackJosmAction(new AddMapWithAILayerAction(u)), null);
         }
@@ -122,10 +133,9 @@ public class MapWithAIMenu extends JMenu {
         if (MainApplication.isDisplayingMapView()) {
             MapView mv = MainApplication.getMap().mapView;
             LatLon pos = mv.getProjection().eastNorth2latlon(mv.getCenter());
-            final List<MapWithAIInfo> alreadyInUse = MapWithAILayerInfo.getInstance().getLayers();
             final List<MapWithAIInfo> inViewLayers = MapWithAILayerInfo.getInstance().getDefaultLayers().stream()
                     .filter(i -> i.getBounds() != null && i.getBounds().contains(pos) && !alreadyInUse.contains(i)
-                            && isPosInOneShapeIfAny(i, pos))
+                            && !savedLayers.contains(i) && isPosInOneShapeIfAny(i, pos))
                     .sorted(alphabeticSourceComparator).collect(Collectors.toList());
             if (!inViewLayers.isEmpty()) {
                 if (inViewLayers.stream().anyMatch(i -> i.getCategory() == i.getCategory().getDefault())) {
@@ -151,6 +161,18 @@ public class MapWithAIMenu extends JMenu {
                         dynamicNonPhotoMenus.add(add(list.get(0)));
                     }
                 }
+            }
+            if (dynamicNonPhotoItems.isEmpty()) {
+                JosmAction infoAction = new JosmAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // Do nothing
+                    }
+                };
+                infoAction.putValue(Action.NAME, tr("No futher download options"));
+                infoAction.setEnabled(false);
+                infoAction.setTooltip(tr("No further download actions possible in this area"));
+                addDynamic(infoAction, null);
             }
         }
     }
