@@ -66,7 +66,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
         }
     }
 
-    private JComponent[] getJComponents(Component[] components) {
+    private static JComponent[] getJComponents(Component[] components) {
         return Stream.of(components).filter(JComponent.class::isInstance).map(JComponent.class::cast)
                 .toArray(JComponent[]::new);
     }

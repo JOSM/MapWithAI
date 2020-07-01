@@ -22,7 +22,6 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 public class MapWithAIDownloadSourceType implements IDownloadSourceType, LayerChangeListener {
     static final BooleanProperty IS_ENABLED = new BooleanProperty("download.mapwithai.data", false);
     JCheckBox cbDownloadMapWithAIData;
-    private static MapWithAIDownloadSourceType INSTANCE;
 
     @Override
     public JCheckBox getCheckBox(ChangeListener checkboxChangeListener) {

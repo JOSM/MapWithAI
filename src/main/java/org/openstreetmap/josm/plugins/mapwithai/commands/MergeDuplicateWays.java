@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -179,7 +178,7 @@ public class MergeDuplicateWays extends Command {
     public static Command checkForDuplicateWays(Way way1, Way way2) {
         Command returnCommand = null;
         final Map<Pair<Integer, Node>, Map<Integer, Node>> duplicateNodes = getDuplicateNodes(way1, way2);
-        final Set<Entry<Pair<Integer, Node>, Map<Integer, Node>>> duplicateEntrySet = duplicateNodes.entrySet();
+        final Set<Map.Entry<Pair<Integer, Node>, Map<Integer, Node>>> duplicateEntrySet = duplicateNodes.entrySet();
         final Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> compressed = duplicateNodes.entrySet().stream()
                 .map(entry -> new Pair<Pair<Integer, Node>, Pair<Integer, Node>>(entry.getKey(),
                         new Pair<Integer, Node>(entry.getValue().entrySet().iterator().next().getKey(),

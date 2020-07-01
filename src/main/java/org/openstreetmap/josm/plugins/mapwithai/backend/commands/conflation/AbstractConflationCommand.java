@@ -39,7 +39,13 @@ import org.openstreetmap.josm.tools.Pair;
 public abstract class AbstractConflationCommand extends Command {
     protected Collection<OsmPrimitive> possiblyAffectedPrimitives;
 
-    public AbstractConflationCommand(DataSet data) {
+    /**
+     * Creates a new command in the context of a specific data set, without data
+     * layer
+     *
+     * @param data the data set. Must not be null.
+     */
+    protected AbstractConflationCommand(DataSet data) {
         super(data);
     }
 

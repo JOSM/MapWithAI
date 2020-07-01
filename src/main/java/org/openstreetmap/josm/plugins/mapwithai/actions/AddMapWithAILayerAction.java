@@ -4,6 +4,8 @@ package org.openstreetmap.josm.plugins.mapwithai.actions;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.actions.AdaptableAction;
 import org.openstreetmap.josm.actions.AddImageryLayerAction;
@@ -50,11 +52,19 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
         // change toolbar icon from if specified
         String icon = info.getIcon();
         if (icon != null) {
-            new ImageProvider(icon).setOptional(true).getResourceAsync(result -> {
+            Future<?> future = new ImageProvider(icon).setOptional(true).getResourceAsync(result -> {
                 if (result != null) {
                     GuiHelper.runInEDT(() -> result.attachImageIcon(this));
                 }
             });
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                Logging.error(e);
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                Logging.error(e);
+            }
         } else {
             try {
                 ImageResource resource = new ImageResource(
@@ -104,7 +114,7 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
         }
     }
 
-    private OsmDataLayer getDataLayer() {
+    private static OsmDataLayer getDataLayer() {
         return MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
                 .filter(i -> !(i instanceof MapWithAILayer)).findFirst().orElse(null);
     }

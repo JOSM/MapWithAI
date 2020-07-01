@@ -30,6 +30,10 @@ public class MapWithAIConflationCategory {
         }
     }
 
+    private MapWithAIConflationCategory() {
+        // Hide the constructor
+    }
+
     /**
      * Get a conflation URL for a specific category
      *

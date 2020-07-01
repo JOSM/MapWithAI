@@ -216,8 +216,8 @@ public class MapWithAIAddComandTest {
     /**
      * https://josm.openstreetmap.de/ticket/18351
      *
-     * @throws InterruptedException
-     * @throws InvocationTargetException
+     * @throws InterruptedException      if the thread is interrupted
+     * @throws InvocationTargetException if some checked exception occurs
      */
     @Test
     public void testRegression18351() throws InvocationTargetException, InterruptedException {

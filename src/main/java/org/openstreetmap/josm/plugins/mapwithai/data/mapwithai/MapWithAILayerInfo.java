@@ -51,7 +51,7 @@ public class MapWithAILayerInfo {
     private final List<MapWithAIInfo> layers = Collections.synchronizedList(new ArrayList<>());
     /** List of layer ids of all usable layers */
     private final Map<String, MapWithAIInfo> layerIds = new HashMap<>();
-    private ListenerList<LayerChangeListener> listeners = ListenerList.create();
+    private final ListenerList<LayerChangeListener> listeners = ListenerList.create();
     /** List of all available default layers */
     static final List<MapWithAIInfo> defaultLayers = new ArrayList<>();
     /** List of all available default layers (including mirrors) */

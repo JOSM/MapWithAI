@@ -194,14 +194,14 @@ public class MapWithAITestRules extends JOSMTestRules {
     /**
      * Replace URL servers with wiremock
      *
-     * @param wireMock The wiremock to point to
-     * @param url      The URL to fix
+     * @param wireMockServer The wiremock to point to
+     * @param url            The URL to fix
      * @return A url that points at the wiremock server
      */
-    private static String replaceUrl(WireMockServer wireMock, String url) {
+    private static String replaceUrl(WireMockServer wireMockServer, String url) {
         try {
             URL temp = new URL(url);
-            return wireMock.baseUrl() + temp.getFile();
+            return wireMockServer.baseUrl() + temp.getFile();
         } catch (MalformedURLException error) {
             Logging.error(error);
         }

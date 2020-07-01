@@ -184,7 +184,7 @@ public class MapWithAISourceReader implements Closeable {
             }
 
         }
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     private static Collection<Shape> areaToShapes(java.awt.Shape shape) {

@@ -93,6 +93,8 @@ public class AddNodeToWayCommand extends Command {
     }
 
     /**
+     * Get the node that will be added to a way
+     *
      * @return {@link Node} to add to {@link Way}
      */
     public Node getToAddNode() {
@@ -100,6 +102,8 @@ public class AddNodeToWayCommand extends Command {
     }
 
     /**
+     * Get the way that we are modifying
+     *
      * @return {@link Way} that we are adding a {@link Node} to
      */
     public Way getWay() {
@@ -107,6 +111,8 @@ public class AddNodeToWayCommand extends Command {
     }
 
     /**
+     * Get the node that we are adding our node after
+     *
      * @return {@link Node} that we are adding another {@link Node} after.
      */
     public Node getFirstNode() {
@@ -114,6 +120,8 @@ public class AddNodeToWayCommand extends Command {
     }
 
     /**
+     * Get the node that we are adding our node before
+     *
      * @return {@link Node} that we are adding another {@link Node} before.
      */
     public Node getSecondNode() {

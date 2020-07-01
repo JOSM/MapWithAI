@@ -303,8 +303,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     /**
      * Replace tags in a dataset with a set of replacement tags
      *
-     * @param dataSet The dataset with primitives to change
-     * @param map     The tags to replace
+     * @param dataSet     The dataset with primitives to change
+     * @param replaceTags The tags to replace
      */
     public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
         replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()

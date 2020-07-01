@@ -32,7 +32,9 @@ public class MapWithAIPreferencesTest {
     private MapWithAIPreferences preferences;
 
     /**
-     * @throws Exception
+     * Set up the test
+     *
+     * @throws Exception if something goes wrong with set up
      */
     @Before
     public void setUp() throws Exception {
@@ -42,10 +44,10 @@ public class MapWithAIPreferencesTest {
     /**
      * Test method for {@link MapWithAIPreferences#addGui(PreferenceTabbedPane)}.
      *
-     * @throws SecurityException
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     * @throws IllegalArgumentException
+     * @throws SecurityException        see {@link java.lang.Class#getDeclaredField}
+     * @throws NoSuchFieldException     see {@link java.lang.Class#getDeclaredField}
+     * @throws IllegalAccessException   see {@link java.lang.reflect.Field#get}
+     * @throws IllegalArgumentException see {@link java.lang.reflect.Field#get}
      */
     @Test
     public void testAddGui()

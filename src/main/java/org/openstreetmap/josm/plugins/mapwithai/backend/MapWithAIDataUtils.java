@@ -60,7 +60,7 @@ public final class MapWithAIDataUtils {
     public static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
 
     private static String paintStyleResourceUrl = DEFAULT_PAINT_STYLE_RESOURCE_URL;
-    private static Pattern TEST_PATTERN = Pattern
+    private static final Pattern TEST_PATTERN = Pattern
             .compile("^https?:\\/\\/(www\\.)?localhost[:0-9]*\\/josmfile\\?page=Styles\\/MapWithAI&zip=1$");
 
     private MapWithAIDataUtils() {

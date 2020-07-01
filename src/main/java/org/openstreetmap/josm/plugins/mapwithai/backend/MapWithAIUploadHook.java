@@ -11,8 +11,9 @@ import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.tools.Destroyable;
 
 /**
- * @author Taylor Smock
+ * Add information that is useful for QC/debugging to OSM changesets.
  *
+ * @author Taylor Smock
  */
 public class MapWithAIUploadHook implements UploadHook, Destroyable {
     private final String version;

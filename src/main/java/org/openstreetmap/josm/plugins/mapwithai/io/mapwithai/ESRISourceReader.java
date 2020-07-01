@@ -37,7 +37,7 @@ public class ESRISourceReader implements Closeable {
     private final MapWithAIInfo source;
     private CachedFile cachedFile;
     private boolean fastFail;
-    private List<MapWithAICategory> ignoreConflationCategories;
+    private final List<MapWithAICategory> ignoreConflationCategories;
     private static final String JSON_QUERY_PARAM = "?f=json";
 
     /**

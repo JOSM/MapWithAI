@@ -40,9 +40,9 @@ import org.openstreetmap.josm.tools.Logging;
 public class DataConflationSender implements RunnableFuture<DataSet> {
 
     private static final int MAX_POLLS = 100;
-    private DataSet external;
-    private DataSet osm;
-    private MapWithAICategory category;
+    private final DataSet external;
+    private final DataSet osm;
+    private final MapWithAICategory category;
     private DataSet conflatedData;
     private CloseableHttpClient client;
     private boolean done;

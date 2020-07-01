@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 
 import javax.swing.JMenuItem;
@@ -63,9 +62,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     private final List<Destroyable> destroyables;
 
-    private PreferencesAction preferenceAction;
+    private final PreferencesAction preferenceAction;
 
-    private MapWithAIMenu mapwithaiMenu;
+    private final MapWithAIMenu mapwithaiMenu;
 
     private static final Map<Class<? extends JosmAction>, Boolean> MENU_ENTRIES = new LinkedHashMap<>();
     static {
@@ -86,7 +85,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         mapwithaiMenu = new MapWithAIMenu();
         MainApplication.getMenu().addMenu(mapwithaiMenu, "mapwithai:menu", KeyEvent.VK_M, 9, ht("/Plugin/MapWithAI"));
 
-        for (final Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
+        for (final Map.Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
             if (Arrays.asList(mapwithaiMenu.getMenuComponents()).parallelStream().filter(JMenuItem.class::isInstance)
                     .map(JMenuItem.class::cast)
                     .noneMatch(component -> entry.getKey().equals(component.getAction().getClass()))) {
@@ -154,6 +153,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     }
 
     /**
+     * The current version for the plugin
+     *
      * @return The version information of the plugin
      */
     public static String getVersionInfo() {

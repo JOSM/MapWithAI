@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -154,6 +153,9 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     }
 
     /**
+     * Calculate the number of objects added in this command that are not deleted
+     * (may not count significantly modified objects as well).
+     *
      * @return The number of MapWithAI objects added in this command that are not
      *         deleted
      */
@@ -170,7 +172,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     public Collection<String> getSourceTags() {
         return sources.entrySet().parallelStream()
-                .filter(entry -> validPrimitive(editable.getPrimitiveById(entry.getKey()))).map(Entry::getValue)
+                .filter(entry -> validPrimitive(editable.getPrimitiveById(entry.getKey()))).map(Map.Entry::getValue)
                 .filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
     }
 

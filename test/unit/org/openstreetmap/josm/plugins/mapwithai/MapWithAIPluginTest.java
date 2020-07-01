@@ -45,7 +45,9 @@ public class MapWithAIPluginTest {
     private static final String VERSION = "no-such-version";
 
     /**
-     * @throws java.lang.Exception
+     * Set up the tests
+     *
+     * @throws java.lang.Exception if something goes wrong
      */
     @Before
     public void setUp() throws Exception {

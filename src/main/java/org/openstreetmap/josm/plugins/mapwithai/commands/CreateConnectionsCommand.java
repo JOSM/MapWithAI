@@ -148,6 +148,8 @@ public class CreateConnectionsCommand extends Command {
     }
 
     /**
+     * Add third-party commands that are run when conflating data.
+     *
      * @param command A command to run when copying data from the MapWithAI layer
      */
     public static void addConflationCommand(Class<? extends AbstractConflationCommand> command) {
@@ -155,6 +157,8 @@ public class CreateConnectionsCommand extends Command {
     }
 
     /**
+     * Get the commands to run when conflating data.
+     *
      * @return A set of commands to run when copying data from the MapWithAI layer
      */
     public static Set<Class<? extends AbstractConflationCommand>> getConflationCommands() {
@@ -162,6 +166,8 @@ public class CreateConnectionsCommand extends Command {
     }
 
     /**
+     * Remove a command that runs when conflating data.
+     *
      * @param command The command class to remove
      * @return {@code true} if the conflation command was removed and was present
      * @see List#remove

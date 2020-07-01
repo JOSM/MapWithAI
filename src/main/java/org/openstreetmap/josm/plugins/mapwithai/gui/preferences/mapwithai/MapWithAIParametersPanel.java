@@ -148,7 +148,9 @@ class MapWithAIParametersPanel extends JPanel {
     }
 
     /**
-     * @return headers provided by user
+     * HTTP parameters (so {@code ?param1=value1&param2=value2})
+     *
+     * @return parameters provided by user
      */
     public Map<String, Pair<String, Boolean>> getParameters() {
         return headers.stream().distinct()
@@ -156,6 +158,8 @@ class MapWithAIParametersPanel extends JPanel {
     }
 
     /**
+     * These are the current parameters for the info object.
+     *
      * @param parameters The initial parameters to show in the dialog
      */
     public void setParameters(JsonArray parameters) {
@@ -175,6 +179,8 @@ class MapWithAIParametersPanel extends JPanel {
     }
 
     /**
+     * Add a listener to the model ({@code model.addTableModelListener})
+     *
      * @param l A TableModelListener for the backing model
      */
     public void addListener(TableModelListener l) {
@@ -182,6 +188,8 @@ class MapWithAIParametersPanel extends JPanel {
     }
 
     /**
+     * Get the model that is displayed in the panel.
+     *
      * @return The table model used to display parameters
      */
     public TableModel getModel() {

@@ -331,7 +331,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         defaultModel.addTableModelListener(e -> activeTable.repaint());
         activeModel.addTableModelListener(e -> defaultTable.repaint());
 
-        setupDefaultTable(this, defaultTable, options, areaListeners);
+        setupDefaultTable(defaultTable, options, areaListeners);
 
         TableColumnModel mod = activeTable.getColumnModel();
         mod.getColumn(1).setPreferredWidth(800);
@@ -436,7 +436,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         }
     }
 
-    private static void setupDefaultTable(MapWithAIProvidersPanel panel, JTable defaultTable, Options[] options,
+    private static void setupDefaultTable(JTable defaultTable, Options[] options,
             ListenerList<AreaListener> areaListeners) {
         boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
         int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
@@ -507,7 +507,9 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     /**
-     * @param The current area to highlight data from
+     * Set the current bounds of the map and the area to select
+     *
+     * @param area The current area to highlight data from
      */
     public void setCurrentBounds(Bounds area) {
         this.defaultMap.setBoundingBox(area);
@@ -613,12 +615,14 @@ public class MapWithAIProvidersPanel extends JPanel {
         }
 
         private <T> void doCleanupResidualBounds(Map<Integer, T> map, Consumer<T> removalEffect) {
+            List<Integer> toRemove = new ArrayList<>();
             for (Integer i : map.keySet()) {
                 int viewIndex = defaultTable.convertRowIndexToView(i);
                 if (!defaultTable.getSelectionModel().isSelectedIndex(viewIndex)) {
-                    removalEffect.accept(map.remove(i));
+                    toRemove.add(i);
                 }
             }
+            toRemove.forEach(i -> removalEffect.accept(map.remove(i)));
         }
 
         private void cleanupResidualBounds() {

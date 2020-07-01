@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import javax.swing.Box;
@@ -64,7 +63,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
 
     private static void fillReplacementTagDisplayData(List<PrefEntry> list) {
         final Map<String, String> current = new TreeMap<>(MapWithAIPreferenceHelper.getReplacementTags());
-        for (final Entry<String, String> entry : current.entrySet()) {
+        for (final Map.Entry<String, String> entry : current.entrySet()) {
             list.add(
                     new PrefEntry(entry.getKey(), new StringSetting(entry.getValue()), new StringSetting(null), false));
         }
@@ -81,7 +80,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         p.add(panel, GBC.std().fill(GBC.BOTH));
     }
 
-    private Component getServerList(PreferenceTabbedPane gui) {
+    private static Component getServerList(PreferenceTabbedPane gui) {
         return new MapWithAIProvidersPanel(gui, MapWithAIProvidersPanel.Options.SHOW_ACTIVE);
     }
 
@@ -235,17 +234,28 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     }
 
     /**
+     * This method returns the checkbox used for deciding if layers should be
+     * switched.
+     *
      * @return The {@code JCheckBox} for whether or not we are switching layers.
      */
     public JCheckBox getSwitchLayerCheckBox() {
         return switchLayerCheckBox;
     }
 
+    /**
+     * Get the checkbox for merging buildings/addresses
+     *
+     * @return The checkbox
+     */
     public JCheckBox getMergeBuildingAddressCheckBox() {
         return mergeBuildingAddressCheckBox;
     }
 
     /**
+     * This is the spinner used to determine maximum additions (and maximum
+     * selections).
+     *
      * @return {@code JSpinner} for the maximum additions
      */
     public JSpinner getMaximumAdditionSpinner() {

@@ -77,8 +77,6 @@ public class MapWithAIUploadHookTest {
 
     /**
      * Test method for {@link MapWithAIUploadHook#modifyChangesetTags(Map)}.
-     *
-     * @throws PluginException
      */
     @Test
     public void testModifyChangesetTags() {
