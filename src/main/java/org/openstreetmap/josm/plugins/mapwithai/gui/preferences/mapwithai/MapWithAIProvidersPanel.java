@@ -244,7 +244,11 @@ public class MapWithAIProvidersPanel extends JPanel {
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<List<String>> {
 
         MapWithAITypeTableCellRenderer() {
-            super(list -> String.join(",", list), i -> null, list -> String.join(",", list), null, false);
+            super(list -> joinList(list), i -> null, list -> joinList(list), null, false);
+        }
+
+        private static String joinList(List<String> list) {
+            return list != null ? String.join(",", list) : "";
         }
     }
 
