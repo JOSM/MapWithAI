@@ -29,6 +29,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SpinnerNumberModel;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
+import org.openstreetmap.josm.data.preferences.BooleanProperty;
 import org.openstreetmap.josm.gui.preferences.DefaultTabPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
@@ -127,6 +128,16 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
 
         final Component expertHorizontalGlue = Box.createHorizontalGlue();
         pane.add(expertHorizontalGlue, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
+        final JLabel previewFeatureSets = new JLabel(tr("Show Preview DataSets"));
+        final JCheckBox previewFeatureSetCheckbox = new JCheckBox();
+        BooleanProperty previewFeatureSetProperty = new BooleanProperty("mapwithai.sources.preview", false);
+        previewFeatureSetCheckbox.setToolTipText(tr("If selected, show datasets which may have various issues"));
+        previewFeatureSetCheckbox.setSelected(Boolean.TRUE.equals(previewFeatureSetProperty.get()));
+        previewFeatureSetCheckbox
+                .addChangeListener(l -> previewFeatureSetProperty.put(previewFeatureSetCheckbox.isSelected()));
+        pane.add(previewFeatureSets, first);
+        pane.add(previewFeatureSetCheckbox, second);
+
         final JLabel replacementTags = new JLabel(tr("Replacement Tags (to be replaced on download)"));
         pane.add(replacementTags, first);
         final JScrollPane scroll2 = new JScrollPane(replacementPreferenceTable);
@@ -193,8 +204,8 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         });
         pane.add(mapWithAILogo, GBC.eol().anchor(GridBagConstraints.EAST));
 
-        Arrays.asList(replaceAddEditDeleteScroll2, scroll2, expertHorizontalGlue, replacementTags)
-                .forEach(ExpertToggleAction::addVisibilitySwitcher);
+        Arrays.asList(replaceAddEditDeleteScroll2, scroll2, expertHorizontalGlue, replacementTags, previewFeatureSets,
+                previewFeatureSetCheckbox).forEach(ExpertToggleAction::addVisibilitySwitcher);
         return pane;
     }
 
