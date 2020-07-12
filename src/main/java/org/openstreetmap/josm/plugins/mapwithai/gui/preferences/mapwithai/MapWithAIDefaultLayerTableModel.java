@@ -2,7 +2,6 @@
 package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,9 +10,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.swing.table.DefaultTableModel;
-
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -31,7 +28,7 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
      */
     public MapWithAIDefaultLayerTableModel() {
         setColumnIdentifiers(new String[] { "", tr("MapWithAI Data Source Name (Default)"), tr("Type"),
-                tr("MapWithAI URL (Default)"), tr("Provider") });
+                tr("MapWithAI URL (Default)"), tr("Provider"), tr("License") });
         columnTypes = Stream.of(MapWithAICategory.class, MapWithAIInfo.class, List.class, String.class, String.class)
                 .collect(Collectors.toCollection(ArrayList::new));
         columnDataRetrieval = new ArrayList<>();
@@ -46,6 +43,7 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
         });
         columnDataRetrieval.add(MapWithAIInfo::getUrl);
         columnDataRetrieval.add(i -> i.getAttributionText(0, null, null));
+        columnDataRetrieval.add(info -> Optional.ofNullable(info.getTermsOfUseURL()).orElse(""));
     }
 
     /**

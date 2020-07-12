@@ -3,12 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,7 +25,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -41,7 +40,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
-
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
 import org.openstreetmap.gui.jmapviewer.MapRectangleImpl;
@@ -71,6 +69,7 @@ import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
 import org.openstreetmap.josm.tools.ImageResource;
 import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.OpenBrowser;
 
 /**
  * A panel displaying imagery providers. Largely duplicates
@@ -79,6 +78,7 @@ import org.openstreetmap.josm.tools.Logging;
  * @since 15115 (extracted from ImageryPreferences)
  */
 public class MapWithAIProvidersPanel extends JPanel {
+
     public enum Options {
         /** Hide the active table */
         SHOW_ACTIVE
@@ -125,6 +125,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     private final Options[] options;
 
     protected interface AreaListener {
+
         void updateArea(Bounds area);
     }
 
@@ -134,6 +135,7 @@ public class MapWithAIProvidersPanel extends JPanel {
      * @param <T> type of information
      */
     private static class MapWithAITableCellRenderer<T> extends DefaultTableCellRenderer implements AreaListener {
+
         private static final NamedColorProperty IMAGERY_BACKGROUND_COLOR = new NamedColorProperty(
                 marktr("MapWithAI Background: Default"), new Color(200, 255, 200));
         private static final NamedColorProperty MAPWITHAI_AREA_BACKGROUND_COLOR = new NamedColorProperty(
@@ -213,6 +215,19 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     /**
+     * class to render the license/terms of use URL of MapWithAI source
+     */
+    private static class MapWithAILicenseTableCellRenderer extends MapWithAITableCellRenderer<String> {
+
+        MapWithAILicenseTableCellRenderer() {
+            super(s -> !s.isEmpty() ? "<html><a href=\"" + s + "\"> License </a>" : "",
+                    u -> MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
+                            .filter(i -> u.equals(i.getUrl())).findFirst().orElse(null),
+                    u -> u, null, true);
+        }
+    }
+
+    /**
      * class to render the URL information of MapWithAI source
      *
      * @since 8065
@@ -269,6 +284,7 @@ public class MapWithAIProvidersPanel extends JPanel {
      */
     private static class MapWithAINameTableCellRenderer
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<MapWithAIInfo> {
+
         private static final long serialVersionUID = 6669934435517244629L;
 
         MapWithAINameTableCellRenderer(boolean showActive) {
@@ -290,6 +306,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
 
         activeTable = new JTable(activeModel) {
+
             private static final long serialVersionUID = -6136421378119093719L;
 
             @Override
@@ -307,6 +324,21 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         defaultTable = new JTable(defaultModel);
         defaultTable.setAutoCreateRowSorter(true);
+        defaultTable.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = defaultTable.rowAtPoint(new Point(e.getX(), e.getY()));
+                int col = defaultTable.columnAtPoint(new Point(e.getX(), e.getY()));
+                if (col == defaultTable.getColumnCount() - 1) {
+                    MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(row);
+                    if (info.getTermsOfUseURL() != null) {
+                        OpenBrowser.displayUrl(info.getTermsOfUseURL());
+                    }
+                }
+
+            }
+        });
         defaultFilter = new FilterField().filter(defaultTable, defaultModel);
 
         defaultModel.addTableModelListener(e -> activeTable.repaint());
@@ -342,6 +374,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         defaultMap = new SlippyMapBBoxChooser();
         defaultMap.setTileSource(SlippyMapBBoxChooser.DefaultOsmTileSourceProvider.get()); // for attribution
         defaultMap.addMouseListener(new MouseAdapter() {
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
@@ -422,6 +455,8 @@ public class MapWithAIProvidersPanel extends JPanel {
         int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
         TableColumnModel mod = defaultTable.getColumnModel();
         int urlWidth = (showActive ? 3 : 0) * tenXWidth;
+        mod.getColumn(5).setPreferredWidth((showActive ? 2 : 0) * tenXWidth);
+        mod.getColumn(5).setCellRenderer(new MapWithAILicenseTableCellRenderer());
         mod.getColumn(4).setPreferredWidth((showActive ? 2 : 0) * tenXWidth);
         mod.getColumn(4).setCellRenderer(new MapWithAIProviderTableCellRenderer());
         mod.getColumn(3).setPreferredWidth(urlWidth);
@@ -441,10 +476,26 @@ public class MapWithAIProvidersPanel extends JPanel {
             defaultTable.removeColumn(mod.getColumn(4));
             defaultTable.removeColumn(mod.getColumn(2));
             areaListeners.addListener(defaultUrlTableCellRenderer);
+
         } else {
             defaultTable.removeColumn(mod.getColumn(3));
             areaListeners.addListener(defaultNameTableCellRenderer);
         }
+        defaultTable.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = defaultTable.rowAtPoint(new Point(e.getX(), e.getY()));
+                int col = defaultTable.columnAtPoint(new Point(e.getX(), e.getY()));
+                if (col == defaultTable.getColumnCount() - 1) {
+                    MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(row);
+                    if (info.getTermsOfUseURL() != null) {
+                        OpenBrowser.displayUrl(info.getTermsOfUseURL());
+                    }
+                }
+
+            }
+        });
     }
 
     /**
@@ -464,6 +515,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     // Listener of default providers list selection
     private final class DefListSelectionListener implements ListSelectionListener {
+
         // The current drawn rectangles and polygons
         private final Map<Integer, MapRectangle> mapRectangles;
         private final Map<Integer, List<MapPolygon>> mapPolygons;
@@ -568,6 +620,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class NewEntryAction extends AbstractAction {
+
         private static final long serialVersionUID = 7451336680150337942L;
 
         NewEntryAction(MapWithAIType type) {
@@ -609,6 +662,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class EditEntryAction extends AbstractAction implements ListSelectionListener {
+
         private static final long serialVersionUID = -1682304557691078801L;
 
         /**
@@ -645,6 +699,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class RemoveEntryAction extends AbstractAction implements ListSelectionListener {
+
         private static final long serialVersionUID = 2666450386256004180L;
 
         /**
@@ -676,6 +731,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class ActivateAction extends AbstractAction implements ListSelectionListener, LayerChangeListener {
+
         private static final long serialVersionUID = -452335751201424801L;
         private final transient ImageResource activate;
         private final transient ImageResource deactivate;
@@ -758,6 +814,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     }
 
     private class ReloadAction extends AbstractAction {
+
         private static final long serialVersionUID = 7801339998423585685L;
 
         /**
