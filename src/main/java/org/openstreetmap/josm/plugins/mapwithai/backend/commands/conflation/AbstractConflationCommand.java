@@ -100,10 +100,17 @@ public abstract class AbstractConflationCommand extends Command {
         final OsmPrimitive[] primitiveConnections = new OsmPrimitive[connections.length];
         for (int i = 0; i < connections.length; i++) {
             final String member = connections[i];
-            SimplePrimitiveId primitiveId = SimplePrimitiveId.fromString(member);
-            primitiveConnections[i] = dataSet.getPrimitiveById(primitiveId);
-            if (primitiveConnections[i] == null) {
-                missingPrimitives.put(i, new Pair<>(primitiveId.getUniqueId(), primitiveId.getType()));
+            try {
+                SimplePrimitiveId primitiveId = SimplePrimitiveId.fromString(member);
+                primitiveConnections[i] = dataSet.getPrimitiveById(primitiveId);
+                if (primitiveConnections[i] == null) {
+                    missingPrimitives.put(i, new Pair<>(primitiveId.getUniqueId(), primitiveId.getType()));
+                }
+            } catch (IllegalArgumentException e) {
+                // Assume someone fiddled with the tag if the pattern doesn't match.
+                if (!e.getMessage().contains("n|node|w|way|r|rel|relation")) {
+                    throw e;
+                }
             }
         }
         obtainMissingPrimitives(dataSet, primitiveConnections, missingPrimitives);
