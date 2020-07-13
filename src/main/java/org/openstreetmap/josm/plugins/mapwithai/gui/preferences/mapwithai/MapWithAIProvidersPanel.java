@@ -3,12 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -40,6 +41,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
+
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
 import org.openstreetmap.gui.jmapviewer.MapRectangleImpl;
@@ -220,7 +222,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     private static class MapWithAILicenseTableCellRenderer extends MapWithAITableCellRenderer<String> {
 
         MapWithAILicenseTableCellRenderer() {
-            super(s -> !s.isEmpty() ? "<html><a href=\"" + s + "\"> License </a>" : "",
+            super(s -> !s.isEmpty() ? "<html><a href=\"" + s + "\">License</a>" : "",
                     u -> MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
                             .filter(i -> u.equals(i.getUrl())).findFirst().orElse(null),
                     u -> u, null, true);
@@ -324,21 +326,6 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         defaultTable = new JTable(defaultModel);
         defaultTable.setAutoCreateRowSorter(true);
-        defaultTable.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = defaultTable.rowAtPoint(new Point(e.getX(), e.getY()));
-                int col = defaultTable.columnAtPoint(new Point(e.getX(), e.getY()));
-                if (col == defaultTable.getColumnCount() - 1) {
-                    MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(row);
-                    if (info.getTermsOfUseURL() != null) {
-                        OpenBrowser.displayUrl(info.getTermsOfUseURL());
-                    }
-                }
-
-            }
-        });
         defaultFilter = new FilterField().filter(defaultTable, defaultModel);
 
         defaultModel.addTableModelListener(e -> activeTable.repaint());
@@ -455,7 +442,10 @@ public class MapWithAIProvidersPanel extends JPanel {
         int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
         TableColumnModel mod = defaultTable.getColumnModel();
         int urlWidth = (showActive ? 3 : 0) * tenXWidth;
-        mod.getColumn(5).setPreferredWidth((showActive ? 2 : 0) * tenXWidth);
+        mod.getColumns();
+        mod.getColumn(6).setCellRenderer(defaultTable.getDefaultRenderer(Boolean.class));
+        mod.getColumn(6).setMaxWidth(20);
+        mod.getColumn(5).setMaxWidth((!showActive ? 1 : 0) * tenXWidth);
         mod.getColumn(5).setCellRenderer(new MapWithAILicenseTableCellRenderer());
         mod.getColumn(4).setPreferredWidth((showActive ? 2 : 0) * tenXWidth);
         mod.getColumn(4).setCellRenderer(new MapWithAIProviderTableCellRenderer());
@@ -473,29 +463,47 @@ public class MapWithAIProvidersPanel extends JPanel {
         mod.getColumn(0).setMaxWidth(ImageProvider.ImageSizes.MENU.getAdjustedWidth() + 5);
 
         if (showActive) {
+            defaultTable.removeColumn(mod.getColumn(6));
             defaultTable.removeColumn(mod.getColumn(4));
             defaultTable.removeColumn(mod.getColumn(2));
             areaListeners.addListener(defaultUrlTableCellRenderer);
-
         } else {
             defaultTable.removeColumn(mod.getColumn(3));
             areaListeners.addListener(defaultNameTableCellRenderer);
         }
         defaultTable.addMouseListener(new MouseAdapter() {
-
             @Override
             public void mouseClicked(MouseEvent e) {
-                int row = defaultTable.rowAtPoint(new Point(e.getX(), e.getY()));
-                int col = defaultTable.columnAtPoint(new Point(e.getX(), e.getY()));
-                if (col == defaultTable.getColumnCount() - 1) {
-                    MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(row);
-                    if (info.getTermsOfUseURL() != null) {
-                        OpenBrowser.displayUrl(info.getTermsOfUseURL());
-                    }
-                }
-
+                clickListener(e);
             }
         });
+    }
+
+    /**
+     * This is a function to be called when a cell is clicked
+     *
+     * @param e The MouseEvent (used to get the appropriate JTable)
+     */
+    private static void clickListener(MouseEvent e) {
+        if (e.getSource() instanceof JTable) {
+            JTable table = (JTable) e.getSource();
+            int realCol = table.convertColumnIndexToModel(table.getSelectedColumn());
+            String tableName = table.getModel().getColumnName(realCol);
+            if (tr("License").equals(tableName)) {
+                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(table.getSelectedRow());
+                if (info.getTermsOfUseURL() != null) {
+                    OpenBrowser.displayUrl(info.getTermsOfUseURL());
+                }
+            } else if (tr("Enabled").equals(tableName)) {
+                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(table.getSelectedRow());
+                MapWithAILayerInfo instance = MapWithAILayerInfo.getInstance();
+                if (instance.getLayers().contains(info)) {
+                    instance.remove(info);
+                } else {
+                    instance.add(info);
+                }
+            }
+        }
     }
 
     /**
