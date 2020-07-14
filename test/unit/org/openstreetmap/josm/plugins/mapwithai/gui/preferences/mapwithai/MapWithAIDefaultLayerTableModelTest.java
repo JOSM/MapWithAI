@@ -20,7 +20,7 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 public class MapWithAIDefaultLayerTableModelTest {
     @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().sources();
+    JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().projection();
 
     @Test
     public void testGetRow() {
