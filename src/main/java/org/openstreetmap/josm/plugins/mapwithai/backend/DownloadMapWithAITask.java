@@ -20,6 +20,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmServerReader;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -30,6 +31,41 @@ import org.xml.sax.SAXException;
 
 public class DownloadMapWithAITask extends DownloadOsmTask {
     private final List<MapWithAIInfo> urls;
+
+    private static class Notifications {
+        private Notifications() {
+            // Hide constructor
+        }
+
+        /**
+         * Show a notification that no data sources that are enabled have data in the
+         * area.
+         */
+        public static void showEmptyNotification() {
+            GuiHelper.runInEDT(Notifications::realShowEmptyNotification);
+        }
+
+        private static void realShowEmptyNotification() {
+            Notification n = new Notification();
+            n.setIcon(ImageProvider.get("mapwithai"));
+            n.setContent(tr("No enabled data sources have potential data in this area"));
+            n.show();
+        }
+
+        /**
+         * Show a notification that no MapWithAI layers are enabled.
+         */
+        public static void showNoLayerNotification() {
+            GuiHelper.runInEDT(Notifications::realShowNoLayerNotification);
+        }
+
+        private static void realShowNoLayerNotification() {
+            Notification n = new Notification();
+            n.setIcon(ImageProvider.get("mapwithai"));
+            n.setContent(tr("No MapWithAI layers were selected. Please select at least one."));
+            GuiHelper.runInEDT(n::show);
+        }
+    }
 
     public DownloadMapWithAITask() {
         urls = MapWithAILayerInfo.getInstance().getLayers();
@@ -44,10 +80,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                     downloadArea);
             return MainApplication.worker.submit(task);
         }
-        Notification n = new Notification();
-        n.setIcon(ImageProvider.get("mapwithai"));
-        n.setContent(tr("No MapWithAI layers were selected. Please select at least one."));
-        n.show();
+        Notifications.showNoLayerNotification();
         return CompletableFuture.completedFuture(null);
     }
 
@@ -94,6 +127,10 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
             relevantUrls = urls.stream().filter(i -> i.getBounds() == null || i.getBounds().intersects(bounds))
                     .collect(Collectors.toList());
             ProgressMonitor monitor = getProgressMonitor();
+            if (relevantUrls.isEmpty()) {
+                Notifications.showEmptyNotification();
+                return;
+            }
             if (relevantUrls.size() < 5) {
                 monitor.indeterminateSubTask(tr("MapWithAI Download"));
             } else {
