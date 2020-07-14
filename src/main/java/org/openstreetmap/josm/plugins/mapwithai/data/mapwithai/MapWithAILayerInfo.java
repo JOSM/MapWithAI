@@ -69,20 +69,23 @@ public class MapWithAILayerInfo {
     private static MapWithAILayerInfo instance;
 
     public static MapWithAILayerInfo getInstance() {
+        AtomicBoolean finished;
         synchronized (DEFAULT_LAYER_SITES) {
             if (instance == null) {
-                AtomicBoolean finished = new AtomicBoolean();
+                finished = new AtomicBoolean();
                 instance = new MapWithAILayerInfo(() -> finished.set(true));
-                // Avoid a deadlock in the EDT.
-                if (!SwingUtilities.isEventDispatchThread()) {
-                    while (!finished.get()) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            Logging.error(e);
-                            Thread.currentThread().interrupt();
-                        }
-                    }
+            } else {
+                finished = null;
+            }
+        }
+        // Avoid a deadlock in the EDT.
+        if (finished != null && !SwingUtilities.isEventDispatchThread()) {
+            while (!finished.get()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Logging.error(e);
+                    Thread.currentThread().interrupt();
                 }
             }
         }

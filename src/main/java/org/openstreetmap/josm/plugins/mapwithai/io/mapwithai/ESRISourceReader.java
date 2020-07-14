@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
@@ -20,6 +21,7 @@ import javax.json.JsonReader;
 import javax.json.JsonString;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
+
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
@@ -35,7 +37,7 @@ import org.openstreetmap.josm.tools.Utils;
  */
 public class ESRISourceReader implements Closeable {
     private final MapWithAIInfo source;
-    private CachedFile cachedFile;
+    private List<CachedFile> cachedFiles = new ArrayList<>();
     private boolean fastFail;
     private final List<MapWithAICategory> ignoreConflationCategories;
     private static final String JSON_QUERY_PARAM = "?f=json";
@@ -85,6 +87,7 @@ public class ESRISourceReader implements Closeable {
             try (CachedFile layers = new CachedFile(url + "content/groups/" + group + searchUrl);
                     BufferedReader i = layers.getContentReader();
                     JsonReader reader = Json.createReader(i)) {
+                cachedFiles.add(layers);
                 layers.setFastFail(fastFail);
                 JsonStructure parser = reader.read();
                 if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
@@ -215,7 +218,7 @@ public class ESRISourceReader implements Closeable {
 
     @Override
     public void close() throws IOException {
-        Utils.close(cachedFile);
+        cachedFiles.forEach(Utils::close);
     }
 
 }

@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,7 +121,7 @@ public class MapWithAIInfo extends
         }
     }
 
-    public static class MapWithAIInfoCategoryComparator implements Comparator<MapWithAIInfo> {
+    public static class MapWithAIInfoCategoryComparator implements Comparator<MapWithAIInfo>, Serializable {
 
         @Override
         public int compare(MapWithAIInfo o1, MapWithAIInfo o2) {

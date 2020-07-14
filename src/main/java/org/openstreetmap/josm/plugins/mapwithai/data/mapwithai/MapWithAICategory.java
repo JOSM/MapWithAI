@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -22,7 +23,7 @@ import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
  * @author Taylor Smock
  *
  */
-public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
+public enum MapWithAICategory implements ISourceCategory<MapWithAICategory>, Serializable {
 
     BUILDING("data/closedway", "buildings", marktr("Buildings")),
     HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),

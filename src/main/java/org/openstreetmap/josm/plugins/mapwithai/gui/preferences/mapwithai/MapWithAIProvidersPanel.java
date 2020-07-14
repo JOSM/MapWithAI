@@ -442,7 +442,6 @@ public class MapWithAIProvidersPanel extends JPanel {
         int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
         TableColumnModel mod = defaultTable.getColumnModel();
         int urlWidth = (showActive ? 3 : 0) * tenXWidth;
-        mod.getColumns();
         mod.getColumn(6).setCellRenderer(defaultTable.getDefaultRenderer(Boolean.class));
         mod.getColumn(6).setMaxWidth(20);
         mod.getColumn(5).setMaxWidth((!showActive ? 1 : 0) * tenXWidth);

@@ -53,7 +53,7 @@ import org.openstreetmap.josm.tools.Pair;
  */
 public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static final long serialVersionUID = 258423685658089715L;
-    private final List<BBox> bbox;
+    private final transient List<BBox> bbox;
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
     private static final float DEGREE_BUFFER = 0.001f;
@@ -61,7 +61,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static final int MAX_LONGITUDE = 180;
 
     private Integer maximumDimensions;
-    private MapWithAIInfo info;
+    private transient MapWithAIInfo info;
 
     private static final int MAX_NUMBER_OF_BBOXES_TO_PROCESS = 1;
     private static final String SERVER_ID_KEY = "current_id";

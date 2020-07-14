@@ -61,7 +61,7 @@ class AddMapWithAIPanel extends JPanel {
     private TimeUnit currentUnit;
     private MapWithAIType type;
 
-    private MapWithAIInfo info;
+    private transient MapWithAIInfo info;
     private JComboBox<MapWithAIType> typeBox;
 
     protected AddMapWithAIPanel(LayoutManager layout) {

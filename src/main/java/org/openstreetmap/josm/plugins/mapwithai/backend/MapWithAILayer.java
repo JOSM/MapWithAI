@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -238,7 +239,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         }
     }
 
-    private static class OsmComparator implements Comparator<OsmPrimitive> {
+    private static class OsmComparator implements Comparator<OsmPrimitive>, Serializable {
         final Collection<OsmPrimitive> previousSelection;
 
         public OsmComparator(Collection<OsmPrimitive> previousSelection) {
