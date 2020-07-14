@@ -116,8 +116,9 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
 
     @Override
     protected void updateEnabledState() {
-        setEnabled(!info.isBlacklisted() && (MapWithAIDataUtils.getLayer(false) == null
-                || !MapWithAIDataUtils.getLayer(false).hasDownloaded(info)));
+        setEnabled(!info.isBlacklisted() && MainApplication.getLayerManager().getActiveDataLayer() != null
+                && (MapWithAIDataUtils.getLayer(false) == null
+                        || !MapWithAIDataUtils.getLayer(false).hasDownloaded(info)));
     }
 
     @Override

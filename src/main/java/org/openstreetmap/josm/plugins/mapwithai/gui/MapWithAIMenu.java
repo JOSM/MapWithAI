@@ -133,7 +133,7 @@ public class MapWithAIMenu extends JMenu {
         if (MainApplication.isDisplayingMapView()) {
             MapView mv = MainApplication.getMap().mapView;
             LatLon pos = mv.getProjection().eastNorth2latlon(mv.getCenter());
-            final List<MapWithAIInfo> inViewLayers = MapWithAILayerInfo.getInstance().getDefaultLayers().stream()
+            final List<MapWithAIInfo> inViewLayers = MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
                     .filter(i -> i.getBounds() != null && i.getBounds().contains(pos) && !alreadyInUse.contains(i)
                             && !savedLayers.contains(i) && isPosInOneShapeIfAny(i, pos))
                     .sorted(alphabeticSourceComparator).collect(Collectors.toList());
@@ -162,7 +162,7 @@ public class MapWithAIMenu extends JMenu {
                     }
                 }
             }
-            if (dynamicNonPhotoItems.isEmpty()) {
+            if (dynJosmActions.isEmpty()) {
                 JosmAction infoAction = new JosmAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
