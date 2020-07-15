@@ -2,6 +2,7 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
+import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.event.ActionEvent;
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import javax.swing.Action;
 import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.AbstractMergeAction;
@@ -29,11 +31,13 @@ import org.openstreetmap.josm.tools.Shortcut;
 public class MapWithAIAction extends JosmAction {
     /** UID */
     private static final long serialVersionUID = 8886705479253246588L;
+    private static final String DOWNLOAD_DATA = marktr("{0}: Download Data");
+    private static final String SWITCH_LAYERS = marktr("{0}: Switch Layers");
 
     public MapWithAIAction() {
-        super(tr("{0}: Download data", MapWithAIPlugin.NAME), "mapwithai",
-                tr("Get data from {0}", MapWithAIPlugin.NAME), Shortcut.registerShortcut("data:mapWithAI",
-                        tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R, Shortcut.CTRL),
+        super(tr(DOWNLOAD_DATA, MapWithAIPlugin.NAME), "mapwithai", tr("Get data from {0}", MapWithAIPlugin.NAME),
+                Shortcut.registerShortcut("data:mapWithAI", tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R,
+                        Shortcut.CTRL),
                 true, "mapwithai:downloadData", true);
         setHelpId(ht("Plugin/MapWithAI#BasicUsage"));
     }
@@ -98,6 +102,13 @@ public class MapWithAIAction extends JosmAction {
     @Override
     protected void updateEnabledState() {
         setEnabled(getLayerManager().getEditDataSet() != null);
+        if (this.isEnabled()) {
+            if (MapWithAIDataUtils.getLayer(false) == null) {
+                putValue(Action.NAME, tr(DOWNLOAD_DATA, MapWithAIPlugin.NAME));
+            } else {
+                putValue(Action.NAME, tr(SWITCH_LAYERS, MapWithAIPlugin.NAME));
+            }
+        }
     }
 
     /**
