@@ -2,7 +2,7 @@ meta
 {
     title: "MapWithAI";
     description: "Visualization of MapWithAI data";
-    icon: "mapwithai.svg";
+    icon: "mapwithai";
     author: "Taylor Smock";
     version: "1.[[revision]]_[[date]]";
     min-josm-version: "15229";
@@ -18,7 +18,6 @@ meta
     settings::colors {
         label: tr("Source Colors");
     }
-
 }
 
 setting::show_new {
@@ -46,6 +45,76 @@ setting::decemberHolidayStyle {
     default: false;
 }
 
+setting::groupOne {
+    type: color;
+    label: tr("Group One color");
+    default: groupOne#ff0000;
+    group: "colors";
+}
+
+setting::groupTwo {
+    type: color;
+    label: tr("Group Two color");
+    default: groupTwo#ffa500;
+    group: "colors";
+}
+
+setting::groupThree {
+    type: color;
+    label: tr("Group Three color");
+    default: groupThree#ffd700;
+    group: "colors";
+}
+
+setting::groupFour {
+    type: color;
+    label: tr("Group Four color");
+    default: groupFour#00ff00;
+    group: "colors";
+}
+
+setting::groupFive {
+    type: color;
+    label: tr("Group Five color");
+    default: groupFive#00ffff;
+    group: "colors";
+}
+
+setting::groupSix {
+    type: color;
+    label: tr("Group Six color");
+    default: groupSix#1e90ff;
+    group: "colors";
+}
+
+setting::groupSeven {
+    type: color;
+    label: tr("Group Seven color");
+    default: groupSeven#ffc0cb;
+    group: "colors";
+}
+
+setting::groupEight {
+    type: color;
+    label: tr("Group Eight color");
+    default: groupEight#d3d3d3;
+    group: "colors";
+}
+
+setting::groupNine {
+    type: color;
+    label: tr("Group Nine color");
+    default: groupNine#faf0e6;
+    group: "colors";
+}
+
+setting::groupAI {
+    type: color;
+    label: tr("Group AI color");
+    default: groupAI#ff26d4;
+    group: "colors";
+}
+
 /* This requires support in the plugin (will read key for mapwithai.mapcss:boolean:toggle_with_layer) */
 setting::toggle_with_layer {
     type: boolean;
@@ -61,31 +130,88 @@ setting::toggle_with_layer {
  * Set .mapwithai for all known MapWithAI datasets *
  ***************************************************/
 
-way["source"][regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft/.*|digitalglobe|maxar|esri/.*"), ")$"), tag("source"))][setting("show_new")]:new,
-way["mapwithai:source"][setting("show_new")] {
-    set .mapwithai;
-    set_color: JOSM_pref(concat("mapwithai.mappaint.", any(tag("source"), tag("mapwithai:source")), "_new"), #FF00FF);
-}
-way["source"][regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft/.*|digitalglobe|maxar|esri/.*"), ")$"), tag("source"))][setting("show_old")]!:new!:modified,
-way["mapwithai:source"][setting("show_old")]!:new!:modified {
-    set .mapwithai;
-    set_color: JOSM_pref(concat("mapwithai.mappaint.", any(tag("source"), tag("mapwithai:source")), "_old"), #FF00FF);
-}
-way[regexp_test(concat("^(", JOSM_pref("mapwithai.mappaint.sources", "microsoft/.*|digitalglobe|maxar|esri/.*"), ")$"), tag("source"))][setting("show_modified")]:modified,
-way["mapwithai:source"][setting("show_modified")]:modified {
-    set .mapwithai;
-    set_color: JOSM_pref(concat("mapwithai.mappaint.", any(tag("source"), tag("mapwithai:source")), "_modified"), #FF00FF);
+*[/^(mapwithai:source|source)$/]::mapwithai {
+    crc: CRC32_checksum(any(tag("source"), tag("mapwithai:source"))) / 429496.7296;
 }
 
-way.mapwithai {
-    color: any(prop("set_color_programatic"), prop("set_color"));
+*[prop(crc) < 1111]::mapwithai {
+    set_color: setting("groupOne");
 }
+*[prop(crc) >= 1111][prop(crc) < 2222]::mapwithai {
+    set_color: setting("groupTwo");
+}
+*[prop(crc) >= 2222][prop(crc) < 3333]::mapwithai {
+    set_color: setting("groupThree");
+}
+*[prop(crc) >= 3333][prop(crc) < 4444]::mapwithai {
+    set_color: setting("groupFour");
+}
+*[prop(crc) >= 4444][prop(crc) < 5555]::mapwithai {
+    set_color: setting("groupFive");
+}
+*[prop(crc) >= 5555][prop(crc) < 6666]::mapwithai {
+    set_color: setting("groupSix");
+}
+*[prop(crc) >= 6666][prop(crc) < 7777]::mapwithai {
+    set_color: setting("groupSeven");
+}
+*[prop(crc) >= 7777][prop(crc) < 8888]::mapwithai {
+    set_color: setting("groupEight");
+}
+*[prop(crc) >= 8888][prop(crc) <= 10000]::mapwithai {
+    set_color: setting("groupNine");
+}
+
+*[source=~/(microsoft\/.*|digitalglobe|maxar)/].crc::mapwithai {
+    /* RapiD Magenta */
+    set_color: setting("groupAI");
+}
+
+*[setting("show_new")].set_color:new::mapwithai,
+*[setting("show_modified")].set_color:modified::mapwithai,
+*[setting("show_old")].set_color!:new!:modified::mapwithai {
+    casing-width: 8;
+    casing-color: prop(set_color);
+    casing-opacity: 0.5;
+    set .mapwithai;
+}
+
+node|z17-.set_color::mapwithai {
+    symbol_size: 22;
+}
+node|z16.set_color::mapwithai {
+    symbol_size: 12;
+}
+node|z15.set_color::mapwithai {
+    symbol_size: 8;
+}
+node|z14.set_color::mapwithai {
+    symbol_size: 6;
+}
+node|z13.set_color::mapwithai {
+    symbol_size: 4;
+}
+node|z-12.set_color::mapwithai {
+    symbol_size: 2;
+}
+
+node[setting("show_new")].set_color:new::mapwithai,
+node[setting("show_modified")].set_color:modified::mapwithai,
+node[setting("show_old")].set_color!:new!:modified::mapwithai {
+    symbol-size: prop(symbol_size);
+    symbol-shape: circle;
+    symbol-fill-opacity: 0.5;
+    symbol-fill-color: any(prop(set_color_programatic), prop(set_color));
+    z-index: -1;
+    set .mapwithai;
+}
+
 
 way.mapwithai:closed2 {
     fill-color: any(prop("set_color_programatic"), prop("set_color"));
 }
 
-way.mapwithai[setting("decemberHolidayStyle")] {
+way.mapwithai[setting("decemberHolidayStyle")]::mapwithai {
     holidayColour: CRC32_checksum(osm_id()) > 2147483647.5
 }
 
@@ -93,24 +219,24 @@ way.mapwithai[setting("decemberHolidayStyle")] {
 /*****************
  * Holiday Theme *
  *****************/
-way.mapwithai[is_prop_set("holidayColour") && prop("holidayColour")] {
+way.mapwithai[is_prop_set("holidayColour") && prop("holidayColour")]::mapwithai {
     color: mapwithaiDecemberGreen#00FF00;
     dashes: 20;
     dashes-background-color: mapwithaiDecemberWhite#FFFFFF;
 }
-way.mapwithai[is_prop_set("holidayColour") && !prop("holidayColour")] {
+way.mapwithai[is_prop_set("holidayColour") && !prop("holidayColour")]::mapwithai {
     color: mapwithaiDecemberRed#FC6262;
     dashes: 20;
     dashes-background-color: mapwithaiDecemberWhite#FFFFFF;
 }
-way.mapwithai[is_prop_set("holidayColour") && prop("holidayColour")]:closed2 {
+way.mapwithai[is_prop_set("holidayColour") && prop("holidayColour")]:closed2::mapwithai {
     fill-color: mapwithaiDecemberGreen#00FF00;
 }
-way.mapwithai[is_prop_set("holidayColour") && !prop("holidayColour")]:closed2 {
+way.mapwithai[is_prop_set("holidayColour") && !prop("holidayColour")]:closed2::mapwithai {
     fill-color: mapwithaiDecemberRed#FC6262;
 }
 
-way.mapwithai[is_prop_set("holidayColour")]:selected {
+way.mapwithai[is_prop_set("holidayColour")]:selected::mapwithai {
     color: mapWithAIDecemberSelected#FF0000;
     dashes: 0;
 }
