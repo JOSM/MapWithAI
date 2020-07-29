@@ -22,10 +22,10 @@ import org.openstreetmap.josm.io.OsmApi;
 import org.openstreetmap.josm.io.OsmApiInitializationException;
 import org.openstreetmap.josm.io.OsmTransferCanceledException;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
@@ -111,7 +111,7 @@ public class MapWithAITestRules extends JOSMTestRules {
             wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
                     .extensions(new WireMockUrlTransformer()).dynamicPort());
             wireMock.start();
-            MapWithAIDataUtils.setPaintStyleUrl(replaceUrl(wireMock, MapWithAIDataUtils.getPaintStyleUrl()));
+            MapPaintUtils.setPaintStyleUrl(replaceUrl(wireMock, MapPaintUtils.getPaintStyleUrl()));
             // Avoid cases where tests could write the wiremock url to some fields.
             if (currentReleaseUrl == null) {
                 currentReleaseUrl = DataAvailability.getReleaseUrl();

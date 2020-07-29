@@ -31,6 +31,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -99,6 +100,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                     Logging.error(e);
                 }
             }
+            MapPaintUtils.addSourcesToPaintStyle(externalData);
             return externalData;
         } catch (OsmApiException e) {
             if (!(e.getResponseCode() == 504 && (System.nanoTime() - lastErrorTime) < 120_000_000_000L)) {
@@ -115,6 +117,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 throw e;
             }
         }
+        // Just in case something happens, try again...
         DataSet ds = new DataSet();
         GetDataRunnable runnable = new GetDataRunnable(downloadArea.toBBox(), ds, NullProgressMonitor.INSTANCE);
         runnable.setMapWithAIInfo(info);
@@ -128,6 +131,8 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             }
             runnable.compute();
         });
+
+        MapPaintUtils.addSourcesToPaintStyle(ds);
         return ds;
     }
 

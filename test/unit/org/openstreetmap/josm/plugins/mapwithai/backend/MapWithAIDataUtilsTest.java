@@ -34,6 +34,7 @@ import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -139,12 +140,11 @@ public class MapWithAIDataUtilsTest {
 
     @Test
     public void testAddPaintStyle() {
-        MapWithAIDataUtils.removeMapWithAIPaintStyles();
-        Awaitility.await().atMost(Durations.TEN_SECONDS)
-                .until(() -> !MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+        MapPaintUtils.removeMapWithAIPaintStyles();
+        Awaitility.await().atMost(Durations.TEN_SECONDS).until(() -> !MapPaintUtils.checkIfMapWithAIPaintStyleExists());
         List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
         for (int i = 0; i < 10; i++) {
-            MapWithAIDataUtils.addMapWithAIPaintStyles();
+            MapPaintUtils.addMapWithAIPaintStyles();
             paintStyles = MapPaintStyles.getStyles().getStyleSources();
             assertEquals(1, paintStyles.stream().filter(s -> s.title.contains("MapWithAI")).count(),
                     "The paintstyle should have been added, but only one of it");

@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +45,7 @@ import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -176,7 +178,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     @Override
     public void activeOrEditLayerChanged(ActiveLayerChangeEvent e) {
         if (checkIfToggleLayer()) {
-            final StyleSource style = MapWithAIDataUtils.getMapWithAIPaintStyle();
+            final StyleSource style = MapPaintUtils.getMapWithAIPaintStyle();
             if (style.active != this.equals(MainApplication.getLayerManager().getActiveLayer())) {
                 MapPaintStyles.toggleStyleActive(MapPaintStyles.getStyles().getStyleSources().indexOf(style));
             }
@@ -349,5 +351,11 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
      */
     public Collection<MapWithAIInfo> getDownloadedInfo() {
         return Collections.unmodifiableCollection(downloadedInfo);
+    }
+
+    @Override
+    public boolean autosave(File file) throws IOException {
+        // Consider a deletetion a "successful" save.
+        return file.delete();
     }
 }

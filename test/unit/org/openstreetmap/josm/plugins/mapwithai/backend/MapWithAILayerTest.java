@@ -45,6 +45,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.Continuou
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Territories;
@@ -202,12 +203,12 @@ public class MapWithAILayerTest {
 
     @Test
     public void testLayerSwitch() {
-        MapWithAIDataUtils.addMapWithAIPaintStyles();
+        MapPaintUtils.addMapWithAIPaintStyles();
         Layer osm = new OsmDataLayer(new DataSet(), "TEST", null);
         MainApplication.getLayerManager().addLayer(osm);
         MainApplication.getLayerManager().addLayer(layer);
         MainApplication.getLayerManager().setActiveLayer(layer);
-        StyleSource pref = MapWithAIDataUtils.getMapWithAIPaintStyle();
+        StyleSource pref = MapPaintUtils.getMapWithAIPaintStyle();
         layer.activeOrEditLayerChanged(null);
         assertTrue(pref.active);
         MainApplication.getLayerManager().setActiveLayer(osm);

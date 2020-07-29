@@ -30,7 +30,6 @@ import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadListener;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIAction;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
@@ -47,6 +46,7 @@ import org.openstreetmap.josm.plugins.mapwithai.gui.MapWithAIMenu;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadOptions;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
@@ -111,10 +111,10 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         });
 
         if (!Config.getPref().getKeySet().contains(PAINTSTYLE_PREEXISTS)) {
-            Config.getPref().putBoolean(PAINTSTYLE_PREEXISTS, MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+            Config.getPref().putBoolean(PAINTSTYLE_PREEXISTS, MapPaintUtils.checkIfMapWithAIPaintStyleExists());
         }
 
-        MapWithAIDataUtils.addMapWithAIPaintStyles();
+        MapPaintUtils.addMapWithAIPaintStyles();
 
         destroyables = new ArrayList<>();
         MapWithAIDownloadOptions mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
@@ -178,7 +178,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
                 .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
         if (!Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {
-            MapWithAIDataUtils.removeMapWithAIPaintStyles();
+            MapPaintUtils.removeMapWithAIPaintStyles();
         }
 
         destroyables.forEach(Destroyable::destroy);

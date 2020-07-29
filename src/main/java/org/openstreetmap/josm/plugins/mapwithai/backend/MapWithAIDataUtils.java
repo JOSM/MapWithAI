@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
@@ -30,9 +29,6 @@ import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
-import org.openstreetmap.josm.gui.mappaint.StyleSource;
-import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmTransferException;
@@ -56,65 +52,8 @@ public final class MapWithAIDataUtils {
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
-    /** The default url for the MapWithAI paint style */
-    public static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
-
-    private static String paintStyleResourceUrl = DEFAULT_PAINT_STYLE_RESOURCE_URL;
-    private static final Pattern TEST_PATTERN = Pattern
-            .compile("^https?:\\/\\/(www\\.)?localhost[:0-9]*\\/josmfile\\?page=Styles\\/MapWithAI&zip=1$");
-
     private MapWithAIDataUtils() {
         // Hide the constructor
-    }
-
-    /**
-     * Add a paintstyle from the jar
-     */
-    public static void addMapWithAIPaintStyles() {
-        // Remove old url's that were automatically added -- remove after Jan 01, 2020
-        final List<Pattern> oldUrls = Arrays.asList(Pattern.compile(
-                "https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
-                TEST_PATTERN, Pattern.compile("resource://styles/standard/mapwithai.mapcss"));
-        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(style -> oldUrls.stream().anyMatch(p -> p.matcher(style.url).matches()))
-                .forEach(MapPaintStyles::removeStyle);
-
-        if (!checkIfMapWithAIPaintStyleExists()) {
-            final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
-                    "MapWithAI");
-            MapPaintStyles.addStyle(style);
-        }
-    }
-
-    /**
-     * Check for the existance of a MapWithAI paint style
-     *
-     * @return true if a MapWithAI paint style exists
-     */
-    public static boolean checkIfMapWithAIPaintStyleExists() {
-        return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
-                .map(MapCSSStyleSource.class::cast).anyMatch(source -> paintStyleResourceUrl.equals(source.url)
-                        || TEST_PATTERN.matcher(source.url).matches());
-    }
-
-    /**
-     * Remove MapWithAI paint styles
-     */
-    public static void removeMapWithAIPaintStyles() {
-        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream().filter(
-                source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
-                .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
-    }
-
-    /**
-     * Get any MapWithAI paint style
-     *
-     * @return get the MapWithAI Paint style
-     */
-    public static StyleSource getMapWithAIPaintStyle() {
-        return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(
-                source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
-                .findAny().orElse(null);
     }
 
     /**
@@ -572,23 +511,5 @@ public final class MapWithAIDataUtils {
         return GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands())
                 .parallelStream().filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
                 .flatMap(com -> com.getSourceTags().stream()).distinct().collect(Collectors.toList());
-    }
-
-    /**
-     * Set the URL for the MapWithAI paint style
-     *
-     * @param paintUrl The paint style for MapWithAI
-     */
-    public static void setPaintStyleUrl(String paintUrl) {
-        paintStyleResourceUrl = paintUrl;
-    }
-
-    /**
-     * Get the url for the paint style for MapWithAI
-     *
-     * @return The url for the paint style
-     */
-    public static String getPaintStyleUrl() {
-        return paintStyleResourceUrl;
     }
 }

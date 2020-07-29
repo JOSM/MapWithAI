@@ -22,9 +22,9 @@ import org.junit.Test;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.plugins.PluginInformation;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
@@ -37,7 +37,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIPluginTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection();
 
     public PluginInformation info;
     public MapWithAIPlugin plugin;
@@ -108,7 +108,7 @@ public class MapWithAIPluginTest {
             assertEquals(dataMenuSize, dataMenu.getMenuComponentCount(),
                     "Menu items were added after they were already added");
             Awaitility.await().atMost(Durations.FIVE_SECONDS)
-                    .until(() -> existed == MapWithAIDataUtils.checkIfMapWithAIPaintStyleExists());
+                    .until(() -> existed == MapPaintUtils.checkIfMapWithAIPaintStyleExists());
             assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
                             .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
