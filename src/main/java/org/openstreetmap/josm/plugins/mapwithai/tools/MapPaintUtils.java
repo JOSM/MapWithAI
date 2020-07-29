@@ -138,7 +138,11 @@ public class MapPaintUtils {
         return paintStyleResourceUrl;
     }
 
-    /** Add sources to the paint style */
+    /**
+     * Add sources to the paint style
+     *
+     * @param ds The dataset to add sources to
+     */
     public static synchronized void addSourcesToPaintStyle(DataSet ds) {
         /* TODO Depends upon JOSM-19547 */
         if (Version.getInstance().getVersion() < 20_000
