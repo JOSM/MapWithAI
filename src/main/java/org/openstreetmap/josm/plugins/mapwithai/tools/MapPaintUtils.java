@@ -27,6 +27,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
@@ -83,8 +84,8 @@ public class MapPaintUtils {
                 "https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
                 TEST_PATTERN, Pattern.compile("resource://styles/standard/mapwithai.mapcss"));
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
-                .filter(style -> oldUrls.stream().anyMatch(p -> p.matcher(style.url).matches()))
-                .forEach(MapPaintStyles::removeStyle);
+        .filter(style -> oldUrls.stream().anyMatch(p -> p.matcher(style.url).matches()))
+        .forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
             final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
@@ -105,7 +106,7 @@ public class MapPaintUtils {
     public static void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream().filter(
                 source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
-                .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
+        .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
     }
 
     /**
@@ -139,6 +140,12 @@ public class MapPaintUtils {
 
     /** Add sources to the paint style */
     public static synchronized void addSourcesToPaintStyle(DataSet ds) {
+        /* TODO Depends upon JOSM-19547 */
+        if (Version.getInstance().getVersion() < 20_000
+                && Version.getInstance().getVersion() == Version.JOSM_UNKNOWN_VERSION) {
+            return;
+        }
+
         List<String> sources = ds.allPrimitives().stream().map(MapPaintUtils::getSourceValue).filter(Objects::nonNull)
                 .distinct().collect(Collectors.toList());
         StyleSource styleSource = getMapWithAIPaintStyle();
@@ -246,8 +253,8 @@ public class MapPaintUtils {
             out.write(System.lineSeparator().getBytes());
             sb = new StringBuilder(
                     "*[/^(source|mapwithai:source)$/][any(tag(\"source\"), tag(\"mapwithai:source\"))=\"")
-                            .append(source).append("\"]{set_color_programatic:setting(\"").append(simpleSource)
-                            .append("\");}");
+                    .append(source).append("\"]{set_color_programatic:setting(\"").append(simpleSource)
+                    .append("\");}");
             out.write(sb.toString().getBytes());
         }
         while ((line = bufferedReader.readLine()) != null) {
