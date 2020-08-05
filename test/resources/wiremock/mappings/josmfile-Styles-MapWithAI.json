@@ -1,0 +1,15 @@
+{
+    "request": {
+        "method": "GET",
+        "url": "/josmfile?page=Styles/MapWithAI&zip=1"
+    },
+    "response": {
+        "status": 200,
+        "bodyFileName": "josmfile?page=Styles/MapWithAI&zip=1",
+        "headers": {
+            "Content-Type": "application/zip",
+            "Content-Disposition": "attachment; filename=Styles_MapWithAI.zip",
+            "Content-Length": "8103"
+        }
+    }
+}
