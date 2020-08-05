@@ -37,7 +37,7 @@ import org.openstreetmap.josm.tools.Utils;
  */
 public class ESRISourceReader implements Closeable {
     private final MapWithAIInfo source;
-    private List<CachedFile> cachedFiles = new ArrayList<>();
+    private final List<CachedFile> cachedFiles = new ArrayList<>();
     private boolean fastFail;
     private final List<MapWithAICategory> ignoreConflationCategories;
     private static final String JSON_QUERY_PARAM = "?f=json";

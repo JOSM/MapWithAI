@@ -25,7 +25,7 @@ import org.openstreetmap.josm.tools.Destroyable;
 public final class DownloadListener implements DataSourceListener, Destroyable {
 
     final WeakReference<DataSet> ds;
-    private double BBOX_SIMILARITY_DEGREES = 0.001;
+    private static final double BBOX_SIMILARITY_DEGREES = 0.001;
     private static final Collection<DownloadListener> LISTENERS = new HashSet<>();
 
     public DownloadListener(DataSet dataSet) {

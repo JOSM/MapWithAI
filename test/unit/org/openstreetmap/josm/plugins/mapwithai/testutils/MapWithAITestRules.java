@@ -251,7 +251,7 @@ public class MapWithAITestRules extends JOSMTestRules {
         @Override
         public Response transform(Request request, Response response, FileSource files, Parameters parameters) {
             if (wireMock != null && !request.getUrl().endsWith("/capabilities")
-                    && (!response.getHeaders().getContentTypeHeader().mimeTypePart().contains("application/zip"))) {
+                    && !response.getHeaders().getContentTypeHeader().mimeTypePart().contains("application/zip")) {
                 String origBody = response.getBodyAsString();
                 String newBody = origBody.replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/");
                 return Response.Builder.like(response).but().body(newBody).build();

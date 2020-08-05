@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -64,15 +65,19 @@ public class MapPaintUtils {
         private final Color color;
 
         SafeColors(Color color) {
-            this.color = color;
+            this.color = new Color(color.getRGB());
         }
 
         /**
          * Get the safe color
          */
         public Color getColor() {
-            return this.color;
+            return new Color(this.color.getRGB());
         }
+    }
+
+    private MapPaintUtils() {
+        // This is a utils class. Don't allow constructing.
     }
 
     /**
@@ -149,8 +154,8 @@ public class MapPaintUtils {
                 .distinct().collect(Collectors.toList());
         StyleSource styleSource = getMapWithAIPaintStyle();
         /* TODO Depends upon JOSM-19547 */
-        if (Version.getInstance().getVersion() < 20_000
-                && Version.getInstance().getVersion() == Version.JOSM_UNKNOWN_VERSION || styleSource == null) {
+        if ((Version.getInstance().getVersion() < 20_000
+                && Version.getInstance().getVersion() == Version.JOSM_UNKNOWN_VERSION) || styleSource == null) {
             return;
         }
         if (!styleSource.isLoaded()) {
@@ -183,7 +188,8 @@ public class MapPaintUtils {
             } catch (ZipException e) {
                 // Assume that it is a standard file, not a zip file.
                 OutputStream out = new FileOutputStream(file.getName() + ".tmp");
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                BufferedReader bufferedReader = new BufferedReader(
+                        new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
                 writeData(out, bufferedReader, group, sources);
                 bufferedReader.close();
                 out.close();
@@ -216,7 +222,8 @@ public class MapPaintUtils {
                 continue;
             }
             out.putNextEntry(new ZipEntry(MAPWITHAI_MAPCSS_ZIP_NAME));
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(file.getInputStream(current)));
+            BufferedReader bufferedReader = new BufferedReader(
+                    new InputStreamReader(file.getInputStream(current), StandardCharsets.UTF_8));
             writeData(out, bufferedReader, group, sources);
             bufferedReader.close();
             out.closeEntry();
@@ -230,21 +237,21 @@ public class MapPaintUtils {
             throws IOException {
         String line = bufferedReader.readLine();
         while (!line.contains("End Settings for the paint style")) {
-            out.write(line.getBytes());
-            out.write(System.lineSeparator().getBytes());
+            out.write(line.getBytes(StandardCharsets.UTF_8));
+            out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             line = bufferedReader.readLine();
         }
         /* Finish writing the comment */
         while (!line.endsWith("*/")) {
-            out.write(line.getBytes());
-            out.write(System.lineSeparator().getBytes());
+            out.write(line.getBytes(StandardCharsets.UTF_8));
+            out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             line = bufferedReader.readLine();
         }
-        out.write(line.getBytes());
-        out.write(System.lineSeparator().getBytes());
+        out.write(line.getBytes(StandardCharsets.UTF_8));
+        out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
 
         for (String source : sources) {
-            out.write(System.lineSeparator().getBytes());
+            out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             String simpleSource = source.replaceAll("[() /\\${}:]", "_");
             StringBuilder sb = new StringBuilder("setting::").append(simpleSource).append("{").append("type:color;")
                     .append("default:").append(simpleSource).append(ColorHelper.color2html(getRandomColor(source)))
@@ -253,17 +260,17 @@ public class MapPaintUtils {
                 sb.append("group:\"").append(group).append("\";");
             }
             sb.append("}");
-            out.write(sb.toString().getBytes());
-            out.write(System.lineSeparator().getBytes());
+            out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+            out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             sb = new StringBuilder(
                     "*[/^(source|mapwithai:source)$/][any(tag(\"source\"), tag(\"mapwithai:source\"))=\"")
                             .append(source).append("\"]{set_color_programatic:setting(\"").append(simpleSource)
                             .append("\");}");
-            out.write(sb.toString().getBytes());
+            out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
         }
         while ((line = bufferedReader.readLine()) != null) {
-            out.write(line.getBytes());
-            out.write(System.lineSeparator().getBytes());
+            out.write(line.getBytes(StandardCharsets.UTF_8));
+            out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -275,7 +282,7 @@ public class MapPaintUtils {
         SafeColors[] colors = Stream.of(SafeColors.values()).filter(c -> SafeColors.AI_MAGENTA != c)
                 .toArray(SafeColors[]::new);
         CRC32 crc = new CRC32();
-        crc.update(sourceName.getBytes());
+        crc.update(sourceName.getBytes(StandardCharsets.UTF_8));
 
         double bucket = crc.getValue() / CRC_DIVIDE_TO_TEN_K_MAX;
         double bucket_size = 10_000 / colors.length;
