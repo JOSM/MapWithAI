@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -205,8 +205,8 @@ public class MapPaintUtils {
 
     private static void writeZipData(ZipFile file, String group, List<String> sources) throws IOException {
         ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file.getName() + ".tmp"));
-        for (Enumeration<? extends ZipEntry> e = file.entries(); e.hasMoreElements();) {
-            ZipEntry current = e.nextElement();
+        for (Iterator<? extends ZipEntry> e = file.stream().iterator(); e.hasNext();) {
+            ZipEntry current = e.next();
             // For the entry we are overwriting, we cannot use the current zipentry, we must
             // make a new one.
             if (!current.getName().equalsIgnoreCase(MAPWITHAI_MAPCSS_ZIP_NAME)) {
