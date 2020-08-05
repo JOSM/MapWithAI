@@ -33,7 +33,7 @@ import org.openstreetmap.josm.tools.Logging;
  */
 public class MapWithAIMenuTest {
     @RegisterExtension
-    static JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().projection().main();
+    static JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().territories().projection().main();
     private static MapWithAIMenu menu;
 
     @BeforeAll

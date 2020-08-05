@@ -17,7 +17,9 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.runners.model.InitializationError;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.gui.progress.swing.ProgressMonitorExecutor;
 import org.openstreetmap.josm.io.OsmApi;
 import org.openstreetmap.josm.io.OsmApiInitializationException;
 import org.openstreetmap.josm.io.OsmTransferCanceledException;
@@ -52,6 +54,7 @@ public class MapWithAITestRules extends JOSMTestRules {
     private String currentReleaseUrl;
     private Collection<String> sourceSites;
     private Runnable mapwithaiLayerInfoMocker;
+    private boolean territories;
 
     public MapWithAITestRules() {
         super();
@@ -79,9 +82,15 @@ public class MapWithAITestRules extends JOSMTestRules {
         return this;
     }
 
+    @Override
+    public MapWithAITestRules territories() {
+        this.territories = true;
+        super.territories();
+        return this;
+    }
+
     public MapWithAITestRules wiremock() {
         this.wiremock = true;
-        super.territories();
         return this;
     }
 
@@ -157,6 +166,14 @@ public class MapWithAITestRules extends JOSMTestRules {
 
     @Override
     protected void after() throws ReflectiveOperationException {
+        ProgressMonitorExecutor worker = (ProgressMonitorExecutor) MainApplication.worker;
+        while (worker.getActiveCount() > 0) {
+            try {
+                wait(20);
+            } catch (InterruptedException e) {
+                Logging.error(e);
+            }
+        }
         super.after();
         if (wiremock) {
             wireMock.stop();
@@ -182,12 +199,14 @@ public class MapWithAITestRules extends JOSMTestRules {
         TestRunnerDecorator.cleanUpAllMocks();
     }
 
-    private static void resetMapWithAILayerInfo() {
-        synchronized (MapWithAILayerInfo.class) {
-            MapWithAILayerInfo.getInstance().clear();
-            MapWithAILayerInfo.getInstance().getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
-                    .forEach(MapWithAILayerInfo.getInstance()::add);
-            MapWithAILayerInfo.getInstance().save();
+    private void resetMapWithAILayerInfo() {
+        if (territories) {
+            synchronized (MapWithAILayerInfo.class) {
+                MapWithAILayerInfo.getInstance().clear();
+                MapWithAILayerInfo.getInstance().getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
+                        .forEach(MapWithAILayerInfo.getInstance()::add);
+                MapWithAILayerInfo.getInstance().save();
+            }
         }
     }
 
@@ -231,7 +250,8 @@ public class MapWithAITestRules extends JOSMTestRules {
 
         @Override
         public Response transform(Request request, Response response, FileSource files, Parameters parameters) {
-            if (wireMock != null && !request.getUrl().endsWith("/capabilities")) {
+            if (wireMock != null && !request.getUrl().endsWith("/capabilities")
+                    && (!response.getHeaders().getContentTypeHeader().mimeTypePart().contains("application/zip"))) {
                 String origBody = response.getBodyAsString();
                 String newBody = origBody.replaceAll("https?:\\/\\/.*?\\/", wireMock.baseUrl() + "/");
                 return Response.Builder.like(response).but().body(newBody).build();

@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.awaitility.Awaitility;
-import org.awaitility.Durations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -30,11 +28,8 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
-import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
-import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
-import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -136,19 +131,6 @@ public class MapWithAIDataUtilsTest {
         assertEquals(3, ds1.allPrimitives().size(), "The DataSet should have three primitives");
         MapWithAIDataUtils.removePrimitivesFromDataSet(Collections.singleton(way1));
         assertEquals(0, ds1.allPrimitives().size(), "All of the primitives should have been removed from the DataSet");
-    }
-
-    @Test
-    public void testAddPaintStyle() {
-        MapPaintUtils.removeMapWithAIPaintStyles();
-        Awaitility.await().atMost(Durations.TEN_SECONDS).until(() -> !MapPaintUtils.checkIfMapWithAIPaintStyleExists());
-        List<StyleSource> paintStyles = MapPaintStyles.getStyles().getStyleSources();
-        for (int i = 0; i < 10; i++) {
-            MapPaintUtils.addMapWithAIPaintStyles();
-            paintStyles = MapPaintStyles.getStyles().getStyleSources();
-            assertEquals(1, paintStyles.stream().filter(s -> s.title.contains("MapWithAI")).count(),
-                    "The paintstyle should have been added, but only one of it");
-        }
     }
 
     @Test
