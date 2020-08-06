@@ -28,7 +28,6 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
@@ -153,11 +152,6 @@ public class MapPaintUtils {
         List<String> sources = ds.allPrimitives().stream().map(MapPaintUtils::getSourceValue).filter(Objects::nonNull)
                 .distinct().collect(Collectors.toList());
         StyleSource styleSource = getMapWithAIPaintStyle();
-        /* TODO Depends upon JOSM-19547 */
-        if ((Version.getInstance().getVersion() < 20_000
-                && Version.getInstance().getVersion() == Version.JOSM_UNKNOWN_VERSION) || styleSource == null) {
-            return;
-        }
         if (!styleSource.isLoaded()) {
             styleSource.loadStyleSource();
         }
