@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
 import java.util.concurrent.Future;
 
 import org.awaitility.Awaitility;
@@ -26,11 +27,14 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.util.GuiHelper;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.ConnectedCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -46,7 +50,8 @@ public class MapWithAIMoveActionTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().territories();
+    public JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
+            .assertionsInEDT();
 
     @Before
     public void setUp() {
@@ -204,5 +209,55 @@ public class MapWithAIMoveActionTest {
         while (UndoRedoHandler.getInstance().hasUndoCommands()) {
             assertDoesNotThrow(() -> UndoRedoHandler.getInstance().undo());
         }
+    }
+
+    @Test
+    public void testAddSimplifiedWay() {
+        Node ma1 = new Node(new LatLon(39.1210737, -108.6162804));
+        Node ma2 = new Node(new LatLon(39.1210363, -108.6162804));
+        Node ma3 = new Node(new LatLon(39.1210196, -108.6162804));
+        Node ma4 = new Node(new LatLon(39.1209364, -108.6162804));
+        Node ma5 = new Node(new LatLon(39.1208031, -108.6163033));
+        ma5.put("dupe", "n7041074564");
+        Way ma1w = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe", ma1, ma2, ma3,
+                ma4, ma5);
+
+        Node osm1 = new Node(new LatLon(39.1208025, -108.6173585));
+        osm1.setOsmId(176255324L, 5);
+        Node osm2 = TestUtils.newNode("maxspeed=\"35 mph\" traffic_sign:forward=yes traffic_sign=maxspeed");
+        osm2.setCoor(new LatLon(39.1208031, -108.6163033));
+        osm2.setOsmId(7041074564L, 1);
+        Node osm3 = TestUtils.newNode("crossing=uncontrolled highway=crossing");
+        osm3.setCoor(new LatLon(39.1208035, -108.6155962));
+        osm3.setOsmId(7050673431L, 1);
+        Way osm1w = TestUtils.newWay(
+                "highway=unclassified lanes=2 maxspeed=\"35 mph\" name=\"H Road\" ref=H surface=asphalt", osm1, osm2,
+                osm3);
+        osm1w.setOsmId(753597166L, 6);
+
+        DataSet osm = new DataSet();
+        osm1w.getNodes().forEach(osm::addPrimitive);
+        osm.addPrimitive(osm1w);
+
+        DataSet mapwithai = new DataSet();
+        ma1w.getNodes().forEach(mapwithai::addPrimitive);
+        mapwithai.addPrimitive(ma1w);
+
+        OsmDataLayer osmDataLayer = new OsmDataLayer(osm, "OSM Layer", null);
+        MapWithAILayer mapwithaiLayer = new MapWithAILayer(mapwithai, "MapWithAI", null);
+
+        MainApplication.getLayerManager().addLayer(osmDataLayer);
+        MainApplication.getLayerManager().addLayer(mapwithaiLayer);
+        MainApplication.getLayerManager().setActiveLayer(mapwithaiLayer);
+        Territories.initialize();
+        mapwithai.setSelected(Collections.singleton(ma1w));
+
+        Config.getPref().put("simplify-way.auto.remember", "yes");
+        Logging.clearLastErrorAndWarnings();
+        assertDoesNotThrow(() -> this.moveAction.actionPerformed(null));
+        assertTrue(Logging.getLastErrorAndWarnings().isEmpty(),
+                Logging.getLastErrorAndWarnings().isEmpty() ? "" : Logging.getLastErrorAndWarnings().get(0));
+        assertTrue(osm.allPrimitives().size() > 4);
+        assertTrue(osm.allPrimitives().stream().anyMatch(p -> p.hasTag("source", "digitalglobe")));
     }
 }

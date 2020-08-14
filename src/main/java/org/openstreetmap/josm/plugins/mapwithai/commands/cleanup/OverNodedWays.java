@@ -24,8 +24,84 @@ import org.openstreetmap.josm.tools.Utils;
 
 public class OverNodedWays extends AbstractConflationCommand {
 
-    private double threshold;
-    private int acceptableRemovalPercentage;
+    private class PostponedOverNodedWayCommand extends Command {
+        private Command realCommand;
+
+        protected PostponedOverNodedWayCommand(DataSet data) {
+            super(data);
+        }
+
+        @Override
+        public boolean executeCommand() {
+            if (realCommand == null) {
+                double threshold = Config.getPref().getDouble("mapwithai.conflation.simplifyway", 0.5);
+                int acceptableRemovalPercentage = Config.getPref()
+                        .getInt("mapwithai.conflation.simplifywaynodepercentagerequired", 20);
+                Layer current = MainApplication.getLayerManager().getActiveLayer();
+                Collection<Way> ways = Utils.filteredCollection(possiblyAffectedPrimitives, Way.class);
+                if (!ways.isEmpty()) {
+                    DataSet ds = this.getAffectedDataSet();
+                    Layer toSwitch = MainApplication.getLayerManager().getLayersOfType(AbstractOsmDataLayer.class)
+                            .stream().filter(d -> ds.equals(d.getDataSet())).findAny().orElse(null);
+                    if (toSwitch != null) {
+                        MainApplication.getLayerManager().setActiveLayer(toSwitch);
+                    }
+                }
+                Collection<Command> commands = new ArrayList<>();
+                for (Way way : ways) {
+                    Command command = SimplifyWayAction.createSimplifyCommand(way, threshold);
+                    if (command == null) {
+                        continue;
+                    }
+                    int count = Utils
+                            .filteredCollection(new ArrayList<>(command.getParticipatingPrimitives()), Node.class)
+                            .size();
+                    if ((count / (double) way.getNodesCount()) * 100 > acceptableRemovalPercentage) {
+                        AutoScaleAction.zoomTo(Collections.singleton(way));
+                        double length = SimplifyWayAction.askSimplifyWays(
+                                tr("You are about to simplify {0} way with a total length of {1}.", 1, way.getLength()),
+                                true);
+                        command = SimplifyWayAction.createSimplifyCommand(way, length);
+                        if (command != null) {
+                            commands.add(command);
+                        }
+                    }
+                }
+                if (current != null) {
+                    MainApplication.getLayerManager().setActiveLayer(current);
+                }
+                if (!commands.isEmpty()) {
+                    realCommand = SequenceCommand.wrapIfNeeded(tr("Simplify ways"), commands);
+                    realCommand.executeCommand();
+                }
+
+            } else {
+                realCommand.executeCommand();
+            }
+            return true;
+        }
+
+        @Override
+        public void undoCommand() {
+            if (realCommand != null) {
+                realCommand.undoCommand();
+            }
+        }
+
+        @Override
+        public String getDescriptionText() {
+            return realCommand != null ? realCommand.getDescriptionText() : "Command not run";
+        }
+
+        @Override
+        public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
+                Collection<OsmPrimitive> added) {
+            if (realCommand != null) {
+                realCommand.fillModifiedData(modified, deleted, added);
+            }
+        }
+
+    }
 
     public OverNodedWays(DataSet data) {
         super(data);
@@ -49,46 +125,7 @@ public class OverNodedWays extends AbstractConflationCommand {
 
     @Override
     public Command getRealCommand() {
-        threshold = Config.getPref().getDouble("mapwithai.conflation.simplifyway", 0.5);
-        acceptableRemovalPercentage = Config.getPref().getInt("mapwithai.conflation.simplifywaynodepercentagerequired",
-                20);
-        Layer current = MainApplication.getLayerManager().getActiveLayer();
-        Collection<Way> ways = Utils.filteredCollection(possiblyAffectedPrimitives, Way.class);
-        if (!ways.isEmpty()) {
-            DataSet ds = this.getAffectedDataSet();
-            Layer toSwitch = MainApplication.getLayerManager().getLayersOfType(AbstractOsmDataLayer.class).stream()
-                    .filter(d -> ds.equals(d.getDataSet())).findAny().orElse(null);
-            if (toSwitch != null) {
-                MainApplication.getLayerManager().setActiveLayer(toSwitch);
-            }
-        }
-        Collection<Command> commands = new ArrayList<>();
-        for (Way way : ways) {
-            Command command = SimplifyWayAction.createSimplifyCommand(way, threshold);
-            if (command == null) {
-                continue;
-            }
-            int count = Utils.filteredCollection(new ArrayList<>(command.getParticipatingPrimitives()), Node.class)
-                    .size();
-            if ((count / (double) way.getNodesCount()) * 100 > this.acceptableRemovalPercentage) {
-                AutoScaleAction.zoomTo(Collections.singleton(way));
-                double length = SimplifyWayAction.askSimplifyWays(
-                        tr("You are about to simplify {0} way with a total length of {1}.", 1, way.getLength()), true);
-                command = SimplifyWayAction.createSimplifyCommand(way, length);
-                if (command != null) {
-                    commands.add(command);
-                }
-            }
-        }
-        if (current != null) {
-            MainApplication.getLayerManager().setActiveLayer(current);
-        }
-        if (commands.size() == 1) {
-            return commands.iterator().next();
-        } else if (!commands.isEmpty()) {
-            return new SequenceCommand(tr("Simplify ways"), commands);
-        }
-        return null;
+        return new PostponedOverNodedWayCommand(this.getAffectedDataSet());
     }
 
     @Override
