@@ -46,6 +46,7 @@ import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mockit.Mock;
 
 public class MapWithAIAddComandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
@@ -57,6 +58,12 @@ public class MapWithAIAddComandTest {
     @Before
     public void setUp() {
         // Required to avoid an NPE with AutoZoomHandler
+        new WindowMocker() {
+            @Mock
+            public void pack() {
+                // Do nothing
+            }
+        };
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "Temp", null));
     }
 

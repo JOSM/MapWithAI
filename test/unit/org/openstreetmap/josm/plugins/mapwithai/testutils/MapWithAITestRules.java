@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.jupiter.api.extension.InvocationInterceptor.Invocation;
 import org.junit.runners.model.InitializationError;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
@@ -91,6 +92,7 @@ public class MapWithAITestRules extends JOSMTestRules {
 
     public MapWithAITestRules wiremock() {
         this.wiremock = true;
+        territories();
         return this;
     }
 
@@ -150,8 +152,11 @@ public class MapWithAITestRules extends JOSMTestRules {
             // happen...
             new MockUp<MapWithAILayerInfo>() {
                 @Mock
-                public MapWithAILayerInfo getInstance() {
-                    return null;
+                public MapWithAILayerInfo getInstance(Invocation<MapWithAILayerInfo> inv) throws Throwable {
+                    if (!sources) {
+                        return null;
+                    }
+                    return inv.proceed();
                 }
             };
         }
