@@ -19,7 +19,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AlreadyConflatedCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.AlreadyConflatedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 

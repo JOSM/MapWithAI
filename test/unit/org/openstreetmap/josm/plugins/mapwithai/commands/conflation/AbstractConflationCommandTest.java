@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import org.junit.jupiter.api.Test;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.AbstractConflationCommand;
 
 public class AbstractConflationCommandTest {
     /**

@@ -21,7 +21,7 @@ import org.openstreetmap.josm.data.validation.Severity;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.data.validation.TestError;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.AbstractConflationCommand;
 import org.openstreetmap.josm.plugins.mapwithai.commands.CreateConnectionsCommand;
 import org.openstreetmap.josm.tools.Logging;
 

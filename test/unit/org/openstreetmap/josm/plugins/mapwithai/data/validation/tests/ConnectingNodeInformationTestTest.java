@@ -13,8 +13,8 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.ConnectedCommand;
+import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

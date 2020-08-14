@@ -9,7 +9,7 @@ import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.validation.TestError;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.cleanup.MissingConnectionTags;
+import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnectionTags;
 import org.openstreetmap.josm.testutils.mockers.JOptionPaneSimpleMocker;
 
 import mockit.Invocation;

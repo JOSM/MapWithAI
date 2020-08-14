@@ -23,14 +23,8 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AbstractConflationCommand;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.AlreadyConflatedCommand;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeAddressBuildings;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.MergeBuildingAddress;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.cleanup.MissingConnectionTags;
-import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.cleanup.OverNodedWays;
+import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnectionTags;
+import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.OverNodedWays;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 

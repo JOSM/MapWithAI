@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation;
+package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
@@ -18,7 +18,6 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
-import org.openstreetmap.josm.plugins.mapwithai.commands.AddNodeToWayCommand;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 
