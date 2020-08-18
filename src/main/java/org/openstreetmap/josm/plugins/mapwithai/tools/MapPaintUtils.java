@@ -148,10 +148,12 @@ public class MapPaintUtils {
      * @param ds The dataset to add sources to
      */
     public static synchronized void addSourcesToPaintStyle(DataSet ds) {
-
+        StyleSource styleSource = getMapWithAIPaintStyle();
+        if (styleSource == null) {
+            return;
+        }
         List<String> sources = ds.allPrimitives().stream().map(MapPaintUtils::getSourceValue).filter(Objects::nonNull)
                 .distinct().collect(Collectors.toList());
-        StyleSource styleSource = getMapWithAIPaintStyle();
         if (!styleSource.isLoaded()) {
             styleSource.loadStyleSource();
         }
