@@ -55,7 +55,7 @@ public class MapPaintUtils {
     private static final String MAPWITHAI_MAPCSS_ZIP_NAME = "Styles_MapWithAI-style.mapcss";
     private static final double CRC_DIVIDE_TO_TEN_K_MAX = 429496.7296;
 
-    static enum SafeColors {
+    public enum SafeColors {
         RED(Color.RED), ORANGE(Color.ORANGE), GOLD(ColorHelper.html2color("#ffd700")),
         LIME(ColorHelper.html2color("#00ff00")), CYAN(Color.CYAN), DODGER_BLUE(ColorHelper.html2color("#1e90ff")),
         AI_MAGENTA(ColorHelper.html2color("#ff26d4")), PINK(Color.PINK), LIGHT_GREY(ColorHelper.html2color("#d3d3d3")),
@@ -183,12 +183,12 @@ public class MapPaintUtils {
                 writeZipData(zipFile, group, sources);
             } catch (ZipException e) {
                 // Assume that it is a standard file, not a zip file.
-                OutputStream out = new FileOutputStream(file.getName() + ".tmp");
-                BufferedReader bufferedReader = new BufferedReader(
-                        new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
-                writeData(out, bufferedReader, group, sources);
-                bufferedReader.close();
-                out.close();
+                try (OutputStream out = new FileOutputStream(file.getName() + ".tmp")) {
+                    BufferedReader bufferedReader = new BufferedReader(
+                            new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+                    writeData(out, bufferedReader, group, sources);
+                    bufferedReader.close();
+                }
                 Files.move(new File(file.getName() + ".tmp").toPath(), new File(file.getName()).toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             }
@@ -200,31 +200,31 @@ public class MapPaintUtils {
     }
 
     private static void writeZipData(ZipFile file, String group, List<String> sources) throws IOException {
-        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file.getName() + ".tmp"));
-        for (Iterator<? extends ZipEntry> e = file.stream().iterator(); e.hasNext();) {
-            ZipEntry current = e.next();
-            // For the entry we are overwriting, we cannot use the current zipentry, we must
-            // make a new one.
-            if (!current.getName().equalsIgnoreCase(MAPWITHAI_MAPCSS_ZIP_NAME)) {
-                out.putNextEntry(current);
-                InputStream is = file.getInputStream(current);
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = is.read(buf)) > 0) {
-                    out.write(buf, 0, len);
+        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file.getName() + ".tmp"))) {
+            for (Iterator<? extends ZipEntry> e = file.stream().iterator(); e.hasNext();) {
+                ZipEntry current = e.next();
+                // For the entry we are overwriting, we cannot use the current zipentry, we must
+                // make a new one.
+                if (!current.getName().equalsIgnoreCase(MAPWITHAI_MAPCSS_ZIP_NAME)) {
+                    out.putNextEntry(current);
+                    InputStream is = file.getInputStream(current);
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = is.read(buf)) > 0) {
+                        out.write(buf, 0, len);
+                    }
+                    is.close();
+                    out.closeEntry();
+                    continue;
                 }
-                is.close();
+                out.putNextEntry(new ZipEntry(MAPWITHAI_MAPCSS_ZIP_NAME));
+                BufferedReader bufferedReader = new BufferedReader(
+                        new InputStreamReader(file.getInputStream(current), StandardCharsets.UTF_8));
+                writeData(out, bufferedReader, group, sources);
+                bufferedReader.close();
                 out.closeEntry();
-                continue;
             }
-            out.putNextEntry(new ZipEntry(MAPWITHAI_MAPCSS_ZIP_NAME));
-            BufferedReader bufferedReader = new BufferedReader(
-                    new InputStreamReader(file.getInputStream(current), StandardCharsets.UTF_8));
-            writeData(out, bufferedReader, group, sources);
-            bufferedReader.close();
-            out.closeEntry();
         }
-        out.close();
         Files.move(new File(file.getName() + ".tmp").toPath(), new File(file.getName()).toPath(),
                 StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
     }
@@ -281,9 +281,9 @@ public class MapPaintUtils {
         crc.update(sourceName.getBytes(StandardCharsets.UTF_8));
 
         double bucket = crc.getValue() / CRC_DIVIDE_TO_TEN_K_MAX;
-        double bucket_size = 10_000 / colors.length;
+        double bucketSize = 10_000 / colors.length;
         for (int i = 1; i <= colors.length; i++) {
-            if (bucket < bucket_size * i) {
+            if (bucket < bucketSize * i) {
                 return colors[i - 1].getColor();
             }
         }
