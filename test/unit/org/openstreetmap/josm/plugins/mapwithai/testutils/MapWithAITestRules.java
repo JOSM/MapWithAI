@@ -171,6 +171,7 @@ public class MapWithAITestRules extends JOSMTestRules {
     protected void after() throws ReflectiveOperationException {
         super.after();
         if (wiremock) {
+            MapPaintUtils.removeMapWithAIPaintStyles();
             wireMock.stop();
             List<LoggedRequest> requests = wireMock.findUnmatchedRequests().getRequests();
             requests.forEach(r -> Logging.error(r.getAbsoluteUrl()));

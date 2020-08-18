@@ -81,8 +81,11 @@ public class MapPaintUtils {
 
     /**
      * Add a paintstyle from the jar
+     *
+     * @return The added paint style, or the already existing paint style. May be
+     *         {@code null} in some unusual circumstances.
      */
-    public static void addMapWithAIPaintStyles() {
+    public static synchronized StyleSource addMapWithAIPaintStyles() {
         // Remove old url's that were automatically added -- remove after Jan 01, 2020
         final List<Pattern> oldUrls = Arrays.asList(Pattern.compile(
                 "https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
@@ -94,11 +97,12 @@ public class MapPaintUtils {
         if (!checkIfMapWithAIPaintStyleExists()) {
             final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
                     "MapWithAI");
-            MapPaintStyles.addStyle(style);
+            return MapPaintStyles.addStyle(style);
         }
+        return getMapWithAIPaintStyle();
     }
 
-    public static boolean checkIfMapWithAIPaintStyleExists() {
+    public static synchronized boolean checkIfMapWithAIPaintStyleExists() {
         return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
                 .map(MapCSSStyleSource.class::cast).anyMatch(source -> paintStyleResourceUrl.equals(source.url)
                         || TEST_PATTERN.matcher(source.url).matches());
@@ -107,7 +111,7 @@ public class MapPaintUtils {
     /**
      * Remove MapWithAI paint styles
      */
-    public static void removeMapWithAIPaintStyles() {
+    public static synchronized void removeMapWithAIPaintStyles() {
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream().filter(
                 source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
                 .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
@@ -118,7 +122,7 @@ public class MapPaintUtils {
      *
      * @return get the MapWithAI Paint style
      */
-    public static StyleSource getMapWithAIPaintStyle() {
+    public static synchronized StyleSource getMapWithAIPaintStyle() {
         return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(
                 source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
                 .findAny().orElse(null);
@@ -129,7 +133,7 @@ public class MapPaintUtils {
      *
      * @param paintUrl The paint style for MapWithAI
      */
-    public static void setPaintStyleUrl(String paintUrl) {
+    public static synchronized void setPaintStyleUrl(String paintUrl) {
         paintStyleResourceUrl = paintUrl;
     }
 
@@ -138,7 +142,7 @@ public class MapPaintUtils {
      *
      * @return The url for the paint style
      */
-    public static String getPaintStyleUrl() {
+    public static synchronized String getPaintStyleUrl() {
         return paintStyleResourceUrl;
     }
 
@@ -148,7 +152,7 @@ public class MapPaintUtils {
      * @param ds The dataset to add sources to
      */
     public static synchronized void addSourcesToPaintStyle(DataSet ds) {
-        StyleSource styleSource = getMapWithAIPaintStyle();
+        StyleSource styleSource = addMapWithAIPaintStyles();
         if (styleSource == null) {
             return;
         }
