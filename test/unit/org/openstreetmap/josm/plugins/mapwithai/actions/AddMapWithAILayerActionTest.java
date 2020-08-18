@@ -28,7 +28,7 @@ class AddMapWithAILayerActionTest {
     JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().projection();
 
     @Test
-    void test() {
+    void testAddMapWithAILayerActionTest() {
         MapWithAIInfo info = MapWithAILayerInfo.getInstance().getLayers().stream()
                 .filter(i -> i.getName().equalsIgnoreCase("MapWithAI")).findAny().orElse(null);
         AddMapWithAILayerAction action = new AddMapWithAILayerAction(info);

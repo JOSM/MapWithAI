@@ -18,9 +18,7 @@ import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.extension.InvocationInterceptor.Invocation;
 import org.junit.runners.model.InitializationError;
-import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
-import org.openstreetmap.josm.gui.progress.swing.ProgressMonitorExecutor;
 import org.openstreetmap.josm.io.OsmApi;
 import org.openstreetmap.josm.io.OsmApiInitializationException;
 import org.openstreetmap.josm.io.OsmTransferCanceledException;
@@ -171,14 +169,6 @@ public class MapWithAITestRules extends JOSMTestRules {
 
     @Override
     protected void after() throws ReflectiveOperationException {
-        ProgressMonitorExecutor worker = (ProgressMonitorExecutor) MainApplication.worker;
-        while (worker.getActiveCount() > 0) {
-            try {
-                wait(20);
-            } catch (InterruptedException e) {
-                Logging.error(e);
-            }
-        }
         super.after();
         if (wiremock) {
             wireMock.stop();
