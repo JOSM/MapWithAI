@@ -190,12 +190,12 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         for (Way way : Utils.filteredCollection(possiblyAffectedPrimitives, Way.class)) {
             Collection<OsmPrimitive> seenFix = new HashSet<>();
             crossingWays.startTest(NullProgressMonitor.INSTANCE);
-            way.getDataSet().searchWays(way.getBBox()).forEach(crossingWays::visit);
+            way.getDataSet().searchWays(way.getBBox()).stream().filter(w -> w.hasKey(HIGHWAY))
+                    .forEach(crossingWays::visit);
             crossingWays.endTest();
             for (TestError error : crossingWays.getErrors()) {
-                if (seenFix.containsAll(error.getPrimitives())
-                        || error.getPrimitives().stream().filter(Way.class::isInstance).map(Way.class::cast)
-                                .filter(w -> w.hasKey(HIGHWAY)).count() == 0L) {
+                if (seenFix.containsAll(error.getPrimitives()) || error.getPrimitives().stream()
+                        .filter(Way.class::isInstance).map(Way.class::cast).noneMatch(w -> w.hasKey(HIGHWAY))) {
                     continue;
                 }
                 TestError.Builder fixError = TestError.builder(error.getTester(), error.getSeverity(), error.getCode())
@@ -229,7 +229,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         Collection<Command> commands = new ArrayList<>();
         if (intersectionNodes.stream().anyMatch(way::containsNode)) {
             Collection<Way> searchWays = way.getDataSet().searchWays(way.getBBox()).parallelStream()
-                    .collect(Collectors.toList());
+                    .filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList());
             searchWays.remove(way);
             for (Way potential : searchWays) {
                 for (Node node : way.getNodes()) {
