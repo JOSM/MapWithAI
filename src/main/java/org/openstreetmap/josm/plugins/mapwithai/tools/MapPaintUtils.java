@@ -234,19 +234,21 @@ public final class MapPaintUtils {
     private static void writeData(OutputStream out, BufferedReader bufferedReader, String group, List<String> sources)
             throws IOException {
         String line = bufferedReader.readLine();
-        while (!line.contains("End Settings for the paint style")) {
+        while (line != null && !line.contains("End Settings for the paint style")) {
             out.write(line.getBytes(StandardCharsets.UTF_8));
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             line = bufferedReader.readLine();
         }
         /* Finish writing the comment */
-        while (!line.endsWith("*/")) {
+        while (line != null && !line.endsWith("*/")) {
             out.write(line.getBytes(StandardCharsets.UTF_8));
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             line = bufferedReader.readLine();
         }
-        out.write(line.getBytes(StandardCharsets.UTF_8));
-        out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
+        if (line != null) {
+            out.write(line.getBytes(StandardCharsets.UTF_8));
+            out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
+        }
 
         for (String source : sources) {
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
@@ -284,7 +286,7 @@ public final class MapPaintUtils {
         crc.update(sourceName.getBytes(StandardCharsets.UTF_8));
 
         double bucket = crc.getValue() / CRC_DIVIDE_TO_TEN_K_MAX;
-        double bucketSize = 10_000 / colors.length;
+        double bucketSize = 10_000d / colors.length;
         for (int i = 1; i <= colors.length; i++) {
             if (bucket < bucketSize * i) {
                 return colors[i - 1].getColor();
