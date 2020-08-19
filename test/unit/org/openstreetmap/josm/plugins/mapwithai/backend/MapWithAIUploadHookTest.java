@@ -54,7 +54,7 @@ public class MapWithAIUploadHookTest {
 
     @Before
     public void setUp() throws PluginException, IOException {
-        try (final InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8))) {
+        try (InputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8))) {
             info = new PluginInformation(in, "MapWithAI", null);
             info.localversion = "no-such-version";
         }

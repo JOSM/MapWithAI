@@ -28,8 +28,7 @@ public class AddMapWithAIPanelTest {
 
     @SuppressWarnings("unused")
     @Test
-    public void test()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void test() throws ReflectiveOperationException {
         new WindowMocker();
         MapWithAIInfo oldInfo = new MapWithAIInfo();
         AddMapWithAIPanel panel = new AddMapWithAIPanel(oldInfo);

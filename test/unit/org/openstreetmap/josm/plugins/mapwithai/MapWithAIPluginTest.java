@@ -84,8 +84,7 @@ public class MapWithAIPluginTest {
      * @throws IllegalArgumentException see {@link java.lang.reflect.Field#get}
      */
     @Test
-    public void testMapWithAIPlugin()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testMapWithAIPlugin() throws ReflectiveOperationException {
         Field menuEntries = MapWithAIPlugin.class.getDeclaredField("MENU_ENTRIES");
         menuEntries.setAccessible(true);
         // + 1 comes from the preferences panel

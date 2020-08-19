@@ -44,14 +44,10 @@ public class MapWithAIPreferencesTest {
     /**
      * Test method for {@link MapWithAIPreferences#addGui(PreferenceTabbedPane)}.
      *
-     * @throws SecurityException        see {@link java.lang.Class#getDeclaredField}
-     * @throws NoSuchFieldException     see {@link java.lang.Class#getDeclaredField}
-     * @throws IllegalAccessException   see {@link java.lang.reflect.Field#get}
-     * @throws IllegalArgumentException see {@link java.lang.reflect.Field#get}
+     * @throws ReflectiveOperationException If a reflexive operation fails
      */
     @Test
-    public void testAddGui()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testAddGui() throws ReflectiveOperationException {
         final PreferenceTabbedPane pane = new PreferenceTabbedPane();
         pane.buildGui();
         Field tab = PreferenceTabbedPane.class.getDeclaredField("tabs");

@@ -16,7 +16,6 @@ import org.awaitility.Durations;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -93,7 +92,7 @@ public class MapWithAIMoveActionTest {
 
     @Test
     public void testMoveEmptyAction() {
-        Assertions.assertDoesNotThrow(() -> moveAction.actionPerformed(null));
+        assertDoesNotThrow(() -> moveAction.actionPerformed(null));
     }
 
     @Test

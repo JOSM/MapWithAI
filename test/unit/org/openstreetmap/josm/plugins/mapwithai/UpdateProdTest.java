@@ -31,8 +31,7 @@ public class UpdateProdTest {
     public JOSMTestRules rule = new JOSMTestRules().preferences();
 
     @Test
-    public void testDoProd()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testDoProd() throws ReflectiveOperationException {
         TestUtils.assumeWorkingJMockit();
         new OpenBrowserMocker();
         if (GraphicsEnvironment.isHeadless()) {

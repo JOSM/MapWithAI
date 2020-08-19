@@ -74,8 +74,7 @@ public class DownloadListenerTest {
     }
 
     @Test
-    public void testDestroyAll()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testDestroyAll() throws ReflectiveOperationException {
         DataSet ds = new DataSet();
         DownloadListener listener = new DownloadListener(ds);
         Field listenerDs = DownloadListener.class.getDeclaredField("ds");

@@ -54,8 +54,7 @@ public class MapWithAIProvidersPanelTest {
      *                                  (update the test!)
      */
     @Test
-    public void testSetCurrentBounds()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testSetCurrentBounds() throws ReflectiveOperationException {
         Field areaListenersField = mapwithaiProvidersPanel.getClass().getDeclaredField("areaListeners");
         areaListenersField.setAccessible(true);
         @SuppressWarnings("unchecked")
@@ -85,8 +84,7 @@ public class MapWithAIProvidersPanelTest {
      *                                  (update the test!)
      */
     @Test
-    public void testTicket19473()
-            throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
+    public void testTicket19473() throws ReflectiveOperationException {
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(new JPanel());
         Field defaultTableField = MapWithAIProvidersPanel.class.getDeclaredField("defaultTable");
         JTable defaultTable = (JTable) defaultTableField.get(mapwithaiProvidersPanel);

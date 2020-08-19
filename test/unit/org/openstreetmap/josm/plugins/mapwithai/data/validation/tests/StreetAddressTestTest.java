@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.junit.Rule;
@@ -31,8 +30,7 @@ public class StreetAddressTestTest {
     public JOSMTestRules test = new JOSMTestRules().projection();
 
     @Test
-    public void testVisitWay() throws NoSuchMethodException, SecurityException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException {
+    public void testVisitWay() throws ReflectiveOperationException {
         StreetAddressTest test = new StreetAddressTest();
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
         DataSet ds = new DataSet();

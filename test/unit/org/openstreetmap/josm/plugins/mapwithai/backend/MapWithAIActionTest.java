@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,7 +58,7 @@ public class MapWithAIActionTest {
 
         MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "temporary", null));
         action.actionPerformed(null);
-        Awaitility.await().atMost(Durations.TEN_SECONDS)
+        await().atMost(Durations.TEN_SECONDS)
                 .until(() -> 1 == MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
         assertEquals(1, MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).size());
 
@@ -81,7 +80,7 @@ public class MapWithAIActionTest {
         MapWithAIAction.toggleLayer(layer);
         assertSame(layer, MainApplication.getLayerManager().getActiveLayer());
         MapWithAIDataUtils.getLayer(true);
-        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
+        await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         // Adding the MapWithAI layer switches to it
         assertSame(MapWithAIDataUtils.getLayer(false), MainApplication.getLayerManager().getActiveLayer());
         MapWithAIAction.toggleLayer(layer);
@@ -98,7 +97,7 @@ public class MapWithAIActionTest {
         assertNull(notification);
 
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(true);
-        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
+        await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
         notification = MapWithAIAction.createMessageDialog();
         assertNotNull(notification);
         DataSource source = new DataSource(new Bounds(38.8876078, -77.012173, 38.892087, -77.0059234), "test area");

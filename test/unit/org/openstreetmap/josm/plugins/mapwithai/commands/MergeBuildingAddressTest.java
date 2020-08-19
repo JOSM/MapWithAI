@@ -25,7 +25,7 @@ public class MergeBuildingAddressTest {
      * Setup test.
      */
     @Rule
-    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
+    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new JOSMTestRules().projection();
 
     @Test
