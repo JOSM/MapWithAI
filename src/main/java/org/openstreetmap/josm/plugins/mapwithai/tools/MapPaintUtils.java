@@ -4,19 +4,19 @@ package org.openstreetmap.josm.plugins.mapwithai.tools;
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -41,7 +41,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.ColorHelper;
 import org.openstreetmap.josm.tools.Logging;
 
-public class MapPaintUtils {
+public final class MapPaintUtils {
     /** The default url for the MapWithAI paint style */
     public static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
 
@@ -182,16 +182,14 @@ public class MapPaintUtils {
                     path = prefix.concat(path);
                 }
             }
-            try {
-                ZipFile zipFile = new ZipFile(file.getAbsolutePath());
+            try (ZipFile zipFile = new ZipFile(file.getAbsolutePath())) {
                 writeZipData(zipFile, group, sources);
             } catch (ZipException e) {
                 // Assume that it is a standard file, not a zip file.
-                try (OutputStream out = new FileOutputStream(file.getName() + ".tmp")) {
-                    BufferedReader bufferedReader = new BufferedReader(
-                            new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+                try (OutputStream out = Files.newOutputStream(Paths.get(file.getName() + ".tmp"));
+                        BufferedReader bufferedReader = new BufferedReader(
+                                new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8));) {
                     writeData(out, bufferedReader, group, sources);
-                    bufferedReader.close();
                 }
                 Files.move(new File(file.getName() + ".tmp").toPath(), new File(file.getName()).toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -204,28 +202,28 @@ public class MapPaintUtils {
     }
 
     private static void writeZipData(ZipFile file, String group, List<String> sources) throws IOException {
-        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file.getName() + ".tmp"))) {
+        try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(Paths.get(file.getName() + ".tmp")))) {
             for (Iterator<? extends ZipEntry> e = file.stream().iterator(); e.hasNext();) {
                 ZipEntry current = e.next();
                 // For the entry we are overwriting, we cannot use the current zipentry, we must
                 // make a new one.
                 if (!current.getName().equalsIgnoreCase(MAPWITHAI_MAPCSS_ZIP_NAME)) {
                     out.putNextEntry(current);
-                    InputStream is = file.getInputStream(current);
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = is.read(buf)) > 0) {
-                        out.write(buf, 0, len);
+                    try (InputStream is = file.getInputStream(current)) {
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = is.read(buf)) > 0) {
+                            out.write(buf, 0, len);
+                        }
                     }
-                    is.close();
                     out.closeEntry();
                     continue;
                 }
                 out.putNextEntry(new ZipEntry(MAPWITHAI_MAPCSS_ZIP_NAME));
-                BufferedReader bufferedReader = new BufferedReader(
-                        new InputStreamReader(file.getInputStream(current), StandardCharsets.UTF_8));
-                writeData(out, bufferedReader, group, sources);
-                bufferedReader.close();
+                try (BufferedReader bufferedReader = new BufferedReader(
+                        new InputStreamReader(file.getInputStream(current), StandardCharsets.UTF_8))) {
+                    writeData(out, bufferedReader, group, sources);
+                }
                 out.closeEntry();
             }
         }
@@ -253,13 +251,14 @@ public class MapPaintUtils {
         for (String source : sources) {
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             String simpleSource = source.replaceAll("[() /\\${}:]", "_");
-            StringBuilder sb = new StringBuilder("setting::").append(simpleSource).append("{").append("type:color;")
-                    .append("default:").append(simpleSource).append(ColorHelper.color2html(getRandomColor(source)))
-                    .append(";label:tr(\"{0} color\",\"").append(source).append("\");");
+            StringBuilder sb = new StringBuilder(64).append("setting::").append(simpleSource).append("{")
+                    .append("type:color;").append("default:").append(simpleSource)
+                    .append(ColorHelper.color2html(getRandomColor(source))).append(";label:tr(\"{0} color\",\"")
+                    .append(source).append("\");");
             if (group != null) {
                 sb.append("group:\"").append(group).append("\";");
             }
-            sb.append("}");
+            sb.append('}');
             out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
             sb = new StringBuilder(
@@ -276,7 +275,7 @@ public class MapPaintUtils {
 
     private static Color getRandomColor(String sourceName) {
         if (Arrays.asList("mapwithai", "maxar", "digitalglobe", "microsoft/").stream()
-                .anyMatch(i -> sourceName.toLowerCase().contains(i.toLowerCase()))) {
+                .anyMatch(i -> sourceName.toLowerCase(Locale.ROOT).contains(i.toLowerCase(Locale.ROOT)))) {
             return SafeColors.AI_MAGENTA.getColor();
         }
         SafeColors[] colors = Stream.of(SafeColors.values()).filter(c -> SafeColors.AI_MAGENTA != c)

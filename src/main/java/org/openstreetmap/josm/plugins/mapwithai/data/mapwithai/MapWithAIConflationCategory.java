@@ -12,7 +12,7 @@ import java.util.Map;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ConflationSourceReader;
 import org.openstreetmap.josm.tools.Logging;
 
-public class MapWithAIConflationCategory {
+public final class MapWithAIConflationCategory {
     private static final Map<MapWithAICategory, List<String>> CONFLATION_URLS = new EnumMap<>(MapWithAICategory.class);
     private static final String EMPTY_URL = "";
     private static final String DEFAULT_CONFLATION_JSON = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/conflation_servers.json";
