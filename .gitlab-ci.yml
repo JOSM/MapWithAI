@@ -119,8 +119,7 @@ build:
   artifacts:
     paths:
     - build
-  dependencies:
-  - assemble
+  needs: ["assemble"]
 
 test:
   stage: test
@@ -133,71 +132,59 @@ test:
     - build
     reports:
       junit: build/test-results/**/TEST-*.xml
-  dependencies:
-  - assemble
+  needs: ["assemble"]
 
 compile against min JOSM:
   stage: test
   script:
   - ./gradlew compileJava_minJosm
-  dependencies:
-  - assemble
+  needs: ["assemble"]
 
 compile against latest JOSM:
   stage: test
   script:
   - ./gradlew compileJava_latestJosm
-  dependencies:
-  - assemble
+  needs: ["assemble"]
 
 build with java 11:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   script:
     - ./gradlew build
-  dependencies:
-    - assemble with java 11
   allow_failure: true # due to copy-paste-detection
+  needs: ["assemble with java 11"]
 
 build with java 12:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-12-josmplugin:latest
   script:
     - ./gradlew build
-  dependencies:
-    - assemble with java 12
   allow_failure: true
+  needs: ["assemble with java 12"]
 
 build with java 13:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-13-josmplugin:latest
   script:
     - ./gradlew build
-  dependencies:
-    - assemble with java 13
   allow_failure: true
+  needs: ["assemble with java 13"]
 
 build with java 14:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-14-josmplugin:latest
   script:
     - ./gradlew build
-  dependencies:
-    - assemble with java 14
   allow_failure: true
-  only:
-    - schedules
+  needs: ["assemble with java 14"]
 
 build with java 15:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-15-josmplugin:latest
   script:
     - ./gradlew build
-  dependencies:
-    - assemble with java 15
   allow_failure: true
-  only:
-    - schedules
+  needs: ["assemble with java 15"]
 
 ################
 # Deploy stage #
@@ -214,8 +201,7 @@ build with java 15:
 #  - pip install git+https://github.com/transifex/transifex-client.git
 #  script:
 #  - TX_TOKEN="$TRANSIFEX_TOKEN" tx push -s --no-interactive
-#  dependencies:
-#  - build
+# needs: ["assemble"]
 #  only:
 #  - master
 
@@ -245,8 +231,7 @@ release:
     git stage .
     git commit -a -m "$commitMessage"
     git push origin pages
-  dependencies:
-  - build
+  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
       when: manual
@@ -263,8 +248,7 @@ release hotfix:
     mkdir -pv "pages/public/dist/$version"
     cp -v "build/dist/"* "build/tmp/jar/MANIFEST.MF" "pages/public/dist/$version"
   - *push_pages_branch
-  dependencies:
-  - build
+  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: always
@@ -286,8 +270,7 @@ publish update site:
     cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     cp -v "build/dist/mapwithai.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/mapwithai-dev.jar"
   - *push_pages_branch
-  dependencies:
-  - build
+  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_REF_NAME != null'
       when: always
@@ -300,8 +283,7 @@ publish to / GitLab.com packages:
   script:
   - ./gradlew publishAllPublicationsToGitlabRepository
   - ./gradlew releaseToGitlab
-  dependencies:
-  - build
+  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
       when: always
