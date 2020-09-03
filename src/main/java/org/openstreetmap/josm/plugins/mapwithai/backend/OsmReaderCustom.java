@@ -24,7 +24,7 @@ import org.openstreetmap.josm.tools.Logging;
 public class OsmReaderCustom extends OsmReader {
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
-        super(convertUnknownToTags);
+        super();
     }
 
     // check every so often to see if I can keep original negative ids
