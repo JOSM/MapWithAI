@@ -174,14 +174,14 @@ spotless {
 josm {
   debugPort = 7055
   manifest {
-    oldVersionDownloadLink 16645, "v1.6.1", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.6.1/mapwithai.jar")
-    oldVersionDownloadLink 16284, "v1.5.5", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.5.5/mapwithai.jar")
-    oldVersionDownloadLink 16220, "v1.4.2", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.4.2/mapwithai.jar")
-    oldVersionDownloadLink 15820, "v1.3.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.3.7/mapwithai.jar")
-    oldVersionDownloadLink 15737, "v1.2.3", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.2.3/mapwithai.jar")
-    oldVersionDownloadLink 15609, "v1.1.8", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.1.8/mapwithai.jar")
-    oldVersionDownloadLink 15542, "v1.0.5", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.0.5/mapwithai.jar")
-    oldVersionDownloadLink 15233, "v0.2.10", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v0.2.10/mapwithai.jar")
+    oldVersionDownloadLink 16645, "v1.6.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.6.4/mapwithai.jar")
+    oldVersionDownloadLink 16284, "v1.5.6", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.5.6/mapwithai.jar")
+    oldVersionDownloadLink 16220, "v1.4.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.4.4/mapwithai.jar")
+    oldVersionDownloadLink 15820, "v1.3.8", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.3.8/mapwithai.jar")
+    oldVersionDownloadLink 15737, "v1.2.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.2.4/mapwithai.jar")
+    oldVersionDownloadLink 15609, "v1.1.9", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.1.9/mapwithai.jar")
+    oldVersionDownloadLink 15542, "v1.0.6", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.0.6/mapwithai.jar")
+    oldVersionDownloadLink 15233, "v0.2.11", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v0.2.11/mapwithai.jar")
   }
   i18n {
     pathTransformer = getPathTransformer("gitlab.com/${gitlabGroup}/${gitlabRepositoryName}/blob")
