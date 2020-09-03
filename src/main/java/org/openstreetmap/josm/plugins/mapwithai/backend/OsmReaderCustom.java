@@ -23,18 +23,10 @@ import org.openstreetmap.josm.tools.Logging;
  * point to the end of the same element, when it is exited.
  */
 public class OsmReaderCustom extends OsmReader {
-    boolean temporaryConvertUknownToTags;
 
     protected OsmReaderCustom(boolean convertUnknownToTags) {
         // Restricts visibility
         super();
-        // TODO when we update to r15470 this.convertUnknownToTags
-        temporaryConvertUknownToTags = convertUnknownToTags;
-    }
-
-    // TODO remove with update to r15470
-    protected boolean isConvertUknownToTags() {
-        return temporaryConvertUknownToTags;
     }
 
     @Override
