@@ -160,8 +160,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         DataSet ds;
         String contentType = this.activeConnection.getResponse().getHeaderField("Content-Type");
         if (contentType.contains("text/xml")) {
-            ds = OsmReader.parseDataSet(source, progressMonitor, OsmReader.Options.CONVERT_UNKNOWN_TO_TAGS,
-                    OsmReader.Options.SAVE_ORIGINAL_ID);
+            ds = OsmReader.parseDataSet(source, progressMonitor, OsmReader.Options.SAVE_ORIGINAL_ID);
         } else if (MapWithAIType.ESRI_FEATURE_SERVER == this.info.getSourceType()) {
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
