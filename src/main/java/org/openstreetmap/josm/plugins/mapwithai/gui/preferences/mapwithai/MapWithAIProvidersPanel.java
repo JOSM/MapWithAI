@@ -487,14 +487,15 @@ public class MapWithAIProvidersPanel extends JPanel {
         if (e.getSource() instanceof JTable) {
             JTable table = (JTable) e.getSource();
             int realCol = table.convertColumnIndexToModel(table.getSelectedColumn());
+            int realRow = table.convertRowIndexToModel(table.getSelectedRow());
             String tableName = table.getModel().getColumnName(realCol);
             if (tr("License").equals(tableName)) {
-                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(table.getSelectedRow());
+                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(realRow);
                 if (info.getTermsOfUseURL() != null) {
                     OpenBrowser.displayUrl(info.getTermsOfUseURL());
                 }
             } else if (tr("Enabled").equals(tableName)) {
-                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(table.getSelectedRow());
+                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(realRow);
                 MapWithAILayerInfo instance = MapWithAILayerInfo.getInstance();
                 if (instance.getLayers().contains(info)) {
                     instance.remove(info);
