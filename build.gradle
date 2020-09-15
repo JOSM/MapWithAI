@@ -15,6 +15,7 @@ plugins {
   id "org.openstreetmap.josm" version "0.7.0"
   id "net.ltgt.errorprone" version "1.2.1"
   id "com.diffplug.spotless" version "5.1.0"
+  id "org.sonarqube" version "3.0"
   //id 'de.aaschmid.cpd' version '2.0'
 }
 
@@ -275,5 +276,17 @@ if (ciJobToken != null && projectId!= null) {
     authentication {
       create("auth", HttpHeaderAuthentication.class)
     }
+  }
+}
+
+sonarqube {
+  properties {
+    property "sonar.organization", "mapwithai"
+    property "sonar.projectKey", "mapwithai"
+    property("sonar.forceAuthentication", "true")
+    property("sonar.host.url", "https://sonarcloud.io")
+    property("sonar.projectDescription", properties.get("plugin.description"))
+    property("sonar.projectVersion", project.version)
+    property("sonar.sources", listOf("src"))
   }
 }

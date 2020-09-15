@@ -121,6 +121,21 @@ build:
     - build
   needs: ["assemble"]
 
+sonarcloud.io:
+  image: registry.gitlab.com/josm/docker-library/openjdk-8-josmplugin:latest
+  stage: test
+  environment:
+    name: sonarcloud.io
+    url: https://sonarcloud.io/dashboard?id=mapwithai%3Amapwithai
+  script:
+    - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
+  needs: ["assemble"]
+  rules:
+    - if: '$CI_MERGE_REQUEST_IID && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_COMMIT_TAG && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SONAR_TOKEN =~ /[0-9a-z]+/'
+
 test:
   stage: test
   script:
