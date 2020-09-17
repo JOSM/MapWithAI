@@ -651,6 +651,10 @@ public class MapWithAIProvidersPanel extends JPanel {
             if (addDialog.getValue() == 1) {
                 try {
                     MapWithAIInfo info = p.getSourceInfo();
+                    // Fix a possible NPE
+                    if (info.getSourceType() == null) {
+                        info.setSourceType(MapWithAIType.THIRD_PARTY);
+                    }
                     if (MapWithAIType.ESRI == info.getSourceType()) {
                         try (ESRISourceReader reader = new ESRISourceReader(info)) {
                             for (MapWithAIInfo i : reader.parse()) {
