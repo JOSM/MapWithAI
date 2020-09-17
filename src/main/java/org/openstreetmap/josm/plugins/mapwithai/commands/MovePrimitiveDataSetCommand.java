@@ -27,6 +27,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.bugreport.ReportedException;
 
 /**
  * Move primitives between datasets (*not* a copy)
@@ -58,7 +59,12 @@ public class MovePrimitiveDataSetCommand extends Command {
     @Override
     public boolean executeCommand() {
         if (command != null) {
-            command.executeCommand();
+            // DeleteCommand is used when the MapWithAI layer has been deleted.
+            if (command instanceof DeleteCommand) {
+                command.undoCommand();
+            } else {
+                command.executeCommand();
+            }
         }
         return true;
     }
@@ -134,7 +140,7 @@ public class MovePrimitiveDataSetCommand extends Command {
         commands.add(delete);
         commands.removeIf(Objects::isNull);
 
-        if (commands != null && !commands.isEmpty()) {
+        if (!commands.isEmpty()) {
             return SequenceCommand.wrapIfNeeded(trn("Move {0} OSM Primitive between data sets",
                     "Move {0} OSM Primitives between data sets", selection.size(), selection.size()), commands);
         }
@@ -144,7 +150,21 @@ public class MovePrimitiveDataSetCommand extends Command {
     @Override
     public void undoCommand() {
         if (command != null) {
-            command.undoCommand();
+            try {
+                if (command instanceof DeleteCommand) {
+                    command.executeCommand();
+                } else {
+                    command.undoCommand();
+                }
+            } catch (ReportedException | AssertionError e) {
+                if (!e.getMessage().contains("Primitive is of wrong data set for this command")) {
+                    throw e;
+                }
+                command = DeleteCommand.delete(command.getParticipatingPrimitives());
+                command.executeCommand();
+            } catch (Exception e) {
+                throw e;
+            }
         }
     }
 
