@@ -288,6 +288,6 @@ sonarqube {
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.projectDescription", properties.get("plugin.description")
     property "sonar.projectVersion", project.version
-    property "sonar.sources", listOf("src")
+    property "sonar.sources", ["src"]
   }
 }
