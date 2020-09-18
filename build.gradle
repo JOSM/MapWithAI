@@ -119,6 +119,7 @@ test {
   project.afterEvaluate {
     jvmArgs("-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}")
     jvmArgs("-Djunit.jupiter.extensions.autodetection.enabled=true")
+    jvmArgs("-Djava.awt.headless=true")
   }
   useJUnitPlatform()
   ignoreFailures
