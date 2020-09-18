@@ -4,12 +4,10 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
-import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DataSourceChangeEvent;
 import org.openstreetmap.josm.data.osm.DataSourceListener;
@@ -25,7 +23,6 @@ import org.openstreetmap.josm.tools.Destroyable;
 public final class DownloadListener implements DataSourceListener, Destroyable {
 
     final WeakReference<DataSet> ds;
-    private static final double BBOX_SIMILARITY_DEGREES = 0.001;
     private static final Collection<DownloadListener> LISTENERS = new HashSet<>();
 
     public DownloadListener(DataSet dataSet) {
@@ -46,9 +43,6 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
             if (layer.downloadContinuous()) {
                 MapWithAIDataUtils.getMapWithAIData(layer, event.getAdded().stream().map(ev -> ev.bounds)
                         .map(Bounds::toBBox).collect(Collectors.toList()));
-                List<Bounds> bounds = DataSource.getDataSourceBounds(event.getSource().getDataSources());
-                bounds.removeIf(a -> layer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox)
-                        .anyMatch(b -> b.bboxIsFunctionallyEqual(a.toBBox(), BBOX_SIMILARITY_DEGREES)));
             }
         }
     }
