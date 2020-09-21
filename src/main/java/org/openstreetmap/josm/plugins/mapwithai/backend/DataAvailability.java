@@ -19,8 +19,8 @@ import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -151,11 +151,11 @@ public class DataAvailability {
      * @return A string that doesn't have quotes at the beginning or end
      */
     public static String stripQuotes(String string) {
-        return string.replaceAll("(^\"|\"$)", EMPTY_STRING);
+        return string.replaceAll("((^\")|(\"$))", EMPTY_STRING);
     }
 
     /**
-     * Get the global i nstance that should be used to check for data availability
+     * Get the global instance that should be used to check for data availability
      *
      * @return the unique instance
      */
@@ -168,19 +168,19 @@ public class DataAvailability {
     }
 
     /**
-     * Check if a bbox may have data
+     * Check if a bounds may have data
      *
-     * @param bbox An area that may have data
-     * @return True if one of the corners of the {@code bbox} is in a country with
+     * @param bounds An area that may have data
+     * @return True if one of the corners of the {@code bounds} is in a country with
      *         available data.
      */
-    public boolean hasData(BBox bbox) {
+    public boolean hasData(Bounds bounds) {
         final List<LatLon> corners = new ArrayList<>();
-        corners.add(bbox.getBottomRight());
-        corners.add(new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon()));
-        corners.add(bbox.getTopLeft());
-        corners.add(new LatLon(bbox.getTopLeftLat(), bbox.getBottomRightLon()));
-        corners.add(bbox.getCenter());
+        corners.add(bounds.getMin());
+        corners.add(new LatLon(bounds.getMinLat(), bounds.getMaxLon()));
+        corners.add(bounds.getMax());
+        corners.add(new LatLon(bounds.getMaxLat(), bounds.getMinLon()));
+        corners.add(bounds.getCenter());
         return corners.parallelStream().anyMatch(this::hasData);
     }
 

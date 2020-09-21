@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.geom.Area;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,7 +20,6 @@ import javax.swing.JOptionPane;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -92,54 +92,53 @@ public final class MapWithAIDataUtils {
     }
 
     /**
-     * Get a dataset from the API servers using a bbox
+     * Get a dataset from the API servers using a bounds
      *
-     * @param bbox The bbox from which to get data
-     * @return A DataSet with data inside the bbox
+     * @param bounds The bounds from which to get data
+     * @return A DataSet with data inside the bounds
      */
-    public static DataSet getData(BBox bbox) {
-        return getData(Arrays.asList(bbox), MAXIMUM_SIDE_DIMENSIONS);
+    public static DataSet getData(Bounds bounds) {
+        return getData(Arrays.asList(bounds), MAXIMUM_SIDE_DIMENSIONS);
     }
 
     /**
-     * Get a dataset from the API servers using a bbox
+     * Get a dataset from the API servers using a bounds
      *
-     * @param bbox              The bbox from which to get data
+     * @param bounds            The bounds from which to get data
      * @param maximumDimensions The maximum dimensions to try to download at any one
      *                          time
-     * @return A DataSet with data inside the bbox
+     * @return A DataSet with data inside the bounds
      */
-    public static DataSet getData(BBox bbox, int maximumDimensions) {
-        return getData(Arrays.asList(bbox), maximumDimensions);
+    public static DataSet getData(Bounds bounds, int maximumDimensions) {
+        return getData(Arrays.asList(bounds), maximumDimensions);
     }
 
     /**
      *
-     * Get a dataset from the API servers using a list bboxes
+     * Get a dataset from the API servers using a list of bounds
      *
-     * @param bbox The bboxes from which to get data
-     * @return A DataSet with data inside the bboxes
+     * @param bounds The bounds from which to get data
+     * @return A DataSet with data inside the bounds
      */
-    public static DataSet getData(List<BBox> bbox) {
-        return getData(bbox, MAXIMUM_SIDE_DIMENSIONS);
+    public static DataSet getData(List<Bounds> bounds) {
+        return getData(bounds, MAXIMUM_SIDE_DIMENSIONS);
     }
 
     /**
-     * Get a dataset from the API servers using a list bboxes
+     * Get a dataset from the API servers using a list bounds
      *
-     * @param bbox              The bboxes from which to get data
+     * @param bounds            The bounds from which to get data
      * @param maximumDimensions The maximum dimensions to try to download at any one
      *                          time
-     * @return A DataSet with data inside the bboxes
+     * @return A DataSet with data inside the bounds
      */
-    public static DataSet getData(List<BBox> bbox, int maximumDimensions) {
+    public static DataSet getData(List<Bounds> bounds, int maximumDimensions) {
         final DataSet dataSet = new DataSet();
-        final List<BBox> realBBoxes = bbox.stream().filter(BBox::isValid).distinct().collect(Collectors.toList());
-        final List<Bounds> realBounds = realBBoxes.stream()
-                .flatMap(tBBox -> MapWithAIDataUtils.reduceBBoxSize(tBBox, maximumDimensions).stream())
-                .map(MapWithAIDataUtils::bboxToBounds).collect(Collectors.toList());
+        final List<Bounds> realBounds = bounds.stream().filter(b -> !b.isOutOfTheWorld()).distinct()
+                .flatMap(bound -> MapWithAIDataUtils.reduceBoundSize(bound, maximumDimensions).stream())
+                .collect(Collectors.toList());
         if (!MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
-            if ((realBBoxes.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBBoxes)) {
+            if ((bounds.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBounds)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
                 realBounds.parallelStream()
@@ -155,7 +154,7 @@ public final class MapWithAIDataUtils {
                                     } catch (OsmTransferException e) {
                                         Logging.error(e);
                                         if (maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10) {
-                                            dataSet.mergeFrom(getData(bound.toBBox(), maximumDimensions / 2));
+                                            dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
                                         }
                                     }
                                 }));
@@ -180,18 +179,18 @@ public final class MapWithAIDataUtils {
         return dataSet;
     }
 
-    private static boolean confirmBigDownload(List<BBox> realBBoxes) {
-        ConfirmBigDownload confirmation = new ConfirmBigDownload(realBBoxes);
+    private static boolean confirmBigDownload(List<Bounds> realBounds) {
+        ConfirmBigDownload confirmation = new ConfirmBigDownload(realBounds);
         GuiHelper.runInEDTAndWait(confirmation);
         return confirmation.confirmed();
     }
 
     private static class ConfirmBigDownload implements Runnable {
         Boolean bool;
-        List<BBox> realBBoxes;
+        List<?> realBounds;
 
-        public ConfirmBigDownload(List<BBox> realBBoxes) {
-            this.realBBoxes = realBBoxes;
+        public ConfirmBigDownload(List<?> realBounds) {
+            this.realBounds = realBounds;
         }
 
         @Override
@@ -199,19 +198,13 @@ public final class MapWithAIDataUtils {
             bool = ConditionalOptionPaneUtil.showConfirmationDialog(MapWithAIPlugin.NAME.concat(".alwaysdownload"),
                     null,
                     tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
-                            realBBoxes.size()),
+                            realBounds.size()),
                     null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION);
         }
 
         public boolean confirmed() {
             return bool;
         }
-    }
-
-    private static Bounds bboxToBounds(BBox bbox) {
-        Bounds bound = new Bounds(bbox.getBottomRight());
-        bound.extend(bbox.getTopLeft());
-        return bound;
     }
 
     /**
@@ -228,18 +221,18 @@ public final class MapWithAIDataUtils {
     }
 
     /**
-     * Get the height of a bbox
+     * Get the height of a bounds
      *
-     * @param bbox The bbox with lat/lon information
+     * @param bounds The bounds with lat/lon information
      * @return The height in meters (see {@link LatLon#greatCircleDistance})
      */
-    public static double getHeight(BBox bbox) {
-        final LatLon bottomRight = bbox.getBottomRight();
-        final LatLon topLeft = bbox.getTopLeft();
-        final double minx = topLeft.getX();
-        final double miny = bottomRight.getY();
-        final LatLon bottomLeft = new LatLon(miny, minx);
-        return topLeft.greatCircleDistance(bottomLeft);
+    public static double getHeight(Bounds bounds) {
+        final LatLon topRight = bounds.getMax();
+        final LatLon bottomLeft = bounds.getMin();
+        final double minx = bottomLeft.getX();
+        final double maxY = topRight.getY();
+        final LatLon topLeft = new LatLon(maxY, minx);
+        return bottomLeft.greatCircleDistance(topLeft);
     }
 
     /**
@@ -295,36 +288,33 @@ public final class MapWithAIDataUtils {
      * @return true if data was downloaded
      */
     public static boolean getMapWithAIData(MapWithAILayer layer, OsmDataLayer osmLayer) {
-        return getMapWithAIData(layer,
-                osmLayer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox).collect(Collectors.toList()));
+        return getMapWithAIData(layer, osmLayer.getDataSet().getDataSourceBounds());
     }
 
     /**
      * Get the data for MapWithAI
      *
      * @param layer  A pre-existing {@link MapWithAILayer}
-     * @param bboxes The bboxes to get the data in
+     * @param bounds The bounds to get the data in
      * @return true if data was downloaded
      */
-    public static boolean getMapWithAIData(MapWithAILayer layer, BBox... bboxes) {
-        return getMapWithAIData(layer, Arrays.asList(bboxes));
+    public static boolean getMapWithAIData(MapWithAILayer layer, Bounds... bounds) {
+        return getMapWithAIData(layer, Arrays.asList(bounds));
     }
 
     /**
      * Get the data for MapWithAI
      *
      * @param layer  A pre-existing {@link MapWithAILayer}
-     * @param bboxes The bboxes to get the data in
+     * @param bounds The bounds to get the data in
      * @return true if data was downloaded
      */
-    public static boolean getMapWithAIData(MapWithAILayer layer, Collection<BBox> bboxes) {
+    public static boolean getMapWithAIData(MapWithAILayer layer, Collection<Bounds> bounds) {
         final DataSet mapWithAISet = layer.getDataSet();
-        final List<BBox> mapWithAIBounds = mapWithAISet.getDataSourceBounds().stream().map(Bounds::toBBox)
-                .collect(Collectors.toList());
-        final List<BBox> editSetBBoxes = bboxes.stream()
-                .filter(bbox -> mapWithAIBounds.stream().noneMatch(tBBox -> tBBox.bounds(bbox)))
-                .collect(Collectors.toList());
-        final List<BBox> toDownload = reduceBBox(mapWithAIBounds, editSetBBoxes);
+        Area area = mapWithAISet.getDataSourceArea();
+        final List<Bounds> toDownload = area == null ? new ArrayList<>(bounds)
+                : bounds.stream().filter(Objects::nonNull).filter(tBounds -> !area.contains(tBounds.asRect()))
+                        .collect(Collectors.toList());
         if (!toDownload.isEmpty()) {
             getForkJoinPool().execute(() -> {
                 final DataSet newData = getData(toDownload);
@@ -336,134 +326,87 @@ public final class MapWithAIDataUtils {
                 } finally {
                     lock.unlock();
                 }
-                toDownload.stream().map(MapWithAIDataUtils::bboxToBounds).forEach(layer::onPostDownloadFromServer);
+                toDownload.stream().forEach(layer::onPostDownloadFromServer);
             });
         }
         return !toDownload.isEmpty();
     }
 
-    private static List<BBox> reduceBBox(List<BBox> alreadyDownloaded, List<BBox> wantToDownload) {
-        final List<BBox> alreadyDownloadedReduced = new ArrayList<>(alreadyDownloaded);
-        int aDRSize = -1;
-        do {
-            aDRSize = alreadyDownloadedReduced.size();
-            for (int i = 0; i < alreadyDownloadedReduced.size(); i++) {
-                final BBox bbox1 = alreadyDownloadedReduced.get(i);
-                for (int j = 0; j < alreadyDownloadedReduced.size(); j++) {
-                    final BBox bbox2 = alreadyDownloadedReduced.get(j);
-                    if (!bbox1.bboxIsFunctionallyEqual(bbox2, null) && bboxesShareSide(bbox1, bbox2)) {
-                        bbox1.add(bbox2);
-                        alreadyDownloadedReduced.remove(bbox2);
-                    }
-                }
-            }
-        } while (aDRSize != alreadyDownloadedReduced.size());
-        return removeDuplicateBBoxes(wantToDownload, alreadyDownloadedReduced);
-    }
-
-    private static List<BBox> removeDuplicateBBoxes(List<BBox> wantToDownload, List<BBox> alreadyDownloaded) {
-        for (final BBox bbox : wantToDownload) {
-            for (final BBox downloaded : alreadyDownloaded) {
-                if (downloaded.bboxIsFunctionallyEqual(downloaded, null)) {
-                    Logging.debug("{0}: It looks like we already downloaded {1}", MapWithAIPlugin.NAME,
-                            bbox.toStringCSV(","));
-                }
-            }
-        }
-        return wantToDownload.parallelStream()
-                .filter(bbox1 -> alreadyDownloaded.parallelStream()
-                        .noneMatch(bbox2 -> bbox2.bboxIsFunctionallyEqual(bbox1, 0.000_02)))
-                .collect(Collectors.toList());
-
-    }
-
-    private static boolean bboxesShareSide(BBox bbox1, BBox bbox2) {
-        final List<Double> bbox1Lons = Arrays.asList(bbox1.getTopLeftLon(), bbox1.getBottomRightLon());
-        final List<Double> bbox1Lats = Arrays.asList(bbox1.getTopLeftLat(), bbox1.getBottomRightLat());
-        final List<Double> bbox2Lons = Arrays.asList(bbox2.getTopLeftLon(), bbox2.getBottomRightLon());
-        final List<Double> bbox2Lats = Arrays.asList(bbox2.getTopLeftLat(), bbox2.getBottomRightLat());
-        final Long lonDupeCount = bbox1Lons.parallelStream()
-                .filter(lon -> bbox2Lons.parallelStream().anyMatch(lon2 -> Double.compare(lon, lon2) == 0)).count();
-        final Long latDupeCount = bbox1Lats.parallelStream()
-                .filter(lat -> bbox2Lats.parallelStream().anyMatch(lat2 -> Double.compare(lat, lat2) == 0)).count();
-        return (lonDupeCount + latDupeCount) > 1;
-    }
-
     /**
-     * Get the width of a bbox
+     * Get the width of a bounds
      *
-     * @param bbox The bbox to get the width of
+     * @param bounds The bounds to get the width of
      * @return See {@link LatLon#greatCircleDistance}
      */
-    public static double getWidth(BBox bbox) {
+    public static double getWidth(Bounds bounds) {
         // Lat is y, Lon is x
-        final LatLon bottomRight = bbox.getBottomRight();
-        final LatLon topLeft = bbox.getTopLeft();
-        final double maxx = bottomRight.getX();
-        final double minx = topLeft.getX();
-        final double miny = bottomRight.getY();
-        final double maxy = topLeft.getY();
-        final LatLon bottomLeft = new LatLon(miny, minx);
-        final LatLon topRight = new LatLon(maxy, maxx);
-        return Math.max(bottomRight.greatCircleDistance(bottomLeft), topRight.greatCircleDistance(topLeft));
+        final LatLon bottomLeft = bounds.getMin();
+        final LatLon topRight = bounds.getMax();
+        final double minx = bottomLeft.getX();
+        final double maxx = topRight.getX();
+        final double miny = bottomLeft.getY();
+        final double maxy = topRight.getY();
+        final LatLon bottomRight = new LatLon(miny, maxx);
+        final LatLon topLeft = new LatLon(maxy, minx);
+        return Math.max(bottomLeft.greatCircleDistance(bottomRight), topLeft.greatCircleDistance(topRight));
     }
 
     /**
-     * Reduce a bbox to the specified dimensions, returning a list of bboxes.
+     * Reduce a bound to the specified dimensions, returning a list of bounds.
      *
-     * @param bbox              The bbox to reduce to a set maximum dimension
-     * @param maximumDimensions The maximum side dimensions of the bbox
-     * @return A list of BBoxes that have a dimension no more than
+     * @param bound             The bound to reduce to a set maximum dimension
+     * @param maximumDimensions The maximum side dimensions of the bound
+     * @return A list of Bounds that have a dimension no more than
      *         {@code maximumDimensions}
      */
-    public static List<BBox> reduceBBoxSize(BBox bbox, int maximumDimensions) {
-        final List<BBox> returnBounds = new ArrayList<>();
-        final double width = getWidth(bbox);
-        final double height = getHeight(bbox);
+    public static List<Bounds> reduceBoundSize(Bounds bound, int maximumDimensions) {
+        final List<Bounds> returnBounds = new ArrayList<>();
+        final double width = getWidth(bound);
+        final double height = getHeight(bound);
         final Double widthDivisions = width / maximumDimensions;
         final Double heightDivisions = height / maximumDimensions;
         final int widthSplits = widthDivisions.intValue() + ((widthDivisions - widthDivisions.intValue()) > 0 ? 1 : 0);
         final int heightSplits = heightDivisions.intValue()
                 + ((heightDivisions - heightDivisions.intValue()) > 0 ? 1 : 0);
 
-        final double newMinWidths = Math.abs(bbox.getTopLeftLon() - bbox.getBottomRightLon()) / widthSplits;
-        final double newMinHeights = Math.abs(bbox.getBottomRightLat() - bbox.getTopLeftLat()) / heightSplits;
+        final double newMinWidths = Math.abs(bound.getMaxLon() - bound.getMinLon()) / widthSplits;
+        final double newMinHeights = Math.abs(bound.getMaxLat() - bound.getMinLat()) / heightSplits;
 
-        final double minx = bbox.getTopLeftLon();
-        final double miny = bbox.getBottomRightLat();
+        final double minx = bound.getMinLon();
+        final double miny = bound.getMinLat();
         for (int x = 1; x <= widthSplits; x++) {
             for (int y = 1; y <= heightSplits; y++) {
                 final LatLon lowerLeft = new LatLon(miny + (newMinHeights * (y - 1)), minx + (newMinWidths * (x - 1)));
                 final LatLon upperRight = new LatLon(miny + (newMinHeights * y), minx + (newMinWidths * x));
-                returnBounds.add(new BBox(lowerLeft, upperRight));
+                returnBounds.add(new Bounds(lowerLeft, upperRight));
             }
         }
         return returnBounds.stream().distinct().collect(Collectors.toList());
     }
 
     /**
-     * Reduce a list of bboxes to {@link MapWithAIDataUtils#MAXIMUM_SIDE_DIMENSIONS}
+     * Reduce a list of bounds to {@link MapWithAIDataUtils#MAXIMUM_SIDE_DIMENSIONS}
      *
-     * @param bboxes The bboxes to reduce to a set maximum dimension
-     * @return A list of BBoxes that have a dimension no more than
+     * @param bounds The bounds to reduce to a set maximum dimension
+     * @return A list of Bounds that have a dimension no more than
      *         {@link MapWithAIDataUtils#MAXIMUM_SIDE_DIMENSIONS}
      */
-    public static List<BBox> reduceBBoxSize(List<BBox> bboxes) {
-        return reduceBBoxSize(bboxes, MAXIMUM_SIDE_DIMENSIONS);
+    public static List<Bounds> reduceBoundSize(List<Bounds> bounds) {
+        return reduceBoundSize(bounds, MAXIMUM_SIDE_DIMENSIONS);
     }
 
     /**
-     * Reduce a list of bboxes to a specified size
+     * Reduce a list of bounds to a specified size
      *
-     * @param bboxes            The bboxes to reduce to a set maximum dimension
+     * @param bounds            The bounds to reduce to a set maximum dimension
      * @param maximumDimensions The maximum width/height dimensions
-     * @return A list of BBoxes that have a dimension no more than the
+     * @return A list of Bounds that have a dimension no more than the
      *         {@code maximumDimensions}
      */
-    public static List<BBox> reduceBBoxSize(List<BBox> bboxes, int maximumDimensions) {
-        final List<BBox> returnBBoxes = new ArrayList<>();
-        bboxes.forEach(bbox -> returnBBoxes.addAll(reduceBBoxSize(bbox, maximumDimensions)));
-        return returnBBoxes.stream().distinct().collect(Collectors.toList());
+    public static List<Bounds> reduceBoundSize(List<Bounds> bounds, int maximumDimensions) {
+        final List<Bounds> returnBounds = new ArrayList<>();
+        bounds.forEach(bound -> returnBounds.addAll(reduceBoundSize(bound, maximumDimensions)));
+        return returnBounds.stream().distinct().collect(Collectors.toList());
     }
 
     /**

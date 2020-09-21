@@ -139,7 +139,7 @@ public class MapWithAIRemoteControlTest {
                         "http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp2.toStringCSV(",")))
                                 .handle());
         assertEquals(
-                "Bad bbox: 39.0621223,-108.4625421,39.0633059,-108.4594728 (converted to [ x: 39.0621223 -> 39.0633059, y: -108.4625421 -> -108.4594728 ])",
+                "Bad bbox: 39.0621223,-108.4625421,39.0633059,-108.4594728 (converted to Bounds[-108.4625421,39.0621223,-108.4594728,39.0633059])",
                 exception.getMessage());
     }
 

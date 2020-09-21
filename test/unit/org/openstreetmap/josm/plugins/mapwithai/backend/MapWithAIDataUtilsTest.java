@@ -50,7 +50,7 @@ public class MapWithAIDataUtilsTest {
      */
     @Test
     public void testGetData() {
-        final BBox testBBox = getTestBBox();
+        final Bounds testBBox = getTestBounds();
         final DataSet ds = new DataSet(MapWithAIDataUtils.getData(testBBox));
         assertEquals(1, ds.getWays().size(), "There should only be one way in the testBBox");
     }
@@ -60,9 +60,9 @@ public class MapWithAIDataUtilsTest {
      */
     @Test
     public void testGetDataMultiple() {
-        final BBox testBBox = getTestBBox();
-        final BBox testBBox2 = new BBox(-108.4495519, 39.095376, -108.4422314, 39.0987811);
-        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBBox, testBBox2)));
+        final Bounds testBounds1 = getTestBounds();
+        final Bounds testBounds2 = new Bounds(39.095376, -108.4495519, 39.0987811, -108.4422314);
+        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBounds1, testBounds2)));
         int expectedBounds = 2;
         assertEquals(expectedBounds, ds.getDataSourceBounds().size(), "There should be two data sources");
     }
@@ -73,14 +73,14 @@ public class MapWithAIDataUtilsTest {
      */
     @Test
     public void testGetDataCropped() {
-        final BBox testBBox = getTestBBox();
+        final Bounds testBounds = getTestBounds();
         final GpxData gpxData = new GpxData();
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0735205, -108.5711561)));
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0736682, -108.5708568)));
         final GpxLayer gpx = new GpxLayer(gpxData, DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA);
-        final DataSet originalData = MapWithAIDataUtils.getData(testBBox);
+        final DataSet originalData = MapWithAIDataUtils.getData(testBounds);
         MainApplication.getLayerManager().addLayer(gpx);
-        final DataSet ds = MapWithAIDataUtils.getData(testBBox);
+        final DataSet ds = MapWithAIDataUtils.getData(testBounds);
         assertEquals(1, ds.getWays().size(), "There should only be one way in the cropped testBBox");
         assertEquals(3, ds.getNodes().size(), "There should be three nodes in the cropped testBBox");
         assertEquals(1, originalData.getWays().size(), "There should be one way in the testBBox");
@@ -153,14 +153,15 @@ public class MapWithAIDataUtilsTest {
 
     @Test
     public void testSplitBounds() {
-        final BBox bbox = new BBox(0, 0, 0.0001, 0.0001);
+        final Bounds bounds = new Bounds(0, 0, 0.0001, 0.0001);
         for (Double i : Arrays.asList(0.0001, 0.001, 0.01, 0.1)) {
-            bbox.add(i, i);
-            List<BBox> bboxes = MapWithAIDataUtils.reduceBBoxSize(bbox, 5_000);
-            assertEquals(getExpectedNumberOfBBoxes(bbox, 5_000), bboxes.size(),
+            bounds.extend(i, i);
+            List<BBox> bboxes = MapWithAIDataUtils.reduceBoundSize(bounds, 5_000).stream().map(Bounds::toBBox)
+                    .collect(Collectors.toList());
+            assertEquals(getExpectedNumberOfBBoxes(bounds, 5_000), bboxes.size(),
                     "The bbox should be appropriately reduced");
-            checkInBBox(bbox, bboxes);
-            checkBBoxesConnect(bbox, bboxes);
+            checkInBBox(bounds.toBBox(), bboxes);
+            checkBBoxesConnect(bounds.toBBox(), bboxes);
         }
     }
 
@@ -176,7 +177,7 @@ public class MapWithAIDataUtilsTest {
                 .collect(Collectors.toList()).isEmpty());
     }
 
-    private static int getExpectedNumberOfBBoxes(BBox bbox, int maximumDimensions) {
+    private static int getExpectedNumberOfBBoxes(Bounds bbox, int maximumDimensions) {
         double width = MapWithAIDataUtils.getWidth(bbox);
         double height = MapWithAIDataUtils.getHeight(bbox);
         int widthDivisions = (int) Math.ceil(width / maximumDimensions);

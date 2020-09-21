@@ -18,8 +18,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
@@ -119,9 +119,9 @@ public class MapWithAIUploadHookTest {
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
         assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
 
-        BBox tBBox = new BBox(1, 0, 0, 1);
+        Bounds tBounds = new Bounds(0, 1, 1, 0);
         MainApplication.getLayerManager()
-                .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(tBBox),
+                .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(tBounds),
                         DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
 
         tags.clear();
@@ -131,7 +131,7 @@ public class MapWithAIUploadHookTest {
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
         assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
-        assertTrue(split.contains("task=".concat(tBBox.toStringCSV(","))),
+        assertTrue(split.contains("task=".concat(tBounds.toBBox().toStringCSV(","))),
                 "There should be a task in the mapwithai:options");
     }
 

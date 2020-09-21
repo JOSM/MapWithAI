@@ -12,7 +12,6 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
 import org.openstreetmap.josm.data.gpx.GpxRoute;
 import org.openstreetmap.josm.data.gpx.WayPoint;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -58,35 +57,39 @@ final class DetectTaskingManagerUtils {
     }
 
     /**
-     * Get the bbox from the tasking manager layer
+     * Get the bounds from the tasking manager layer
      *
-     * @return A {@link BBox} made from a tasking manager layer, or one that is not
-     *         valid.
+     * @return A {@link Bounds} made from a tasking manager layer, or one that is
+     *         not valid.
      */
-    public static BBox getTaskingManagerBBox() {
-        final BBox returnBBox = new BBox();
+    public static Bounds getTaskingManagerBounds() {
+        Bounds returnBounds = new Bounds(0, 0, 0, 0);
         final Layer layer = getTaskingManagerLayer();
         if (layer instanceof GpxLayer) {
             final GpxLayer gpxLayer = (GpxLayer) layer;
             final Bounds realBounds = gpxLayer.data.recalculateBounds();
-            returnBBox.add(realBounds.toBBox());
+            if (returnBounds.isCollapsed()) {
+                returnBounds = realBounds;
+            } else {
+                returnBounds.extend(realBounds);
+            }
         }
-        return returnBBox;
+        return returnBounds;
     }
 
     /**
      * Create a GpxData that can be used to define a crop area
      *
-     * @param bbox A bbox to crop data to
+     * @param bounds A bounds to crop data to
      * @return A gpx layer that can be used to crop data from MapWithAI
      */
-    public static GpxData createTaskingManagerGpxData(BBox bbox) {
+    public static GpxData createTaskingManagerGpxData(Bounds bounds) {
         final GpxData data = new GpxData();
         final GpxRoute route = new GpxRoute();
-        route.routePoints.add(new WayPoint(bbox.getBottomRight()));
-        route.routePoints.add(new WayPoint(new LatLon(bbox.getBottomRightLat(), bbox.getTopLeftLon())));
-        route.routePoints.add(new WayPoint(bbox.getTopLeft()));
-        route.routePoints.add(new WayPoint(new LatLon(bbox.getTopLeftLat(), bbox.getBottomRightLon())));
+        route.routePoints.add(new WayPoint(bounds.getMin()));
+        route.routePoints.add(new WayPoint(new LatLon(bounds.getMaxLat(), bounds.getMinLon())));
+        route.routePoints.add(new WayPoint(bounds.getMax()));
+        route.routePoints.add(new WayPoint(new LatLon(bounds.getMinLat(), bounds.getMaxLon())));
         route.routePoints.add(route.routePoints.iterator().next());
         route.routePoints.forEach(waypoint -> waypoint.setTime(0));
         data.addRoute(route);

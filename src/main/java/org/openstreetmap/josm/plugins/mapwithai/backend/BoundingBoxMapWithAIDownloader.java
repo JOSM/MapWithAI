@@ -3,8 +3,10 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.geom.Area;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -72,7 +74,8 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         return url.replace("{bbox}", Double.toString(lon1) + ',' + lat1 + ',' + lon2 + ',' + lat2)
                 .replace("{xmin}", Double.toString(lon1)).replace("{ymin}", Double.toString(lat1))
                 .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2))
-                + (crop ? "&crop_bbox=" + DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(",") : "");
+                + (crop ? "&crop_bbox=" + DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox().toStringCSV(",")
+                        : "");
     }
 
     @Override
@@ -119,7 +122,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
         // Just in case something happens, try again...
         DataSet ds = new DataSet();
-        GetDataRunnable runnable = new GetDataRunnable(downloadArea.toBBox(), ds, NullProgressMonitor.INSTANCE);
+        GetDataRunnable runnable = new GetDataRunnable(downloadArea, ds, NullProgressMonitor.INSTANCE);
         runnable.setMapWithAIInfo(info);
         MainApplication.worker.execute(() -> {
             try {
@@ -143,9 +146,9 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
      * @return The dataset to send to the server
      */
     private static DataSet getConflationData(Bounds bound) {
-        List<OsmDataLayer> layers = MainApplication
-                .getLayerManager().getLayersOfType(OsmDataLayer.class).stream().filter(l -> l.getDataSet()
-                        .getDataSourceBounds().stream().anyMatch(b -> b.toBBox().bounds(bound.toBBox())))
+        Area area = DataSource.getDataSourceArea(Collections.singleton(new DataSource(bound, "")));
+        List<OsmDataLayer> layers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                .filter(l -> l.getDataSet().getDataSourceBounds().stream().anyMatch(b -> area.contains(bound.asRect())))
                 .collect(Collectors.toList());
         return layers.stream().max(Comparator.comparingInt(l -> l.getDataSet().allPrimitives().size()))
                 .map(OsmDataLayer::getDataSet).orElse(null);

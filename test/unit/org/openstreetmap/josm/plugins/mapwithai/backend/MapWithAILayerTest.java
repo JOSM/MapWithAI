@@ -30,7 +30,6 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -143,7 +142,7 @@ public class MapWithAILayerTest {
         MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         DataSet ds = mapWithAILayer.getDataSet();
         GetDataRunnable getData = new GetDataRunnable(
-                Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null);
+                Arrays.asList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
         getData.setMaximumDimensions(5_000);
         getData.fork().join();
         assertTrue(ds.getSelected().isEmpty());

@@ -13,8 +13,8 @@ import org.awaitility.Durations;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -38,8 +38,8 @@ public class MapWithAIAvailabilityTest {
 
     @Test
     public void testHasDataBBox() {
-        assertFalse(instance.hasData(new BBox(0, 0, 0.1, 0.1)), "There shouldn't be data in the ocean");
-        assertTrue(instance.hasData(new BBox(-99.9, 39.9, 100.1, 40.1)), "There should be data in the US");
+        assertFalse(instance.hasData(new Bounds(0, 0, 0.1, 0.1)), "There shouldn't be data in the ocean");
+        assertTrue(instance.hasData(new Bounds(39.9, -99.9, 40.1, 100.1)), "There should be data in the US");
     }
 
     @Test

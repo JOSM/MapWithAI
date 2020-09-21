@@ -5,8 +5,9 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.stream.Stream;
 
-import org.openstreetmap.josm.data.osm.BBox;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -20,8 +21,8 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     private static final PermissionPrefWithDefault PERMISSION_PREF_WITH_DEFAULT = new PermissionPrefWithDefault(
             MapWithAIPlugin.NAME.concat(".remote_control"), true, tr("MapWithAI"));
 
-    private BBox download;
-    private BBox crop;
+    private Bounds download;
+    private Bounds crop;
     private Integer maxObj;
     private Boolean switchLayer;
     private String url;
@@ -43,10 +44,10 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         if (args != null) {
             try {
                 if (args.containsKey(BBOX)) {
-                    download = parseBBox(args.get(BBOX));
+                    download = parseBounds(args.get(BBOX));
                 }
                 if (args.containsKey(CROP_BBOX)) {
-                    crop = parseBBox(args.get(CROP_BBOX));
+                    crop = parseBounds(args.get(CROP_BBOX));
                 }
                 if (args.containsKey(MAX_OBJ)) {
                     maxObj = Integer.parseInt(args.get(MAX_OBJ));
@@ -70,24 +71,32 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         }
     }
 
-    private static BBox parseBBox(String coordinates) throws RequestHandlerBadRequestException {
-        final String[] coords = coordinates.split(",", -1);
-        final BBox tBBox = new BBox();
-        if (coords.length >= 4 && coords.length % 2 == 0) {
-            for (int i = 0; i < coords.length / 2; i++) {
-                tBBox.add(Double.parseDouble(coords[2 * i]), Double.parseDouble(coords[2 * i + 1]));
-            }
-        }
-        if (!tBBox.isInWorld()) {
+    /**
+     * Parse a string of coordinates into bounds
+     *
+     * @param coordinates The coordinates to parse
+     * @return The new Bounds
+     * @throws RequestHandlerBadRequestException If there was something wrong with
+     *                                           the coordinates
+     */
+    private static Bounds parseBounds(String coordinates) throws RequestHandlerBadRequestException {
+        final Double[] coords = Stream.of(coordinates.split(",", -1)).map(Double::parseDouble).toArray(Double[]::new);
+        // min lat, min lon, max lat, max lon
+        final double minLat = Math.min(coords[1], coords[3]);
+        final double maxLat = Math.max(coords[1], coords[3]);
+        final double maxLon = Math.max(coords[0], coords[2]);
+        final double minLon = Math.min(coords[0], coords[2]);
+        final Bounds tBounds = new Bounds(minLat, minLon, maxLat, maxLon);
+        if (tBounds.isOutOfTheWorld() || tBounds.isCollapsed()) {
             throw new RequestHandlerBadRequestException(
-                    tr("Bad bbox: {0} (converted to {1})", coordinates, tBBox.toString()));
+                    tr("Bad bbox: {0} (converted to {1})", coordinates, tBounds.toString()));
         }
-        return tBBox;
+        return tBounds;
     }
 
     @Override
     protected void handleRequest() throws RequestHandlerErrorException, RequestHandlerBadRequestException {
-        if (crop != null && crop.isInWorld()) {
+        if (crop != null && crop.toBBox().isInWorld()) {
             MainApplication.getLayerManager()
                     .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(crop),
                             DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
@@ -108,12 +117,12 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
             layer.setSwitchLayers(switchLayer);
         }
 
-        if (download != null && download.isInWorld()) {
+        if (download != null && download.toBBox().isInWorld()) {
             MapWithAIDataUtils.getMapWithAIData(layer, download);
         } else if (MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
                 .anyMatch(tLayer -> !(tLayer instanceof MapWithAILayer))) {
             MapWithAIDataUtils.getMapWithAIData(layer);
-        } else if (crop != null && crop.isInWorld()) {
+        } else if (crop != null && crop.toBBox().isInWorld()) {
             MapWithAIDataUtils.getMapWithAIData(layer, crop);
         }
     }
@@ -129,10 +138,10 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
         }
         sb.append(tr("automatically switch layers.")).append(br);
         if (download != null) {
-            sb.append(tr("We will download data in ")).append(download.toStringCSV(",")).append(br);
+            sb.append(tr("We will download data in ")).append(download.toBBox().toStringCSV(",")).append(br);
         }
         if (crop != null) {
-            sb.append(tr("We will crop the data to ")).append(crop.toStringCSV(",")).append(br);
+            sb.append(tr("We will crop the data to ")).append(crop.toBBox().toStringCSV(",")).append(br);
         }
         sb.append(tr("There is a maximum addition of {0} objects at one time", maxObj));
         return sb.toString();

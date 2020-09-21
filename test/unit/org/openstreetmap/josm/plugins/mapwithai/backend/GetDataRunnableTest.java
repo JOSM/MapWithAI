@@ -18,8 +18,8 @@ import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
@@ -103,7 +103,7 @@ public class GetDataRunnableTest {
     public void testRegressionTicket46() {
         DataSet ds = new DataSet();
         GetDataRunnable getData = new GetDataRunnable(
-                Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null);
+                Arrays.asList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
         getData.setMaximumDimensions(5_000);
         getData.fork().join();
         assertNotNull(ds);

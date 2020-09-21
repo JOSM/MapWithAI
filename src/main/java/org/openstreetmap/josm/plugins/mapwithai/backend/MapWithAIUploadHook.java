@@ -35,7 +35,8 @@ public class MapWithAIUploadHook implements UploadHook, Destroyable {
                 sb.append(";maxadd=").append(MapWithAIPreferenceHelper.getMaximumAddition());
             }
             if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
-                sb.append(";task=").append(DetectTaskingManagerUtils.getTaskingManagerBBox().toStringCSV(","));
+                sb.append(";task=")
+                        .append(DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox().toStringCSV(","));
             }
             if (!MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
                 sb.append(";url_ids=")

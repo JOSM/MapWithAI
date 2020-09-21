@@ -53,7 +53,7 @@ import org.openstreetmap.josm.tools.Pair;
  */
 public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static final long serialVersionUID = 258423685658089715L;
-    private final transient List<BBox> bbox;
+    private final transient List<Bounds> runnableBounds;
     private final transient DataSet dataSet;
     private final transient ProgressMonitor monitor;
     private static final float DEGREE_BUFFER = 0.001f;
@@ -88,7 +88,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset to add the data to
      * @param monitor A monitor to keep track of progress
      */
-    public GetDataRunnable(BBox bbox, DataSet dataSet, ProgressMonitor monitor) {
+    public GetDataRunnable(Bounds bbox, DataSet dataSet, ProgressMonitor monitor) {
         this(Arrays.asList(bbox), dataSet, monitor);
     }
 
@@ -98,9 +98,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset to add the data to
      * @param monitor A monitor to keep track of progress
      */
-    public GetDataRunnable(List<BBox> bbox, DataSet dataSet, ProgressMonitor monitor) {
+    public GetDataRunnable(List<Bounds> bbox, DataSet dataSet, ProgressMonitor monitor) {
         super();
-        this.bbox = bbox.stream().distinct().collect(Collectors.toList());
+        this.runnableBounds = bbox.stream().distinct().collect(Collectors.toList());
         this.dataSet = dataSet;
         this.monitor = Optional.ofNullable(monitor).orElse(NullProgressMonitor.INSTANCE);
     }
@@ -116,19 +116,19 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     @Override
     public DataSet compute() {
-        final List<BBox> bboxes = maximumDimensions == null ? MapWithAIDataUtils.reduceBBoxSize(bbox)
-                : MapWithAIDataUtils.reduceBBoxSize(bbox, maximumDimensions);
-        monitor.beginTask(tr("Downloading {0} data ({1} total downloads)", MapWithAIPlugin.NAME, bboxes.size()),
-                bboxes.size() - 1);
+        final List<Bounds> bounds = maximumDimensions == null ? MapWithAIDataUtils.reduceBoundSize(runnableBounds)
+                : MapWithAIDataUtils.reduceBoundSize(runnableBounds, maximumDimensions);
+        monitor.beginTask(tr("Downloading {0} data ({1} total downloads)", MapWithAIPlugin.NAME, bounds.size()),
+                bounds.size() - 1);
         if (!monitor.isCanceled()) {
-            if (bboxes.size() == MAX_NUMBER_OF_BBOXES_TO_PROCESS) {
-                final DataSet temporaryDataSet = getDataReal(bboxes.get(0), monitor);
+            if (bounds.size() == MAX_NUMBER_OF_BBOXES_TO_PROCESS) {
+                final DataSet temporaryDataSet = getDataReal(bounds.get(0), monitor);
                 synchronized (GetDataRunnable.class) {
                     dataSet.mergeFrom(temporaryDataSet);
                 }
             } else {
-                final Collection<GetDataRunnable> tasks = bboxes.parallelStream()
-                        .map(tBbox -> new GetDataRunnable(tBbox, dataSet, monitor.createSubTaskMonitor(0, true)))
+                final Collection<GetDataRunnable> tasks = bounds.parallelStream()
+                        .map(bound -> new GetDataRunnable(bound, dataSet, monitor.createSubTaskMonitor(0, true)))
                         .collect(Collectors.toList());
                 tasks.forEach(GetDataRunnable::fork);
                 tasks.parallelStream().forEach(runnable -> {
@@ -139,8 +139,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
         // This can technically be included in the above block, but it is here so that
         // cancellation is a little faster
-        if (!monitor.isCanceled() && !bboxes.isEmpty()) {
-            cleanup(dataSet, new Bounds(bboxes.get(0).getBottomRight(), bboxes.get(0).getTopLeft()), info);
+        if (!monitor.isCanceled() && !bounds.isEmpty()) {
+            cleanup(dataSet, bounds.get(0), info);
         }
         monitor.finishTask();
         return dataSet;
@@ -391,8 +391,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean distanceCheck(Node nearNode, Node node, Double distance) {
-        return nearNode == null || node == null ? false
-                : nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
+        return !(nearNode == null || node == null) && nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
     }
 
     private static boolean keyCheck(Node nearNode, Node node) {
@@ -516,19 +515,17 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     /**
      * Actually get the data
      *
-     * @param bbox    The bbox to get the data from
+     * @param bounds  The bounds to get the data from
      * @param monitor Use to determine if the operation has been cancelled
-     * @return A dataset with the data from the bbox
+     * @return A dataset with the data from the bounds
      */
-    private static DataSet getDataReal(BBox bbox, ProgressMonitor monitor) {
+    private static DataSet getDataReal(Bounds bounds, ProgressMonitor monitor) {
         final DataSet dataSet = new DataSet();
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
         new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers()).parallelStream().forEach(map -> {
             try {
-                Bounds bound = new Bounds(bbox.getBottomRight());
-                bound.extend(bbox.getTopLeft());
-                BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, map,
+                BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bounds, map,
                         DetectTaskingManagerUtils.hasTaskingManagerLayer());
                 dataSet.mergeFrom(downloader.parseOsm(monitor));
             } catch (OsmTransferException e1) {

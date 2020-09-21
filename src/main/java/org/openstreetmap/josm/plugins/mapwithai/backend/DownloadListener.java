@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
@@ -44,11 +43,11 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
                 return;
             }
             if (layer.downloadContinuous()) {
-                MapWithAIDataUtils.getMapWithAIData(layer, event.getAdded().stream().map(ev -> ev.bounds)
-                        .map(Bounds::toBBox).collect(Collectors.toList()));
                 List<Bounds> bounds = DataSource.getDataSourceBounds(event.getSource().getDataSources());
                 bounds.removeIf(a -> layer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox)
                         .anyMatch(b -> b.bboxIsFunctionallyEqual(a.toBBox(), BBOX_SIMILARITY_DEGREES)));
+                MapWithAIDataUtils.getMapWithAIData(layer, bounds);
+
             }
         }
     }
