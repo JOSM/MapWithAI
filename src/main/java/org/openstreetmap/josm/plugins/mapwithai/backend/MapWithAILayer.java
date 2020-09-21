@@ -78,6 +78,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         data.setDownloadPolicy(DownloadPolicy.BLOCKED);
         lock = new MapLock();
         MainApplication.getLayerManager().addActiveLayerChangeListener(this);
+        new ContinuousDownloadAction(this); // Initialize data source listeners
     }
 
     @Override
