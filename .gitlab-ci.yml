@@ -122,7 +122,7 @@ build:
   needs: ["assemble"]
 
 sonarcloud.io:
-  image: registry.gitlab.com/josm/docker-library/openjdk-8-josmplugin:latest
+  image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   stage: test
   environment:
     name: sonarcloud.io
