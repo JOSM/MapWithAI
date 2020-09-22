@@ -126,7 +126,7 @@ sonarcloud.io:
   stage: test
   environment:
     name: sonarcloud.io
-    url: https://sonarcloud.io/dashboard?id=mapwithai%3Amapwithai
+    url: https://sonarcloud.io/dashboard?id=mapwithai
   script:
     - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
   rules:
