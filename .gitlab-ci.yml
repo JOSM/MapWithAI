@@ -121,21 +121,6 @@ build:
     - build
   needs: ["assemble"]
 
-sonarcloud.io:
-  image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
-  stage: test
-  environment:
-    name: sonarcloud.io
-    url: https://sonarcloud.io/dashboard?id=mapwithai
-  script:
-    - git fetch --unshallow
-    - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
-  rules:
-    - if: '$CI_COMMIT_TAG && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    - if: '$CI_MERGE_REQUEST_IID && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_TOKEN =~ /[0-9a-z]+/'
-
 test:
   stage: test
   script:
@@ -219,6 +204,23 @@ build with java 15:
 # needs: ["assemble"]
 #  only:
 #  - master
+
+sonarcloud.io:
+  image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
+  stage: deploy
+  environment:
+    name: sonarcloud.io
+    url: https://sonarcloud.io/dashboard?id=mapwithai
+  script:
+    - git fetch --unshallow
+    - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
+  needs: ["test"]
+  rules:
+    - if: '$CI_COMMIT_TAG && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_MERGE_REQUEST_IID && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_TOKEN =~ /[0-9a-z]+/'
+
 
 release:
   stage: deploy
