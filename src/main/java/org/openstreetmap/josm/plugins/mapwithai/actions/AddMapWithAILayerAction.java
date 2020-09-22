@@ -88,11 +88,12 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         final DataSet ds;
         final OsmData<?, ?, ?, ?> boundsSource;
+        final OsmDataLayer dataLayer = getDataLayer();
         if (layer != null && !layer.getData().getDataSourceBounds().isEmpty()) {
             ds = layer.getDataSet();
             boundsSource = ds;
-        } else if (getDataLayer() != null && !getDataLayer().getDataSet().getDataSourceBounds().isEmpty()) {
-            boundsSource = getDataLayer().getDataSet();
+        } else if (dataLayer != null && !dataLayer.getDataSet().getDataSourceBounds().isEmpty()) {
+            boundsSource = dataLayer.getDataSet();
             layer = MapWithAIDataUtils.getLayer(true);
             ds = layer.getDataSet();
         } else {
