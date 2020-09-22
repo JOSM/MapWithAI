@@ -67,23 +67,25 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
     public void run() {
         String url = MapWithAIConflationCategory.conflationUrlFor(category);
         this.client = HttpClients.createDefault();
-        try (CloseableHttpClient client = this.client) {
-            StringWriter output = new StringWriter();
-            OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6");
+        try (CloseableHttpClient currentClient = this.client) {
             MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
             if (osm != null) {
-                writer.write(osm);
-                multipartEntityBuilder.addTextBody("openstreetmap", output.toString(), ContentType.APPLICATION_XML);
+                StringWriter output = new StringWriter();
+                try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
+                    writer.write(osm);
+                    multipartEntityBuilder.addTextBody("openstreetmap", output.toString(), ContentType.APPLICATION_XML);
+                }
             }
             // We need to reset the writers to avoid writing previous streams
-            output = new StringWriter();
-            writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6");
-            writer.write(external);
-            multipartEntityBuilder.addTextBody("external", output.toString(), ContentType.APPLICATION_XML);
+            StringWriter output = new StringWriter();
+            try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
+                writer.write(external);
+                multipartEntityBuilder.addTextBody("external", output.toString(), ContentType.APPLICATION_XML);
+            }
             HttpEntity postData = multipartEntityBuilder.build();
             HttpUriRequest request = RequestBuilder.post(url).setEntity(postData).build();
 
-            HttpResponse response = client.execute(request);
+            HttpResponse response = currentClient.execute(request);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 conflatedData = OsmReader.parseDataSet(response.getEntity().getContent(), NullProgressMonitor.INSTANCE,
                         OsmReader.Options.SAVE_ORIGINAL_ID);
