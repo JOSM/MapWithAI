@@ -2,6 +2,7 @@
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -16,6 +17,7 @@ import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -50,8 +52,8 @@ public class MapWithAIRemoteControlTest {
      */
     @Test
     public void testBadRequestInvalidUrl() throws Exception {
-        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
-                () -> newHandler("https://localhost?url=invalid_url").handle());
+        MapWithAIRemoteControl handler = assertDoesNotThrow(() -> newHandler("https://localhost?url=invalid_url"));
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);
         assertEquals("MalformedURLException: no protocol: invalid_url", exception.getMessage());
     }
 
@@ -87,11 +89,12 @@ public class MapWithAIRemoteControlTest {
         assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
                 .anyMatch(map -> badUrl.equals(map.getUrl())));
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
-        assertNotEquals(badUrl, MapWithAIPreferenceHelper.getMapWithAIUrl());
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().stream().map(MapWithAIInfo::getUrl)
+                .noneMatch(badUrl::equals));
 
         final String badUrl2 = "NothingToSeeHere";
-        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
-                () -> newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl2)).handle());
+        final MapWithAIRemoteControl handler = newHandler("https://localhost?url=" + Utils.encodeUrl(badUrl2));
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);
         assertEquals("MalformedURLException: no protocol: " + badUrl2, exception.getMessage());
 
     }
@@ -109,11 +112,9 @@ public class MapWithAIRemoteControlTest {
         assertEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
         assertNotEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
-
-        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
-                () -> newHandler(
-                        "http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE")
-                                .handle());
+        final MapWithAIRemoteControl handler = assertDoesNotThrow(() -> newHandler(
+                "http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE"));
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);
         assertEquals("NumberFormatException (For input string: \"BAD_VALUE\")", exception.getMessage());
     }
 
@@ -134,10 +135,9 @@ public class MapWithAIRemoteControlTest {
 
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
         BBox temp2 = new BBox(39.0621223, -108.4625421, 39.0633059, -108.4594728);
-        Exception exception = assertThrows(RequestHandlerBadRequestException.class,
-                () -> newHandler(
-                        "http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp2.toStringCSV(",")))
-                                .handle());
+        final MapWithAIRemoteControl handler = assertDoesNotThrow(() -> newHandler(
+                "http://127.0.0.1:8111/mapwithai?bbox={bbox}".replace("{bbox}", temp2.toStringCSV(","))));
+        Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);
         assertEquals(
                 "Bad bbox: 39.0621223,-108.4625421,39.0633059,-108.4594728 (converted to Bounds[-108.4625421,39.0621223,-108.4594728,39.0633059])",
                 exception.getMessage());
