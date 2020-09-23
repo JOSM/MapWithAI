@@ -218,7 +218,7 @@ public class MergeDuplicateWaysTest {
         assertFalse(MergeDuplicateWays.checkDirection(set), "The direction is not the same");
         pair1.b.a = pair1.b.a - 2;
 
-        assertThrows(NullPointerException.class, () -> assertNull(MergeDuplicateWays.checkDirection(null)),
+        assertThrows(NullPointerException.class, () -> MergeDuplicateWays.checkDirection(null),
                 "Throw an NPE if the argument is null");
 
         assertFalse(MergeDuplicateWays.checkDirection(Collections.emptySet()),
