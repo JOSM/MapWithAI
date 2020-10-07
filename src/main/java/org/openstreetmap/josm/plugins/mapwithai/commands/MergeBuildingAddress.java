@@ -8,7 +8,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
@@ -92,12 +94,27 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
                 .filter(prim -> checkInside(node, prim)).collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
+        List<String> sources = new ArrayList<>();
+        OsmPrimitive object = null;
+        sources.add(node.get(MergeAddressBuildings.SOURCE));
         if (possibleDuplicates.size() == 1) {
             commandList.add(new ChangePropertyCommand(possibleDuplicates, node.getKeys()));
             commandList.add(DeleteCommand.delete(Collections.singleton(node)));
+            object = possibleDuplicates.get(0);
         } else if (buildings.size() == 1 && getAddressPoints(buildings.get(0)).size() == 1) {
             commandList.add(new ChangePropertyCommand(buildings, node.getKeys()));
             commandList.add(DeleteCommand.delete(Collections.singleton(node)));
+            object = buildings.get(0);
+        }
+        if (object != null) {
+            sources.add(object.get(MergeAddressBuildings.SOURCE));
+        }
+
+        sources.removeIf(Objects::isNull);
+        sources = sources.stream().flatMap(source -> Stream.of(source.split(";", 0))).distinct()
+                .filter(Objects::nonNull).sorted().collect(Collectors.toList());
+        if (!sources.isEmpty() && object != null) {
+            commandList.add(new ChangePropertyCommand(object, MergeAddressBuildings.SOURCE, String.join(";", sources)));
         }
 
         return commandList;

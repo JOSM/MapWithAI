@@ -8,8 +8,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -31,6 +34,7 @@ import org.openstreetmap.josm.tools.Geometry;
  */
 public class MergeAddressBuildings extends AbstractConflationCommand {
     public static final String KEY = "building";
+    public static final String SOURCE = "source";
 
     public MergeAddressBuildings(DataSet data) {
         super(data);
@@ -85,15 +89,26 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
         if (nodesWithAddresses.size() == 1
                 && nodesWithAddresses.parallelStream().allMatch(n -> n.getParentWays().isEmpty())) {
             String currentKey = null;
+            Node node = nodesWithAddresses.get(0);
+            List<String> sources = new ArrayList<>();
             try {
                 // Remove the key to avoid the popup from utilsplugin2
                 currentKey = object.get(KEY);
+                sources.add(object.get(SOURCE));
                 object.remove(KEY);
-                GuiHelper.runInEDTAndWait(() -> commandList
-                        .add(ReplaceGeometryUtils.buildUpgradeNodeCommand(nodesWithAddresses.get(0), object)));
+                object.remove(SOURCE);
+                GuiHelper.runInEDTAndWait(
+                        () -> commandList.add(ReplaceGeometryUtils.buildUpgradeNodeCommand(node, object)));
             } finally {
                 if (currentKey != null) {
                     object.put(KEY, currentKey);
+                }
+                sources.add(node.get(SOURCE));
+                sources.removeIf(Objects::isNull);
+                sources = sources.stream().flatMap(source -> Stream.of(source.split(";", 0))).distinct()
+                        .filter(Objects::nonNull).sorted().collect(Collectors.toList());
+                if (!sources.isEmpty()) {
+                    commandList.add(new ChangePropertyCommand(object, SOURCE, String.join(";", sources)));
                 }
             }
         }
