@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
+import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
@@ -45,7 +46,7 @@ public class MapWithAILayerInfo {
     /**
      * A boolean preference used to determine if preview datasets should be shown
      */
-    private static final BooleanProperty SHOW_PREVIEW = new BooleanProperty("mapwithai.sources.preview", false);
+    public static final BooleanProperty SHOW_PREVIEW = new BooleanProperty("mapwithai.sources.preview", false);
 
     /** List of all usable layers */
     private final List<MapWithAIInfo> layers = Collections.synchronizedList(new ArrayList<>());
@@ -500,7 +501,7 @@ public class MapWithAILayerInfo {
      *         {@code true}.
      */
     private static List<MapWithAIInfo> filterPreview(List<MapWithAIInfo> layers) {
-        if (SHOW_PREVIEW.get()) {
+        if (Boolean.TRUE.equals(SHOW_PREVIEW.get()) && ExpertToggleAction.isExpert()) {
             return layers;
         }
         return layers.stream()

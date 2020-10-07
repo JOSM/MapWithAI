@@ -129,7 +129,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         pane.add(expertHorizontalGlue, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         final JLabel previewFeatureSets = new JLabel(tr("Show Preview DataSets"));
         final JCheckBox previewFeatureSetCheckbox = new JCheckBox();
-        BooleanProperty previewFeatureSetProperty = new BooleanProperty("mapwithai.sources.preview", false);
+        BooleanProperty previewFeatureSetProperty = MapWithAILayerInfo.SHOW_PREVIEW;
         previewFeatureSetCheckbox.setToolTipText(tr("If selected, show datasets which may have various issues"));
         previewFeatureSetCheckbox.setSelected(Boolean.TRUE.equals(previewFeatureSetProperty.get()));
         previewFeatureSetCheckbox
