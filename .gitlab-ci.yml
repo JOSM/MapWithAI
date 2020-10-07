@@ -99,7 +99,7 @@ code_navigation:
     - cd ..
     - ./gradlew generatePomFileForJosmPluginPublication
     - cp ./build/publications/josmPlugin/pom-default.xml ./pom.xml
-    - $(pwd)/lsif-java/build/install/lsifjava/bin/lsifjava -projectRoot . -out dump.lsif -debug
+    - $(pwd)/lsif-java/build/install/lsifjava/bin/lsifjava -projectRoot . -out dump.lsif -verbose
   artifacts:
     reports:
       lsif: dump.lsif
