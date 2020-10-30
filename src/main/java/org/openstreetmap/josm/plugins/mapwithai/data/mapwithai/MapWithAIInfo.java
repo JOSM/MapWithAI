@@ -46,7 +46,7 @@ public class MapWithAIInfo extends
     private JsonArray conflationParameters;
     private String alreadyConflatedKey;
     /** This is for categories that cannot be conflated */
-    private ArrayList<MapWithAICategory> conflationIgnoreCategory;
+    private List<MapWithAICategory> conflationIgnoreCategory;
 
     /**
      * when adding a field, also adapt the: {@link #MapWithAIPreferenceEntry
@@ -92,7 +92,7 @@ public class MapWithAIInfo extends
         public MapWithAIPreferenceEntry(MapWithAIInfo i) {
             super(i);
             if (i.parameters != null) {
-                parameters = i.parameters.toString();
+                parameters = i.getParameters().toString();
             }
             if (i.conflationParameters != null) {
                 conflationParameters = i.conflationParameters.toString();
@@ -164,7 +164,7 @@ public class MapWithAIInfo extends
      * @throws IllegalArgumentException if type refers to an unknown service type
      */
     public MapWithAIInfo(String name, String url, String type, String eulaAcceptanceRequired, String id) {
-        super(name, url, id);
+        this(name, url, id);
         MapWithAIType t = MapWithAIType.fromString(type);
         this.setEulaAcceptanceRequired(eulaAcceptanceRequired);
         if (t != null) {
@@ -239,36 +239,48 @@ public class MapWithAIInfo extends
 
     public MapWithAIInfo(MapWithAIInfo i) {
         this(i.name, i.url, i.id);
-        setCookies(i.cookies);
-
-        this.origName = i.origName;
-        this.langName = i.langName;
-        setDefaultEntry(i.defaultEntry);
-        setEulaAcceptanceRequired(i.getEulaAcceptanceRequired());
-        setBounds(i.getBounds());
-        setDescription(i.getDescription());
-        setSource(i.getSource());
-        this.langDescription = i.langDescription;
-        this.attributionText = i.attributionText;
-        this.privacyPolicyURL = i.privacyPolicyURL;
-        this.permissionReferenceURL = i.permissionReferenceURL;
-        this.attributionLinkURL = i.attributionLinkURL;
+        this.alreadyConflatedKey = i.alreadyConflatedKey;
         this.attributionImage = i.attributionImage;
         this.attributionImageURL = i.attributionImageURL;
-        this.termsOfUseText = i.termsOfUseText;
-        this.termsOfUseURL = i.termsOfUseURL;
-        this.sourceType = i.sourceType;
+        this.attributionLinkURL = i.attributionLinkURL;
+        this.attributionText = i.attributionText;
+        this.bounds = i.bounds;
+        this.categories = i.categories;
+        this.category = i.category;
+        this.categoryOriginalString = i.categoryOriginalString;
+        this.conflate = i.conflate;
+        this.conflationIgnoreCategory = i.conflationIgnoreCategory;
+        this.conflationUrl = i.conflationUrl;
+        this.cookies = i.cookies;
         this.countryCode = i.countryCode;
         this.date = i.date;
+        this.defaultEntry = i.defaultEntry;
+        this.defaultLayers = i.defaultLayers;
+        this.description = i.description;
+        this.eulaAcceptanceRequired = i.eulaAcceptanceRequired;
+        this.icon = i.icon;
+        this.langDescription = i.langDescription;
+        this.langName = i.langName;
+        this.maxZoom = i.maxZoom;
+        this.minZoom = i.minZoom;
+        this.modTileFeatures = i.modTileFeatures;
+        this.noTileChecksums = i.noTileChecksums;
+        this.noTileHeaders = i.noTileHeaders;
+        this.origName = i.origName;
+        this.permissionReferenceURL = i.permissionReferenceURL;
+        this.privacyPolicyURL = i.privacyPolicyURL;
+        this.setConflationParameters(i.conflationParameters);
+        this.setCustomHttpHeaders(i.getCustomHttpHeaders());
         this.setIcon(i.icon);
-        this.setCustomHttpHeaders(i.customHttpHeaders);
-        this.category = i.category;
-        this.categories = i.categories;
-        this.replacementTags = i.replacementTags;
-        this.conflate = i.conflate;
-        this.conflationUrl = i.conflationUrl;
-        this.conflationParameters = i.conflationParameters;
-        this.alreadyConflatedKey = i.alreadyConflatedKey;
+        this.setMetadataHeaders(i.getMetadataHeaders());
+        this.setParameters(i.getParameters());
+        this.setReplacementTags(i.getReplacementTags());
+        this.source = i.source;
+        this.sourceType = i.sourceType;
+        this.termsOfUseText = i.termsOfUseText;
+        this.termsOfUseURL = i.termsOfUseURL;
+        this.tileSize = i.tileSize;
+
     }
 
     public boolean equalsPref(MapWithAIInfo other) {
