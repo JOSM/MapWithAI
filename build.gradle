@@ -176,8 +176,8 @@ spotless {
 josm {
   debugPort = 7055
   manifest {
-    oldVersionDownloadLink 16645, "v1.6.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.6.4/mapwithai.jar")
-    oldVersionDownloadLink 16284, "v1.5.6", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.5.6/mapwithai.jar")
+    oldVersionDownloadLink 16645, "v1.6.5", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.6.5/mapwithai.jar")
+    oldVersionDownloadLink 16284, "v1.5.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.5.7/mapwithai.jar")
     oldVersionDownloadLink 16220, "v1.4.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.4.4/mapwithai.jar")
     oldVersionDownloadLink 15820, "v1.3.8", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.3.8/mapwithai.jar")
     oldVersionDownloadLink 15737, "v1.2.4", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.2.4/mapwithai.jar")
