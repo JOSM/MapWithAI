@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.geom.Area;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,10 +32,12 @@ import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
+import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -141,25 +144,36 @@ public final class MapWithAIDataUtils {
             if ((bounds.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBounds)) {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
-                realBounds.parallelStream()
-                        .forEach(bound -> new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl()).parallelStream()
-                                .filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty()).forEach(i -> {
-                                    BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
-                                            bound, i, DetectTaskingManagerUtils.hasTaskingManagerLayer());
-                                    try {
-                                        DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
-                                        synchronized (MapWithAIDataUtils.class) {
-                                            dataSet.mergeFrom(ds);
+                try {
+                    realBounds.parallelStream()
+                            .forEach(bound -> new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl())
+                                    .parallelStream().filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty())
+                                    .forEach(i -> {
+                                        BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
+                                                bound, i, DetectTaskingManagerUtils.hasTaskingManagerLayer());
+                                        try {
+                                            DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
+                                            synchronized (MapWithAIDataUtils.class) {
+                                                dataSet.mergeFrom(ds);
+                                            }
+                                        } catch (OsmTransferException e) {
+                                            if (e.getCause() instanceof SocketTimeoutException
+                                                    && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10) {
+                                                dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
+                                            } else if (e.getCause() instanceof IllegalDataException) {
+                                                Logging.error(e);
+                                                Notification notification = new Notification();
+                                                notification.setContent(tr("MapWithAI servers may be down."));
+                                                GuiHelper.runInEDT(notification::show);
+                                            } else {
+                                                throw new JosmRuntimeException(e);
+                                            }
                                         }
-                                    } catch (OsmTransferException e) {
-                                        Logging.error(e);
-                                        if (maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10) {
-                                            dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
-                                        }
-                                    }
-                                }));
-                monitor.finishTask();
-                monitor.close();
+                                    }));
+                } finally {
+                    monitor.finishTask();
+                    monitor.close();
+                }
             }
         } else {
             final Notification noUrls = GuiHelper.runInEDTAndWaitAndReturn(
