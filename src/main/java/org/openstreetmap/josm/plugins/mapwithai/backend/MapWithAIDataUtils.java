@@ -48,7 +48,7 @@ import org.openstreetmap.josm.tools.Utils;
  *
  */
 public final class MapWithAIDataUtils {
-    /** THe maximum dimensions for MapWithAI data (in kilometers) */
+    /** The maximum dimensions for MapWithAI data (in kilometers) */
     public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1km, max is 10km, but 10km causes
     // timeouts
     private static final int TOO_MANY_BBOXES = 4;
@@ -158,7 +158,8 @@ public final class MapWithAIDataUtils {
                                             }
                                         } catch (OsmTransferException e) {
                                             if (e.getCause() instanceof SocketTimeoutException
-                                                    && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10) {
+                                                    && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10
+                                                    && maximumDimensions / 2f > 0.5) {
                                                 dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
                                             } else if (e.getCause() instanceof IllegalDataException) {
                                                 Logging.error(e);
