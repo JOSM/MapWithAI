@@ -146,6 +146,7 @@ class MapWithAILayerTest {
         getData.setMaximumDimensions(5_000);
         getData.fork().join();
         assertTrue(ds.getSelected().isEmpty());
+        MapWithAIPreferenceHelper.setMaximumAddition(5, false);
         SwingUtilities.invokeAndWait(() -> ds.setSelected(ds.allNonDeletedCompletePrimitives()));
         assertEquals(1, ds.getSelected().size());
         OsmPrimitive prim = ds.getSelected().iterator().next();

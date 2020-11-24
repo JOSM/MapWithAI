@@ -15,7 +15,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
-    private static final int DEFAULT_MAXIMUM_ADDITION = 5;
+    private static final int DEFAULT_MAXIMUM_ADDITION = 20;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
     private static final String MAXIMUMSELECTION = MapWithAIPlugin.NAME.concat(".maximumselection");

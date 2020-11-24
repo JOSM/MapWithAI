@@ -106,7 +106,7 @@ class MapWithAIMoveActionTest {
 
         moveAction.actionPerformed(null);
         Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> ds.getPrimitiveById(way1) != null);
-        assertTrue(((Way) ds.getPrimitiveById(way1)).lastNode().equals(((Way) ds.getPrimitiveById(way2)).lastNode()),
+        assertEquals(((Way) ds.getPrimitiveById(way1)).lastNode(), ((Way) ds.getPrimitiveById(way2)).lastNode(),
                 "The duplicate node should have been replaced");
         assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY),
                 "The dupe key should no longer exist");

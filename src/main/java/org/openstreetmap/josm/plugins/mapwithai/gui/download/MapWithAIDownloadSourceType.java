@@ -71,7 +71,7 @@ public class MapWithAIDownloadSourceType implements IDownloadSourceType, LayerCh
 
     @Override
     public void changeEvent(MapWithAIInfo modified) {
-        if (Stream.of(Thread.currentThread().getStackTrace()).map(p -> p.getClassName())
+        if (Stream.of(Thread.currentThread().getStackTrace()).map(StackTraceElement::getClassName)
                 .noneMatch(p -> p.contains("PreferenceDialog"))) {
             if (MapWithAILayerInfo.getInstance().getLayers().contains(modified)) {
                 this.cbDownloadMapWithAIData.setSelected(true);

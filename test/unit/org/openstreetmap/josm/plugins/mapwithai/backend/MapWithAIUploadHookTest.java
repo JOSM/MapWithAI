@@ -109,14 +109,16 @@ class MapWithAIUploadHookTest {
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
 
-        MapWithAIPreferenceHelper.setMaximumAddition(20, false);
+        final int newMaxAdd = MapWithAIPreferenceHelper.getDefaultMaximumAddition() + 1;
+        MapWithAIPreferenceHelper.setMaximumAddition(newMaxAdd, false);
         tags.clear();
         hook.modifyChangesetTags(tags);
         split = Arrays.asList(tags.get("mapwithai:options").split(";"));
         assertEquals(3, split.size(), "There should be three ; in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
-        assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
+        assertTrue(split.contains("maxadd=" + Integer.toString(newMaxAdd)),
+                "The maxadd should be " + Integer.toString(newMaxAdd));
 
         Bounds tBounds = new Bounds(0, 1, 1, 0);
         MainApplication.getLayerManager()
@@ -129,7 +131,8 @@ class MapWithAIUploadHookTest {
         assertEquals(4, split.size(), "There should be four ; in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
-        assertTrue(split.contains("maxadd=20"), "The maxadd should be 20");
+        assertTrue(split.contains("maxadd=" + Integer.toString(newMaxAdd)),
+                "The maxadd should be " + Integer.toString(newMaxAdd));
         assertTrue(split.contains("task=".concat(tBounds.toBBox().toStringCSV(","))),
                 "There should be a task in the mapwithai:options");
     }

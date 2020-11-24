@@ -154,12 +154,6 @@ public class StreetAddressOrder extends Test {
 
         Way way = new Way();
         way.setNodes(centroids);
-        /*
-         * if (primitives.get(0) instanceof OsmPrimitive) { DataSet ds = ((OsmPrimitive)
-         * primitives.get(0)).getDataSet(); // TODO remove after finishing debug
-         * way.getNodes().stream().filter(p -> p.getDataSet() == null &&
-         * !p.isDeleted()).forEach(ds::addPrimitive); ds.addPrimitive(way); }
-         */
         double maxDistance = 100;
         Node previousCentroid = centroids.get(0);
         for (Node centroid : centroids) {

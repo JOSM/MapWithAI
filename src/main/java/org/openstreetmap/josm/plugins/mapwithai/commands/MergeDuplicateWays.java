@@ -181,7 +181,7 @@ public class MergeDuplicateWays extends Command {
         final Set<Map.Entry<Pair<Integer, Node>, Map<Integer, Node>>> duplicateEntrySet = duplicateNodes.entrySet();
         final Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> compressed = duplicateNodes.entrySet().stream()
                 .map(entry -> new Pair<Pair<Integer, Node>, Pair<Integer, Node>>(entry.getKey(),
-                        new Pair<Integer, Node>(entry.getValue().entrySet().iterator().next().getKey(),
+                        new Pair<>(entry.getValue().entrySet().iterator().next().getKey(),
                                 entry.getValue().entrySet().iterator().next().getValue())))
                 .sorted((pair1, pair2) -> pair1.a.a - pair2.a.a).collect(Collectors.toSet());
         if (compressed.parallelStream().anyMatch(entry -> entry.a.b.isDeleted() || entry.b.b.isDeleted())) {
@@ -367,8 +367,8 @@ public class MergeDuplicateWays extends Command {
     @Override
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
-        for (final Command command : commands) {
-            command.fillModifiedData(modified, deleted, added);
+        for (final Command currentCommand : commands) {
+            currentCommand.fillModifiedData(modified, deleted, added);
         }
     }
 }

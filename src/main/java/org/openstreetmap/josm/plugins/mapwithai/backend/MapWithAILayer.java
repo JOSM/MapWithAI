@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -356,7 +357,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public boolean autosave(File file) throws IOException {
-        // Consider a deletetion a "successful" save.
-        return file.delete();
+        // Consider a deletion a "successful" save.
+        return Files.deleteIfExists(file.toPath());
     }
 }

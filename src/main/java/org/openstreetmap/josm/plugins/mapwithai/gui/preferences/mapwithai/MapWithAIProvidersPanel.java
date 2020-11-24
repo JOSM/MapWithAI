@@ -261,7 +261,8 @@ public class MapWithAIProvidersPanel extends JPanel {
             extends MapWithAIProvidersPanel.MapWithAITableCellRenderer<List<String>> {
 
         MapWithAITypeTableCellRenderer() {
-            super(list -> joinList(list), i -> null, list -> joinList(list), null, false);
+            super(MapWithAITypeTableCellRenderer::joinList, i -> null, MapWithAITypeTableCellRenderer::joinList, null,
+                    false);
         }
 
         private static String joinList(List<String> list) {
