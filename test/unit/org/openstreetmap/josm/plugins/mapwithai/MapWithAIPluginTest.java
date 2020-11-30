@@ -88,12 +88,11 @@ class MapWithAIPluginTest {
         Field menuEntries = MapWithAIPlugin.class.getDeclaredField("MENU_ENTRIES");
         menuEntries.setAccessible(true);
         // + 1 comes from the preferences panel
+        final JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        final int dataMenuSize = dataMenu.getMenuComponentCount();
         final int addedMenuItems = ((Map<?, ?>) menuEntries.get(plugin)).size() + 1;
         plugin = new MapWithAIPlugin(info);
-        // Currently adding the menu at the 9th index
-        final JMenu dataMenu = MainApplication.getMenu().getMenu(9);
-        final int dataMenuSize = dataMenu.getMenuComponentCount();
-        assertEquals(addedMenuItems, dataMenu.getMenuComponentCount(), "Menu items were not added");
+        assertEquals(dataMenuSize + 1, dataMenu.getMenuComponentCount(), "Menu items were not added");
         assertEquals(1,
                 MapPaintStyles.getStyles().getStyleSources().parallelStream()
                         .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
@@ -116,7 +115,8 @@ class MapWithAIPluginTest {
 
         for (int i = 0; i < 3; i++) {
             plugin = new MapWithAIPlugin(info);
-            assertEquals(addedMenuItems, dataMenu.getMenuComponentCount(), "The menu items were added multiple times");
+            assertEquals(dataMenuSize + 1, dataMenu.getMenuComponentCount(),
+                    "The menu items were added multiple times");
             assertEquals(1,
                     MapPaintStyles.getStyles().getStyleSources().parallelStream()
                             .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),

@@ -1,10 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai;
 
-import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
@@ -82,9 +81,10 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         preferenceSetting = new MapWithAIPreferences();
 
         // Add MapWithAI specific menu
+        JMenu dataMenu = MainApplication.getMenu().dataMenu;
         mapwithaiMenu = new MapWithAIMenu();
-        MainApplication.getMenu().addMenu(mapwithaiMenu, "mapwithai:menu", KeyEvent.VK_M, 9, ht("/Plugin/MapWithAI"));
 
+        dataMenu.add(mapwithaiMenu);
         for (final Map.Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
             if (Arrays.asList(mapwithaiMenu.getMenuComponents()).parallelStream().filter(JMenuItem.class::isInstance)
                     .map(JMenuItem.class::cast)
@@ -172,7 +172,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
      */
     @Override
     public void destroy() {
-        MainApplication.getMenu().remove(this.mapwithaiMenu);
+        MainApplication.getMenu().dataMenu.remove(this.mapwithaiMenu);
 
         MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
                 .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));

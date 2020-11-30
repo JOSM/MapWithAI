@@ -40,7 +40,9 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
+import org.openstreetmap.josm.tools.ImageResource;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -65,6 +67,12 @@ public class MapWithAIMenu extends JMenu {
     public MapWithAIMenu() {
         /* I18N: mnemonic: I */
         super(trc("menu", "MapWithAI"));
+        ImageProvider mapwithai = new ImageProvider("MapWithAI").setOptional(true)
+                .setMaxSize(ImageProvider.ImageSizes.MENU);
+        ImageResource resource = mapwithai.getResource();
+        if (resource != null) {
+            super.setIcon(resource.getImageIconBounded(ImageProvider.ImageSizes.MENU.getImageDimension()));
+        }
         setupMenuScroller();
         // build dynamically
         addMenuListener(new MenuListener() {
