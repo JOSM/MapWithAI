@@ -37,7 +37,6 @@ import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
-import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -167,7 +166,10 @@ public final class MapWithAIDataUtils {
                                                 notification.setContent(tr("MapWithAI servers may be down."));
                                                 GuiHelper.runInEDT(notification::show);
                                             } else {
-                                                throw new JosmRuntimeException(e);
+                                                Logging.error(e);
+                                                Notification notification = new Notification();
+                                                notification.setContent(e.getLocalizedMessage());
+                                                GuiHelper.runInEDT(notification::show);
                                             }
                                         }
                                     }));
