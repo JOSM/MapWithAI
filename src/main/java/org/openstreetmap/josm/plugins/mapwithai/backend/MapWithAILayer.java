@@ -365,4 +365,11 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         // Consider a deletion a "successful" save.
         return Files.deleteIfExists(file.toPath());
     }
+
+    @Override
+    public boolean isMergable(final Layer other) {
+        // Don't allow this layer to be merged down
+        return other instanceof MapWithAILayer;
+    }
+
 }
