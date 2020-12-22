@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -84,8 +85,12 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public String getChangesetSourceTag() {
-        return MapWithAIDataUtils.getAddedObjects() > 0 ? String.join("; ", MapWithAIDataUtils.getAddedObjectsSource())
-                : null;
+        if (MapWithAIDataUtils.getAddedObjects() > 0) {
+            TreeSet<String> sources = new TreeSet<>(MapWithAIDataUtils.getAddedObjectsSource());
+            sources.add("MapWithAI");
+            return String.join("; ", sources);
+        }
+        return null;
     }
 
     public void setMaximumAddition(Integer max) {
