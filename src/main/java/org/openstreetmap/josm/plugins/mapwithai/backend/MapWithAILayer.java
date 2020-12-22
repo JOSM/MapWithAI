@@ -4,6 +4,8 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -22,6 +24,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListener;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -198,5 +201,16 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
                     .collect(Collectors.toList()));
         }
         super.selectionChanged(event);
+    }
+
+    public boolean autosave(File file) throws IOException {
+        // Consider a deletion a "successful" save.
+        return Files.deleteIfExists(file.toPath());
+    }
+
+    @Override
+    public boolean isMergable(final Layer other) {
+        // Don't allow this layer to be merged down
+        return other instanceof MapWithAILayer;
     }
 }
