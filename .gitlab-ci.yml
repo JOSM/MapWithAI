@@ -37,6 +37,8 @@ assemble:
   artifacts:
     paths:
     - build/
+  interruptible: true
+
 
 assemble with java 11:
   stage: build
@@ -46,6 +48,7 @@ assemble with java 11:
   artifacts:
     paths:
       - build/
+  interruptible: true
 
 assemble with java 12:
   stage: build
@@ -56,6 +59,7 @@ assemble with java 12:
     paths:
       - build/
   allow_failure: true
+  interruptible: true
 
 assemble with java 13:
   stage: build
@@ -66,6 +70,7 @@ assemble with java 13:
     paths:
       - build/
   allow_failure: true
+  interruptible: true
 
 assemble with java 14:
   stage: build
@@ -76,6 +81,7 @@ assemble with java 14:
     paths:
       - build/
   allow_failure: true
+  interruptible: true
 
 assemble with java 15:
   stage: build
@@ -86,6 +92,7 @@ assemble with java 15:
     paths:
       - build/
   allow_failure: true
+  interruptible: true
 
 code_navigation:
   stage: build
@@ -107,6 +114,7 @@ code_navigation:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: always
   allow_failure: true
+  interruptible: true
 
 ##############
 # Test stage #
@@ -120,6 +128,7 @@ build:
     paths:
     - build
   needs: ["assemble"]
+  interruptible: true
 
 test:
   stage: test
@@ -133,6 +142,7 @@ test:
     reports:
       junit: build/test-results/**/TEST-*.xml
   needs: ["assemble"]
+  interruptible: true
 
 coverage:
   stage: deploy
@@ -143,18 +153,21 @@ coverage:
   artifacts:
     reports:
       cobertura: "build/reports/jacoco/test/coverage.xml"
+  interruptible: true
 
 compile against min JOSM:
   stage: test
   script:
   - ./gradlew compileJava_minJosm
   needs: ["assemble"]
+  interruptible: true
 
 compile against latest JOSM:
   stage: test
   script:
   - ./gradlew compileJava_latestJosm
   needs: ["assemble"]
+  interruptible: true
 
 build with java 11:
   stage: test
@@ -163,6 +176,7 @@ build with java 11:
     - ./gradlew build
   allow_failure: true # due to copy-paste-detection
   needs: ["assemble with java 11"]
+  interruptible: true
 
 build with java 12:
   stage: test
@@ -171,6 +185,7 @@ build with java 12:
     - ./gradlew build
   allow_failure: true
   needs: ["assemble with java 12"]
+  interruptible: true
 
 build with java 13:
   stage: test
@@ -179,6 +194,7 @@ build with java 13:
     - ./gradlew build
   allow_failure: true
   needs: ["assemble with java 13"]
+  interruptible: true
 
 build with java 14:
   stage: test
@@ -187,6 +203,7 @@ build with java 14:
     - ./gradlew build
   allow_failure: true
   needs: ["assemble with java 14"]
+  interruptible: true
 
 build with java 15:
   stage: test
@@ -195,6 +212,7 @@ build with java 15:
     - ./gradlew build
   allow_failure: true
   needs: ["assemble with java 15"]
+  interruptible: true
 
 ################
 # Deploy stage #
@@ -214,6 +232,7 @@ build with java 15:
 # needs: ["assemble"]
 #  only:
 #  - master
+#  interruptible: true
 
 sonarcloud.io:
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
@@ -224,12 +243,12 @@ sonarcloud.io:
   script:
     - git fetch --unshallow
     - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
-  needs: ["test"]
+  needs: []
   rules:
     - if: '$CI_COMMIT_TAG && $SONAR_TOKEN =~ /[0-9a-z]+/'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    #- if: '$CI_MERGE_REQUEST_IID && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    #- if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_MERGE_REQUEST_IID && $SONAR_TOKEN =~ /[0-9a-z]+/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_TOKEN =~ /[0-9a-z]+/'
 
 
 release:
