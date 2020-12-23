@@ -7,7 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -17,12 +20,18 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mockit.Mock;
+import mockit.MockUp;
 
 public class MapWithAIMoveActionTest {
     MapWithAIMoveAction moveAction;
@@ -33,7 +42,13 @@ public class MapWithAIMoveActionTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().territories()
+    .assertionsInEDT();
+
+    @BeforeClass
+    public static void beforeAll() {
+        new MapWithAIPluginMock();
+    }
 
     @Before
     public void setUp() {
@@ -83,8 +98,15 @@ public class MapWithAIMoveActionTest {
                 "The dupe key should no longer exist");
 
         UndoRedoHandler.getInstance().undo();
+<<<<<<< HEAD
         assertFalse(way2.lastNode().hasKey(DuplicateCommand.DUPE_KEY), "The dupe key should no longer exist");
         assertTrue(way1.lastNode().hasKey(DuplicateCommand.DUPE_KEY), "The dupe key should no longer exist");
+=======
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+        .until(() -> !((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY));
+        assertFalse(way2.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
+        assertTrue(way1.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
+>>>>>>> d0b2ede (Add code to avoid accidentally uploading bad data in older plugin versions.)
     }
 
     @Test
@@ -105,5 +127,34 @@ public class MapWithAIMoveActionTest {
         assertFalse(way2.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key shouldn't exist");
         assertTrue(way1.lastNode().hasKey(ConnectedCommand.CONN_KEY), "The conn key should exist");
         assertFalse(way1.lastNode().isDeleted(), "way1 should no longer be deleted");
+    }
+
+    private static class NotificationMocker extends MockUp<Notification> {
+        public boolean shown;
+
+        @Mock
+        public void show() {
+            shown = true;
+        }
+    }
+
+    @Test
+    public void testMaxAddNotification() {
+        TestUtils.assumeWorkingJMockit();
+        new WindowMocker();
+        NotificationMocker notification = new NotificationMocker();
+        DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(new DataSet(), "TEST", null));
+        MapWithAIPreferenceHelper.setMaximumAddition(1, false);
+        for (int i = 0; i < 40; i++) {
+            ds.addPrimitive(new Node(LatLon.ZERO));
+        }
+        for (int i = 0; i < 11; i++) {
+            GuiHelper
+            .runInEDTAndWaitWithException(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
+            moveAction.actionPerformed(null);
+        }
+        assertTrue(notification.shown);
+        notification.shown = false;
     }
 }

@@ -14,6 +14,8 @@ import javax.json.JsonStructure;
 import javax.json.JsonValue;
 
 import org.openstreetmap.josm.io.CachedFile;
+import org.openstreetmap.josm.io.NetworkManager;
+import org.openstreetmap.josm.io.OnlineResource;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -39,8 +41,8 @@ public class BlacklistUtils {
      */
     public static boolean isBlacklisted() {
         String version = MapWithAIPlugin.getVersionInfo();
-        try (CachedFile blacklist = new CachedFile(blacklistUrl);
-                BufferedReader bufferedReader = blacklist.getContentReader();
+        CachedFile blacklist = new CachedFile(blacklistUrl);
+        try (BufferedReader bufferedReader = blacklist.getContentReader();
                 JsonReader reader = Json.createReader(bufferedReader)) {
             JsonStructure structure = reader.read();
             if (structure.getValueType() == JsonValue.ValueType.ARRAY) {
@@ -52,7 +54,14 @@ public class BlacklistUtils {
                 return object.keySet().contains(version);
             }
         } catch (IOException | JsonException e) {
+            try {
+                blacklist.clear();
+            } catch (IOException e1) {
+                Logging.error(e1);
+            }
             Logging.error(e);
+        } finally {
+            blacklist.close();
         }
         return true;
     }
@@ -64,5 +73,14 @@ public class BlacklistUtils {
      */
     static void setBlacklistUrl(String url) {
         blacklistUrl = url;
+    }
+
+    /**
+     * Check if we can reach the URL for the known-bad version list.
+     *
+     * @return {@code true} if the configured url is offline
+     */
+    public static boolean isOffline() {
+        return NetworkManager.isOffline(OnlineResource.ALL);
     }
 }
