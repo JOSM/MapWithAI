@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -20,10 +21,12 @@ import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -31,8 +34,10 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -40,7 +45,9 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.ContinuousDownloadAction;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.Territories;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
@@ -53,11 +60,19 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAILayerTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection()
+    .fakeAPI().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     MapWithAILayer layer;
+
+    @BeforeClass
+    public static void beforeAll() {
+        TestUtils.assumeWorkingJMockit();
+        new MapWithAIPluginMock();
+        Territories.initialize(); // Required to avoid an NPE (see JOSM-19132)
+    }
 
     @Before
     public void setUp() {
@@ -141,6 +156,22 @@ public class MapWithAILayerTest {
             Layer tMapWithAI = MapWithAIDataUtils.getLayer(create);
             assertSame(mapWithAILayer, tMapWithAI, "getLayer should always return the same layer");
         }
+    }
+
+    @Test
+    public void testSelection() throws InvocationTargetException, InterruptedException {
+        MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
+        DataSet ds = mapWithAILayer.getDataSet();
+        new GetDataRunnable(Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null).fork()
+        .join();
+        assertTrue(ds.getSelected().isEmpty());
+        SwingUtilities.invokeAndWait(() -> ds.setSelected(ds.allNonDeletedCompletePrimitives()));
+        assertEquals(1, ds.getSelected().size());
+        OsmPrimitive prim = ds.getSelected().iterator().next();
+        assertTrue(prim instanceof Way);
+        SwingUtilities.invokeAndWait(() -> ds.setSelected(((Way) prim).getNodes()));
+        assertEquals(((Way) prim).getNodes().size(), ds.getSelected().size());
+        assertTrue(((Way) prim).getNodes().parallelStream().allMatch(ds::isSelected));
     }
 
     @Test
