@@ -77,7 +77,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
             panel.addTab(tr("Servers"), getServerList(gui));
             panel.addTab(tr("Settings"), getSettingsPanel(gui));
         }
-        p.add(panel, GBC.std().fill(GBC.BOTH));
+        p.add(panel, GBC.std().fill(GridBagConstraints.BOTH));
     }
 
     private static Component getServerList(PreferenceTabbedPane gui) {

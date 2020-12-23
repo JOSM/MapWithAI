@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -35,9 +36,10 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
         optionPanel = new JPanel(new GridBagLayout());
         JPanel infoHeader = new JPanel();
         infoHeader.add(new JLabel("Browse and activate extra data sets to facilitate your mapping needs."));
-        optionPanel.add(infoHeader, GBC.eol().fill(GBC.HORIZONTAL).anchor(GBC.NORTH));
+        optionPanel.add(infoHeader, GBC.eol().fill(GridBagConstraints.HORIZONTAL).anchor(GridBagConstraints.NORTH));
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this);
-        optionPanel.add(mapwithaiProvidersPanel, GBC.eol().fill(GBC.BOTH).anchor(GBC.CENTER));
+        optionPanel.add(mapwithaiProvidersPanel,
+                GBC.eol().fill(GridBagConstraints.BOTH).anchor(GridBagConstraints.CENTER));
         mapwithaiProvidersPanel.defaultMap.addPropertyChangeListener(this);
     }
 

@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
@@ -110,7 +111,7 @@ class AddMapWithAIPanel extends JPanel {
         });
         add(new JLabel(tr("{0} Make sure OSM has the permission to use this service", "1.")), GBC.eol());
         add(new JLabel(tr("{0} Enter Service URL", "2.")), GBC.eol());
-        add(rawUrl, GBC.eop().fill(GBC.HORIZONTAL));
+        add(rawUrl, GBC.eop().fill(GridBagConstraints.HORIZONTAL));
         rawUrl.setLineWrap(true);
         rawUrl.setAlignmentY(TOP_ALIGNMENT);
         add(layerPanel, GBC.eol().fill());
@@ -118,7 +119,7 @@ class AddMapWithAIPanel extends JPanel {
         addCommonSettings();
 
         add(new JLabel(tr("{0} Enter name for this source", "3.")), GBC.eol());
-        add(name, GBC.eol().fill(GBC.HORIZONTAL));
+        add(name, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         add(new JLabel(tr("{0} What is the type of this source?", "4.")), GBC.eol());
         typeBox = new JComboBox<>(MapWithAIType.values());
         typeBox.setSelectedItem(MapWithAIType.THIRD_PARTY);
@@ -152,7 +153,7 @@ class AddMapWithAIPanel extends JPanel {
             add(minimumCacheExpiryUnit, GBC.eol());
             add(new JLabel(tr("Set custom HTTP headers (if needed):")), GBC.eop());
             add(headersTable, GBC.eol().fill());
-            add(validGeoreference, GBC.eop().fill(GBC.HORIZONTAL));
+            add(validGeoreference, GBC.eop().fill(GridBagConstraints.HORIZONTAL));
         }
     }
 

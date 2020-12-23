@@ -598,14 +598,14 @@ public class MapWithAIProvidersPanel extends JPanel {
                     // Only display bounds when no polygons (shapes) are defined for this provider
                 } else {
                     if (defaultTable.getSelectionModel().isSelectedIndex(viewIndex)) {
-                        if (!mapRectangles.containsKey(i)) {
+                        mapRectangles.computeIfAbsent(i, key -> {
                             // Add new map rectangle
                             Coordinate topLeft = new Coordinate(bounds.getMaxLat(), bounds.getMinLon());
                             Coordinate bottomRight = new Coordinate(bounds.getMinLat(), bounds.getMaxLon());
                             MapRectangle rectangle = new MapRectangleImpl(topLeft, bottomRight);
-                            mapRectangles.put(i, rectangle);
                             defaultMap.addMapRectangle(rectangle);
-                        }
+                            return rectangle;
+                        });
                     } else if (mapRectangles.containsKey(i)) {
                         // Remove previously drawn map rectangle
                         defaultMap.removeMapRectangle(mapRectangles.get(i));
