@@ -25,6 +25,7 @@ import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.plugins.mapwithai.tools.BlacklistUtils;
 import org.openstreetmap.josm.tools.Shortcut;
 
 public class MapWithAIMoveAction extends JosmAction {
@@ -62,6 +63,10 @@ public class MapWithAIMoveAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
+        if (BlacklistUtils.isBlacklisted()) {
+            MapWithAILayer.createBadDataNotification();
+            return;
+        }
         for (final MapWithAILayer mapWithAI : MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class)) {
             final DataSet ds = mapWithAI.getDataSet();
             final int maxAddition = MapWithAIPreferenceHelper.getMaximumAddition();

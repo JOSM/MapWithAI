@@ -15,13 +15,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-
-import mockit.Mock;
-import mockit.MockUp;
 
 /**
  * Tests for {@link BlacklistUtils}
@@ -31,13 +30,6 @@ import mockit.MockUp;
  */
 class BlacklistUtilsTest {
 
-    private static class MapWithAIPluginMock extends MockUp<MapWithAIPlugin> {
-        @Mock
-        public static String getVersionInfo() {
-            return "1.0";
-        }
-    }
-
     @RegisterExtension
     static JOSMTestRules rules = new JOSMTestRules();
 
@@ -45,6 +37,7 @@ class BlacklistUtilsTest {
 
     @BeforeAll
     static void setup() {
+        TestUtils.assumeWorkingJMockit();
         wireMock = new WireMockServer(options().dynamicPort());
         wireMock.start();
         BlacklistUtils.setBlacklistUrl(wireMock.baseUrl() + "/JOSM_MapWithAI/json/blacklisted_versions.json");
