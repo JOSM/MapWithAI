@@ -26,6 +26,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.PluginException;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -37,7 +38,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIUploadHookTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection().preferences().territories();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().preferences()
+    .territories();
 
     /**
      * Test method for {@link MapWithAIUploadHook#modifyChangesetTags(Map)}.
@@ -106,8 +108,8 @@ public class MapWithAIUploadHookTest {
 
         BBox tBBox = new BBox(1, 0, 0, 1);
         MainApplication.getLayerManager()
-                .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(tBBox),
-                        DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
+        .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(tBBox),
+                DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
 
         tags.clear();
         hook.modifyChangesetTags(tags);

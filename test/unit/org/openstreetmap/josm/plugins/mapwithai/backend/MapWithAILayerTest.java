@@ -24,6 +24,7 @@ import javax.swing.SwingUtilities;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -44,6 +45,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.ContinuousDownloadAction;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -58,15 +60,21 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAILayerTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().fakeAPI()
-            .territories();
+    public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection()
+    .fakeAPI().territories();
 
     MapWithAILayer layer;
 
-    @Before
-    public void setUp() {
-        layer = new MapWithAILayer(new DataSet(), "test", null);
+    @BeforeClass
+    public static void beforeAll() {
+        TestUtils.assumeWorkingJMockit();
+        new MapWithAIPluginMock();
         Territories.initialize(); // Required to avoid an NPE (see JOSM-19132)
+    }
+
+    @Before
+    public void beforeEach() {
+        layer = new MapWithAILayer(new DataSet(), "test", null);
     }
 
     @Test
