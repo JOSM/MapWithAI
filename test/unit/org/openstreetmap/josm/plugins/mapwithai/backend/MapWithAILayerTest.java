@@ -12,9 +12,11 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.swing.Action;
 import javax.swing.JLabel;
@@ -91,6 +93,29 @@ class MapWithAILayerTest {
         assertFalse(layer.getChangesetSourceTag().trim().isEmpty(), "The source tag should not be an empty string");
         assertEquals(MapWithAIPlugin.NAME, layer.getChangesetSourceTag(),
                 "The source tag should be the plugin name (by default)");
+    }
+
+    @Test
+    void testSourceDeduplication() {
+        assertNull(layer.getChangesetSourceTag(), "The source tag should be null");
+        DataSet to = new DataSet();
+        DataSet from = new DataSet();
+        Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
+        way1.getNodes().stream().forEach(from::addPrimitive);
+        from.addPrimitive(way1);
+        way1.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, "esri/Buildings");
+        Way way2 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 2)));
+        way2.getNodes().stream().forEach(from::addPrimitive);
+        from.addPrimitive(way2);
+        way2.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, "esri/Addresses");
+        MapWithAIAddCommand command = new MapWithAIAddCommand(from, to, Arrays.asList(way1, way2));
+        UndoRedoHandler.getInstance().add(command);
+        String source = layer.getChangesetSourceTag();
+        assertNotNull(source, "The source tag should not be null");
+        assertFalse(source.trim().isEmpty(), "The source tag should not be an empty string");
+        List<String> expected = Arrays.asList("MapWithAI", "esri");
+        assertTrue(Stream.of(source.split(";", -1)).map(string -> string.trim()).allMatch(expected::contains),
+                MessageFormat.format("The source tag should be MapWithAI; esri, not {0}", source));
     }
 
     @Test

@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -64,6 +65,7 @@ import org.openstreetmap.josm.tools.ImageProvider;
  *
  */
 public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener {
+    private final static Collection<String> COMPACT = Arrays.asList("esri");
     private Integer maximumAddition;
     private MapWithAIInfo url;
     private Boolean switchLayers;
@@ -90,7 +92,10 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     @Override
     public String getChangesetSourceTag() {
         if (MapWithAIDataUtils.getAddedObjects() > 0) {
-            TreeSet<String> sources = new TreeSet<>(MapWithAIDataUtils.getAddedObjectsSource());
+            TreeSet<String> sources = new TreeSet<>(
+                    MapWithAIDataUtils.getAddedObjectsSource().stream().filter(Objects::nonNull)
+                            .map(string -> COMPACT.stream().filter(string::contains).findAny().orElse(string))
+                            .collect(Collectors.toSet()));
             sources.add("MapWithAI");
             return String.join("; ", sources);
         }
