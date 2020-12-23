@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -30,6 +31,7 @@ import org.openstreetmap.josm.plugins.PluginException;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -42,7 +44,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 class MapWithAIUploadHookTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().preferences().territories();
+    static JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().preferences()
+            .territories();
     private PluginInformation info;
     private OsmDataLayer osmLayer;
     private MapWithAILayer aiLayer;
@@ -50,6 +53,11 @@ class MapWithAIUploadHookTest {
     private Way way2;
     private MapWithAIMoveAction action;
     private MapWithAIUploadHook hook;
+
+    @BeforeAll
+    static void beforeAll() {
+        new MapWithAIPluginMock();
+    }
 
     @BeforeEach
     void setUp() throws PluginException, IOException {

@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -28,6 +29,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.commands.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -49,8 +51,13 @@ class MapWithAIMoveActionTest {
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
+    static JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
             .assertionsInEDT();
+
+    @BeforeAll
+    static void beforeAll() {
+        new MapWithAIPluginMock();
+    }
 
     @BeforeEach
     void setUp() {
