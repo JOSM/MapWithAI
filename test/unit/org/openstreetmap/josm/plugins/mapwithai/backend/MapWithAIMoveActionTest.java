@@ -7,7 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -22,6 +25,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.backend.commands.conflation.DuplicateCommand;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
@@ -38,7 +42,13 @@ public class MapWithAIMoveActionTest {
 
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().territories()
+    .assertionsInEDT();
+
+    @BeforeClass
+    public static void beforeAll() {
+        new MapWithAIPluginMock();
+    }
 
     @Before
     public void setUp() {
@@ -88,6 +98,8 @@ public class MapWithAIMoveActionTest {
                 "The dupe key should no longer exist");
 
         UndoRedoHandler.getInstance().undo();
+        Awaitility.await().atMost(Durations.ONE_SECOND)
+        .until(() -> !((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY));
         assertFalse(way2.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
         assertTrue(way1.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
     }
@@ -133,7 +145,8 @@ public class MapWithAIMoveActionTest {
             ds.addPrimitive(new Node(LatLon.ZERO));
         }
         for (int i = 0; i < 11; i++) {
-            GuiHelper.runInEDTAndWait(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
+            GuiHelper
+            .runInEDTAndWaitWithException(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
             moveAction.actionPerformed(null);
         }
         assertTrue(notification.shown);

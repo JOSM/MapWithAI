@@ -25,6 +25,7 @@ import javax.swing.SwingUtilities;
 import org.awaitility.Durations;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.openstreetmap.josm.TestUtils;
@@ -46,8 +47,10 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer.Continuou
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAILayerInfoTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.tools.Territories;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
@@ -60,11 +63,19 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAILayerTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection().fakeAPI().territories();
+    public JOSMTestRules test = new JOSMTestRules().preferences().main().projection()
+    .fakeAPI().territories();
 
     WireMockServer wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock"));
 
     MapWithAILayer layer;
+
+    @BeforeClass
+    public static void beforeAll() {
+        TestUtils.assumeWorkingJMockit();
+        new MapWithAIPluginMock();
+        Territories.initialize(); // Required to avoid an NPE (see JOSM-19132)
+    }
 
     @Before
     public void setUp() {
@@ -152,7 +163,7 @@ public class MapWithAILayerTest {
         MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         DataSet ds = mapWithAILayer.getDataSet();
         new GetDataRunnable(Arrays.asList(new BBox(-5.7400005, 34.4524384, -5.6686014, 34.5513153)), ds, null).fork()
-                .join();
+        .join();
         assertTrue(ds.getSelected().isEmpty());
         SwingUtilities.invokeAndWait(() -> ds.setSelected(ds.allNonDeletedCompletePrimitives()));
         assertEquals(1, ds.getSelected().size());

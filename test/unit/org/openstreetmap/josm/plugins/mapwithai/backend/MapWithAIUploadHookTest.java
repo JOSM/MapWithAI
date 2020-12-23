@@ -39,7 +39,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MapWithAIUploadHookTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules test = new JOSMTestRules().main().projection().preferences().territories();
+    public JOSMTestRules test = new JOSMTestRules().main().projection().preferences()
+    .territories();
 
     /**
      * Test method for {@link MapWithAIUploadHook#modifyChangesetTags(Map)}.
@@ -108,8 +109,8 @@ public class MapWithAIUploadHookTest {
 
         BBox tBBox = new BBox(1, 0, 0, 1);
         MainApplication.getLayerManager()
-                .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(tBBox),
-                        DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
+        .addLayer(new GpxLayer(DetectTaskingManagerUtils.createTaskingManagerGpxData(tBBox),
+                DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA));
 
         tags.clear();
         hook.modifyChangesetTags(tags);

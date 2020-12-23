@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -22,6 +23,7 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
@@ -34,6 +36,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListener;
@@ -41,8 +44,10 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.util.GuiHelper;
+import org.openstreetmap.josm.gui.widgets.HtmlPanel;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.tools.BlacklistUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -213,6 +218,13 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public void selectionChanged(SelectionChangeEvent event) {
+        if (BlacklistUtils.isBlacklisted()) {
+            if (!event.getSelection().isEmpty()) {
+                GuiHelper.runInEDT(() -> getDataSet().setSelected(Collections.emptySet()));
+                createBadDataNotification();
+            }
+            return;
+        }
         super.selectionChanged(event);
         final int maximumAdditionSelection = MapWithAIPreferenceHelper.getMaximumAddition();
         if ((event.getSelection().size() - event.getOldSelection().size() > 1
@@ -232,6 +244,29 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
             }
             GuiHelper.runInEDT(() -> getDataSet().setSelected(selection));
         }
+    }
+
+    /**
+     * Create a notification for plugin versions that create bad data.
+     */
+    public static void createBadDataNotification() {
+        Notification badData = new Notification();
+        badData.setIcon(JOptionPane.ERROR_MESSAGE);
+        badData.setDuration(Notification.TIME_LONG);
+        HtmlPanel panel = new HtmlPanel();
+        StringBuilder message = new StringBuilder()
+                .append(tr("This version of the MapWithAI plugin is known to create bad data.")).append("<br />")
+                .append(tr("Please update plugins and/or JOSM."));
+        if (BlacklistUtils.isOffline()) {
+            message.append("<br />").append(tr("This message may occur when JOSM is offline."));
+        }
+        panel.setText(message.toString());
+        badData.setContent(panel);
+        MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+        if (layer != null) {
+            layer.setMaximumAddition(0);
+        }
+        GuiHelper.runInEDT(badData::show);
     }
 
     private static class OsmComparator implements Comparator<OsmPrimitive> {
@@ -302,7 +337,6 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     }
 
-    @Override
     public boolean autosave(File file) throws IOException {
         // Consider a deletion a "successful" save.
         return Files.deleteIfExists(file.toPath());
