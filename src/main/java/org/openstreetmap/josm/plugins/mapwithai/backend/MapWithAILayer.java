@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
@@ -22,15 +26,22 @@ import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
+import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListener;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
+import org.openstreetmap.josm.gui.util.GuiHelper;
+import org.openstreetmap.josm.gui.widgets.HtmlPanel;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.tools.BlacklistUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -60,7 +71,6 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         MainApplication.getLayerManager().addActiveLayerChangeListener(this);
     }
 
-    // @Override TODO remove comment on 2020-01-01
     public String getChangesetSourceTag() {
         return MapWithAIDataUtils.getAddedObjects() > 0 ? String.join("; ", MapWithAIDataUtils.getAddedObjectsSource())
                 : null;
@@ -194,13 +204,78 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public void selectionChanged(SelectionChangeEvent event) {
+        if (BlacklistUtils.isBlacklisted()) {
+            if (!event.getSelection().isEmpty()) {
+                GuiHelper.runInEDT(() -> getDataSet().setSelected(Collections.emptySet()));
+                createBadDataNotification();
+            }
+            return;
+        }
+        super.selectionChanged(event);
         final int maximumAdditionSelection = MapWithAIPreferenceHelper.getMaximumAddition();
         if (maximumAdditionSelection < event.getSelection().size()
                 && (MapWithAIPreferenceHelper.getMaximumAddition() != 0 || !ExpertToggleAction.isExpert())) {
-            getDataSet().setSelected(event.getSelection().stream().distinct().limit(maximumAdditionSelection)
-                    .collect(Collectors.toList()));
+            Collection<OsmPrimitive> selection;
+            if (event.getSelection().parallelStream().filter(Node.class::isInstance).map(Node.class::cast)
+                    .filter(n -> !event.getOldSelection().contains(n))
+                    .allMatch(n -> event.getOldSelection().parallelStream().filter(Way.class::isInstance)
+                            .map(Way.class::cast).anyMatch(w -> w.containsNode(n)))) {
+                selection = event.getSelection();
+            } else {
+                OsmComparator comparator = new OsmComparator(event.getOldSelection());
+                selection = event.getSelection().stream().distinct().sorted(comparator).limit(maximumAdditionSelection)
+                        .limit(event.getOldSelection().size() + Math.max(1L, maximumAdditionSelection / 10L))
+                        .collect(Collectors.toList());
+            }
+            GuiHelper.runInEDT(() -> getDataSet().setSelected(selection));
         }
-        super.selectionChanged(event);
+    }
+
+    /**
+     * Create a notification for plugin versions that create bad data.
+     */
+    public static void createBadDataNotification() {
+        Notification badData = new Notification();
+        badData.setIcon(JOptionPane.ERROR_MESSAGE);
+        badData.setDuration(Notification.TIME_LONG);
+        HtmlPanel panel = new HtmlPanel();
+        StringBuilder message = new StringBuilder()
+                .append(tr("This version of the MapWithAI plugin is known to create bad data.")).append("<br />")
+                .append(tr("Please update plugins and/or JOSM."));
+        if (BlacklistUtils.isOffline()) {
+            message.append("<br />").append(tr("This message may occur when JOSM is offline."));
+        }
+        panel.setText(message.toString());
+        badData.setContent(panel);
+        MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+        if (layer != null) {
+            layer.setMaximumAddition(0);
+        }
+        GuiHelper.runInEDT(badData::show);
+    }
+
+    private static class OsmComparator implements Comparator<OsmPrimitive> {
+        final Collection<OsmPrimitive> previousSelection;
+
+        public OsmComparator(Collection<OsmPrimitive> previousSelection) {
+            this.previousSelection = previousSelection;
+        }
+
+        @Override
+        public int compare(OsmPrimitive o1, OsmPrimitive o2) {
+            if (previousSelection.contains(o1) == previousSelection.contains(o2)) {
+                if (o1.isTagged() == o2.isTagged()) {
+                    return o1.compareTo(o2);
+                } else if (o1.isTagged()) {
+                    return -1;
+                }
+                return 1;
+            }
+            if (previousSelection.contains(o1)) {
+                return -1;
+            }
+            return 1;
+        }
     }
 
     public boolean autosave(File file) throws IOException {
