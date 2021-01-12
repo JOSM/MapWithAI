@@ -54,7 +54,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
 
         switchLayerCheckBox = new JCheckBox();
         maximumAdditionSpinner = new JSpinner(
-                new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 50, 1));
+                new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 500, 1));
         mergeBuildingAddressCheckBox = new JCheckBox();
         replacementTableDisplayData = new ArrayList<>();
         fillReplacementTagDisplayData(replacementTableDisplayData);
