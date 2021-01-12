@@ -2,7 +2,10 @@
   "id" : "89bb3fed-c485-401c-a9b9-9c5b367f81a0",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_sarpy_county_ne_addresses_featureserver_1",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Sarpy_County_NE_Addresses/FeatureServer/1?f=json",
+    "urlPath": "/Do88DoK2xjTUCXd1/arcgis/rest/services/Sarpy_County_NE_Addresses/FeatureServer/1",
+    "queryParameters": {
+        "f": { "equalTo": "json" }
+    },
     "method" : "GET"
   },
   "response" : {

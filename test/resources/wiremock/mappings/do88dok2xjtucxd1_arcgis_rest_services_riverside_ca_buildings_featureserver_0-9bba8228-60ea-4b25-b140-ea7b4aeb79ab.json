@@ -2,7 +2,10 @@
   "id" : "9bba8228-60ea-4b25-b140-ea7b4aeb79ab",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_riverside_ca_buildings_featureserver_0",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Riverside_CA_Buildings/FeatureServer/0?f=json",
+    "urlPath": "/Do88DoK2xjTUCXd1/arcgis/rest/services/Riverside_CA_Buildings/FeatureServer/0",
+    "queryParameters": {
+        "f": { "equalTo": "json" }
+    },
     "method" : "GET"
   },
   "response" : {
@@ -28,6 +31,5 @@
   "persistent" : true,
   "scenarioName" : "scenario-2-Do88DoK2xjTUCXd1-arcgis-rest-services-Riverside_CA_Buildings-FeatureServer-0",
   "requiredScenarioState" : "Started",
-  "newScenarioState" : "scenario-2-Do88DoK2xjTUCXd1-arcgis-rest-services-Riverside_CA_Buildings-FeatureServer-0-2",
   "insertionIndex" : 39
 }

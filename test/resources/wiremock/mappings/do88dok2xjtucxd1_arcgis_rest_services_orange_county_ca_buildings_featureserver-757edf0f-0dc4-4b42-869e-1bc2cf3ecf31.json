@@ -2,7 +2,10 @@
   "id" : "757edf0f-0dc4-4b42-869e-1bc2cf3ecf31",
   "name" : "do88dok2xjtucxd1_arcgis_rest_services_orange_county_ca_buildings_featureserver",
   "request" : {
-    "url" : "/Do88DoK2xjTUCXd1/arcgis/rest/services/Orange_County_CA_Buildings/FeatureServer?f=json",
+    "urlPath": "/Do88DoK2xjTUCXd1/arcgis/rest/services/Orange_County_CA_Buildings/FeatureServer",
+    "queryParameters": {
+        "f": { "equalTo": "json" }
+    },
     "method" : "GET"
   },
   "response" : {

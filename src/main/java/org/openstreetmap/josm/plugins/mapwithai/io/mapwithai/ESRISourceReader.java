@@ -93,6 +93,9 @@ public class ESRISourceReader implements Closeable {
                 if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
                     JsonObject obj = parser.asJsonObject();
                     next = obj.getString("nextStart", "-1");
+                    if ("-1".equals(next)) {
+                        next = Integer.toString(obj.getInt("nextStart", -1));
+                    }
                     searchUrl = startReplace.matcher(search).replaceAll(next);
                     JsonArray features = obj.getJsonArray("results");
                     for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
