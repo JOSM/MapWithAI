@@ -243,13 +243,10 @@ sonarcloud.io:
   script:
     - git fetch --unshallow
     - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
-  needs: []
-  rules:
-    - if: '$CI_COMMIT_TAG && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    - if: '$CI_MERGE_REQUEST_IID && $SONAR_TOKEN =~ /[0-9a-z]+/'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_TOKEN =~ /[0-9a-z]+/'
-
+  needs: ["test"]
+  only:
+    variables:
+      - $SONAR_TOKEN =~ /[0-9a-z]+/
 
 release:
   stage: deploy
