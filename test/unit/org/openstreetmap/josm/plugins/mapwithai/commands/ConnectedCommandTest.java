@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collection;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
@@ -38,7 +40,8 @@ class ConnectedCommandTest {
         Node toAdd = new Node(new LatLon(0.5, 0));
         ds.addPrimitive(toAdd);
 
-        assertThrows(NullPointerException.class, () -> command.getCommand(Collections.singletonList(toAdd)));
+        Collection<OsmPrimitive> temporaryList = Collections.singletonList(toAdd);
+        assertThrows(NullPointerException.class, () -> command.getCommand(temporaryList));
 
         // SimplePrimitiveId doesn't like negative ids
         way.setOsmId(1, 1);
