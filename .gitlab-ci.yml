@@ -33,19 +33,18 @@ sast:
 assemble:
   stage: build
   script:
-  - ./gradlew assemble
+    - ./gradlew assemble --stacktrace
   artifacts:
     paths:
     - build/
     expire_in: 1 day
   interruptible: true
 
-
 assemble with java 11:
   stage: build
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   script:
-    - ./gradlew assemble
+    - ./gradlew assemble --stacktrace
   artifacts:
     paths:
       - build/
@@ -56,7 +55,7 @@ assemble with java 15:
   stage: build
   image: registry.gitlab.com/josm/docker-library/openjdk-15-josmplugin:latest
   script:
-    - ./gradlew assemble
+    - ./gradlew assemble --stacktrace
   artifacts:
     paths:
       - build/
@@ -93,7 +92,7 @@ code_navigation:
 build:
   stage: test
   script:
-  - ./gradlew build generatePot generateSnapshotUpdateSite #--info
+  - ./gradlew build generatePot generateSnapshotUpdateSite --stacktrace
   artifacts:
     paths:
     - build
@@ -136,7 +135,7 @@ coverage:
 compile against min JOSM:
   stage: test
   script:
-  - ./gradlew compileJava_minJosm
+    - ./gradlew compileJava_minJosm --stacktrace
   needs: ["assemble"]
   dependencies:
     - assemble
@@ -145,7 +144,7 @@ compile against min JOSM:
 compile against latest JOSM:
   stage: test
   script:
-  - ./gradlew compileJava_latestJosm
+    - ./gradlew compileJava_latestJosm --stacktrace
   needs: ["assemble"]
   dependencies:
     - assemble
@@ -155,7 +154,7 @@ build with java 11:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   script:
-    - ./gradlew build
+    - ./gradlew build --stacktrace
   allow_failure: true # due to copy-paste-detection
   needs: ["assemble with java 11"]
   dependencies:
@@ -166,7 +165,8 @@ build with java 15:
   stage: test
   image: registry.gitlab.com/josm/docker-library/openjdk-15-josmplugin:latest
   script:
-    - ./gradlew build
+    - ./gradlew build --stacktrace
+  needs: ["java 15 assemble"]
   allow_failure: true
   needs: ["assemble with java 15"]
   dependencies:
