@@ -337,7 +337,6 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     }
 
-    @Override
     public boolean autosave(File file) throws IOException {
         // Consider a deletion a "successful" save.
         return Files.deleteIfExists(file.toPath());

@@ -15,6 +15,7 @@ import javax.json.JsonValue;
 
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
+import org.openstreetmap.josm.io.OnlineResource;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -80,6 +81,6 @@ public class BlacklistUtils {
      * @return {@code true} if the configured url is offline
      */
     public static boolean isOffline() {
-        return NetworkManager.isOffline(blacklistUrl);
+        return NetworkManager.isOffline(OnlineResource.ALL);
     }
 }
