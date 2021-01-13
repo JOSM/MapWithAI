@@ -37,6 +37,7 @@ assemble:
   artifacts:
     paths:
     - build/
+    expire_in: 1 day
   interruptible: true
 
 
@@ -48,6 +49,7 @@ assemble with java 11:
   artifacts:
     paths:
       - build/
+    expire_in: 1 day
   interruptible: true
 
 assemble with java 15:
@@ -58,6 +60,7 @@ assemble with java 15:
   artifacts:
     paths:
       - build/
+    expire_in: 1 day
   allow_failure: true
   interruptible: true
 
@@ -94,6 +97,7 @@ build:
   artifacts:
     paths:
     - build
+    expire_in: 1 day
   needs: ["assemble"]
   dependencies:
     - assemble
