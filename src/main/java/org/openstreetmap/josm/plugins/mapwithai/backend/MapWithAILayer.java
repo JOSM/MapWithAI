@@ -65,7 +65,7 @@ import org.openstreetmap.josm.tools.ImageProvider;
  *
  */
 public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener {
-    private final static Collection<String> COMPACT = Arrays.asList("esri");
+    private static final Collection<String> COMPACT = Arrays.asList("esri");
     private Integer maximumAddition;
     private MapWithAIInfo url;
     private Boolean switchLayers;
