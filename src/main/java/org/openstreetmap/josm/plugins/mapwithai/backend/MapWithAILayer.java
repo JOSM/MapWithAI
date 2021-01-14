@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.dialogs.layer.DuplicateAction;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeEvent;
 import org.openstreetmap.josm.gui.layer.MainLayerManager.ActiveLayerChangeListener;
@@ -123,9 +125,12 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public Action[] getMenuEntries() {
+        Collection<Class<? extends Action>> forbiddenActions = Arrays.asList(LayerSaveAction.class,
+                LayerSaveAsAction.class, DuplicateAction.class, LayerGpxExportAction.class,
+                ConvertToGpxLayerAction.class);
         final List<Action> actions = Arrays.asList(super.getMenuEntries()).stream()
-                .filter(action -> !(action instanceof LayerSaveAction) && !(action instanceof LayerSaveAsAction))
-                .collect(Collectors.toList());
+                .filter(action -> forbiddenActions.stream().noneMatch(clazz -> clazz.isInstance(action)))
+                .collect(Collectors.toCollection(ArrayList::new));
         return actions.toArray(new Action[0]);
     }
 
