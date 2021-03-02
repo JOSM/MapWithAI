@@ -578,16 +578,16 @@ public class MapWithAIProvidersPanel extends JPanel {
                 List<Shape> shapes = bounds.getShapes();
                 if (shapes != null && !shapes.isEmpty()) {
                     if (defaultTable.getSelectionModel().isSelectedIndex(viewIndex)) {
-                        if (!mapPolygons.containsKey(i)) {
+                        mapPolygons.computeIfAbsent(i, key -> {
                             List<MapPolygon> list = new ArrayList<>();
-                            mapPolygons.put(i, list);
                             // Add new map polygons
                             for (Shape shape : shapes) {
                                 MapPolygon polygon = new MapPolygonImpl(shape.getPoints());
                                 list.add(polygon);
                                 defaultMap.addMapPolygon(polygon);
                             }
-                        }
+                            return list;
+                        });
                     } else if (mapPolygons.containsKey(i)) {
                         // Remove previously drawn map polygons
                         for (MapPolygon polygon : mapPolygons.get(i)) {
