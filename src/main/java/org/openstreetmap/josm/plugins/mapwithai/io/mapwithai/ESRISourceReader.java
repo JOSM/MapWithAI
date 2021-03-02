@@ -175,13 +175,20 @@ public class ESRISourceReader implements Closeable {
                 JsonReader reader = Json.createReader(br)) {
             JsonObject info = reader.readObject();
             JsonArray layers = info.getJsonArray("layers");
+            // This fixes #20551
+            if (layers == null || layers.stream().noneMatch(jsonvalue -> jsonvalue != null)) {
+                return null;
+            }
             // TODO use all the layers?
+            JsonObject layer = layers.stream().filter(jsonValue -> jsonValue != null).findFirst()
+                    .orElse(JsonObject.EMPTY_JSON_OBJECT).asJsonObject();
+            if (layer.containsKey("id")) {
+                String partialUrl = (url.endsWith("/") ? url : url + "/") + layer.getInt("id");
+                mapwithaiInfo.setReplacementTags(getReplacementTags(partialUrl));
 
-            JsonObject layer = layers.get(0).asJsonObject();
-            String partialUrl = (url.endsWith("/") ? url : url + "/") + layer.getInt("id");
-            mapwithaiInfo.setReplacementTags(getReplacementTags(partialUrl));
-
-            return partialUrl;
+                return partialUrl;
+            }
+            return null;
         } catch (IOException e) {
             Logging.error(e);
             return null;
