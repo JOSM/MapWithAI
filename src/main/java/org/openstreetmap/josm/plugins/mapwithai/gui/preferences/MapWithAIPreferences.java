@@ -53,8 +53,8 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         super("mapwithai", tr("MapWithAI preferences"), tr("Modify MapWithAI preferences"), false, new JTabbedPane());
 
         switchLayerCheckBox = new JCheckBox();
-        maximumAdditionSpinner = new JSpinner(
-                new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0, 500, 1));
+        maximumAdditionSpinner = new JSpinner(new SpinnerNumberModel(MapWithAIPreferenceHelper.getMaximumAddition(), 0,
+                MapWithAIPreferenceHelper.getDefaultMaximumAddition() * 10, 1));
         mergeBuildingAddressCheckBox = new JCheckBox();
         replacementTableDisplayData = new ArrayList<>();
         fillReplacementTagDisplayData(replacementTableDisplayData);
