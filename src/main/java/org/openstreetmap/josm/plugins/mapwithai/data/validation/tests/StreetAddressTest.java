@@ -101,7 +101,7 @@ public class StreetAddressTest extends Test {
     public static Collection<Way> getSurroundingHighways(OsmPrimitive address) {
         Objects.requireNonNull(address.getDataSet(), "Node must be part of a dataset");
         DataSet ds = address.getDataSet();
-        BBox addrBox = expandBBox(address.getBBox(), BBOX_EXPANSION);
+        BBox addrBox = expandBBox(new BBox(address.getBBox()), BBOX_EXPANSION);
         int expansions = 0;
         int maxExpansions = Config.getPref().getInt("mapwithai.validator.streetaddresstest.maxexpansions", 20);
         while (ds.searchWays(addrBox).parallelStream().filter(StreetAddressTest::isHighway).count() == 0

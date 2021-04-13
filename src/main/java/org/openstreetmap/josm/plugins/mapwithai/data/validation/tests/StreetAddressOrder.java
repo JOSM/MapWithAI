@@ -64,7 +64,7 @@ public class StreetAddressOrder extends Test {
      * @return The primitives that have appropriate addr tags near to the way
      */
     public static List<IPrimitive> getNearbyAddresses(Way way) {
-        BBox bbox = StreetAddressTest.expandBBox(way.getBBox(), StreetAddressTest.BBOX_EXPANSION);
+        BBox bbox = StreetAddressTest.expandBBox(new BBox(way.getBBox()), StreetAddressTest.BBOX_EXPANSION);
         List<Node> addrNodes = way.getDataSet().searchNodes(bbox).parallelStream()
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
         List<Way> addrWays = way.getDataSet().searchWays(bbox).parallelStream()
@@ -83,7 +83,7 @@ public class StreetAddressOrder extends Test {
      * @return {@code true} if the primitive is the nearest way
      */
     public static boolean isNearestRoad(Way way, OsmPrimitive prim) {
-        BBox primBBox = StreetAddressTest.expandBBox(prim.getBBox(), StreetAddressTest.BBOX_EXPANSION);
+        BBox primBBox = StreetAddressTest.expandBBox(new BBox(prim.getBBox()), StreetAddressTest.BBOX_EXPANSION);
         List<Pair<Way, Double>> sorted = way.getDataSet().searchWays(primBBox).parallelStream()
                 .filter(StreetAddressTest::isHighway).map(iway -> StreetAddressTest.distanceToWay(iway, prim))
                 .sorted(Comparator.comparing(p -> p.b)).collect(Collectors.toList());
