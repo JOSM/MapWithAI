@@ -22,6 +22,7 @@ import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
+import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
@@ -29,7 +30,6 @@ import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagMap;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -43,6 +43,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.tools.Geometry;
+import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
@@ -423,15 +424,20 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
     }
 
-    protected static void addMissingElement(Map.Entry<WaySegment, List<WaySegment>> entry) {
-        final Way way = entry.getKey().way;
-        final Way waySegmentWay = entry.getKey().toWay();
+    protected static void addMissingElement(Map.Entry<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> entry) {
+        final Way way = entry.getKey().getWay();
+        final Way waySegmentWay;
+        try {
+            waySegmentWay = entry.getKey().toWay();
+        } catch (ReflectiveOperationException e) {
+            throw new JosmRuntimeException(e);
+        }
         final Node toAdd = entry.getValue().parallelStream()
                 .flatMap(seg -> Arrays.asList(seg.getFirstNode(), seg.getSecondNode()).parallelStream())
                 .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
         if ((toAdd != null) && (convertToMeters(
                 Geometry.getDistance(waySegmentWay, toAdd)) < (MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))) {
-            way.addNode(entry.getKey().lowerIndex + 1, toAdd);
+            way.addNode(entry.getKey().getUpperIndex(), toAdd);
         }
         for (int i = 0; i < (way.getNodesCount() - 2); i++) {
             final Node node0 = way.getNode(i);
@@ -483,15 +489,21 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @return A Map&lt;WaySegment to modify from way1, List&lt;WaySegments from
      *         way2&gt; to make the segment conform to &gt;
      */
-    protected static Map<WaySegment, List<WaySegment>> checkWayDuplications(Way way1, Way way2) {
-        final List<WaySegment> waySegments1 = way1.getNodePairs(false).stream()
-                .map(pair -> WaySegment.forNodePair(way1, pair.a, pair.b)).collect(Collectors.toList());
-        final List<WaySegment> waySegments2 = way2.getNodePairs(false).stream()
-                .map(pair -> WaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
-        final Map<WaySegment, List<WaySegment>> partials = new TreeMap<>();
-        for (final WaySegment segment1 : waySegments1) {
-            final Way waySegment1 = segment1.toWay();
-            final List<WaySegment> replacements = waySegments2.parallelStream()
+    protected static Map<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> checkWayDuplications(Way way1,
+            Way way2) {
+        final List<IWaySegment<Node, Way>> waySegments1 = way1.getNodePairs(false).stream()
+                .map(pair -> IWaySegment.forNodePair(way1, pair.a, pair.b)).collect(Collectors.toList());
+        final List<IWaySegment<Node, Way>> waySegments2 = way2.getNodePairs(false).stream()
+                .map(pair -> IWaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
+        final Map<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> partials = new TreeMap<>();
+        for (final IWaySegment<Node, Way> segment1 : waySegments1) {
+            final Way waySegment1;
+            try {
+                waySegment1 = segment1.toWay();
+            } catch (ReflectiveOperationException e) {
+                throw new JosmRuntimeException(e);
+            }
+            final List<IWaySegment<Node, Way>> replacements = waySegments2.parallelStream()
                     .filter(seg2 -> waySegment1.isFirstLastNode(seg2.getFirstNode())
                             || waySegment1.isFirstLastNode(seg2.getSecondNode()))
                     .filter(seg -> {
@@ -503,8 +515,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                         return Math.abs(Geometry.getCornerAngle(node1.getEastNorth(), node2.getEastNorth(),
                                 node3.getEastNorth())) < (Math.PI / 4);
                     }).collect(Collectors.toList());
-            if ((replacements.size() != 2) || replacements.parallelStream()
-                    .anyMatch(seg -> waySegment1.getNodes().containsAll(seg.toWay().getNodes()))) {
+            if ((replacements.size() != 2) || replacements.parallelStream().anyMatch(seg -> {
+                try {
+                    return waySegment1.getNodes().containsAll(seg.toWay().getNodes());
+                } catch (ReflectiveOperationException e) {
+                    throw new JosmRuntimeException(e);
+                }
+            })) {
                 continue;
             }
             partials.put(segment1, replacements);

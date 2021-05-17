@@ -21,9 +21,9 @@ import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -55,7 +55,8 @@ class GetDataRunnableTest {
         Way way2 = new Way();
         way2.setNodes(way1.getNodes());
         way2.addNode(1, new Node(new LatLon(-5.7115826, 34.5012438)));
-        Map<WaySegment, List<WaySegment>> map = GetDataRunnable.checkWayDuplications(way1, way2);
+        Map<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> map = GetDataRunnable.checkWayDuplications(way1,
+                way2);
         GetDataRunnable.addMissingElement(map.entrySet().iterator().next());
 
         assertEquals(4, way1.getNodesCount());
