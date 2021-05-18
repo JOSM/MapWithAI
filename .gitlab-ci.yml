@@ -229,7 +229,7 @@ release:
     git stage .
     git commit -a -m "$commitMessage"
     git push origin pages
-  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
+  needs: ["compile against min JOSM", "compile against latest JOSM", "assemble"]
   dependencies:
     - build
   rules:
@@ -248,7 +248,7 @@ release hotfix:
     mkdir -pv "pages/public/dist/$version"
     cp -v "build/dist/"* "build/tmp/jar/MANIFEST.MF" "pages/public/dist/$version"
   - *push_pages_branch
-  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
+  needs: ["compile against min JOSM", "compile against latest JOSM", "assemble"]
   dependencies:
     - build
   rules:
@@ -272,7 +272,7 @@ publish update site:
     cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     cp -v "build/dist/mapwithai.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/mapwithai-dev.jar"
   - *push_pages_branch
-  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
+  needs: ["compile against min JOSM", "compile against latest JOSM", "assemble"]
   dependencies:
     - build
   rules:
@@ -287,7 +287,7 @@ publish to / GitLab.com packages:
   script:
   - ./gradlew publishAllPublicationsToGitlabRepository
   - ./gradlew releaseToGitlab
-  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
+  needs: ["compile against min JOSM", "compile against latest JOSM", "assemble"]
   dependencies:
     - build
   rules:
