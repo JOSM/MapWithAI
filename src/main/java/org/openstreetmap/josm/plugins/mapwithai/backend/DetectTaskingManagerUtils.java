@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -91,7 +92,7 @@ final class DetectTaskingManagerUtils {
         route.routePoints.add(new WayPoint(bounds.getMax()));
         route.routePoints.add(new WayPoint(new LatLon(bounds.getMinLat(), bounds.getMaxLon())));
         route.routePoints.add(route.routePoints.iterator().next());
-        route.routePoints.forEach(waypoint -> waypoint.setTime(0));
+        route.routePoints.forEach(waypoint -> waypoint.setInstant(Instant.EPOCH));
         data.addRoute(route);
         return data;
     }
