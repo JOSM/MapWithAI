@@ -126,7 +126,8 @@ public class MapWithAITestRules extends JOSMTestRules {
                         .extensions(new WireMockUrlTransformer()).dynamicPort());
                 wireMock.start();
             }
-            // Sometimes this is called twice, the second time resetting the config but not resetting the urls.
+            // Sometimes this is called twice, the second time resetting the config but not
+            // resetting the urls.
             if (wiremock && wireMock != null) {
                 MapPaintUtils.setPaintStyleUrl(replaceUrl(wireMock, MapPaintUtils.getPaintStyleUrl()));
                 // Avoid cases where tests could write the wiremock url to some fields.

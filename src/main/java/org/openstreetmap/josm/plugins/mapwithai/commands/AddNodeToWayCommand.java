@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
@@ -44,6 +45,9 @@ public class AddNodeToWayCommand extends Command {
     public boolean executeCommand() {
         int index = Integer.MIN_VALUE;
         try {
+            // IWaySegment#forNodePair throws an IllegalArgumentException when the node pair
+            // doesn't exist as a segment in the way.
+            IWaySegment.forNodePair(getWay(), getFirstNode(), getSecondNode());
             index = Math.max(getWay().getNodes().indexOf(getFirstNode()), getWay().getNodes().indexOf(getSecondNode()));
         } catch (IllegalArgumentException e) {
             // OK, someone has added a node between the two nodes since calculation
