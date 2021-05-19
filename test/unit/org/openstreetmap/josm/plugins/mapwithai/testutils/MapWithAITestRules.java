@@ -125,6 +125,9 @@ public class MapWithAITestRules extends JOSMTestRules {
                 wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
                         .extensions(new WireMockUrlTransformer()).dynamicPort());
                 wireMock.start();
+            }
+            // Sometimes this is called twice, the second time resetting the config but not resetting the urls.
+            if (wiremock && wireMock != null) {
                 MapPaintUtils.setPaintStyleUrl(replaceUrl(wireMock, MapPaintUtils.getPaintStyleUrl()));
                 // Avoid cases where tests could write the wiremock url to some fields.
                 if (currentReleaseUrl == null) {
@@ -145,8 +148,6 @@ public class MapWithAITestRules extends JOSMTestRules {
                 } catch (OsmTransferCanceledException | OsmApiInitializationException e) {
                     Logging.error(e);
                 }
-                wireMockUsers.add(this);
-            } else if (wiremock) {
                 wireMockUsers.add(this);
             }
         }
