@@ -112,9 +112,12 @@ public final class MapPaintUtils {
      * Remove MapWithAI paint styles
      */
     public static synchronized void removeMapWithAIPaintStyles() {
-        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream().filter(
-                source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
-                .forEach(style -> GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style)));
+        // WebStart has issues with streams and EDT permissions. Don't use streams.
+        for (StyleSource style : new ArrayList<>(MapPaintStyles.getStyles().getStyleSources())) {
+            if (paintStyleResourceUrl.equals(style.url) || TEST_PATTERN.matcher(style.url).matches()) {
+                GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style));
+            }
+        }
     }
 
     /**
