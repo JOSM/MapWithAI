@@ -11,11 +11,11 @@ plugins {
   id "maven-publish"
   id "pmd"
   id "com.github.ben-manes.versions" version "0.38.0"
-  id "com.github.spotbugs" version "4.7.0"
+  id "com.github.spotbugs" version "4.7.1"
   id "org.openstreetmap.josm" version "0.7.1"
   id "net.ltgt.errorprone" version "2.0.1"
-  id "com.diffplug.spotless" version "5.11.1"
-  id "org.sonarqube" version "3.1.1"
+  id "com.diffplug.spotless" version "5.12.5"
+  id "org.sonarqube" version "3.2.0"
   //id 'de.aaschmid.cpd' version '2.0'
 }
 
@@ -43,7 +43,6 @@ def gitlabGroup = "gokaart"
 def gitlabRepositoryName = "JOSM_MapWithAI"
 
 repositories {
-  jcenter()
   mavenCentral()
 }
 
@@ -71,13 +70,13 @@ sourceSets {
 }
 
 def versions = [
-  awaitility: "4.0.3",
+  awaitility: "4.1.0",
   errorprone: "2.4.0",
   jacoco: "0.8.5",
   jmockit: "1.49",
   junit: "5.7.1",
   pmd: "6.20.0",
-  spotbugs: "4.2.2",
+  spotbugs: "4.2.3",
   wiremock: "2.27.2",
   findsecbugs: "1.11.0",
 ]
@@ -92,8 +91,8 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
   testImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
-  testCompile("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
-  testCompile("org.jmockit:jmockit:${versions.jmockit}")
+  testImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
+  testImplementation("org.jmockit:jmockit:${versions.jmockit}")
   testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
   testImplementation("com.github.tomakehurst:wiremock:${versions.wiremock}")
@@ -146,10 +145,11 @@ task integrationTest(type: Test) {
 check.dependsOn integrationTest
 
 tasks.processResources {
+  // Note: src/${source_set}/resources is automatically copied
+  // processResources uses the `main` source set.
+  // https://docs.gradle.org/current/userguide/building_java_projects.html#sec:java_resources
   from("$projectDir/LICENSE")
   from("$projectDir/README.md")
-  from("$projectDir/src/resources")
-  from("$projectDir/src/main/resources")
 }
 
 jacocoTestCoverageVerification {
