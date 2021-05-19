@@ -14,7 +14,6 @@ import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.tools.Geometry;
 
@@ -45,7 +44,6 @@ public class AddNodeToWayCommand extends Command {
     public boolean executeCommand() {
         int index = Integer.MIN_VALUE;
         try {
-            WaySegment.forNodePair(getWay(), getFirstNode(), getSecondNode());
             index = Math.max(getWay().getNodes().indexOf(getFirstNode()), getWay().getNodes().indexOf(getSecondNode()));
         } catch (IllegalArgumentException e) {
             // OK, someone has added a node between the two nodes since calculation

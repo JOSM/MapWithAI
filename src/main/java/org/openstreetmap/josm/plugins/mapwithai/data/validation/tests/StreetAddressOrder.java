@@ -18,12 +18,12 @@ import java.util.stream.Stream;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWay;
+import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.validation.Severity;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.data.validation.TestError;
@@ -217,7 +217,7 @@ public class StreetAddressOrder extends Test {
         for (T address : addresses) {
             if (address instanceof OsmPrimitive && way instanceof Way) {
                 Node centroid = getCentroid(address);
-                WaySegment seg = Geometry.getClosestWaySegment((Way) way, (OsmPrimitive) address);
+                IWaySegment<?, ?> seg = Geometry.getClosestWaySegment((Way) way, (OsmPrimitive) address);
                 if (seg.getFirstNode().getEastNorth() != null && seg.getSecondNode().getEastNorth() != null
                         && centroid != null && centroid.getEastNorth() != null) {
                     boolean right = Geometry.angleIsClockwise(seg.getFirstNode(), seg.getSecondNode(), centroid);

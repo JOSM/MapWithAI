@@ -23,10 +23,10 @@ import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
+import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.data.preferences.sources.ValidatorPrefHelper;
 import org.openstreetmap.josm.data.validation.TestError;
 import org.openstreetmap.josm.data.validation.tests.CrossingWays;
@@ -250,8 +250,8 @@ public class MissingConnectionTags extends AbstractConflationCommand {
 
     private static Command createAddNodeCommand(Way way, Node node, double precision) {
         if (Geometry.getDistance(node, way) < precision) {
-            WaySegment seg = Geometry.getClosestWaySegment(way, node);
-            List<OsmPrimitive> prims = Arrays.asList(way, seg.getFirstNode(), seg.getSecondNode());
+            IWaySegment<?, ?> seg = Geometry.getClosestWaySegment(way, node);
+            List<IPrimitive> prims = Arrays.asList(way, seg.getFirstNode(), seg.getSecondNode());
             if (prims.stream().allMatch(p -> p.getOsmId() > 0)) {
                 return new ChangePropertyCommand(node, "conn", String.join(",",
                         prims.stream().map(p -> p.getPrimitiveId().toString()).collect(Collectors.toList())));
