@@ -46,7 +46,7 @@ public class MapWithAIMoveActionTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
-    .assertionsInEDT();
+            .assertionsInEDT();
 
     @BeforeClass
     public static void beforeAll() {
@@ -116,7 +116,7 @@ public class MapWithAIMoveActionTest {
 
         UndoRedoHandler.getInstance().undo();
         Awaitility.await().atMost(Durations.ONE_SECOND)
-        .until(() -> !((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY));
+                .until(() -> !((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY));
         assertFalse(way2.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
         assertTrue(way1.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
     }
@@ -168,7 +168,7 @@ public class MapWithAIMoveActionTest {
         }
         for (int i = 0; i < 11; i++) {
             GuiHelper
-            .runInEDTAndWaitWithException(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
+                    .runInEDTAndWaitWithException(() -> ds.setSelected(ds.allNonDeletedPrimitives().iterator().next()));
             moveAction.actionPerformed(null);
         }
         assertTrue(notification.shown);

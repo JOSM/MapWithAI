@@ -61,7 +61,7 @@ public class MapWithAILayerTest {
     @Rule
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection()
-    .fakeAPI().territories();
+            .fakeAPI().territories();
 
     MapWithAILayer layer;
 
