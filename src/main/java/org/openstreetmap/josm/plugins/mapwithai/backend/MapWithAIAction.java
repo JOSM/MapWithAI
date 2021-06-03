@@ -70,9 +70,13 @@ public class MapWithAIAction extends JosmAction {
      */
     protected static OsmDataLayer getOsmLayer(List<OsmDataLayer> osmLayers) {
         OsmDataLayer returnLayer = null;
-        if (osmLayers.size() == 1) {
+        List<OsmDataLayer> tLayers = new ArrayList<>(osmLayers);
+        if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
+            tLayers.removeIf(DetectTaskingManagerUtils.getTaskingManagerLayer()::equals);
+        }
+        if (tLayers.size() == 1) {
             returnLayer = osmLayers.get(0);
-        } else if (!osmLayers.isEmpty()) {
+        } else if (!tLayers.isEmpty()) {
             returnLayer = AbstractMergeAction.askTargetLayer(osmLayers.toArray(new OsmDataLayer[0]),
                     tr("Please select the initial layer for boundaries"), tr("Select target layer for boundaries"),
                     tr("OK"), "download");

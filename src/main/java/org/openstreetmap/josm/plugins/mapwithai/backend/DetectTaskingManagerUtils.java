@@ -4,18 +4,19 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
 import org.openstreetmap.josm.data.gpx.GpxRoute;
 import org.openstreetmap.josm.data.gpx.WayPoint;
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.Layer;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 
 /**
@@ -26,11 +27,8 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
  */
 final class DetectTaskingManagerUtils {
     public static final String MAPWITHAI_CROP_AREA = tr("{0}: Crop Area", MapWithAIPlugin.NAME);
-    private static final List<Pattern> PATTERNS = new ArrayList<>();
-    static {
-        PATTERNS.add(Pattern.compile("^Task Boundaries.*$"));
-        PATTERNS.add(Pattern.compile("^" + MAPWITHAI_CROP_AREA + "$"));
-    }
+    private static final Pattern[] PATTERNS = { Pattern.compile("^Task Boundaries.*$"),
+            Pattern.compile("^" + MAPWITHAI_CROP_AREA + "$"), Pattern.compile("^Boundary for task:.*$") };
 
     private DetectTaskingManagerUtils() {
         // Hide since this is going to be a static class
@@ -52,9 +50,8 @@ final class DetectTaskingManagerUtils {
      *         {@link DetectTaskingManagerUtils#PATTERNS} or {@code null}.
      */
     public static Layer getTaskingManagerLayer() {
-        return MainApplication.getLayerManager().getLayers().parallelStream().filter(
-                tlayer -> PATTERNS.parallelStream().anyMatch(pattern -> pattern.matcher(tlayer.getName()).matches()))
-                .findFirst().orElse(null);
+        return MainApplication.getLayerManager().getLayers().parallelStream().filter(tlayer -> Stream.of(PATTERNS)
+                .parallel().anyMatch(pattern -> pattern.matcher(tlayer.getName()).matches())).findFirst().orElse(null);
     }
 
     /**
@@ -74,6 +71,10 @@ final class DetectTaskingManagerUtils {
             } else {
                 returnBounds.extend(realBounds);
             }
+        } else if (layer instanceof OsmDataLayer && ((OsmDataLayer) layer).getDataSet().getWays().size() == 1) {
+            final BBox bbox = ((OsmDataLayer) layer).getDataSet().getWays().iterator().next().getBBox();
+            returnBounds.extend(bbox.getBottomRight());
+            returnBounds.extend(bbox.getTopLeft());
         }
         return returnBounds;
     }
