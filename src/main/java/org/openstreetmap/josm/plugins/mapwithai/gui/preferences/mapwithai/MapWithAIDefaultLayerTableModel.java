@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import javax.swing.table.DefaultTableModel;
 
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -49,6 +50,7 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
         columnDataRetrieval.add(i -> i.getAttributionText(0, null, null));
         columnDataRetrieval.add(info -> Optional.ofNullable(info.getTermsOfUseURL()).orElse(""));
         columnDataRetrieval.add(i -> MapWithAILayerInfo.getInstance().getLayers().contains(i));
+        MapWithAILayerInfo.getInstance().addFinishListener(() -> GuiHelper.runInEDT(this::fireTableDataChanged));
     }
 
     /**
@@ -58,12 +60,15 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
      * @return The imagery info at the given row number
      */
     public static MapWithAIInfo getRow(int row) {
+        if (row == 0 && MapWithAILayerInfo.getInstance().getAllDefaultLayers().isEmpty()) {
+            return new MapWithAIInfo(tr("Loading"), "");
+        }
         return MapWithAILayerInfo.getInstance().getAllDefaultLayers().get(row);
     }
 
     @Override
     public int getRowCount() {
-        return MapWithAILayerInfo.getInstance().getAllDefaultLayers().size();
+        return Math.max(MapWithAILayerInfo.getInstance().getAllDefaultLayers().size(), 1);
     }
 
     @Override
@@ -76,7 +81,7 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
 
     @Override
     public Object getValueAt(int row, int column) {
-        MapWithAIInfo info = MapWithAILayerInfo.getInstance().getAllDefaultLayers().get(row);
+        MapWithAIInfo info = getRow(row);
         if (column < columnDataRetrieval.size()) {
             return columnDataRetrieval.get(column).apply(info);
         }

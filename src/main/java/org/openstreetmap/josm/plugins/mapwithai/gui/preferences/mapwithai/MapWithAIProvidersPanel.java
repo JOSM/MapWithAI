@@ -190,8 +190,8 @@ public class MapWithAIProvidersPanel extends JPanel {
                     if (MapWithAILayerTableModel.contains(info)) {
                         Color t = IMAGERY_BACKGROUND_COLOR.get();
                         GuiHelper.setBackgroundReadable(label, isSelected ? t.darker() : t);
-                    } else if (this.area != null && (this.area.intersects(info.getBounds())
-                            || (info.getBounds() != null && info.getBounds().intersects(this.area)))) {
+                    } else if (this.area != null && info.getBounds() != null
+                            && (this.area.intersects(info.getBounds()) || (info.getBounds().intersects(this.area)))) {
                         Color t = MAPWITHAI_AREA_BACKGROUND_COLOR.get();
                         GuiHelper.setBackgroundReadable(label, isSelected ? t.darker() : t);
                     } else {
@@ -657,7 +657,8 @@ public class MapWithAIProvidersPanel extends JPanel {
                         info.setSourceType(MapWithAIType.THIRD_PARTY);
                     }
                     if (MapWithAIType.ESRI == info.getSourceType()) {
-                        try (ESRISourceReader reader = new ESRISourceReader(info)) {
+                        final ESRISourceReader reader = new ESRISourceReader(info);
+                        try {
                             for (MapWithAIInfo i : reader.parse()) {
                                 activeModel.addRow(i);
                             }
@@ -845,11 +846,11 @@ public class MapWithAIProvidersPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent evt) {
             MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () -> {
-                defaultModel.fireTableDataChanged();
-                defaultTable.getSelectionModel().clearSelection();
-                defaultTableListener.clearMap();
+                GuiHelper.runInEDT(defaultModel::fireTableDataChanged);
+                GuiHelper.runInEDT(defaultTable.getSelectionModel()::clearSelection);
+                GuiHelper.runInEDT(defaultTableListener::clearMap);
                 /* loading new file may change active layers */
-                activeModel.fireTableDataChanged();
+                GuiHelper.runInEDT(activeModel::fireTableDataChanged);
             });
         }
     }

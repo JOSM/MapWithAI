@@ -16,18 +16,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
-import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
-import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
@@ -48,6 +48,8 @@ public class MapWithAILayerInfo {
      */
     public static final BooleanProperty SHOW_PREVIEW = new BooleanProperty("mapwithai.sources.preview", false);
 
+    /** Finish listeners */
+    private ListenerList<FinishListener> finishListenerListenerList = ListenerList.create();
     /** List of all usable layers */
     private final List<MapWithAIInfo> layers = Collections.synchronizedList(new ArrayList<>());
     /** List of layer ids of all usable layers */
@@ -70,23 +72,29 @@ public class MapWithAILayerInfo {
     private static MapWithAILayerInfo instance;
 
     public static MapWithAILayerInfo getInstance() {
-        AtomicBoolean finished;
+        final AtomicBoolean finished = new AtomicBoolean();
         synchronized (DEFAULT_LAYER_SITES) {
             if (instance == null) {
-                finished = new AtomicBoolean();
-                instance = new MapWithAILayerInfo(() -> finished.set(true));
+                instance = new MapWithAILayerInfo(() -> {
+                    synchronized (finished) {
+                        finished.set(true);
+                        finished.notifyAll();
+                    }
+                });
             } else {
-                finished = null;
+                finished.set(true);
             }
         }
         // Avoid a deadlock in the EDT.
-        if (finished != null && !SwingUtilities.isEventDispatchThread()) {
-            while (!finished.get()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Logging.error(e);
-                    Thread.currentThread().interrupt();
+        if (!finished.get() && !SwingUtilities.isEventDispatchThread()) {
+            synchronized (finished) {
+                while (!finished.get()) {
+                    try {
+                        finished.wait();
+                    } catch (InterruptedException e) {
+                        Logging.error(e);
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
         }
@@ -169,7 +177,12 @@ public class MapWithAILayerInfo {
             layers.removeIf(i -> i.getUrl().contains("localhost:8111"));
             Collections.sort(layers);
         }
-        loadDefaults(false, MainApplication.worker, fastFail, listener);
+        // Ensure that the cache is initialized prior to running in the fork join pool
+        // on webstart
+        if (System.getSecurityManager() != null) {
+            ESRISourceReader.SOURCE_CACHE.getClass();
+        }
+        loadDefaults(false, ForkJoinPool.commonPool(), fastFail, listener);
     }
 
     /**
@@ -188,18 +201,53 @@ public class MapWithAILayerInfo {
      * @since 12634
      */
     public void loadDefaults(boolean clearCache, ExecutorService worker, boolean fastFail, FinishListener listener) {
-        final DefaultEntryLoader loader = new DefaultEntryLoader(clearCache, fastFail, listener);
+        final DefaultEntryLoader loader = new DefaultEntryLoader(clearCache, fastFail);
+        if (this.finishListenerListenerList == null) {
+            this.finishListenerListenerList = ListenerList.create();
+        }
+        if (listener != null) {
+            this.finishListenerListenerList.addListener(listener);
+        }
         if (worker == null) {
-            loader.realRun();
+            PleaseWaitRunnable pleaseWaitRunnable = new PleaseWaitRunnable(tr("Update default entries")) {
+                @Override
+                protected void cancel() {
+                    loader.canceled = true;
+                }
+
+                @Override
+                protected void realRun() {
+                    loader.run();
+                }
+
+                @Override
+                protected void finish() {
+                    loader.finish();
+                }
+            };
+            pleaseWaitRunnable.run();
         } else {
             worker.execute(loader);
         }
     }
 
     /**
+     * Add a listener for when the data finishes updating
+     *
+     * @param finishListener The listener
+     */
+    public void addFinishListener(final FinishListener finishListener) {
+        if (this.finishListenerListenerList == null) {
+            finishListener.onFinish();
+        } else {
+            this.finishListenerListenerList.addListener(finishListener);
+        }
+    }
+
+    /**
      * Loader/updater of the available imagery entries
      */
-    class DefaultEntryLoader extends PleaseWaitRunnable {
+    class DefaultEntryLoader implements Runnable {
 
         private final boolean clearCache;
         private final boolean fastFail;
@@ -207,30 +255,28 @@ public class MapWithAILayerInfo {
         private MapWithAISourceReader reader;
         private boolean canceled;
         private boolean loadError;
-        private final FinishListener listener;
 
-        DefaultEntryLoader(boolean clearCache, boolean fastFail, FinishListener listener) {
-            super(tr("Update default entries"));
+        DefaultEntryLoader(boolean clearCache, boolean fastFail) {
             this.clearCache = clearCache;
             this.fastFail = fastFail;
-            this.listener = listener;
         }
 
-        @Override
         protected void cancel() {
             canceled = true;
             Utils.close(reader);
         }
 
-        @Override
-        protected void realRun() {
+        public void run() {
+            if (this.clearCache) {
+                ESRISourceReader.SOURCE_CACHE.clear();
+            }
             for (String source : getImageryLayersSites()) {
                 if (canceled) {
                     return;
                 }
                 loadSource(source);
             }
-            GuiHelper.runInEDT(this::finish);
+            this.finish();
         }
 
         protected void loadSource(String source) {
@@ -242,6 +288,9 @@ public class MapWithAILayerInfo {
                 reader = new MapWithAISourceReader(source);
                 reader.setFastFail(fastFail);
                 Collection<MapWithAIInfo> result = reader.parse();
+                // This is called here to "pre-cache" the layer information, to avoid blocking
+                // the EDT
+                this.updateEsriLayers(result);
                 newLayers.addAll(result);
             } catch (IOException ex) {
                 loadError = true;
@@ -249,18 +298,26 @@ public class MapWithAILayerInfo {
             }
         }
 
-        @Override
-        protected void finish() {
-            defaultLayers.clear();
-            allDefaultLayers.clear();
-            defaultLayers.addAll(newLayers);
-            for (MapWithAIInfo layer : newLayers) {
+        /**
+         * Update the esri layer information
+         *
+         * @param layers The layers to update
+         */
+        private void updateEsriLayers(@Nonnull final Collection<MapWithAIInfo> layers) {
+            for (MapWithAIInfo layer : layers) {
                 if (MapWithAIType.ESRI == layer.getSourceType()) {
                     allDefaultLayers.addAll(parseEsri(layer));
                 } else {
                     allDefaultLayers.add(layer);
                 }
             }
+        }
+
+        protected void finish() {
+            defaultLayers.clear();
+            allDefaultLayers.clear();
+            defaultLayers.addAll(newLayers);
+            this.updateEsriLayers(newLayers);
             defaultLayerIds.clear();
 
             Collections.sort(defaultLayers, new MapWithAIInfo.MapWithAIInfoCategoryComparator());
@@ -271,8 +328,10 @@ public class MapWithAILayerInfo {
             if (!loadError && !defaultLayerIds.isEmpty()) {
                 dropOldEntries();
             }
-            if (listener != null) {
-                listener.onFinish();
+            final ListenerList<FinishListener> listenerList = MapWithAILayerInfo.this.finishListenerListenerList;
+            MapWithAILayerInfo.this.finishListenerListenerList = null;
+            if (listenerList != null) {
+                listenerList.fireEvent(FinishListener::onFinish);
             }
         }
 
@@ -283,8 +342,8 @@ public class MapWithAILayerInfo {
          * @return The Feature Servers for the ESRI layer
          */
         private Collection<MapWithAIInfo> parseEsri(MapWithAIInfo layer) {
-            try (ESRISourceReader esriReader = new ESRISourceReader(layer)) {
-                return esriReader.parse();
+            try {
+                return new ESRISourceReader(layer).parse();
             } catch (IOException e) {
                 Logging.error(e);
             }

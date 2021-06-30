@@ -24,6 +24,7 @@ import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
 import org.openstreetmap.josm.gui.download.OSMDownloadSource;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
@@ -35,6 +36,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIRemoteControl;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIUploadHook;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MergeDuplicateWaysAction;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.ConnectingNodeInformationTest;
 import org.openstreetmap.josm.plugins.mapwithai.data.validation.tests.RoutingIslandsTest;
@@ -118,6 +120,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MapPaintUtils.addMapWithAIPaintStyles();
 
         destroyables = new ArrayList<>();
+        // Run in EDT to avoid blocking (has to be run before MapWithAIDownloadOptions
+        // so its already initialized)
+        GuiHelper.runInEDT(MapWithAILayerInfo::getInstance);
         MapWithAIDownloadOptions mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
         mapWithAIDownloadOptions.addGui(DownloadDialog.getInstance());
         destroyables.add(mapWithAIDownloadOptions);
