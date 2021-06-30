@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
+import org.openstreetmap.josm.data.Preferences;
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
@@ -270,11 +271,34 @@ public class MapWithAILayerInfo {
             if (this.clearCache) {
                 ESRISourceReader.SOURCE_CACHE.clear();
             }
-            for (String source : getImageryLayersSites()) {
-                if (canceled) {
-                    return;
+            // This is literally to avoid allocations on startup
+            final Preferences preferences;
+            if (Config.getPref() instanceof Preferences) {
+                preferences = (Preferences) Config.getPref();
+            } else {
+                preferences = null;
+            }
+            try {
+                if (preferences != null) {
+                    preferences.enableSaveOnPut(false);
                 }
-                loadSource(source);
+                for (String source : getImageryLayersSites()) {
+                    if (canceled) {
+                        return;
+                    }
+                    loadSource(source);
+                }
+            } finally {
+                if (preferences != null) {
+                    // saveOnPut is pretty much always true
+                    preferences.enableSaveOnPut(true);
+                    try {
+                        preferences.save();
+                    } catch (IOException e) {
+                        // This is highly unlikely to happen
+                        Logging.error(e);
+                    }
+                }
             }
             this.finish();
         }
