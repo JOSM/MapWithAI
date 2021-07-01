@@ -30,6 +30,7 @@ import javax.json.stream.JsonParsingException;
 
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
+import org.openstreetmap.josm.data.preferences.LongProperty;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -53,6 +54,7 @@ public class ESRISourceReader {
     private boolean fastFail;
     private final List<MapWithAICategory> ignoreConflationCategories;
     private static final String JSON_QUERY_PARAM = "?f=json";
+    private static final LongProperty MIRROR_MAXTIME = new LongProperty("mirror.maxtime", TimeUnit.DAYS.toSeconds(7));
 
     /**
      * Constructs a {@code ImageryReader} from a given filename, URL or internal
@@ -97,7 +99,8 @@ public class ESRISourceReader {
         String searchUrl = startReplace.matcher(search).replaceAll(next);
         while (!next.equals("-1")) {
             final String finalUrl = url + "content/groups/" + group + searchUrl;
-            final String jsonString = getJsonString(finalUrl, this.fastFail);
+            final String jsonString = getJsonString(finalUrl, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()) / 7,
+                    this.fastFail);
             if (jsonString == null) {
                 continue;
             }
@@ -137,7 +140,7 @@ public class ESRISourceReader {
      * @return The json string, or {@code null}.
      */
     @Nullable
-    private static String getJsonString(@Nonnull final String url, final boolean fastFail) {
+    private static String getJsonString(@Nonnull final String url, final long defaultMaxAge, final boolean fastFail) {
         String jsonString = SOURCE_CACHE.get(url);
         // TODO FIXME remove sometime after January 2022 (give it a chance to cleanup
         // directories)
@@ -162,8 +165,7 @@ public class ESRISourceReader {
                             if (expirationTime > 0) {
                                 elementAttributes.setMaxLife(response.getExpiration());
                             } else {
-                                elementAttributes.setMaxLife(TimeUnit.SECONDS.toMillis(
-                                        Config.getPref().getLong("mirror.maxtime", TimeUnit.DAYS.toSeconds(7))));
+                                elementAttributes.setMaxLife(defaultMaxAge);
                             }
                             SOURCE_CACHE.put(url, jsonString, elementAttributes);
                         } else {
@@ -245,7 +247,7 @@ public class ESRISourceReader {
     @Nullable
     private String featureService(@Nonnull MapWithAIInfo mapwithaiInfo, @Nonnull String url) {
         final String toGet = url.endsWith(JSON_QUERY_PARAM) ? url : url.concat(JSON_QUERY_PARAM);
-        final String jsonString = getJsonString(toGet, this.fastFail);
+        final String jsonString = getJsonString(toGet, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()), this.fastFail);
         if (jsonString == null) {
             return null;
         }
@@ -282,7 +284,7 @@ public class ESRISourceReader {
     @Nonnull
     private Map<String, String> getReplacementTags(@Nonnull String layerUrl) {
         String toGet = layerUrl.endsWith(JSON_QUERY_PARAM) ? layerUrl : layerUrl.concat(JSON_QUERY_PARAM);
-        final String jsonString = getJsonString(toGet, this.fastFail);
+        final String jsonString = getJsonString(toGet, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()), this.fastFail);
         if (jsonString != null) {
             try (JsonReader reader = Json
                     .createReader(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
