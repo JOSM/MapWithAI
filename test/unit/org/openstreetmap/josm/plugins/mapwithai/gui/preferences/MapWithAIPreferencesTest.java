@@ -23,8 +23,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
- * @author Taylor Smock
+ * Test class for {@link MapWithAIPreferences}
  *
+ * @author Taylor Smock
  */
 @BasicPreferences
 class MapWithAIPreferencesTest {
@@ -37,10 +38,9 @@ class MapWithAIPreferencesTest {
     /**
      * Set up the test
      *
-     * @throws Exception if something goes wrong with set up
      */
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         preferences = new MapWithAIPreferences();
     }
 
