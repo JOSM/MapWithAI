@@ -28,6 +28,7 @@ import javax.json.JsonStructure;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParsingException;
 
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
@@ -93,7 +94,7 @@ public class ESRISourceReader {
             url = url.concat("/");
         }
 
-        List<MapWithAIInfo> information = new ArrayList<>();
+        final List<MapWithAIInfo> information = new ArrayList<>();
 
         String next = "1";
         String searchUrl = startReplace.matcher(search).replaceAll(next);
@@ -124,12 +125,11 @@ public class ESRISourceReader {
                 next = "-1";
             }
         }
-        Comparator<MapWithAIInfo> comparator = (o1, o2) -> o1.getCategory().getDescription()
-                .compareTo(o2.getCategory().getDescription());
-        if (information != null) {
-            information = information.stream().sorted(comparator).collect(Collectors.toList());
-        }
-        return information;
+        return information.stream().sorted(Comparator.comparing(TileSourceInfo::getName))
+                .sorted(Comparator.comparing(info -> info.getCategory().getDescription()))
+                .sorted(Comparator.comparingInt(
+                        info -> (-1) * info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)))
+                .collect(Collectors.toList());
     }
 
     /**
