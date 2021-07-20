@@ -58,6 +58,7 @@
     "MapWithAI": {
         "id": "facebook_mapwithai",
         "type": "facebook",
+        "category": "highways;buildings;featured",
         "countries": {
             "AE": ["highway"],
             "AF": ["highway"],
