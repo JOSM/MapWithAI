@@ -46,6 +46,7 @@
         "id": "colorado_public_aggregate_addresses",
         "type": "thirdParty",
         "category": "addresses",
+        "provider": "State of Colorado",
         "countries": {
             "US-CO": ["addr:housenumber"]
         },
@@ -59,6 +60,7 @@
         "id": "facebook_mapwithai",
         "type": "facebook",
         "category": "highways;buildings;featured",
+        "provider": "Facebook",
         "countries": {
             "AE": ["highway"],
             "AF": ["highway"],
