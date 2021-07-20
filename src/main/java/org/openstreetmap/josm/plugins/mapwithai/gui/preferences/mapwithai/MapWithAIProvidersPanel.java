@@ -485,21 +485,23 @@ public class MapWithAIProvidersPanel extends JPanel {
     private static void clickListener(MouseEvent e) {
         if (e.getSource() instanceof JTable) {
             JTable table = (JTable) e.getSource();
-            int realCol = table.convertColumnIndexToModel(table.getSelectedColumn());
-            int realRow = table.convertRowIndexToModel(table.getSelectedRow());
-            String tableName = table.getModel().getColumnName(realCol);
-            if (tr("License").equals(tableName)) {
-                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(realRow);
-                if (info.getTermsOfUseURL() != null) {
-                    OpenBrowser.displayUrl(info.getTermsOfUseURL());
-                }
-            } else if (tr("Enabled").equals(tableName)) {
-                MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(realRow);
-                MapWithAILayerInfo instance = MapWithAILayerInfo.getInstance();
-                if (instance.getLayers().contains(info)) {
-                    instance.remove(info);
-                } else {
-                    instance.add(info);
+            if (table.getSelectedRow() >= 0 && table.getSelectedColumn() >= 0) {
+                int realCol = table.convertColumnIndexToModel(table.getSelectedColumn());
+                int realRow = table.convertRowIndexToModel(table.getSelectedRow());
+                String tableName = table.getModel().getColumnName(realCol);
+                if (tr("License").equals(tableName)) {
+                    MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(realRow);
+                    if (info.getTermsOfUseURL() != null) {
+                        OpenBrowser.displayUrl(info.getTermsOfUseURL());
+                    }
+                } else if (tr("Enabled").equals(tableName)) {
+                    MapWithAIInfo info = MapWithAIDefaultLayerTableModel.getRow(realRow);
+                    MapWithAILayerInfo instance = MapWithAILayerInfo.getInstance();
+                    if (instance.getLayers().contains(info)) {
+                        instance.remove(info);
+                    } else {
+                        instance.add(info);
+                    }
                 }
             }
         }
@@ -843,12 +845,17 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent evt) {
+            this.setEnabled(false);
             MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () -> {
-                GuiHelper.runInEDT(DEFAULT_MODEL::fireTableDataChanged);
-                GuiHelper.runInEDT(defaultTable.getSelectionModel()::clearSelection);
-                GuiHelper.runInEDT(defaultTableListener::clearMap);
-                /* loading new file may change active layers */
-                GuiHelper.runInEDT(ACTIVE_MODEL::fireTableDataChanged);
+                // This needs to be run in a block to avoid race conditions.
+                GuiHelper.runInEDT(() -> {
+                    defaultTable.getSelectionModel().clearSelection();
+                    defaultTableListener.clearMap();
+                    DEFAULT_MODEL.fireTableDataChanged();
+                    /* loading new file may change active layers */
+                    ACTIVE_MODEL.fireTableDataChanged();
+                    this.setEnabled(true);
+                });
             });
         }
     }
