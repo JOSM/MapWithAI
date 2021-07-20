@@ -22,11 +22,13 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+@BasicPreferences
 class DownloadListenerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().preferences().projection();
+    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection();
 
     @Test
     void testDataSourceChange() {

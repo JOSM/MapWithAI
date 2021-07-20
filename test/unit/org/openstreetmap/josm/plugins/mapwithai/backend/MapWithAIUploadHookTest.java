@@ -36,16 +36,17 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
  * @author Taylor Smock
  *
  */
+@BasicPreferences
 class MapWithAIUploadHookTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().preferences()
-            .territories();
+    static JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories();
     private PluginInformation info;
     private OsmDataLayer osmLayer;
     private MapWithAILayer aiLayer;

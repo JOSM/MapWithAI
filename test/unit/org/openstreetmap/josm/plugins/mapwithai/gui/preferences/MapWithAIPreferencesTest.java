@@ -20,15 +20,17 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.ImageProviderMocker;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
  * @author Taylor Smock
  *
  */
+@BasicPreferences
 class MapWithAIPreferencesTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().preferences().main().timeout(100_000);
+    JOSMTestRules test = new JOSMTestRules().main().timeout(100_000);
 
     private MapWithAIPreferences preferences;
 

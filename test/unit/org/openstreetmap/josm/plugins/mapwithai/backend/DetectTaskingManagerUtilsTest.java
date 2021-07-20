@@ -19,17 +19,19 @@ import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
  * @author Taylor Smock
  *
  */
+@BasicPreferences
 class DetectTaskingManagerUtilsTest {
     private static final String LAYER_NAME = "Task Boundaries";
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().preferences().main().projection();
+    JOSMTestRules test = new JOSMTestRules().main().projection();
 
     @Test
     void testHasTaskingManagerLayer() {

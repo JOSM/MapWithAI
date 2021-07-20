@@ -34,6 +34,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
@@ -42,6 +43,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 import mockit.MockUp;
 
+@BasicPreferences
 class MapWithAIMoveActionTest {
     MapWithAIMoveAction moveAction;
     DataSet mapWithAIData;
@@ -51,8 +53,7 @@ class MapWithAIMoveActionTest {
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().wiremock().preferences().main().projection().territories()
-            .assertionsInEDT();
+    static JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories().assertionsInEDT();
 
     @BeforeAll
     static void beforeAll() {

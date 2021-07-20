@@ -27,6 +27,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -34,10 +35,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * @author Taylor Smock
  */
+@BasicPreferences
 class MapWithAIPluginTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection();
+    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection();
 
     PluginInformation info;
     MapWithAIPlugin plugin;

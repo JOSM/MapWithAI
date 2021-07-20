@@ -15,6 +15,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
  * Test case for {@link PreConflatedDataUtils}
@@ -22,9 +23,10 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
  * @author Taylor Smock
  *
  */
+@BasicPreferences
 class PreConflatedDataUtilsTest {
     @RegisterExtension
-    JOSMTestRules rules = new JOSMTestRules().preferences().projection();
+    JOSMTestRules rules = new JOSMTestRules().projection();
     private DataSet ds;
 
     @BeforeEach

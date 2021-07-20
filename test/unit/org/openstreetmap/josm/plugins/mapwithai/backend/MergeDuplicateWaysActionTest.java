@@ -23,14 +23,16 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
  * @author Taylor Smock
  */
+@BasicPreferences
 class MergeDuplicateWaysActionTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rules = new JOSMTestRules().preferences().projection().main();
+    JOSMTestRules rules = new JOSMTestRules().projection().main();
 
     MergeDuplicateWaysAction action;
 

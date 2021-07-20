@@ -26,12 +26,14 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.MergeAddressBuildings;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 @org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+@BasicPreferences
 class MergeAddressBuildingsTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().preferences().projection().main();
+    JOSMTestRules test = new JOSMTestRules().projection().main();
 
     private MergeAddressBuildings command;
     private DataSet ds;

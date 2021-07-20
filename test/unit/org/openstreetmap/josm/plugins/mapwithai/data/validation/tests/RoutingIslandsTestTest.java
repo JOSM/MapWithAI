@@ -28,6 +28,7 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
  * Test class for {@link RoutingIslandsTest}
@@ -35,13 +36,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  * @since xxx
  */
+@BasicPreferences
 class RoutingIslandsTestTest {
     /**
      * Setup test.
      */
     @RegisterExtension
     @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().projection().preferences().timeout(30000);
+    JOSMTestRules rule = new JOSMTestRules().projection().timeout(30000);
 
     /**
      * Test method for {@link RoutingIslandsTest#RoutingIslandsTest()} and the

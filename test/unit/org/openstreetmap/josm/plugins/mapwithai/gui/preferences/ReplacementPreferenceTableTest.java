@@ -11,13 +11,11 @@ import javax.swing.JPanel;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 import mockit.MockUp;
 
@@ -25,10 +23,8 @@ import mockit.MockUp;
  * @author Taylor Smock
  *
  */
+@BasicPreferences
 class ReplacementPreferenceTableTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().preferences();
     ReplacementPreferenceTable test;
 
     static class ReplacementPreferenceTableMock extends MockUp<ReplacementPreferenceTable> {

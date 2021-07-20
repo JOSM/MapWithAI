@@ -17,14 +17,16 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
-public class MapWithAISourceReaderTestIT {
+@BasicPreferences
+class MapWithAISourceReaderTestIT {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().preferences().territories().projection();
+    public JOSMTestRules rule = new JOSMTestRules().territories().projection();
 
     @Test
-    public void testDefaultSourceIT() throws IOException {
+    void testDefaultSourceIT() throws IOException {
         try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.getReleaseUrl())) {
             List<MapWithAIInfo> infoList = source.parse();
             assertFalse(infoList.isEmpty(), "There should be viable sources");

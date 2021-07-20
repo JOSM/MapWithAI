@@ -16,6 +16,7 @@ import org.openstreetmap.josm.gui.layer.MainLayerManager;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Taylor Smock
  */
+@BasicPreferences
 class MapWithAICopyProhibitTest {
     private static class BlacklistUtilsMock extends MockUp<BlacklistUtils> {
         @Mock
@@ -37,7 +39,7 @@ class MapWithAICopyProhibitTest {
 
     // preferences for nodes, main for actions, projection for mapview
     @RegisterExtension
-    JOSMTestRules josmTestRules = new JOSMTestRules().preferences().main().projection();
+    JOSMTestRules josmTestRules = new JOSMTestRules().main().projection();
 
     @Test
     void testDestroyable() {

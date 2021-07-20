@@ -50,6 +50,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -58,11 +59,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  *
  */
+@BasicPreferences
 class MapWithAILayerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().sources().wiremock().preferences().main().projection()
-            .fakeAPI().territories();
+    static JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().fakeAPI()
+            .territories();
 
     MapWithAILayer layer;
 

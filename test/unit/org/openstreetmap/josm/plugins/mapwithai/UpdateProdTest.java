@@ -10,26 +10,20 @@ import java.lang.reflect.Field;
 import javax.swing.JOptionPane;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.OpenBrowserMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test the update prod
  *
  * @author Taylor Smock
  */
+@BasicPreferences
 class UpdateProdTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().preferences();
-
     @Test
     void testDoProd() throws ReflectiveOperationException {
         TestUtils.assumeWorkingJMockit();
