@@ -106,11 +106,9 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     // Public models
     /** The model of active providers **/
-    private static final MapWithAILayerTableModel ACTIVE_MODEL = new MapWithAILayerTableModel();
-    public final MapWithAILayerTableModel activeModel = ACTIVE_MODEL;
+    public static final MapWithAILayerTableModel ACTIVE_MODEL = new MapWithAILayerTableModel();
     /** The model of default providers **/
-    private static final MapWithAIDefaultLayerTableModel DEFAULT_MODEL = new MapWithAIDefaultLayerTableModel();
-    public final MapWithAIDefaultLayerTableModel defaultModel = DEFAULT_MODEL;
+    public static final MapWithAIDefaultLayerTableModel DEFAULT_MODEL = new MapWithAIDefaultLayerTableModel();
 
     // Public JToolbars
     /** The toolbar on the right of active providers **/
@@ -308,7 +306,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         this.options = options;
         boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
 
-        activeTable = new JTable(activeModel) {
+        activeTable = new JTable(ACTIVE_MODEL) {
 
             private static final long serialVersionUID = -6136421378119093719L;
 
@@ -316,7 +314,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             public String getToolTipText(MouseEvent e) {
                 java.awt.Point p = e.getPoint();
                 try {
-                    return activeModel.getValueAt(rowAtPoint(p), columnAtPoint(p)).toString();
+                    return ACTIVE_MODEL.getValueAt(rowAtPoint(p), columnAtPoint(p)).toString();
                 } catch (ArrayIndexOutOfBoundsException ex) {
                     Logging.debug(ex);
                     return null;
@@ -325,12 +323,12 @@ public class MapWithAIProvidersPanel extends JPanel {
         };
         activeTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
-        defaultTable = new JTable(defaultModel);
+        defaultTable = new JTable(DEFAULT_MODEL);
         defaultTable.setAutoCreateRowSorter(true);
-        defaultFilter = new FilterField().filter(defaultTable, defaultModel);
+        defaultFilter = new FilterField().filter(defaultTable, DEFAULT_MODEL);
 
-        defaultModel.addTableModelListener(e -> activeTable.repaint());
-        activeModel.addTableModelListener(e -> defaultTable.repaint());
+        DEFAULT_MODEL.addTableModelListener(e -> activeTable.repaint());
+        ACTIVE_MODEL.addTableModelListener(e -> defaultTable.repaint());
 
         setupDefaultTable(defaultTable, options, areaListeners);
 
@@ -660,13 +658,13 @@ public class MapWithAIProvidersPanel extends JPanel {
                         final ESRISourceReader reader = new ESRISourceReader(info);
                         try {
                             for (MapWithAIInfo i : reader.parse()) {
-                                activeModel.addRow(i);
+                                ACTIVE_MODEL.addRow(i);
                             }
                         } catch (IOException e) {
                             Logging.error(e);
                         }
                     } else {
-                        activeModel.addRow(info);
+                        ACTIVE_MODEL.addRow(info);
                     }
                 } catch (IllegalArgumentException ex) {
                     if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
@@ -743,7 +741,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         public void actionPerformed(ActionEvent e) {
             Integer i;
             while ((i = activeTable.getSelectedRow()) != -1) {
-                activeModel.removeRow(i);
+                ACTIVE_MODEL.removeRow(i);
             }
         }
     }
@@ -805,19 +803,19 @@ public class MapWithAIProvidersPanel extends JPanel {
                         .collect(Collectors.toList());
                 activeTable.getSelectionModel().clearSelection();
                 for (MapWithAIInfo info : toAdd) {
-                    activeModel.addRow(new MapWithAIInfo(info));
-                    int lastLine = activeModel.getRowCount() - 1;
+                    ACTIVE_MODEL.addRow(new MapWithAIInfo(info));
+                    int lastLine = ACTIVE_MODEL.getRowCount() - 1;
                     activeTable.getSelectionModel().setSelectionInterval(lastLine, lastLine);
                     activeTable.scrollRectToVisible(activeTable.getCellRect(lastLine, 0, true));
                 }
                 selected.removeIf(toAdd::contains);
-                selected.stream().mapToInt(activeModel::getRowIndex).filter(i -> i >= 0).forEach(j -> {
+                selected.stream().mapToInt(ACTIVE_MODEL::getRowIndex).filter(i -> i >= 0).forEach(j -> {
                     activeTable.getSelectionModel().addSelectionInterval(j, j);
                     activeTable.scrollRectToVisible(activeTable.getCellRect(j, 0, true));
                 });
             } else {
-                selected.stream().mapToInt(activeModel::getRowIndex).filter(i -> i >= 0).boxed()
-                        .sorted(Collections.reverseOrder()).forEach(activeModel::removeRow);
+                selected.stream().mapToInt(ACTIVE_MODEL::getRowIndex).filter(i -> i >= 0).boxed()
+                        .sorted(Collections.reverseOrder()).forEach(ACTIVE_MODEL::removeRow);
             }
             updateEnabledState();
             if (Stream.of(options).noneMatch(Options.SHOW_ACTIVE::equals)) {
@@ -846,11 +844,11 @@ public class MapWithAIProvidersPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent evt) {
             MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () -> {
-                GuiHelper.runInEDT(defaultModel::fireTableDataChanged);
+                GuiHelper.runInEDT(DEFAULT_MODEL::fireTableDataChanged);
                 GuiHelper.runInEDT(defaultTable.getSelectionModel()::clearSelection);
                 GuiHelper.runInEDT(defaultTableListener::clearMap);
                 /* loading new file may change active layers */
-                GuiHelper.runInEDT(activeModel::fireTableDataChanged);
+                GuiHelper.runInEDT(ACTIVE_MODEL::fireTableDataChanged);
             });
         }
     }
