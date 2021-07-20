@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -116,8 +117,9 @@ public class MapWithAISourceReader implements Closeable {
             JsonObject values = entry.getValue().asJsonObject();
             String url = values.getString("url", "");
             String type = values.getString("type", MapWithAIType.values()[0].getDefault().getTypeString());
-            String category = values.getString("category",
-                    MapWithAICategory.values()[0].getDefault().getCategoryString());
+            String[] categories = values
+                    .getString("category", MapWithAICategory.values()[0].getDefault().getCategoryString())
+                    .split(";", -1);
             String eula = values.getString("eula", "");
             boolean conflation = values.getBoolean("conflate", false);
             String conflationUrl = values.getString("conflationUrl", null);
@@ -133,7 +135,13 @@ public class MapWithAISourceReader implements Closeable {
             info.setConflationUrl(conflationUrl);
             info.setSource(values.getString("source", null));
             info.setAlreadyConflatedKey(alreadyConflatedKey);
-            info.setCategory(MapWithAICategory.fromString(category));
+            if (categories.length > 0) {
+                info.setCategory(MapWithAICategory.fromString(categories[0]));
+                if (categories.length > 1) {
+                    info.setAdditionalCategories(Stream.of(categories).skip(1).map(MapWithAICategory::fromString)
+                            .collect(Collectors.toList()));
+                }
+            }
             if (values.containsKey("conflation_ignore_categories")) {
                 JsonArray ignore = values.getJsonArray("conflation_ignore_categories");
                 for (MapWithAICategory cat : ignore.getValuesAs(JsonString.class).stream().map(JsonString::getString)
