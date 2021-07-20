@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Preferences;
 import org.openstreetmap.josm.data.StructUtils;
@@ -342,10 +344,12 @@ public class MapWithAILayerInfo {
             allDefaultLayers.clear();
             defaultLayers.addAll(newLayers);
             this.updateEsriLayers(newLayers);
+            allDefaultLayers.sort(new MapWithAIInfo.MapWithAIInfoCategoryComparator());
+            allDefaultLayers.sort(Comparator.comparing(TileSourceInfo::getName));
+            allDefaultLayers.sort(Comparator.comparing(info -> info.getCategory().getDescription()));
+            allDefaultLayers.sort(Comparator
+                    .comparingInt(info -> (-1) * info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)));
             defaultLayerIds.clear();
-
-            Collections.sort(defaultLayers, new MapWithAIInfo.MapWithAIInfoCategoryComparator());
-            Collections.sort(allDefaultLayers, new MapWithAIInfo.MapWithAIInfoCategoryComparator());
             buildIdMap(allDefaultLayers, defaultLayerIds);
             updateEntriesFromDefaults(!loadError);
             buildIdMap(layers, layerIds);

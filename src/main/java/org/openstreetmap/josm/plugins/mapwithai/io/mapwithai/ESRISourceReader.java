@@ -8,7 +8,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,7 +31,6 @@ import javax.json.JsonStructure;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParsingException;
 
-import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
@@ -145,11 +143,7 @@ public class ESRISourceReader {
                 Logging.warn(e);
             }
         }
-        return information.stream().sorted(Comparator.comparing(TileSourceInfo::getName))
-                .sorted(Comparator.comparing(info -> info.getCategory().getDescription()))
-                .sorted(Comparator.comparingInt(
-                        info -> (-1) * info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)))
-                .collect(Collectors.toList());
+        return information;
     }
 
     /**
