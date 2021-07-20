@@ -12,6 +12,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,6 +52,7 @@ import org.apache.commons.jcs3.engine.behavior.IElementAttributes;
  * list of "true" layers.
  */
 public class ESRISourceReader {
+    private static int INITIAL_SEARCH = 100;
     /** The cache storing ESRI source information (json) */
     public static final CacheAccess<String, String> SOURCE_CACHE = JCSCacheManager.getCache("mapwithai:esrisources", 5,
             50_000, new File(Config.getDirs().getCacheDirectory(true), "mapwithai").getPath());
@@ -87,18 +92,22 @@ public class ESRISourceReader {
      */
     public List<MapWithAIInfo> parse() throws IOException {
         Pattern startReplace = Pattern.compile("\\{start\\}");
-        String search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=12&start={start}";
+        String search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=" + INITIAL_SEARCH
+                + "&start={start}";
         String url = source.getUrl();
         String group = source.getId();
         if (!url.endsWith("/")) {
             url = url.concat("/");
         }
 
-        final List<MapWithAIInfo> information = new ArrayList<>();
+        final List<MapWithAIInfo> information = Collections.synchronizedList(new ArrayList<>());
 
-        String next = "1";
-        String searchUrl = startReplace.matcher(search).replaceAll(next);
-        while (!next.equals("-1")) {
+        int next = 1;
+        String searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
+
+        final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+        ArrayList<Future<?>> futureList = new ArrayList<>();
+        while (next != -1) {
             final String finalUrl = url + "content/groups/" + group + searchUrl;
             final String jsonString = getJsonString(finalUrl, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()) / 7,
                     this.fastFail);
@@ -110,19 +119,30 @@ public class ESRISourceReader {
                 JsonStructure parser = reader.read();
                 if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
                     JsonObject obj = parser.asJsonObject();
-                    next = obj.getString("nextStart", "-1");
-                    if ("-1".equals(next)) {
-                        next = Integer.toString(obj.getInt("nextStart", -1));
-                    }
-                    searchUrl = startReplace.matcher(search).replaceAll(next);
+                    futureList.ensureCapacity(obj.getInt("total", INITIAL_SEARCH));
+                    next = obj.getInt("nextStart", -1);
+                    searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
                     JsonArray features = obj.getJsonArray("results");
                     for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
-                        information.add(parse(feature));
+                        futureList.add(forkJoinPool.submit(() -> {
+                            MapWithAIInfo info = parse(feature);
+                            information.add(info);
+                        }));
                     }
                 }
             } catch (ClassCastException e) {
                 Logging.error(e);
-                next = "-1";
+                next = -1;
+            }
+        }
+        for (Future<?> future : futureList) {
+            try {
+                future.get(1, TimeUnit.MINUTES);
+            } catch (InterruptedException interruptedException) {
+                Logging.warn(interruptedException);
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException | TimeoutException e) {
+                Logging.warn(e);
             }
         }
         return information.stream().sorted(Comparator.comparing(TileSourceInfo::getName))
