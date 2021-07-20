@@ -135,6 +135,7 @@ public class MapWithAISourceReader implements Closeable {
             info.setConflationUrl(conflationUrl);
             info.setSource(values.getString("source", null));
             info.setAlreadyConflatedKey(alreadyConflatedKey);
+            info.setAttributionText(values.getString("provider", null));
             if (categories.length > 0) {
                 info.setCategory(MapWithAICategory.fromString(categories[0]));
                 if (categories.length > 1) {
