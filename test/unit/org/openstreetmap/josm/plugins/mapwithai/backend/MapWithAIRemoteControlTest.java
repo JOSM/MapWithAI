@@ -20,22 +20,27 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Utils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * @author Taylor Smock
+ * Test class for {@link MapWithAIRemoteControl}
  *
+ * @author Taylor Smock
  */
+@BasicPreferences
+@MapWithAISources
 class MapWithAIRemoteControlTest {
     /**
      * Setup test.
      */
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories();
+    JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories();
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();

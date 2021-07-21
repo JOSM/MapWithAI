@@ -28,6 +28,7 @@ import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Geometry;
 
@@ -35,10 +36,16 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * Test class for {@link GetDataRunnable}
+ *
+ * @author Taylor Smock
+ */
+@MapWithAISources
 class GetDataRunnableTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().projection().fakeAPI().territories();
+    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection().fakeAPI().territories();
 
     static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
         return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.mapwith.ai");

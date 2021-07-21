@@ -15,17 +15,23 @@ import org.openstreetmap.josm.gui.widgets.JosmTextArea;
 import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * Test class for {@link AddMapWithAIPanel}
+ *
+ * @author Taylor Smock
+ */
+@MapWithAISources
 class AddMapWithAIPanelTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().territories().projection().assertionsInEDT();
+    JOSMTestRules rule = new MapWithAITestRules().wiremock().territories().projection().assertionsInEDT();
 
-    @SuppressWarnings("unused")
     @Test
     void test() throws ReflectiveOperationException {
         new WindowMocker();
@@ -61,5 +67,4 @@ class AddMapWithAIPanelTest {
         rawUrl.setText("");
         assertFalse(panel.isSourceValid());
     }
-
 }

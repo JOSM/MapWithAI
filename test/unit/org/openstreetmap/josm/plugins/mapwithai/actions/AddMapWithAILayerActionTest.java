@@ -21,11 +21,20 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+/**
+ * Test class for {@link AddMapWithAILayerAction}
+ *
+ * @author Taylor Smock
+ */
+@MapWithAISources
+@BasicPreferences
 class AddMapWithAILayerActionTest {
     @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().projection();
+    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection();
 
     @Test
     void testAddMapWithAILayerActionTest() {

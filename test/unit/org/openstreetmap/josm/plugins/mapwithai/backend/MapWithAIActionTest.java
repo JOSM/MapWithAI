@@ -23,16 +23,19 @@ import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Territories;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+@MapWithAISources
+@BasicPreferences
 class MapWithAIActionTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().territories()
-            .timeout(100000);
+    JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories().timeout(100000);
 
     private MapWithAIAction action;
 

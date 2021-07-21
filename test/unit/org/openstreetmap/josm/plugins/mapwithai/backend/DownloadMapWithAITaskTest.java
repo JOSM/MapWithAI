@@ -17,16 +17,18 @@ import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+@MapWithAISources
 @BasicPreferences
 class DownloadMapWithAITaskTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().sources().wiremock().fakeAPI().projection().territories();
+    JOSMTestRules rule = new MapWithAITestRules().wiremock().fakeAPI().projection().territories();
 
     @Test
     void testDownloadOsmServerReaderDownloadParamsBoundsProgressMonitor()

@@ -12,13 +12,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import org.awaitility.Awaitility;
-import org.awaitility.Durations;
-import org.junit.jupiter.api.extension.InvocationInterceptor.Invocation;
 import org.junit.runners.model.InitializationError;
 
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
@@ -43,13 +39,10 @@ import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
-import mockit.Mock;
-import mockit.MockUp;
 import mockit.integration.TestRunnerDecorator;
 
 public class MapWithAITestRules extends JOSMTestRules {
 
-    private boolean sources;
     private boolean wiremock;
     private static WireMockServer wireMock;
     private static final List<Object> wireMockUsers = Collections.synchronizedList(new ArrayList<>());
@@ -57,33 +50,10 @@ public class MapWithAITestRules extends JOSMTestRules {
     private UncaughtExceptionHandler currentExceptionHandler;
     private String currentReleaseUrl;
     private Collection<String> sourceSites;
-    private Runnable mapwithaiLayerInfoMocker;
     private boolean territories;
 
     public MapWithAITestRules() {
         super();
-    }
-
-    /**
-     * Use if a fully initialized {@link MapWithAILayerInfo} is required
-     *
-     * @return this, for easy chaining
-     */
-    public MapWithAITestRules sources() {
-        return sources(null);
-    }
-
-    /**
-     * Use if you don't need all of {@link MapWithAILayerInfo}
-     *
-     * @param mapwithaiLayerInfoMocker A mocker so that MapWithAILayerInfo isn't
-     *                                 fully instantiated
-     * @return this, for easy chaining
-     */
-    public MapWithAITestRules sources(Runnable mapwithaiLayerInfoMocker) {
-        this.sources = true;
-        this.mapwithaiLayerInfoMocker = mapwithaiLayerInfoMocker;
-        return this;
     }
 
     @Override
@@ -118,9 +88,6 @@ public class MapWithAITestRules extends JOSMTestRules {
         Logging.getLogger().setFilter(record -> record.getLevel().intValue() >= Level.WARNING.intValue()
                 || record.getSourceClassName().startsWith("org.openstreetmap.josm.plugins.mapwithai"));
 
-        if (mapwithaiLayerInfoMocker != null) {
-            mapwithaiLayerInfoMocker.run();
-        }
         synchronized (wireMockUsers) {
             if (wiremock && wireMock == null) {
                 wireMock = new WireMockServer(options().usingFilesUnderDirectory("test/resources/wiremock")
@@ -153,23 +120,7 @@ public class MapWithAITestRules extends JOSMTestRules {
                 wireMockUsers.add(this);
             }
         }
-        if (sources) {
-            AtomicBoolean finished = new AtomicBoolean();
-            MapWithAILayerInfo.getInstance().load(false, () -> finished.set(true));
-            Awaitility.await().atMost(Durations.TEN_SECONDS).until(finished::get);
-        } else {
-            // This only exists to ensure that if MapWithAILayerInfo is called, things
-            // happen...
-            new MockUp<MapWithAILayerInfo>() {
-                @Mock
-                public MapWithAILayerInfo getInstance(Invocation<MapWithAILayerInfo> inv) throws Throwable {
-                    if (!sources) {
-                        return null;
-                    }
-                    return inv.proceed();
-                }
-            };
-        }
+
         if (workerExceptions) {
             currentExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
             Thread.setDefaultUncaughtExceptionHandler((t, e) -> {

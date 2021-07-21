@@ -30,12 +30,19 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Logging;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * Test class for {@link MapWithAIDataUtils}
+ *
+ * @author Taylor Smock
+ */
+@MapWithAISources
 @BasicPreferences
 public class MapWithAIDataUtilsTest {
     /** This is the default MapWithAI URL */
@@ -43,7 +50,7 @@ public class MapWithAIDataUtilsTest {
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().fakeAPI().territories();
+    JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().fakeAPI().territories();
 
     /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to

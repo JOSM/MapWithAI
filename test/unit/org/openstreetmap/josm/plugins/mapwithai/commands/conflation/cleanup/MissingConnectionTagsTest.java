@@ -28,10 +28,12 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnecti
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.WoundedTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+@BasicPreferences
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class MissingConnectionTagsTest {
     @RegisterExtension

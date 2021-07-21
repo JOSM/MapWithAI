@@ -22,7 +22,9 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.actions.AddMapWithAILayerAction;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -31,9 +33,11 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  *
  */
+@BasicPreferences
+@MapWithAISources
 class MapWithAIMenuTest {
     @RegisterExtension
-    static JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().territories().projection().main();
+    static JOSMTestRules rule = new MapWithAITestRules().wiremock().territories().projection().main();
     private static MapWithAIMenu menu;
 
     @BeforeAll

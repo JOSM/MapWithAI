@@ -17,7 +17,9 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+@BasicPreferences
 class MapWithAIDownloadSourceTypeTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")

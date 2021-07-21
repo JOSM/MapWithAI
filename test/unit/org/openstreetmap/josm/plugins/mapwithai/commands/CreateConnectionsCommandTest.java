@@ -25,6 +25,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -34,11 +35,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @author Taylor Smock
  */
+@MapWithAISources
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class CreateConnectionsCommandTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection();
+    JOSMTestRules test = new MapWithAITestRules().wiremock().projection();
 
     /**
      * Test method for

@@ -16,11 +16,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
+/**
+ * Test class for {@link MapWithAIDefaultLayerTableModel}
+ *
+ * @author Taylor Smock
+ */
+@MapWithAISources
 class MapWithAIDefaultLayerTableModelTest {
     @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().sources().projection();
+    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection();
 
     @Test
     void testGetRow() {

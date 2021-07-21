@@ -42,20 +42,29 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.PleaseWaitDialogMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 
+/**
+ * Test class for {@link MapWithAIAddCommand}
+ *
+ * @author Taylor Smock
+ */
+@BasicPreferences
+@MapWithAISources
 @Command
 class MapWithAIAddComandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().sources().wiremock().projection().assertionsInEDT().main();
+    JOSMTestRules test = new MapWithAITestRules().wiremock().projection().assertionsInEDT().main();
 
     @BeforeEach
     void setUp() {
@@ -125,8 +134,8 @@ class MapWithAIAddComandTest {
                 "w".concat(Long.toString(way1.getUniqueId())).concat(",n")
                         .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
                         .concat(Long.toString(way1.lastNode().getUniqueId())));
-        way1.getNodes().forEach(node -> ds1.addPrimitive(node));
-        way2.getNodes().forEach(node -> ds1.addPrimitive(node));
+        way1.getNodes().forEach(ds1::addPrimitive);
+        way2.getNodes().forEach(ds1::addPrimitive);
         ds1.addPrimitive(way2);
         ds1.addPrimitive(way1);
         MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode().save())).executeCommand();
@@ -155,8 +164,8 @@ class MapWithAIAddComandTest {
                 new Node(new LatLon(0.1, 0.1)));
         final Way way2 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(-0.1, -0.1)),
                 new Node(new LatLon(0.1, 0.1)));
-        way1.getNodes().forEach(node -> mapWithAIData.addPrimitive(node));
-        way2.getNodes().forEach(node -> osmData.addPrimitive(node));
+        way1.getNodes().forEach(mapWithAIData::addPrimitive);
+        way2.getNodes().forEach(osmData::addPrimitive);
         osmData.addPrimitive(way2);
         mapWithAIData.addPrimitive(way1);
         mapWithAIData.setSelected(way1);
@@ -194,7 +203,7 @@ class MapWithAIAddComandTest {
         final DataSet from = new DataSet();
         final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0.1, 0.1)));
-        way1.getNodes().stream().forEach(node -> from.addPrimitive(node));
+        way1.getNodes().stream().forEach(from::addPrimitive);
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 

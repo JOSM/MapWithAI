@@ -47,6 +47,7 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -56,15 +57,16 @@ import org.openstreetmap.josm.tools.Territories;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * @author Taylor Smock
+ * Test class for {@link MapWithAILayer}
  *
+ * @author Taylor Smock
  */
+@MapWithAISources
 @BasicPreferences
 class MapWithAILayerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().sources().wiremock().main().projection().fakeAPI()
-            .territories();
+    static JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().fakeAPI().territories();
 
     MapWithAILayer layer;
 
