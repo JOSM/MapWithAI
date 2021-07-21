@@ -26,13 +26,13 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnectionTags;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.WoundedTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.WoundedTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class MissingConnectionTagsTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")

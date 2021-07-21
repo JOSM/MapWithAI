@@ -28,7 +28,7 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
-@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 @BasicPreferences
 class MergeAddressBuildingsTest {
     @RegisterExtension

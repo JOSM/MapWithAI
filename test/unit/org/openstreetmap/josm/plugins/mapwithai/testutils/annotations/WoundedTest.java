@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai.testutils;
+package org.openstreetmap.josm.plugins.mapwithai.testutils.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

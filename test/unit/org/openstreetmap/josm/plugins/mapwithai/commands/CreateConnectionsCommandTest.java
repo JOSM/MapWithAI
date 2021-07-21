@@ -34,7 +34,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @author Taylor Smock
  */
-@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class CreateConnectionsCommandTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")

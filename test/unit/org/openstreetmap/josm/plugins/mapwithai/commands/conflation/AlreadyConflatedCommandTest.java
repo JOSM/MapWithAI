@@ -23,7 +23,7 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.AlreadyConflatedCommand
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
-@org.openstreetmap.josm.plugins.mapwithai.testutils.Command
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class AlreadyConflatedCommandTest {
     @RegisterExtension
     JOSMTestRules rule = new JOSMTestRules().projection();

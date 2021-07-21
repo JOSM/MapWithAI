@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package org.openstreetmap.josm.plugins.mapwithai.testutils;
+package org.openstreetmap.josm.plugins.mapwithai.testutils.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,14 +11,16 @@ import org.junit.jupiter.api.Test;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-@Tag("slow")
+@Tag("bleed")
 @Test
 /**
- * This is used for slow tests (to test them separately from other tests)
+ * This is used for tests that bleed into other tests. This may cause
+ * undesirable behavior, like the test failing. It may also cause desirable
+ * behavior, like a test failing.
  *
  * @author Taylor Smock
  *
  */
-public @interface SlowTest {
+public @interface BleedTest {
 
 }
