@@ -50,7 +50,7 @@ public class RoutingIslandsTest extends Test {
 
     private static final String HIGHWAY = "highway";
     private static final String WATERWAY = "waterway";
-    private static final List<String> IGNORE_TAGS_HIGHWAY = Arrays.asList("services", "rest_area");
+    private static final List<String> IGNORE_TAGS_HIGHWAY = Arrays.asList("services", "rest_area", "platform");
     private static final List<String> IGNORE_TAGS_WATERWAY = Arrays.asList("services", "rest_area", "dam");
 
     /**

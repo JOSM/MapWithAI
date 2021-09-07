@@ -13,8 +13,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
@@ -26,8 +29,6 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.Severity;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
@@ -341,12 +342,32 @@ class RoutingIslandsTestTest {
                 new Node(new LatLon(39.1055829, -108.5257975)));
         Way testPath = TestUtils.newWay("highway=footway", i70w.lastNode(true), i70e.firstNode(true));
         DataSet ds = new DataSet();
+        ds.addDataSource(new DataSource(new Bounds(-90, -180, 90, 180), ""));
         Arrays.asList(i70w, i70e, testPath).forEach(way -> addToDataSet(ds, way));
 
         RoutingIslandsTest test = new RoutingIslandsTest();
         test.startTest(null);
         test.visit(ds.allPrimitives());
         test.endTest();
+        assertFalse(test.getErrors().isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "highway=services", "highway=rest_area", "highway=platform", "waterway=services",
+            "waterway=rest_area", "waterway=dam" })
+    void testExemptions(final String tag) {
+        final Way testWay = TestUtils.newWay(tag, new Node(new LatLon(39.1058104, -108.5258586)),
+                new Node(new LatLon(39.1052235, -108.5293733)));
+        final DataSet ds = new DataSet();
+        ds.addDataSource(new DataSource(new Bounds(-90, -180, 90, 180), ""));
+        testWay.getNodes().forEach(ds::addPrimitive);
+        ds.addPrimitive(testWay);
+
+        RoutingIslandsTest test = new RoutingIslandsTest();
+        test.startTest(null);
+        test.visit(ds.allPrimitives());
+        test.endTest();
+        assertTrue(test.getErrors().isEmpty());
     }
 
     private static void addToDataSet(DataSet ds, OsmPrimitive primitive) {

@@ -165,11 +165,13 @@ jacocoTestCoverageVerification {
 spotless {
   java {
     licenseHeader "// License: GPL. For details, see LICENSE file."
+    ratchetFrom("origin/master")
     removeUnusedImports()
     endWithNewline()
     indentWithSpaces(4)
     eclipse().configFile "config/josm_formatting.xml"
     trimTrailingWhitespace()
+    importOrder("java", "javax", "")
   }
 }
 
