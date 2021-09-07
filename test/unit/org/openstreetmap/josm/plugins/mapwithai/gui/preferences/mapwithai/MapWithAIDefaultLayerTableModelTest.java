@@ -17,6 +17,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 /**
@@ -24,10 +25,11 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
  *
  * @author Taylor Smock
  */
+@Wiremock
 @MapWithAISources
 class MapWithAIDefaultLayerTableModelTest {
     @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection();
+    JOSMTestRules rule = new MapWithAITestRules().projection();
 
     @Test
     void testGetRow() {

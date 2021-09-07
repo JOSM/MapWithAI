@@ -27,6 +27,8 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.Severity;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
@@ -37,7 +39,9 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
  * @author Taylor Smock
  * @since xxx
  */
+@NoExceptions
 @BasicPreferences
+@MapWithAISources
 class RoutingIslandsTestTest {
     /**
      * Setup test.

@@ -10,13 +10,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JCheckBox;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 @BasicPreferences

@@ -11,15 +11,15 @@ import java.util.List;
 
 import javax.swing.SpinnerNumberModel;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.ImageProviderMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
@@ -28,10 +28,11 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
  * @author Taylor Smock
  */
 @BasicPreferences
+@MapWithAISources
 class MapWithAIPreferencesTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().main().timeout(100_000);
+    JOSMTestRules test = new JOSMTestRules().main();
 
     private MapWithAIPreferences preferences;
 

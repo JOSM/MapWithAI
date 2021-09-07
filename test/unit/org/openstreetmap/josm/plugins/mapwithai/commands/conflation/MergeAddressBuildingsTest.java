@@ -9,6 +9,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.Arrays;
 import java.util.Collection;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -24,8 +25,6 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeAddressBuildings;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command

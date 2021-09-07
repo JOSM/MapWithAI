@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,8 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 /**
@@ -30,12 +30,13 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
  *
  * @author Taylor Smock
  */
-@MapWithAISources
+@NoExceptions
 @BasicPreferences
+@MapWithAISources
 class DownloadListenerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection();
+    JOSMTestRules rule = new MapWithAITestRules().projection();
 
     @Test
     void testDataSourceChange() {

@@ -15,8 +15,15 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.common.FileSource;
+import com.github.tomakehurst.wiremock.extension.Parameters;
+import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
+import com.github.tomakehurst.wiremock.http.Request;
+import com.github.tomakehurst.wiremock.http.Response;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import mockit.integration.TestRunnerDecorator;
 import org.junit.runners.model.InitializationError;
-
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmApi;
@@ -30,16 +37,6 @@ import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Logging;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.common.FileSource;
-import com.github.tomakehurst.wiremock.extension.Parameters;
-import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
-import com.github.tomakehurst.wiremock.http.Request;
-import com.github.tomakehurst.wiremock.http.Response;
-import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-
-import mockit.integration.TestRunnerDecorator;
 
 public class MapWithAITestRules extends JOSMTestRules {
 
@@ -63,6 +60,13 @@ public class MapWithAITestRules extends JOSMTestRules {
         return this;
     }
 
+    /**
+     * @deprecated Use
+     *             {@link org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock}
+     *             instead
+     * @return this, for easy chaining
+     */
+    @Deprecated
     public MapWithAITestRules wiremock() {
         this.wiremock = true;
         territories();
@@ -189,15 +193,6 @@ public class MapWithAITestRules extends JOSMTestRules {
             Logging.error(error);
         }
         return null;
-    }
-
-    /**
-     * Get the wiremock instance
-     *
-     * @return The WireMock
-     */
-    public WireMockServer getWireMock() {
-        return wireMock;
     }
 
     /**

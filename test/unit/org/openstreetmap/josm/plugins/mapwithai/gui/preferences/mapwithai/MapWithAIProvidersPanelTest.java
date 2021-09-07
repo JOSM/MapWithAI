@@ -22,6 +22,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWithAIProvidersPanel.AreaListener;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.ListenerList;
 
@@ -30,10 +31,11 @@ import org.openstreetmap.josm.tools.ListenerList;
  *
  * @author Taylor Smock
  */
+@Wiremock
 @MapWithAISources
 class MapWithAIProvidersPanelTest {
     @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection();
+    JOSMTestRules rule = new MapWithAITestRules().projection();
 
     private MapWithAIProvidersPanel mapwithaiProvidersPanel;
 

@@ -13,6 +13,7 @@ import java.util.Map;
 
 import javax.swing.JMenu;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
@@ -25,25 +26,27 @@ import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Test class for {@link MapWithAIPlugin}
  *
  * @author Taylor Smock
  */
-@MapWithAISources
+@NoExceptions
 @BasicPreferences
+@Wiremock
+@MapWithAISources
 class MapWithAIPluginTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection();
+    JOSMTestRules test = new MapWithAITestRules().main().projection();
 
     PluginInformation info;
     MapWithAIPlugin plugin;

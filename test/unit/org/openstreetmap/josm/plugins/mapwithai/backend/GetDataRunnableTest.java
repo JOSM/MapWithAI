@@ -14,7 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
@@ -29,31 +31,23 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Geometry;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link GetDataRunnable}
  *
  * @author Taylor Smock
  */
+@NoExceptions
 @MapWithAISources
+@Territories
 class GetDataRunnableTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().projection().fakeAPI().territories();
-
-    static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url) {
-        return getDefaultMapWithAIAPIForTest(wireMock, url, "https://www.mapwith.ai");
-    }
-
-    static String getDefaultMapWithAIAPIForTest(WireMockServer wireMock, String url, String wireMockReplace) {
-        return url.replace(wireMockReplace, wireMock.baseUrl());
-    }
+    JOSMTestRules rule = new MapWithAITestRules().projection().fakeAPI();
 
     @Test
     void testAddMissingElement() {
@@ -99,7 +93,7 @@ class GetDataRunnableTest {
 
         assertEquals(2, ds.getWays().parallelStream().filter(way -> !way.isDeleted()).count());
 
-        Node tNode = new Node(way1.lastNode(), true);
+        Node tNode = new Node(Objects.requireNonNull(way1.lastNode()), true);
         ds.addPrimitive(tNode);
         way2.addNode(tNode);
 
@@ -107,6 +101,10 @@ class GetDataRunnableTest {
         assertEquals(1, ds.getWays().parallelStream().filter(way -> !way.isDeleted()).count());
     }
 
+    /**
+     * Non-regression test for GitLab #46: Data Integrity Issue (Node already
+     * deleted)
+     */
     @Test
     void testRegressionTicket46() {
         DataSet ds = new DataSet();

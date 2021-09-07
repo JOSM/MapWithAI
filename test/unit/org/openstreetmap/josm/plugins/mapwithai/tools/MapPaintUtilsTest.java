@@ -20,10 +20,15 @@ import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
+import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+@BasicPreferences
+@Wiremock
 class MapPaintUtilsTest {
     @RegisterExtension
-    MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().wiremock().projection();
+    JOSMTestRules rule = new MapWithAITestRules().projection();
 
     @Test
     void testAddPaintStyle() {

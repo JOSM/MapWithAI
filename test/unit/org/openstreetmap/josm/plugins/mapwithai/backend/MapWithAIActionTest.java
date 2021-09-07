@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,18 +25,23 @@ import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Territories;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@MapWithAISources
+/**
+ * Test class for {@link MapWithAIAction}
+ *
+ * @author Taylor Smock
+ */
+@NoExceptions
 @BasicPreferences
+@MapWithAISources
 class MapWithAIActionTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories().timeout(100000);
+    JOSMTestRules test = new MapWithAITestRules().main().projection().territories().timeout(100000);
 
     private MapWithAIAction action;
 

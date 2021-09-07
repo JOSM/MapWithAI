@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,10 +17,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
+import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 
+@Wiremock
 class ESRISourceReaderTest {
+
+    @BasicWiremock
+    public WireMockServer wireMockServer;
+
     @RegisterExtension
-    MapWithAITestRules rule = (MapWithAITestRules) new MapWithAITestRules().wiremock().projection();
+    JOSMTestRules rule = new MapWithAITestRules().projection();
 
     @BeforeEach
     void setUp() {
@@ -42,7 +51,7 @@ class ESRISourceReaderTest {
         // TODO wiremock
         MapWithAIInfo info = new MapWithAIInfo("TEST", "test_url", "bdf6c800b3ae453b9db239e03d7c1727");
         info.setSourceType(MapWithAIType.ESRI);
-        String tUrl = rule.getWireMock().baseUrl() + "/sharing/rest";
+        String tUrl = wireMockServer.url("/sharing/rest");
         for (String url : Arrays.asList(tUrl, tUrl + "/")) {
             info.setUrl(url);
             final ESRISourceReader reader = new ESRISourceReader(info);

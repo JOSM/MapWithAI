@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,23 +19,24 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Territories;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for testing availability
  *
  * @author Taylor Smock
  */
+@Wiremock
 @MapWithAISources
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories
 class MapWithAIAvailabilityTest {
     private DataAvailability instance;
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().wiremock().projection().territories();
+    JOSMTestRules test = new MapWithAITestRules().projection();
 
     @BeforeEach
     void setUp() {

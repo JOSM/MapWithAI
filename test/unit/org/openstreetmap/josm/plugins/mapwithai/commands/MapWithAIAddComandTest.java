@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mockit.Mock;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Assertions;
@@ -36,20 +38,17 @@ import org.openstreetmap.josm.data.validation.tests.SharpAngles;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.BleedTest;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.PleaseWaitDialogMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.BleedTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import mockit.Mock;
 
 /**
  * Test class for {@link MapWithAIAddCommand}

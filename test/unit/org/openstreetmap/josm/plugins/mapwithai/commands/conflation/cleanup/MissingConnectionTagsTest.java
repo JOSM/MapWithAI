@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.swing.JOptionPane;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -26,13 +27,18 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnectionTags;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.WoundedTest;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
+/**
+ * Test class for {@link MissingConnectionTags}
+ *
+ * @author Taylor Smock
+ */
+@NoExceptions
 @BasicPreferences
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class MissingConnectionTagsTest {

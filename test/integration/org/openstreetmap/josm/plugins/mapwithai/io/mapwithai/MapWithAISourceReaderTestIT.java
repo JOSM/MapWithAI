@@ -9,16 +9,22 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.extension.RegisterExtension;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+/**
+ * Integration test for {@link MapWithAISourceReader}
+ *
+ * @author Taylor Smock
+ */
+@NoExceptions
 @BasicPreferences
 class MapWithAISourceReaderTestIT {
     @RegisterExtension
@@ -27,6 +33,7 @@ class MapWithAISourceReaderTestIT {
 
     @Test
     void testDefaultSourceIT() throws IOException {
+        DataAvailability.setReleaseUrl(DataAvailability.DEFAULT_SERVER_URL);
         try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.getReleaseUrl())) {
             List<MapWithAIInfo> infoList = source.parse();
             assertFalse(infoList.isEmpty(), "There should be viable sources");

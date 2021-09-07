@@ -38,6 +38,10 @@ tasks.withType(JavaCompile).configureEach {
   }
 }
 
+rootProject.tasks.named("jar") {
+    duplicatesStrategy = 'include'
+}
+
 archivesBaseName = "mapwithai"
 def gitlabGroup = "gokaart"
 def gitlabRepositoryName = "JOSM_MapWithAI"

@@ -93,7 +93,7 @@ public class MapWithAILayerInfo {
             synchronized (finished) {
                 while (!finished.get()) {
                     try {
-                        finished.wait();
+                        finished.wait(1000);
                     } catch (InterruptedException e) {
                         Logging.error(e);
                         Thread.currentThread().interrupt();
@@ -290,6 +290,8 @@ public class MapWithAILayerInfo {
                     }
                     loadSource(source);
                 }
+            } catch (Exception e) {
+                Logging.error(e);
             } finally {
                 if (preferences != null) {
                     // saveOnPut is pretty much always true

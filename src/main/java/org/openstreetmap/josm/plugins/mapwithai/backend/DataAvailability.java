@@ -29,8 +29,10 @@ import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
 
 public class DataAvailability {
+    /** The default server URL */
+    public static final String DEFAULT_SERVER_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
     /** This points to a list of default sources that can be used with MapWithAI */
-    private static String defaultServerUrl = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
+    private static String defaultServerUrl = DEFAULT_SERVER_URL;
     /** A map of tag -&gt; message of possible data types */
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
