@@ -183,7 +183,7 @@ public class MapWithAILayerInfo {
         // Ensure that the cache is initialized prior to running in the fork join pool
         // on webstart
         if (System.getSecurityManager() != null) {
-            ESRISourceReader.SOURCE_CACHE.getClass();
+            Logging.trace("MapWithAI loaded: {0}", ESRISourceReader.SOURCE_CACHE.getClass());
         }
         loadDefaults(false, ForkJoinPool.commonPool(), fastFail, listener);
     }
