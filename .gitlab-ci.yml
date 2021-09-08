@@ -194,7 +194,7 @@ sonarcloud.io:
     name: sonarcloud.io
     url: https://sonarcloud.io/dashboard?id=mapwithai
   script:
-    - git fetch --unshallow
+    - git fetch --unshallow || echo "Already unshallowed?"
     - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
   needs: ["test"]
   dependencies:
