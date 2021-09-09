@@ -23,7 +23,8 @@ See the [wiki page](https://josm.openstreetmap.de/wiki/Help/Plugin/MapWithAI).
 ## Contributing
 
 - The **source code** is hosted on [GitLab](https://gitlab.com/gokaart/JOSM_MapWithAI).
-- **Issues** are managed in [GitLab](https://gitlab.com/gokaart/JOSM_MapWithAI/issues)
+- **Issues** are managed in [JOSM Trac](https://josm.openstreetmap.de/query?status=assigned&status=needinfo&status=new&status=reopened&component=Plugin+mapwithai&group=component&max=200&col=id&col=summary&col=component&col=status&col=type&col=priority&order=priority&report=17)
+  - Report a [New Ticket](https://josm.openstreetmap.de/newticket?component=Plugin+mapwithai)
 - **Translations** are not currently done.
 
 ## Authors
