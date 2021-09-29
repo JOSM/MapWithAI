@@ -296,6 +296,6 @@
         "permission_url": "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/wiki/FAQ",
         "terms_of_use_url": "https://mapwith.ai/doc/license/MapWithAILicense.pdf",
         "privacy_policy_url": "https://mapwith.ai/doc/license/MapWithAIPrivacyPolicy.pdf#page=3",
-        "url": "https://www.mapwith.ai/maps/ml_roads?bbox={bbox}"
+        "url": "https://mapwith.ai/maps/ml_roads?bbox={bbox}"
     }
 }
