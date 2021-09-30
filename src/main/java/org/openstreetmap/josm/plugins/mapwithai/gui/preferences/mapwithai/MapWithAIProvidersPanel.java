@@ -4,6 +4,22 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JToolBar;
+import javax.swing.UIManager;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumnModel;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -25,22 +41,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.swing.AbstractAction;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JToolBar;
-import javax.swing.UIManager;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumnModel;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
@@ -189,7 +189,7 @@ public class MapWithAIProvidersPanel extends JPanel {
                         Color t = IMAGERY_BACKGROUND_COLOR.get();
                         GuiHelper.setBackgroundReadable(label, isSelected ? t.darker() : t);
                     } else if (this.area != null && info.getBounds() != null
-                            && (this.area.intersects(info.getBounds()) || (info.getBounds().intersects(this.area)))) {
+                            && (this.area.intersects(info.getBounds()) || info.getBounds().intersects(this.area))) {
                         Color t = MAPWITHAI_AREA_BACKGROUND_COLOR.get();
                         GuiHelper.setBackgroundReadable(label, isSelected ? t.darker() : t);
                     } else {
@@ -304,7 +304,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         super(new GridBagLayout());
         this.gui = gui;
         this.options = options;
-        boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
+        boolean showActive = Arrays.asList(options).contains(Options.SHOW_ACTIVE);
 
         activeTable = new JTable(ACTIVE_MODEL) {
 
@@ -360,7 +360,6 @@ public class MapWithAIProvidersPanel extends JPanel {
         defaultMap = new SlippyMapBBoxChooser();
         defaultMap.setTileSource(SlippyMapBBoxChooser.DefaultOsmTileSourceProvider.get()); // for attribution
         defaultMap.addMouseListener(new MouseAdapter() {
-
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
@@ -437,7 +436,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
     private static void setupDefaultTable(JTable defaultTable, Options[] options,
             ListenerList<AreaListener> areaListeners) {
-        boolean showActive = Stream.of(options).anyMatch(Options.SHOW_ACTIVE::equals);
+        boolean showActive = Arrays.asList(options).contains(Options.SHOW_ACTIVE);
         int tenXWidth = defaultTable.getFontMetrics(defaultTable.getFont()).stringWidth("XXXXXXXXXX");
         TableColumnModel mod = defaultTable.getColumnModel();
         int urlWidth = (showActive ? 3 : 0) * tenXWidth;
@@ -741,7 +740,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Integer i;
+            int i;
             while ((i = activeTable.getSelectedRow()) != -1) {
                 ACTIVE_MODEL.removeRow(i);
             }
@@ -846,17 +845,16 @@ public class MapWithAIProvidersPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent evt) {
             this.setEnabled(false);
-            MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () -> {
-                // This needs to be run in a block to avoid race conditions.
-                GuiHelper.runInEDT(() -> {
-                    defaultTable.getSelectionModel().clearSelection();
-                    defaultTableListener.clearMap();
-                    DEFAULT_MODEL.fireTableDataChanged();
-                    /* loading new file may change active layers */
-                    ACTIVE_MODEL.fireTableDataChanged();
-                    this.setEnabled(true);
-                });
-            });
+            MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () ->
+            // This needs to be run in a block to avoid race conditions.
+            GuiHelper.runInEDT(() -> {
+                defaultTable.getSelectionModel().clearSelection();
+                defaultTableListener.clearMap();
+                DEFAULT_MODEL.fireTableDataChanged();
+                /* loading new file may change active layers */
+                ACTIVE_MODEL.fireTableDataChanged();
+                this.setEnabled(true);
+            }));
         }
     }
 }

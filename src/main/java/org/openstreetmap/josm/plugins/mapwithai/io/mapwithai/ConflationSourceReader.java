@@ -44,6 +44,7 @@ public class ConflationSourceReader extends CommonSourceReader<Map<MapWithAICate
      * @param jsonObject The json of the data sources
      * @return The parsed entries
      */
+    @Override
     public Map<MapWithAICategory, List<String>> parseJson(JsonObject jsonObject) {
         return jsonObject.entrySet().stream().flatMap(i -> parse(i).stream())
                 .collect(Collectors.groupingBy(p -> p.a, Collectors.mapping(p -> p.b, Collectors.toList())));

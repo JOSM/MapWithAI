@@ -269,6 +269,7 @@ public class MapWithAILayerInfo {
             Utils.close(reader);
         }
 
+        @Override
         public void run() {
             if (this.clearCache) {
                 ESRISourceReader.SOURCE_CACHE.clear();
@@ -351,7 +352,7 @@ public class MapWithAILayerInfo {
             allDefaultLayers.sort(Comparator.comparing(TileSourceInfo::getName));
             allDefaultLayers.sort(Comparator.comparing(info -> info.getCategory().getDescription()));
             allDefaultLayers.sort(Comparator
-                    .comparingInt(info -> (-1) * info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)));
+                    .comparingInt(info -> -info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)));
             defaultLayerIds.clear();
             buildIdMap(allDefaultLayers, defaultLayerIds);
             updateEntriesFromDefaults(!loadError);

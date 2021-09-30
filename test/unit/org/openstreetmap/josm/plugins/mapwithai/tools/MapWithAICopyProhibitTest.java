@@ -66,32 +66,37 @@ class MapWithAICopyProhibitTest {
         new WindowMocker();
         new BlacklistUtilsMock();
 
-        MainLayerManager layerManager = MainApplication.getLayerManager();
-        OsmDataLayer osmDataLayer = new OsmDataLayer(new DataSet(), "TEST", null);
-        MapWithAILayer mapWithAILayer = new MapWithAILayer(new DataSet(), "TEST", null);
-        layerManager.addLayer(osmDataLayer);
-        layerManager.addLayer(mapWithAILayer);
-        DataSet mapWithAIDataSet = mapWithAILayer.getDataSet();
-        Node testNode = new Node(LatLon.ZERO);
-        mapWithAIDataSet.addPrimitive(testNode);
-        mapWithAIDataSet.setSelected(testNode);
-        layerManager.setActiveLayer(mapWithAILayer);
+        MapWithAICopyProhibit mapWithAICopyProhibit = new MapWithAICopyProhibit();
+        try {
+            MainLayerManager layerManager = MainApplication.getLayerManager();
+            OsmDataLayer osmDataLayer = new OsmDataLayer(new DataSet(), "TEST", null);
+            MapWithAILayer mapWithAILayer = new MapWithAILayer(new DataSet(), "TEST", null);
+            layerManager.addLayer(osmDataLayer);
+            layerManager.addLayer(mapWithAILayer);
+            DataSet mapWithAIDataSet = mapWithAILayer.getDataSet();
+            Node testNode = new Node(LatLon.ZERO);
+            mapWithAIDataSet.addPrimitive(testNode);
+            mapWithAIDataSet.setSelected(testNode);
+            layerManager.setActiveLayer(mapWithAILayer);
 
-        CopyAction copyAction = new CopyAction();
-        copyAction.actionPerformed(null);
-        PasteAction pasteAction = new PasteAction();
+            CopyAction copyAction = new CopyAction();
+            copyAction.actionPerformed(null);
+            PasteAction pasteAction = new PasteAction();
 
-        assertEquals(1, mapWithAIDataSet.allPrimitives().size());
-        pasteAction.actionPerformed(null);
-        assertEquals(2, mapWithAIDataSet.allPrimitives().size());
-        pasteAction.actionPerformed(null);
-        assertEquals(3, mapWithAIDataSet.allPrimitives().size());
-
-        layerManager.setActiveLayer(osmDataLayer);
-        assertEquals(0, osmDataLayer.getDataSet().allPrimitives().size());
-        for (int i = 0; i < 10; i++) {
+            assertEquals(1, mapWithAIDataSet.allPrimitives().size());
             pasteAction.actionPerformed(null);
+            assertEquals(2, mapWithAIDataSet.allPrimitives().size());
+            pasteAction.actionPerformed(null);
+            assertEquals(3, mapWithAIDataSet.allPrimitives().size());
+
+            layerManager.setActiveLayer(osmDataLayer);
             assertEquals(0, osmDataLayer.getDataSet().allPrimitives().size());
+            for (int i = 0; i < 10; i++) {
+                pasteAction.actionPerformed(null);
+                assertEquals(0, osmDataLayer.getDataSet().allPrimitives().size());
+            }
+        } finally {
+            mapWithAICopyProhibit.destroy();
         }
     }
 }

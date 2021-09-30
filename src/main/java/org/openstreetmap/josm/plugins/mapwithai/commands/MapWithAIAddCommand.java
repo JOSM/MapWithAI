@@ -30,11 +30,11 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
 public class MapWithAIAddCommand extends Command implements Runnable {
-    DataSet editable;
-    DataSet mapWithAI;
-    Collection<OsmPrimitive> primitives;
+    private final DataSet editable;
+    private final DataSet mapWithAI;
+    private final Collection<OsmPrimitive> primitives;
     Command command;
-    Lock lock;
+    private Lock lock;
     final Map<OsmPrimitive, String> sources;
 
     /**
@@ -67,7 +67,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
         this.primitives = new HashSet<>(selection);
         this.primitives.addAll(nodeReferrers);
         sources = selection.parallelStream()
-                .map(prim -> new Pair<OsmPrimitive, String>(prim,
+                .map(prim -> new Pair<>(prim,
                         prim.hasKey("source") ? prim.get("source")
                                 : prim.get(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY)))
                 .filter(pair -> pair.b != null).collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
@@ -75,7 +75,7 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public boolean executeCommand() {
-        GuiHelper.runInEDTAndWait(this::run);
+        GuiHelper.runInEDTAndWait(this);
         return true;
     }
 
@@ -159,10 +159,10 @@ public class MapWithAIAddCommand extends Command implements Runnable {
      * @return The number of MapWithAI objects added in this command that are not
      *         deleted
      */
-    public Long getAddedObjects() {
-        Long returnLong;
+    public long getAddedObjects() {
+        long returnLong;
         if (this.equals(UndoRedoHandler.getInstance().getLastCommand())) {
-            returnLong = Long.valueOf(primitives.size());
+            returnLong = primitives.size();
         } else {
             returnLong = primitives.stream().map(editable::getPrimitiveById).filter(Objects::nonNull)
                     .filter(MapWithAIAddCommand::validPrimitive).count();
@@ -182,11 +182,13 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public boolean equals(Object other) {
-        boolean returnBoolean = false;
-        if (other instanceof MapWithAIAddCommand && hashCode() == other.hashCode()) {
-            returnBoolean = true;
+        if (other instanceof MapWithAIAddCommand) {
+            MapWithAIAddCommand o = (MapWithAIAddCommand) other;
+            return Objects.equals(this.editable, o.editable) && Objects.equals(this.mapWithAI, o.mapWithAI)
+                    && Objects.equals(this.lock, o.lock) && o.primitives.containsAll(this.primitives)
+                    && this.primitives.containsAll(o.primitives);
         }
-        return returnBoolean;
+        return false;
     }
 
     @Override

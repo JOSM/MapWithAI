@@ -145,58 +145,6 @@ public class ESRISourceReader {
         return information;
     }
 
-    /**
-     * Get the json string for a URL
-     *
-     * @param url      The URL to get
-     * @param fastFail Fail fast (1 second)
-     * @return The json string, or {@code null}.
-     */
-    @Nullable
-    private static String getJsonString(@Nonnull final String url, final long defaultMaxAge, final boolean fastFail) {
-        String jsonString = SOURCE_CACHE.get(url);
-        // TODO FIXME remove sometime after January 2022 (give it a chance to cleanup
-        // directories)
-        CachedFile.cleanup(url);
-        if (jsonString == null) {
-            synchronized (SOURCE_CACHE) {
-                jsonString = SOURCE_CACHE.get(url);
-                if (jsonString == null) {
-                    HttpClient client = null;
-                    try {
-                        client = HttpClient.create(new URL(url));
-                        if (fastFail) {
-                            client.setReadTimeout(1000);
-                        }
-                        final HttpClient.Response response = client.connect();
-                        jsonString = response.fetchContent();
-                        if (jsonString != null && response.getResponseCode() < 400
-                                && response.getResponseCode() >= 200) {
-                            final IElementAttributes elementAttributes = SOURCE_CACHE.getDefaultElementAttributes();
-                            // getExpiration returns milliseconds
-                            final long expirationTime = response.getExpiration();
-                            if (expirationTime > 0) {
-                                elementAttributes.setMaxLife(response.getExpiration());
-                            } else {
-                                elementAttributes.setMaxLife(defaultMaxAge);
-                            }
-                            SOURCE_CACHE.put(url, jsonString, elementAttributes);
-                        } else {
-                            jsonString = null;
-                        }
-                    } catch (final IOException e) {
-                        Logging.error(e);
-                    } finally {
-                        if (client != null) {
-                            client.disconnect();
-                        }
-                    }
-                }
-            }
-        }
-        return jsonString;
-    }
-
     private MapWithAIInfo parse(JsonObject feature) {
         // Use the initial esri server information to keep conflation info
         MapWithAIInfo newInfo = new MapWithAIInfo(source);
@@ -248,6 +196,58 @@ public class ESRISourceReader {
         }
         newInfo.setTermsOfUseURL("https://wiki.openstreetmap.org/wiki/Esri/ArcGIS_Datasets#License");
         return (newInfo);
+    }
+
+    /**
+     * Get the json string for a URL
+     *
+     * @param url      The URL to get
+     * @param fastFail Fail fast (1 second)
+     * @return The json string, or {@code null}.
+     */
+    @Nullable
+    private static String getJsonString(@Nonnull final String url, final long defaultMaxAge, final boolean fastFail) {
+        String jsonString = SOURCE_CACHE.get(url);
+        // TODO FIXME remove sometime after January 2022 (give it a chance to cleanup
+        // directories)
+        CachedFile.cleanup(url);
+        if (jsonString == null) {
+            synchronized (SOURCE_CACHE) {
+                jsonString = SOURCE_CACHE.get(url);
+                if (jsonString == null) {
+                    HttpClient client = null;
+                    try {
+                        client = HttpClient.create(new URL(url));
+                        if (fastFail) {
+                            client.setReadTimeout(1000);
+                        }
+                        final HttpClient.Response response = client.connect();
+                        jsonString = response.fetchContent();
+                        if (jsonString != null && response.getResponseCode() < 400
+                                && response.getResponseCode() >= 200) {
+                            final IElementAttributes elementAttributes = SOURCE_CACHE.getDefaultElementAttributes();
+                            // getExpiration returns milliseconds
+                            final long expirationTime = response.getExpiration();
+                            if (expirationTime > 0) {
+                                elementAttributes.setMaxLife(response.getExpiration());
+                            } else {
+                                elementAttributes.setMaxLife(defaultMaxAge);
+                            }
+                            SOURCE_CACHE.put(url, jsonString, elementAttributes);
+                        } else {
+                            jsonString = null;
+                        }
+                    } catch (final IOException e) {
+                        Logging.error(e);
+                    } finally {
+                        if (client != null) {
+                            client.disconnect();
+                        }
+                    }
+                }
+            }
+        }
+        return jsonString;
     }
 
     /**

@@ -21,7 +21,11 @@ import org.openstreetmap.josm.data.osm.Way;
  * @author Taylor Smock
  *
  */
-public class MergeBuildingNodeCommand {
+public final class MergeBuildingNodeCommand {
+    private MergeBuildingNodeCommand() {
+        // Hide constructor
+    }
+
     /**
      * Upgrade a node to a way or multipolygon
      *

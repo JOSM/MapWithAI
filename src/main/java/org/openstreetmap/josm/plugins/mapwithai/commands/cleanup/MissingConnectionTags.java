@@ -3,6 +3,8 @@ package org.openstreetmap.josm.plugins.mapwithai.commands.cleanup;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.JOptionPane;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,14 +16,13 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import javax.swing.JOptionPane;
-
 import org.openstreetmap.josm.actions.AutoScaleAction;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
@@ -83,11 +84,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         Collection<Way> ways = Utils.filteredCollection(possiblyAffectedPrimitives, Way.class);
         if (!ways.isEmpty()) {
             DataSet ds = this.getAffectedDataSet();
-            Layer toSwitch = MainApplication.getLayerManager().getLayersOfType(AbstractOsmDataLayer.class).stream()
-                    .filter(d -> ds.equals(d.getDataSet())).findAny().orElse(null);
-            if (toSwitch != null) {
-                MainApplication.getLayerManager().setActiveLayer(toSwitch);
-            }
+            MainApplication.getLayerManager().getLayersOfType(AbstractOsmDataLayer.class).stream()
+                    .filter(d -> ds.equals(d.getDataSet())).findAny()
+                    .ifPresent(toSwitch -> MainApplication.getLayerManager().setActiveLayer(toSwitch));
         }
         String prefKey = "mapwithai.conflation.missingconflationtags";
 
@@ -213,9 +212,10 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         Collection<Node> nodes = Geometry.addIntersections(error.getPrimitives().stream().filter(Way.class::isInstance)
                 .map(Way.class::cast).filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList()), false,
                 new ArrayList<>());
-        if (nodes.stream().filter(MissingConnectionTags::noConflationKey)
-                .anyMatch(n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
-                        .anyMatch(wn -> n.getCoor().greatCircleDistance(wn.getCoor()) < precision))) {
+        if (nodes.stream().filter(MissingConnectionTags::noConflationKey).map(INode::getCoor).filter(Objects::nonNull)
+                .anyMatch(
+                        n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey).map(INode::getCoor)
+                                .filter(Objects::nonNull).anyMatch(wn -> n.greatCircleDistance(wn) < precision))) {
             return () -> createIntersectionCommand(way,
                     way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
                             .filter(n1 -> nodes.stream().anyMatch(n2 -> Geometry.getDistance(n1, n2) < precision))
@@ -253,8 +253,8 @@ public class MissingConnectionTags extends AbstractConflationCommand {
             IWaySegment<?, ?> seg = Geometry.getClosestWaySegment(way, node);
             List<IPrimitive> prims = Arrays.asList(way, seg.getFirstNode(), seg.getSecondNode());
             if (prims.stream().allMatch(p -> p.getOsmId() > 0)) {
-                return new ChangePropertyCommand(node, "conn", String.join(",",
-                        prims.stream().map(p -> p.getPrimitiveId().toString()).collect(Collectors.toList())));
+                return new ChangePropertyCommand(node, "conn",
+                        prims.stream().map(p -> p.getPrimitiveId().toString()).collect(Collectors.joining(",")));
             }
         }
         return null;
@@ -321,17 +321,17 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o instanceof MissingConnectionTags) {
-            MissingConnectionTags omct = (MissingConnectionTags) o;
-            return Objects.equals(omct.precision, this.precision) && super.equals(o);
+    public boolean equals(Object other) {
+        if (other instanceof MissingConnectionTags) {
+            MissingConnectionTags o = (MissingConnectionTags) other;
+            return o.precision == this.precision && super.equals(other);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(precision);
+        return Objects.hash(super.hashCode(), precision);
     }
 
 }
