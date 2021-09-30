@@ -24,7 +24,7 @@ public final class MapWithAIConflationCategory {
     static void initialize() {
         CONFLATION_URLS.clear();
         try (ConflationSourceReader reader = new ConflationSourceReader(conflationJson)) {
-            CONFLATION_URLS.putAll(reader.parse());
+            reader.parse().ifPresent(CONFLATION_URLS::putAll);
         } catch (IOException e) {
             Logging.error(e);
         }

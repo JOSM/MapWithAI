@@ -3,6 +3,9 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.annotation.Nonnull;
+import javax.swing.SwingUtilities;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,9 +23,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nonnull;
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
@@ -314,8 +314,9 @@ public class MapWithAILayerInfo {
             }
             try {
                 reader = new MapWithAISourceReader(source);
+                this.reader.setClearCache(this.clearCache);
                 reader.setFastFail(fastFail);
-                Collection<MapWithAIInfo> result = reader.parse();
+                Collection<MapWithAIInfo> result = reader.parse().orElse(Collections.emptyList());
                 // This is called here to "pre-cache" the layer information, to avoid blocking
                 // the EDT
                 this.updateEsriLayers(result);

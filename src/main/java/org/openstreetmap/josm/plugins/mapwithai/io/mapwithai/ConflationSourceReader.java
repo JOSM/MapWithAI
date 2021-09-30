@@ -1,31 +1,21 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-
-import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
-import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Pair;
-import org.openstreetmap.josm.tools.Utils;
 
-public class ConflationSourceReader implements Closeable {
-
-    private final String source;
-    private CachedFile cachedFile;
-    private boolean fastFail;
+public class ConflationSourceReader extends CommonSourceReader<Map<MapWithAICategory, List<String>>>
+        implements Closeable {
 
     /**
      * Constructs a {@code ConflationSourceReader} from a given filename, URL or
@@ -45,7 +35,7 @@ public class ConflationSourceReader implements Closeable {
      *               </ul>
      */
     public ConflationSourceReader(String source) {
-        this.source = source;
+        super(source);
     }
 
     /**
@@ -54,30 +44,9 @@ public class ConflationSourceReader implements Closeable {
      * @param jsonObject The json of the data sources
      * @return The parsed entries
      */
-    public static Map<MapWithAICategory, List<String>> parseJson(JsonObject jsonObject) {
+    public Map<MapWithAICategory, List<String>> parseJson(JsonObject jsonObject) {
         return jsonObject.entrySet().stream().flatMap(i -> parse(i).stream())
                 .collect(Collectors.groupingBy(p -> p.a, Collectors.mapping(p -> p.b, Collectors.toList())));
-    }
-
-    /**
-     * Parses MapWithAI source.
-     *
-     * @return list of source info
-     * @throws IOException if any I/O error occurs
-     */
-    public Map<MapWithAICategory, List<String>> parse() throws IOException {
-        Map<MapWithAICategory, List<String>> entries = Collections.emptyMap();
-        cachedFile = new CachedFile(source);
-        cachedFile.setFastFail(fastFail);
-        try (JsonReader reader = Json.createReader(cachedFile.setMaxAge(CachedFile.DAYS)
-                .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
-            JsonStructure struct = reader.read();
-            if (JsonValue.ValueType.OBJECT == struct.getValueType()) {
-                JsonObject jsonObject = struct.asJsonObject();
-                entries = parseJson(jsonObject);
-            }
-            return entries;
-        }
     }
 
     private static List<Pair<MapWithAICategory, String>> parse(Map.Entry<String, JsonValue> entry) {
@@ -90,21 +59,4 @@ public class ConflationSourceReader implements Closeable {
         }
         return Collections.emptyList();
     }
-
-    /**
-     * Sets whether opening HTTP connections should fail fast, i.e., whether a
-     * {@link HttpClient#setConnectTimeout(int) low connect timeout} should be used.
-     *
-     * @param fastFail whether opening HTTP connections should fail fast
-     * @see CachedFile#setFastFail(boolean)
-     */
-    public void setFastFail(boolean fastFail) {
-        this.fastFail = fastFail;
-    }
-
-    @Override
-    public void close() throws IOException {
-        Utils.close(cachedFile);
-    }
-
 }

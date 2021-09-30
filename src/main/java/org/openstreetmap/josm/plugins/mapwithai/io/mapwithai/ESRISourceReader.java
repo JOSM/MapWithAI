@@ -1,6 +1,18 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonString;
+import javax.json.JsonStructure;
+import javax.json.JsonValue;
+import javax.json.stream.JsonParsingException;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -14,23 +26,13 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParsingException;
-
+import org.apache.commons.jcs3.access.CacheAccess;
+import org.apache.commons.jcs3.engine.behavior.IElementAttributes;
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
@@ -42,15 +44,12 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 
-import org.apache.commons.jcs3.access.CacheAccess;
-import org.apache.commons.jcs3.engine.behavior.IElementAttributes;
-
 /**
  * Take a {@link MapWithAIInfo.MapWithAIType#ESRI} layer and convert it to a
  * list of "true" layers.
  */
 public class ESRISourceReader {
-    private static int INITIAL_SEARCH = 100;
+    private static final int INITIAL_SEARCH = 100;
     /** The cache storing ESRI source information (json) */
     public static final CacheAccess<String, String> SOURCE_CACHE = JCSCacheManager.getCache("mapwithai:esrisources", 5,
             50_000, new File(Config.getDirs().getCacheDirectory(true), "mapwithai").getPath());
@@ -89,7 +88,7 @@ public class ESRISourceReader {
      * @throws IOException if any I/O error occurs
      */
     public List<MapWithAIInfo> parse() throws IOException {
-        Pattern startReplace = Pattern.compile("\\{start\\}");
+        Pattern startReplace = Pattern.compile("\\{start}");
         String search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=" + INITIAL_SEARCH
                 + "&start={start}";
         String url = source.getUrl();

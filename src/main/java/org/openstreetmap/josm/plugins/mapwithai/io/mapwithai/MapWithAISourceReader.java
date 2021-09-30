@@ -3,14 +3,17 @@ package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,29 +21,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.osm.BBox;
-import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.DefaultGeoProperty;
 import org.openstreetmap.josm.tools.GeoPropertyIndex;
-import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
-import org.openstreetmap.josm.tools.Utils;
 
 /**
  * Reader to parse the list of available MapWithAI servers from an JSON
@@ -50,13 +42,8 @@ import org.openstreetmap.josm.tools.Utils;
  * "https://gitlab.com/gokaart/JOSM_MapWithAI/-/blob/pages/public/json/sources.json">MapWithAI
  * source</a>.
  */
-public class MapWithAISourceReader implements Closeable {
+public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo>> implements Closeable {
 
-    private final String source;
-    private CachedFile cachedFile;
-    private boolean fastFail;
-
-    private static final int MIN_NODE_FOR_CLOSED_WAY = 2;
     private static final int COORD_ARRAY_SIZE = 6;
 
     /**
@@ -77,7 +64,7 @@ public class MapWithAISourceReader implements Closeable {
      *               </ul>
      */
     public MapWithAISourceReader(String source) {
-        this.source = source;
+        super(source);
     }
 
     /**
@@ -86,29 +73,9 @@ public class MapWithAISourceReader implements Closeable {
      * @param jsonObject The json of the data sources
      * @return The parsed entries
      */
-    public static List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
+    @Override
+    public List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
         return jsonObject.entrySet().stream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
-    }
-
-    /**
-     * Parses MapWithAI source.
-     *
-     * @return list of source info
-     * @throws IOException if any I/O error occurs
-     */
-    public List<MapWithAIInfo> parse() throws IOException {
-        List<MapWithAIInfo> entries = Collections.emptyList();
-        cachedFile = new CachedFile(source);
-        cachedFile.setFastFail(fastFail);
-        try (JsonReader reader = Json.createReader(cachedFile.setMaxAge(CachedFile.DAYS)
-                .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
-            JsonStructure struct = reader.read();
-            if (JsonValue.ValueType.OBJECT == struct.getValueType()) {
-                JsonObject jsonObject = struct.asJsonObject();
-                entries = parseJson(jsonObject);
-            }
-            return entries;
-        }
     }
 
     private static MapWithAIInfo parse(Map.Entry<String, JsonValue> entry) {
@@ -181,7 +148,7 @@ public class MapWithAISourceReader implements Closeable {
                             DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
                             Rectangle2D areaBounds = prop.getArea().getBounds2D();
                             ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
-                                    areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY()), ","), ",");
+                                    areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY())), ",");
                             areaToShapes(prop.getArea()).forEach(tmp::addShape);
                             bounds.add(tmp);
                         }
@@ -209,7 +176,7 @@ public class MapWithAISourceReader implements Closeable {
                     moveTo = coords;
                 }
                 defaultShape.addPoint(Float.toString(coords[1]), Float.toString(coords[0]));
-            } else if (type == PathIterator.SEG_CLOSE && moveTo != null && moveTo.length >= MIN_NODE_FOR_CLOSED_WAY) {
+            } else if (type == PathIterator.SEG_CLOSE && moveTo != null) {
                 defaultShape.addPoint(Float.toString(moveTo[1]), Float.toString(moveTo[0]));
                 shapes.add(defaultShape);
                 defaultShape = new Shape();
@@ -224,25 +191,9 @@ public class MapWithAISourceReader implements Closeable {
         return shapes;
     }
 
-    private static String bboxToBoundsString(BBox bbox, String separator) {
-        return String.join(separator, LatLon.cDdFormatter.format(bbox.getBottomRightLat()),
+    private static String bboxToBoundsString(BBox bbox) {
+        return String.join(",", LatLon.cDdFormatter.format(bbox.getBottomRightLat()),
                 LatLon.cDdFormatter.format(bbox.getTopLeftLon()), LatLon.cDdFormatter.format(bbox.getTopLeftLat()),
                 LatLon.cDdFormatter.format(bbox.getBottomRightLon()));
-    }
-
-    /**
-     * Sets whether opening HTTP connections should fail fast, i.e., whether a
-     * {@link HttpClient#setConnectTimeout(int) low connect timeout} should be used.
-     *
-     * @param fastFail whether opening HTTP connections should fail fast
-     * @see CachedFile#setFastFail(boolean)
-     */
-    public void setFastFail(boolean fastFail) {
-        this.fastFail = fastFail;
-    }
-
-    @Override
-    public void close() throws IOException {
-        Utils.close(cachedFile);
     }
 }

@@ -4,23 +4,23 @@ package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.Collections;
-import java.util.List;
-
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 import com.google.common.collect.ImmutableMap;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
 @BasicPreferences
 class MapWithAISourceReaderTest {
@@ -32,7 +32,7 @@ class MapWithAISourceReaderTest {
     void testParseSimple() {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("nowhere", JsonValue.NULL);
-        List<MapWithAIInfo> infoList = MapWithAISourceReader.parseJson(builder.build());
+        List<MapWithAIInfo> infoList = new MapWithAISourceReader("").parseJson(builder.build());
         assertEquals(1, infoList.size());
         assertEquals("nowhere", infoList.get(0).getName());
     }
@@ -47,7 +47,7 @@ class MapWithAISourceReaderTest {
         coCountries.add("US-CO", coCountriesArray.build());
         co.add("countries", coCountries.build());
         builder.add("Colorado", co);
-        List<MapWithAIInfo> infoList = MapWithAISourceReader.parseJson(builder.build());
+        List<MapWithAIInfo> infoList = new MapWithAISourceReader("").parseJson(builder.build());
         assertEquals(1, infoList.size());
         MapWithAIInfo info = infoList.stream().filter(i -> "Colorado".equals(i.getName())).findFirst().orElse(null);
         assertNotNull(info);

@@ -7,9 +7,9 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
@@ -18,6 +18,8 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Integration test for {@link MapWithAISourceReader}
@@ -35,10 +37,10 @@ class MapWithAISourceReaderTestIT {
     void testDefaultSourceIT() throws IOException {
         DataAvailability.setReleaseUrl(DataAvailability.DEFAULT_SERVER_URL);
         try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.getReleaseUrl())) {
-            List<MapWithAIInfo> infoList = source.parse();
+            List<MapWithAIInfo> infoList = source.parse().orElse(Collections.emptyList());
             assertFalse(infoList.isEmpty(), "There should be viable sources");
             for (MapWithAIType type : Arrays.asList(MapWithAIType.FACEBOOK, MapWithAIType.THIRD_PARTY)) {
-                assertTrue(infoList.stream().filter(i -> type.equals(i.getSourceType())).count() > 0,
+                assertTrue(infoList.stream().anyMatch(i -> type.equals(i.getSourceType())),
                         tr("Type {0} should have more than 0 sources", type.getTypeString()));
             }
         }
