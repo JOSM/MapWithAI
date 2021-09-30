@@ -11,12 +11,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.common.FileSource;
-import com.github.tomakehurst.wiremock.extension.Parameters;
-import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
-import com.github.tomakehurst.wiremock.http.Request;
-import com.github.tomakehurst.wiremock.http.Response;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +23,13 @@ import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.HTTP;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.common.FileSource;
+import com.github.tomakehurst.wiremock.extension.Parameters;
+import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
+import com.github.tomakehurst.wiremock.http.Request;
+import com.github.tomakehurst.wiremock.http.Response;
 
 /**
  * Test annotation to ensure that wiremock is used
@@ -91,7 +92,7 @@ public @interface Wiremock {
          * @param context The context to search
          * @return The wiremock server
          */
-        static WireMockServer getWiremock(ExtensionContext context) {
+        public static WireMockServer getWiremock(ExtensionContext context) {
             ExtensionContext.Namespace namespace = ExtensionContext.Namespace.create(BasicWiremock.class);
             return context.getStore(namespace).get(WireMockServer.class, WireMockServer.class);
         }
