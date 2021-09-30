@@ -1,8 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.tools;
 
-import mockit.Mock;
-import mockit.MockUp;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
@@ -19,9 +21,8 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import mockit.Mock;
+import mockit.MockUp;
 
 /**
  * Test class for {@link MapWithAICopyProhibit}
@@ -65,7 +66,6 @@ class MapWithAICopyProhibitTest {
         new WindowMocker();
         new BlacklistUtilsMock();
 
-        MapWithAICopyProhibit mapWithAICopyProhibit = new MapWithAICopyProhibit();
         MainLayerManager layerManager = MainApplication.getLayerManager();
         OsmDataLayer osmDataLayer = new OsmDataLayer(new DataSet(), "TEST", null);
         MapWithAILayer mapWithAILayer = new MapWithAILayer(new DataSet(), "TEST", null);

@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
@@ -27,7 +27,10 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Tests for {@link CreateConnections}
@@ -35,11 +38,12 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
  * @author Taylor Smock
  */
 @MapWithAISources
+@Wiremock
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 class CreateConnectionsCommandTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().wiremock().projection();
+    JOSMTestRules test = new MapWithAITestRules().projection();
 
     /**
      * Test method for
@@ -67,8 +71,8 @@ class CreateConnectionsCommandTest {
 
         // SimplePrimitiveId doesn't like negative ids
         way.setOsmId(1, 1);
-        way.firstNode().setOsmId(1, 1);
-        way.lastNode().setOsmId(2, 1);
+        Objects.requireNonNull(way.firstNode()).setOsmId(1, 1);
+        Objects.requireNonNull(way.lastNode()).setOsmId(2, 1);
 
         node3.put(ConnectedCommand.KEY,
                 "w" + way.getUniqueId() + ",n" + node1.getUniqueId() + ",n" + node2.getUniqueId());

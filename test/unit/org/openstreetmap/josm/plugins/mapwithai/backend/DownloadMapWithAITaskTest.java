@@ -6,12 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
@@ -20,16 +18,20 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
-@NoExceptions
-@MapWithAISources
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 @BasicPreferences
+@MapWithAISources
+@NoExceptions
+@Wiremock
 class DownloadMapWithAITaskTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().wiremock().fakeAPI().projection().territories();
+    JOSMTestRules rule = new MapWithAITestRules().fakeAPI().projection().territories();
 
     @Test
     void testDownloadOsmServerReaderDownloadParamsBoundsProgressMonitor()
@@ -44,7 +46,7 @@ class DownloadMapWithAITaskTest {
     }
 
     @Test
-    void testGetConfirmationMessage() throws MalformedURLException {
+    void testGetConfirmationMessage() {
         DownloadMapWithAITask task = new DownloadMapWithAITask();
         assertAll(
                 () -> assertTrue(task.getConfirmationMessage(new URL("https://fake.api")).contains("fake.api"),

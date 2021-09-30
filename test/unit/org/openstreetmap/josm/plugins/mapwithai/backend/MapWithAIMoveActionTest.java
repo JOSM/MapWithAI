@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.Future;
 
 import org.awaitility.Awaitility;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -32,6 +34,7 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
@@ -44,16 +47,19 @@ import mockit.Mock;
 import mockit.MockUp;
 
 @BasicPreferences
+@Wiremock
 class MapWithAIMoveActionTest {
-    MapWithAIMoveAction moveAction;
-    DataSet mapWithAIData;
-    OsmDataLayer osmLayer;
-    Way way1;
-    Way way2;
+    private MapWithAIMoveAction moveAction;
+    private DataSet mapWithAIData;
+    private OsmDataLayer osmLayer;
+    private Way way1;
+    private Way way2;
+    private Node way1LastNode;
+    private Node way2LastNode;
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories().assertionsInEDT();
+    static JOSMTestRules test = new MapWithAITestRules().main().projection().territories().assertionsInEDT();
 
     @BeforeAll
     static void beforeAll() {
@@ -69,18 +75,22 @@ class MapWithAIMoveActionTest {
         way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(-0.1, -0.1)),
                 new Node(new LatLon(0.1, 0.1)));
         way1.getNodes().forEach(node -> mapWithAIData.addPrimitive(node));
-        way2.getNodes().forEach(node -> osmData.addPrimitive(node));
+        way2.getNodes().forEach(osmData::addPrimitive);
         osmData.addPrimitive(way2);
         mapWithAIData.addPrimitive(way1);
         way2.setOsmId(1, 1);
-        way2.firstNode().setOsmId(1, 1);
-        way2.lastNode().setOsmId(2, 1);
+        Objects.requireNonNull(way2.firstNode()).setOsmId(1, 1);
+        Objects.requireNonNull(way2.lastNode()).setOsmId(2, 1);
 
         osmLayer = new OsmDataLayer(osmData, "osm", null);
         final MapWithAILayer mapWithAILayer = new MapWithAILayer(mapWithAIData, "MapWithAI", null);
         MainApplication.getLayerManager().addLayer(osmLayer);
         MainApplication.getLayerManager().addLayer(mapWithAILayer);
         MainApplication.getLayerManager().setActiveLayer(mapWithAILayer);
+        way1LastNode = way1.lastNode();
+        way2LastNode = way2.lastNode();
+        assertNotNull(way1LastNode);
+        assertNotNull(way2LastNode);
     }
 
     @Test
@@ -107,48 +117,50 @@ class MapWithAIMoveActionTest {
     void testConflationDupeKeyRemoval() {
         new MissingConnectionTagsMocker();
         mapWithAIData.unlock();
-        way1.lastNode().put(DuplicateCommand.KEY, "n" + Long.toString(way2.lastNode().getUniqueId()));
+        way1LastNode.put(DuplicateCommand.KEY, "n" + way2LastNode.getUniqueId());
         mapWithAIData.lock();
         mapWithAIData.addSelected(way1);
         final DataSet ds = osmLayer.getDataSet();
 
         moveAction.actionPerformed(null);
         Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> ds.getPrimitiveById(way1) != null);
-        assertEquals(((Way) ds.getPrimitiveById(way1)).lastNode(), ((Way) ds.getPrimitiveById(way2)).lastNode(),
-                "The duplicate node should have been replaced");
-        assertFalse(((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY),
-                "The dupe key should no longer exist");
-        assertFalse(((Way) ds.getPrimitiveById(way1)).lastNode().hasKey(DuplicateCommand.KEY),
-                "The dupe key should no longer exist");
+        final Node way1LastNodeDs = ((Way) ds.getPrimitiveById(way1)).lastNode();
+        final Node way2LastNodeDs = ((Way) ds.getPrimitiveById(way2)).lastNode();
+        assertNotNull(way1LastNodeDs);
+        assertNotNull(way2LastNodeDs);
+        assertEquals(way1LastNodeDs, way2LastNodeDs, "The duplicate node should have been replaced");
+        assertFalse(way2LastNodeDs.hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
+        assertFalse(way1LastNodeDs.hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
 
         UndoRedoHandler.getInstance().undo();
-        Awaitility.await().atMost(Durations.ONE_SECOND)
-                .until(() -> !((Way) ds.getPrimitiveById(way2)).lastNode().hasKey(DuplicateCommand.KEY));
-        assertFalse(way2.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
-        assertTrue(way1.lastNode().hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> !way2LastNodeDs.hasKey(DuplicateCommand.KEY));
+        assertFalse(way2LastNode.hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
+        assertTrue(way1LastNode.hasKey(DuplicateCommand.KEY), "The dupe key should no longer exist");
     }
 
     @Test
     void testConflationConnKeyRemoval() {
         new MissingConnectionTagsMocker();
         mapWithAIData.unlock();
-        way1.lastNode().put(ConnectedCommand.KEY, "w" + Long.toString(way2.getUniqueId()) + ",n"
-                + Long.toString(way2.lastNode().getUniqueId()) + ",n" + Long.toString(way2.firstNode().getUniqueId()));
+        final Node way2FirstNode = way2.firstNode();
+        assertNotNull(way2FirstNode);
+        way1LastNode.put(ConnectedCommand.KEY,
+                "w" + way2.getUniqueId() + ",n" + way2LastNode.getUniqueId() + ",n" + way2FirstNode.getUniqueId());
         mapWithAIData.lock();
         mapWithAIData.addSelected(way1);
 
         moveAction.actionPerformed(null);
         Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> way1.isDeleted());
-        assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
-        assertFalse(way2.firstNode().hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
+        assertFalse(way2LastNode.hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
+        assertFalse(way2FirstNode.hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
         assertFalse(way2.getNode(1).hasKey(ConnectedCommand.KEY), "The conn key should have been removed");
         assertTrue(way1.isDeleted(), "way1 should be deleted when added");
 
         UndoRedoHandler.getInstance().undo();
-        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> !way1.isDeleted() && !way1.lastNode().isDeleted());
-        assertFalse(way2.lastNode().hasKey(ConnectedCommand.KEY), "The conn key shouldn't exist");
-        assertTrue(way1.lastNode().hasKey(ConnectedCommand.KEY), "The conn key should exist");
-        assertFalse(way1.lastNode().isDeleted(), "way1 should no longer be deleted");
+        Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> !way1.isDeleted() && !way1LastNode.isDeleted());
+        assertFalse(way2LastNode.hasKey(ConnectedCommand.KEY), "The conn key shouldn't exist");
+        assertTrue(way1LastNode.hasKey(ConnectedCommand.KEY), "The conn key should exist");
+        assertFalse(way1LastNode.isDeleted(), "way1 should no longer be deleted");
     }
 
     private static class NotificationMocker extends MockUp<Notification> {
@@ -189,8 +201,9 @@ class MapWithAIMoveActionTest {
      */
     @Test
     void testBuildingAndAddressAdd() {
-        // Required to avoid an NPE in Territories.getRegionalTaginfoUrls
-        Future<?> territoriesRegionalTaginfo = MainApplication.worker.submit(() -> Territories.initialize());
+        // Required to avoid an NPE in Territories.getRegionalTaginfoUrls. TODO remove
+        // with @Territories
+        Future<?> territoriesRegionalTaginfo = MainApplication.worker.submit(Territories::initialize);
         DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
         Way building = TestUtils.newWay("building=yes", new Node(new LatLon(38.236811, -104.62571)),
                 new Node(new LatLon(38.236811, -104.625493)), new Node(new LatLon(38.236716, -104.625493)),
@@ -211,7 +224,7 @@ class MapWithAIMoveActionTest {
         ds.setSelected(building);
         ds.addSelected(address);
         // Wait for territories to finish
-        assertDoesNotThrow(() -> territoriesRegionalTaginfo.get());
+        assertDoesNotThrow((ThrowingSupplier<?>) territoriesRegionalTaginfo::get);
         GuiHelper.runInEDTAndWaitWithException(() -> moveAction.actionPerformed(null));
         while (UndoRedoHandler.getInstance().hasUndoCommands()) {
             assertDoesNotThrow(() -> UndoRedoHandler.getInstance().undo());

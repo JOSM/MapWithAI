@@ -10,6 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.Action;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
@@ -18,12 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import javax.swing.Action;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,23 +48,27 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Territories;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Test class for {@link MapWithAILayer}
  *
  * @author Taylor Smock
  */
-@MapWithAISources
 @BasicPreferences
+@MapWithAISources
+@Wiremock
 class MapWithAILayerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().fakeAPI().territories();
+    static JOSMTestRules test = new MapWithAITestRules().main().projection().fakeAPI().territories();
 
     MapWithAILayer layer;
 
@@ -87,7 +90,7 @@ class MapWithAILayerTest {
         DataSet to = new DataSet();
         DataSet from = new DataSet();
         Way way = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
-        way.getNodes().stream().forEach(from::addPrimitive);
+        way.getNodes().forEach(from::addPrimitive);
         from.addPrimitive(way);
         way.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, MapWithAIPlugin.NAME);
         MapWithAIAddCommand command = new MapWithAIAddCommand(from, to, Collections.singleton(way));
@@ -104,11 +107,11 @@ class MapWithAILayerTest {
         DataSet to = new DataSet();
         DataSet from = new DataSet();
         Way way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 1)));
-        way1.getNodes().stream().forEach(from::addPrimitive);
+        way1.getNodes().forEach(from::addPrimitive);
         from.addPrimitive(way1);
         way1.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, "esri/Buildings");
         Way way2 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(1, 2)));
-        way2.getNodes().stream().forEach(from::addPrimitive);
+        way2.getNodes().forEach(from::addPrimitive);
         from.addPrimitive(way2);
         way2.put(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY, "esri/Addresses");
         MapWithAIAddCommand command = new MapWithAIAddCommand(from, to, Arrays.asList(way1, way2));
@@ -117,7 +120,7 @@ class MapWithAILayerTest {
         assertNotNull(source, "The source tag should not be null");
         assertFalse(source.trim().isEmpty(), "The source tag should not be an empty string");
         List<String> expected = Arrays.asList("MapWithAI", "esri");
-        assertTrue(Stream.of(source.split(";", -1)).map(string -> string.trim()).allMatch(expected::contains),
+        assertTrue(Stream.of(source.split(";", -1)).map(String::trim).allMatch(expected::contains),
                 MessageFormat.format("The source tag should be MapWithAI; esri, not {0}", source));
     }
 
@@ -127,7 +130,7 @@ class MapWithAILayerTest {
         assertTrue(tObject instanceof JPanel, "The info component should be a JPanel instead of a string");
 
         JPanel jPanel = (JPanel) tObject;
-        final List<Component> startComponents = Arrays.asList(jPanel.getComponents());
+        final Component[] startComponents = jPanel.getComponents();
         for (final Component comp : startComponents) {
             final JLabel label = (JLabel) comp;
             assertFalse(label.getText().contains("URL"), "The layer doesn't have a custom URL");
@@ -141,7 +144,7 @@ class MapWithAILayerTest {
         layer.setSwitchLayers(false);
 
         jPanel = (JPanel) layer.getInfoComponent();
-        final List<Component> currentComponents = Arrays.asList(jPanel.getComponents());
+        final Component[] currentComponents = jPanel.getComponents();
 
         for (final Component comp : currentComponents) {
             final JLabel label = (JLabel) comp;
@@ -178,7 +181,7 @@ class MapWithAILayerTest {
         MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
         DataSet ds = mapWithAILayer.getDataSet();
         GetDataRunnable getData = new GetDataRunnable(
-                Arrays.asList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
+                Collections.singletonList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
         getData.setMaximumDimensions(5_000);
         getData.fork().join();
         assertTrue(ds.getSelected().isEmpty());

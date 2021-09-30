@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,7 +73,7 @@ public @interface Wiremock {
             if (!request.getUrl().endsWith("/capabilities")
                     && !response.getHeaders().getContentTypeHeader().mimeTypePart().contains("application/zip")) {
                 String origBody = response.getBodyAsString();
-                String newBody = origBody.replaceAll("https?:\\/\\/.*?\\/",
+                String newBody = origBody.replaceAll("https?://.*?/",
                         WiremockExtension.getWiremock(context).baseUrl() + "/");
                 return Response.Builder.like(response).but().body(newBody).build();
             }
@@ -123,11 +122,6 @@ public @interface Wiremock {
      * Extension for {@link MapWithAILayerInfo}
      */
     class MapWithAILayerInfoExtension extends WiremockExtension {
-        private static Collection<String> getSourceSites(ExtensionContext context) {
-            ExtensionContext.Namespace namespace = ExtensionContext.Namespace.create(MapWithAILayerInfoExtension.class);
-            return (Collection<String>) context.getStore(namespace).get(MapWithAILayerInfo.class, Collection.class);
-        }
-
         @Override
         public void afterAll(ExtensionContext context) throws Exception {
             try {
@@ -151,7 +145,7 @@ public @interface Wiremock {
             Awaitility.await().atMost(Durations.TEN_SECONDS).until(finished::get);
         }
 
-        private void resetMapWithAILayerInfo() {
+        private static void resetMapWithAILayerInfo() {
             // This should probably only be run if territories is initialized
             // TODO update if @Territories becomes an annotation
             synchronized (MapWithAILayerInfo.class) {

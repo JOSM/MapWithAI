@@ -4,16 +4,14 @@ package org.openstreetmap.josm.plugins.mapwithai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import javax.swing.JMenu;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Map;
 
-import javax.swing.JMenu;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +31,8 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link MapWithAIPlugin}
@@ -99,7 +99,6 @@ class MapWithAIPluginTest {
         // + 1 comes from the preferences panel
         final JMenu dataMenu = MainApplication.getMenu().dataMenu;
         final int dataMenuSize = dataMenu.getMenuComponentCount();
-        final int addedMenuItems = ((Map<?, ?>) menuEntries.get(plugin)).size() + 1;
         plugin = new MapWithAIPlugin(info);
         assertEquals(dataMenuSize + 1, dataMenu.getMenuComponentCount(), "Menu items were not added");
         assertEquals(1,

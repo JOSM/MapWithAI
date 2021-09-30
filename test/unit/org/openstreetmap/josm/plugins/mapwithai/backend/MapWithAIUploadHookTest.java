@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,8 +34,11 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link MapWithAIUploadHook}
@@ -45,12 +47,12 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
  */
 @MapWithAISources
 @BasicPreferences
+@Wiremock
 class MapWithAIUploadHookTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().wiremock().main().projection().territories();
+    static JOSMTestRules test = new MapWithAITestRules().main().projection().territories();
     private PluginInformation info;
-    private OsmDataLayer osmLayer;
     private MapWithAILayer aiLayer;
     private Way way1;
     private Way way2;
@@ -70,7 +72,7 @@ class MapWithAIUploadHookTest {
         }
 
         aiLayer = MapWithAIDataUtils.getLayer(true);
-        osmLayer = new OsmDataLayer(new DataSet(), "no-name", null);
+        OsmDataLayer osmLayer = new OsmDataLayer(new DataSet(), "no-name", null);
         MainApplication.getLayerManager().addLayer(osmLayer);
 
         way1 = TestUtils.newWay("", new Node(new LatLon(0, 0)), new Node(new LatLon(0, 0.1)));
@@ -128,8 +130,7 @@ class MapWithAIUploadHookTest {
         assertEquals(3, split.size(), "There should be three ; in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
-        assertTrue(split.contains("maxadd=" + Integer.toString(newMaxAdd)),
-                "The maxadd should be " + Integer.toString(newMaxAdd));
+        assertTrue(split.contains("maxadd=" + newMaxAdd), "The maxadd should be " + newMaxAdd);
 
         Bounds tBounds = new Bounds(0, 1, 1, 0);
         MainApplication.getLayerManager()
@@ -142,8 +143,7 @@ class MapWithAIUploadHookTest {
         assertEquals(4, split.size(), "There should be four ; in mapwithai:options");
         assertTrue(split.contains("version=".concat(info.localversion)), "The version should match the local version");
         assertTrue(split.contains("url_ids=false-url"), "The false-url should be shown in the changeset tag");
-        assertTrue(split.contains("maxadd=" + Integer.toString(newMaxAdd)),
-                "The maxadd should be " + Integer.toString(newMaxAdd));
+        assertTrue(split.contains("maxadd=" + newMaxAdd), "The maxadd should be " + newMaxAdd);
         assertTrue(split.contains("task=".concat(tBounds.toBBox().toStringCSV(","))),
                 "There should be a task in the mapwithai:options");
     }
@@ -174,6 +174,6 @@ class MapWithAIUploadHookTest {
         MapWithAIPreferenceHelper.setMapWithAIUrl(null, true, false);
         Map<String, String> tags = new TreeMap<>();
         hook.modifyChangesetTags(tags);
-        assertTrue(tags.entrySet().stream().map(Map.Entry::getValue).noneMatch(s -> s.contains("url")));
+        assertTrue(tags.values().stream().noneMatch(s -> s.contains("url")));
     }
 }

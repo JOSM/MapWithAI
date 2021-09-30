@@ -31,7 +31,7 @@ public @interface NoExceptions {
         @Override
         public void afterAll(ExtensionContext context) {
             final AtomicBoolean atomicBoolean = new AtomicBoolean();
-            MainApplication.worker.submit(() -> atomicBoolean.set(true));
+            MainApplication.worker.execute(() -> atomicBoolean.set(true));
             Awaitility.await().atMost(Durations.TEN_SECONDS).until(atomicBoolean::get);
             final ExtensionContext.Store store = context
                     .getStore(ExtensionContext.Namespace.create(NoExceptions.class));

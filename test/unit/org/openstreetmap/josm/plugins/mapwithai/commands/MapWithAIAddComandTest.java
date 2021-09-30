@@ -9,15 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import mockit.Mock;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Assertions;
@@ -45,10 +42,14 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.BleedTest;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mockit.Mock;
 
 /**
  * Test class for {@link MapWithAIAddCommand}
@@ -56,14 +57,15 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  */
 @BasicPreferences
-@MapWithAISources
 @Command
+@MapWithAISources
+@Wiremock
 class MapWithAIAddComandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().wiremock().projection().assertionsInEDT().main();
+    JOSMTestRules test = new MapWithAITestRules().projection().assertionsInEDT().main();
 
     @BeforeEach
     void setUp() {
@@ -104,7 +106,7 @@ class MapWithAIAddComandTest {
         }
 
         assertNull(ds2.getPrimitiveById(way3), "DataSet should not yet have way3");
-        command = new MapWithAIAddCommand(ds1, ds2, Arrays.asList(way3));
+        command = new MapWithAIAddCommand(ds1, ds2, Collections.singletonList(way3));
         command.executeCommand();
         assertNotNull(ds2.getPrimitiveById(way3), "DataSet should still contain object");
         assertTrue(way3.isDeleted(), "The way should be deleted");
@@ -120,37 +122,37 @@ class MapWithAIAddComandTest {
     void testCreateConnections() {
         new PleaseWaitDialogMocker();
         final DataSet ds1 = new DataSet();
-        final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
-                new Node(new LatLon(0, 0.15)));
-        final Way way2 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0.05)),
-                new Node(new LatLon(0.05, 0.2)));
+        final Node way1FirstNode = new Node(new LatLon(0, 0));
+        final Node way1LastNode = new Node(new LatLon(0, 0.15));
+        final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, way1FirstNode, way1LastNode);
+        final Node way2FirstNode = new Node(new LatLon(0, 0.05));
+        final Way way2 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, way2FirstNode, new Node(new LatLon(0.05, 0.2)));
         // SimplePrimitiveId doesn't understand negative ids
         way1.setOsmId(1, 1);
-        way1.firstNode().setOsmId(1, 1);
-        way1.lastNode().setOsmId(2, 1);
+        way1FirstNode.setOsmId(1, 1);
+        way1LastNode.setOsmId(2, 1);
 
-        way2.firstNode().put("conn",
+        way2FirstNode.put("conn",
                 "w".concat(Long.toString(way1.getUniqueId())).concat(",n")
-                        .concat(Long.toString(way1.firstNode().getUniqueId())).concat(",n")
-                        .concat(Long.toString(way1.lastNode().getUniqueId())));
+                        .concat(Long.toString(way1FirstNode.getUniqueId())).concat(",n")
+                        .concat(Long.toString(way1LastNode.getUniqueId())));
         way1.getNodes().forEach(ds1::addPrimitive);
         way2.getNodes().forEach(ds1::addPrimitive);
         ds1.addPrimitive(way2);
         ds1.addPrimitive(way1);
-        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way2.firstNode().save())).executeCommand();
+        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way2FirstNode.save())).executeCommand();
         assertEquals(3, way1.getNodesCount(), "The way should now have three nodes");
         assertFalse(way1.isFirstLastNode(way2.firstNode()), "The ways should be connected");
 
-        final Way way3 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
-                new Node(new LatLon(-0.1, -0.1)));
-        way3.firstNode().put("dupe", "n".concat(Long.toString(way1.firstNode().getUniqueId())));
-        way3.getNodes().forEach(node -> ds1.addPrimitive(node));
+        final Node way3FirstNode = new Node(new LatLon(0, 0));
+        final Way way3 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, way3FirstNode, new Node(new LatLon(-0.1, -0.1)));
+        way3FirstNode.put("dupe", "n".concat(Long.toString(way1FirstNode.getUniqueId())));
+        way3.getNodes().forEach(ds1::addPrimitive);
         ds1.addPrimitive(way3);
-        final Node way3Node1 = way3.firstNode();
-        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way3.firstNode().save())).executeCommand();
-        assertNotEquals(way3Node1, way3.firstNode(), "The original first node should no longer be the first node");
+        MapWithAIAddCommand.createConnections(ds1, Collections.singletonList(way3FirstNode.save())).executeCommand();
+        assertNotEquals(way3FirstNode, way3.firstNode(), "The original first node should no longer be the first node");
         assertEquals(way1.firstNode(), way3.firstNode(), "way1 and way3 should have the same first nodes");
-        assertTrue(way3Node1.isDeleted(), "way3 should be deleted");
+        assertTrue(way3FirstNode.isDeleted(), "way3 should be deleted");
     }
 
     @BleedTest
@@ -159,16 +161,16 @@ class MapWithAIAddComandTest {
 
         final DataSet osmData = new DataSet();
         final DataSet mapWithAIData = new DataSet();
-        final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)),
-                new Node(new LatLon(0.1, 0.1)));
-        final Way way2 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(-0.1, -0.1)),
-                new Node(new LatLon(0.1, 0.1)));
+        final Node way1LastNode = new Node(new LatLon(0.1, 0.1));
+        final Way way1 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(0, 0)), way1LastNode);
+        final Node way2LastNode = new Node(new LatLon(0.1, 0.1));
+        final Way way2 = TestUtils.newWay(HIGHWAY_RESIDENTIAL, new Node(new LatLon(-0.1, -0.1)), way2LastNode);
         way1.getNodes().forEach(mapWithAIData::addPrimitive);
         way2.getNodes().forEach(osmData::addPrimitive);
         osmData.addPrimitive(way2);
         mapWithAIData.addPrimitive(way1);
         mapWithAIData.setSelected(way1);
-        way2.lastNode().setOsmId(1, 1);
+        way2LastNode.setOsmId(1, 1);
         MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
         Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> mapWithAIData.allNonDeletedPrimitives().isEmpty());
@@ -181,8 +183,8 @@ class MapWithAIAddComandTest {
         assertEquals(3, osmData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
         assertEquals(3, mapWithAIData.allNonDeletedPrimitives().size(), "The DataSet should be in its original state");
 
-        final Tag dupe = new Tag("dupe", "n".concat(Long.toString(way2.lastNode().getUniqueId())));
-        way1.lastNode().put(dupe);
+        final Tag dupe = new Tag("dupe", "n".concat(Long.toString(way2LastNode.getUniqueId())));
+        way1LastNode.put(dupe);
         command = new MapWithAIAddCommand(mapWithAIData, osmData, mapWithAIData.getSelected());
         command.executeCommand();
         Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> osmData.allNonDeletedPrimitives().size() == 5);
@@ -202,7 +204,7 @@ class MapWithAIAddComandTest {
         final DataSet from = new DataSet();
         final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0.1, 0.1)));
-        way1.getNodes().stream().forEach(from::addPrimitive);
+        way1.getNodes().forEach(from::addPrimitive);
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 
@@ -211,6 +213,7 @@ class MapWithAIAddComandTest {
         UndoRedoHandler.getInstance().add(new MapWithAIAddCommand(from, to, Collections.singleton(way1)));
 
         final Node tNode = (Node) to.getPrimitiveById(way1FirstNode);
+        assertNotNull(tNode);
 
         UndoRedoHandler.getInstance().add(new MoveCommand(tNode, LatLon.ZERO));
 
@@ -232,11 +235,9 @@ class MapWithAIAddComandTest {
     /**
      * https://josm.openstreetmap.de/ticket/18351
      *
-     * @throws InterruptedException      if the thread is interrupted
-     * @throws InvocationTargetException if some checked exception occurs
      */
     @Test
-    void testRegression18351() throws InvocationTargetException, InterruptedException {
+    void testRegression18351() {
         System.getProperty("java.awt.headless", "true");
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
@@ -244,9 +245,10 @@ class MapWithAIAddComandTest {
         SwingUtilitiesMocker swingMocker = new SwingUtilitiesMocker();
 
         swingMocker.futureTasks.clear();
-        Way way = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe",
-                new Node(new LatLon(39.0339521, -108.4874581)), new Node(new LatLon(39.0292629, -108.4875117)));
-        way.firstNode().put("dupe", "n176220609");
+        final Node wayFirstNode = new Node(new LatLon(39.0339521, -108.4874581));
+        Way way = TestUtils.newWay("highway=residential mapwithai:source=MapWithAI source=digitalglobe", wayFirstNode,
+                new Node(new LatLon(39.0292629, -108.4875117)));
+        wayFirstNode.put("dupe", "n176220609");
         way.getNode(way.getNodesCount() - 1).put("dupe", "n176232378");
         DataSet mapWithAIData = new DataSet();
         DataSet osmData = new DataSet();
@@ -282,20 +284,21 @@ class MapWithAIAddComandTest {
     @Test
     void testMultiConnectionsSimultaneous() {
         SharpAngles test = new SharpAngles();
-        Way way1 = TestUtils.newWay("highway=residential", new Node(new LatLon(3.4186753, 102.0559126)),
-                new Node(new LatLon(3.4185682, 102.0555264)));
-        Way way2 = TestUtils.newWay("highway=residential", new Node(new LatLon(3.4186271, 102.0559502)),
-                new Node(new LatLon(3.4188681, 102.0562935)));
-        Way original = TestUtils.newWay("highway=tertiary", new Node(new LatLon(3.4185368, 102.0560268)),
-                new Node(new LatLon(3.4187717, 102.0558451)));
+        final Node way1FirstNode = new Node(new LatLon(3.4186753, 102.0559126));
+        final Node way1LastNode = new Node(new LatLon(3.4185682, 102.0555264));
+        Way way1 = TestUtils.newWay("highway=residential", way1FirstNode, way1LastNode);
+        final Node way2FirstNode = new Node(new LatLon(3.4186271, 102.0559502));
+        Way way2 = TestUtils.newWay("highway=residential", way2FirstNode, new Node(new LatLon(3.4188681, 102.0562935)));
+        final Node originalFirstNode = new Node(new LatLon(3.4185368, 102.0560268));
+        final Node originalLastNode = new Node(new LatLon(3.4187717, 102.0558451));
+        Way original = TestUtils.newWay("highway=tertiary", originalFirstNode, originalLastNode);
         original.setOsmId(1, 1);
-        original.firstNode().setOsmId(1, 1);
-        original.lastNode().setOsmId(2, 1);
-        String connectedValue = "w" + Long.toString(original.getUniqueId()) + ",n"
-                + Long.toString(original.firstNode().getUniqueId()) + ",n"
-                + Long.toString(original.lastNode().getUniqueId());
-        way1.firstNode().put(ConnectedCommand.KEY, connectedValue);
-        way2.firstNode().put(ConnectedCommand.KEY, connectedValue);
+        originalFirstNode.setOsmId(1, 1);
+        originalLastNode.setOsmId(2, 1);
+        String connectedValue = "w" + original.getUniqueId() + ",n" + originalFirstNode.getUniqueId() + ",n"
+                + originalLastNode.getUniqueId();
+        way1FirstNode.put(ConnectedCommand.KEY, connectedValue);
+        way2FirstNode.put(ConnectedCommand.KEY, connectedValue);
 
         DataSet ds = new DataSet();
         DataSet osmData = new DataSet();
