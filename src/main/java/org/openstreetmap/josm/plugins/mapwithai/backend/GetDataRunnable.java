@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
@@ -18,9 +19,11 @@ import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
@@ -90,7 +93,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param monitor A monitor to keep track of progress
      */
     public GetDataRunnable(Bounds bbox, DataSet dataSet, ProgressMonitor monitor) {
-        this(Arrays.asList(bbox), dataSet, monitor);
+        this(Collections.singletonList(bbox), dataSet, monitor);
     }
 
     /**
@@ -124,7 +127,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         if (!monitor.isCanceled()) {
             if (bounds.size() == MAX_NUMBER_OF_BBOXES_TO_PROCESS) {
                 final DataSet temporaryDataSet = getDataReal(bounds.get(0), monitor);
-                synchronized (GetDataRunnable.class) {
+                synchronized (this.dataSet) {
                     dataSet.mergeFrom(temporaryDataSet);
                 }
             } else {
@@ -234,7 +237,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
                 .forEach(way -> {
                     final List<Node> nodes = way.getNodes();
-                    DeleteCommand.delete(Collections.singleton(way), true, true).executeCommand();
+                    Optional.ofNullable(DeleteCommand.delete(Collections.singleton(way), true, true))
+                            .ifPresent(Command::executeCommand);
                     nodes.parallelStream()
                             .filter(node -> !node.isDeleted()
                                     && node.getReferrers().parallelStream().allMatch(OsmPrimitive::isDeleted))
@@ -256,12 +260,15 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         twoMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
         if (one.getClass().equals(two.getClass()) && oneMap.equals(twoMap)) {
             if (one instanceof Node) {
-                if (one.hasSameInterestingTags(two) && ((Node) one).getCoor().equalsEpsilon(((Node) two).getCoor())) {
+                final LatLon coor1 = ((Node) one).getCoor();
+                final LatLon coor2 = ((Node) two).getCoor();
+                if (one.hasSameInterestingTags(two) && coor1 != null && coor2 != null && coor1.equalsEpsilon(coor2)) {
                     equivalent = true;
                 }
             } else if (one instanceof Way) {
-                equivalent = ((Way) one).getNodes().parallelStream().allMatch(node1 -> ((Way) two).getNodes()
-                        .parallelStream().anyMatch(node2 -> node1.getCoor().equalsEpsilon(node2.getCoor())));
+                equivalent = ((Way) one).getNodes().parallelStream().map(INode::getCoor).filter(Objects::nonNull)
+                        .allMatch(node1 -> ((Way) two).getNodes().parallelStream().map(INode::getCoor)
+                                .anyMatch(node1::equalsEpsilon));
             } else if (one instanceof Relation) {
                 equivalent = ((Relation) one).getMembers().parallelStream()
                         .allMatch(member1 -> ((Relation) two).getMembers().parallelStream()
@@ -392,7 +399,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean distanceCheck(Node nearNode, Node node, Double distance) {
-        return !(nearNode == null || node == null) && nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
+        return !(nearNode == null || node == null || nearNode.getCoor() == null || node.getCoor() == null)
+                && nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
     }
 
     private static boolean keyCheck(Node nearNode, Node node) {
@@ -411,8 +419,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     private static void mergeWays(DataSet dataSet) {
         final List<Way> ways = dataSet.getWays().parallelStream().filter(way -> !way.isDeleted())
                 .collect(Collectors.toList());
-        for (int i = 0; i < ways.size(); i++) {
-            final Way way1 = ways.get(i);
+        for (final Way way1 : ways) {
             final BBox bbox = new BBox();
             bbox.addPrimitive(way1, DEGREE_BUFFER);
             final List<Way> nearbyWays = dataSet.searchWays(bbox).parallelStream().filter(

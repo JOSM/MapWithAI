@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
@@ -35,6 +34,8 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptio
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Geometry;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link GetDataRunnable}
@@ -109,7 +110,7 @@ class GetDataRunnableTest {
     void testRegressionTicket46() {
         DataSet ds = new DataSet();
         GetDataRunnable getData = new GetDataRunnable(
-                Arrays.asList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
+                Collections.singletonList(new Bounds(34.4524384, -5.7400005, 34.5513153, -5.6686014)), ds, null);
         getData.setMaximumDimensions(5_000);
         getData.fork().join();
         assertNotNull(ds);

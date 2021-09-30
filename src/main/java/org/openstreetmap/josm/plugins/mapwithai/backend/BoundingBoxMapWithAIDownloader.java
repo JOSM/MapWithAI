@@ -82,7 +82,10 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     public DataSet parseOsm(ProgressMonitor progressMonitor) throws OsmTransferException {
         long startTime = System.nanoTime();
         try {
-            DataSet externalData = super.parseOsm(progressMonitor);
+            DataSet externalData;
+            synchronized (BoundingBoxMapWithAIDownloader.class) {
+                externalData = super.parseOsm(progressMonitor);
+            }
             if (!this.info.isConflated()
                     && !MapWithAIConflationCategory.conflationUrlFor(this.info.getCategory()).isEmpty()) {
                 if (externalData.getDataSourceBounds().isEmpty()) {
@@ -147,11 +150,15 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
      */
     private static DataSet getConflationData(Bounds bound) {
         Area area = DataSource.getDataSourceArea(Collections.singleton(new DataSource(bound, "")));
-        List<OsmDataLayer> layers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                .filter(l -> l.getDataSet().getDataSourceBounds().stream().anyMatch(b -> area.contains(bound.asRect())))
-                .collect(Collectors.toList());
-        return layers.stream().max(Comparator.comparingInt(l -> l.getDataSet().allPrimitives().size()))
-                .map(OsmDataLayer::getDataSet).orElse(null);
+        if (area != null) {
+            List<OsmDataLayer> layers = MainApplication
+                    .getLayerManager().getLayersOfType(OsmDataLayer.class).stream().filter(l -> l.getDataSet()
+                            .getDataSourceBounds().stream().anyMatch(b -> area.contains(bound.asRect())))
+                    .collect(Collectors.toList());
+            return layers.stream().max(Comparator.comparingInt(l -> l.getDataSet().allPrimitives().size()))
+                    .map(OsmDataLayer::getDataSet).orElse(null);
+        }
+        return null;
     }
 
     private static void updateLastErrorTime(long time) {
