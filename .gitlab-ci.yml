@@ -1,12 +1,15 @@
 image: registry.gitlab.com/josm/docker-library/openjdk-8-josmplugin:latest
 
-before_script:
-- export GRADLE_USER_HOME=`pwd`/.gradle
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
 
-cache:
+cache: &global_cache
   paths:
     - .gradle/wrapper
     - .gradle/caches
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
 
 #############################
 # Various additional Checks #
@@ -15,16 +18,27 @@ include:
   - template: Code-Quality.gitlab-ci.yml
   - template: SAST.gitlab-ci.yml
   - template: Dependency-Scanning.gitlab-ci.yml
+  - template: License-Scanning.gitlab-ci.yml
 #  - template: Container-Scanning.gitlab-ci.yml
 #  - template: DAST.gitlab-ci.yml
-#  - template: License-Management.gitlab-ci.yml
+
+stages:
+  - build
+  - test
+  - deploy
+  - release
 
 sast:
   variables: {}
   variables:
     GRADLE_PATH: "./gradlew"
     FAIL_NEVER: 1
+    SAST_EXCLUDED_PATHS: ".gradle"
 #    CI_DEBUG_TRACE: "true"
+
+variables:
+  PLUGIN_NAME: "MapWithAI"
+  PLUGIN_JAR_BASE_NAME: "mapwithai"
 
 ###############
 # Build stage #
@@ -36,7 +50,7 @@ assemble:
     - ./gradlew assemble --stacktrace
   artifacts:
     paths:
-    - build/
+      - build/
     expire_in: 1 day
   interruptible: true
 
@@ -69,7 +83,7 @@ code_navigation:
     - apk add --update curl bash
     - curl -fLo coursier https://git.io/coursier-cli
     - chmod +x coursier
-    - ./coursier launch com.sourcegraph:lsif-java_2.13:0.5.4 -- index --build-tool gradle
+    - ./coursier launch com.sourcegraph:lsif-java_2.13:0.5.6 -- index --build-tool gradle
   artifacts:
     reports:
       lsif: dump.lsif
@@ -78,6 +92,9 @@ code_navigation:
       when: always
   allow_failure: true
   interruptible: true
+  cache:
+    <<: *global_cache
+    policy: pull
 
 ##############
 # Test stage #
@@ -86,7 +103,7 @@ code_navigation:
 build:
   stage: test
   script:
-  - ./gradlew build generatePot generateSnapshotUpdateSite --stacktrace
+    - ./gradlew build --stacktrace #--info
   artifacts:
     paths:
     - build
@@ -124,6 +141,21 @@ coverage:
     reports:
       cobertura: "build/reports/jacoco/test/coverage.xml"
   interruptible: true
+  cache:
+    <<: *global_cache
+    policy: pull
+
+translate:
+  stage: test
+  script:
+    - ./gradlew generatePot --stacktrace
+  artifacts:
+    paths:
+    - build
+  needs: ["assemble"]
+  cache:
+    <<: *global_cache
+    policy: pull
 
 compile against min JOSM:
   stage: test
@@ -133,6 +165,10 @@ compile against min JOSM:
   dependencies:
     - assemble
   interruptible: true
+  allow_failure: true # It should still run against it, but there are some methods if'd around
+  cache:
+    <<: *global_cache
+    policy: pull
 
 compile against latest JOSM:
   stage: test
@@ -142,6 +178,9 @@ compile against latest JOSM:
   dependencies:
     - assemble
   interruptible: true
+  cache:
+    <<: *global_cache
+    policy: pull
 
 build with java 11:
   stage: test
@@ -153,6 +192,9 @@ build with java 11:
   dependencies:
     - assemble with java 11
   interruptible: true
+  cache:
+    <<: *global_cache
+    policy: pull
 
 build with java 17:
   stage: test
@@ -165,45 +207,90 @@ build with java 17:
   dependencies:
     - assemble with java 17
   interruptible: true
+  cache:
+    <<: *global_cache
+    policy: pull
 
 ################
 # Deploy stage #
 ################
 
-#upload to transifex:
-#  image: python:3.6-stretch
-#  stage: deploy
-#  environment:
-#    name: transifex
-#    url: https://www.transifex.com/josm/josm/josm-plugin_mapwithai/
-#  before_script:
-#  - apt-get update && apt-get install -yq gettext git
-#  - pip install git+https://github.com/transifex/transifex-client.git
-#  script:
-#  - TX_TOKEN="$TRANSIFEX_TOKEN" tx push -s --no-interactive
-# needs: ["assemble"]
-#  only:
-#  - master
-#  interruptible: true
+transifex.com:
+  image: registry.gitlab.com/josm/docker-library/python-transifex:latest
+  stage: deploy
+  environment:
+    name: transifex.com
+    url: https://www.transifex.com/josm/josm/josm-plugin_$PLUGIN_NAME/
+  script:
+    - TX_TOKEN="$TRANSIFEX_TOKEN" tx push -s --no-interactive
+  needs: ["translate"]
+  only:
+    refs:
+      - master
+    variables:
+      - $TRANSIFEX_TOKEN
+  cache:
+    <<: *global_cache
+    policy: pull
+
+codecov.io:
+  image: alpine:3.10
+  stage: deploy
+  environment:
+    name: codecov.io
+    url: https://codecov.io/gh/JOSM/$PLUGIN_NAME
+  before_script:
+    - apk add --update curl bash
+  script:
+    - curl -s https://codecov.io/bash | bash
+    - curl -s https://codecov.io/bash | bash /dev/stdin -c -F model_and_api
+  needs: ["build"]
+  only:
+    refs:
+      - master
+    variables:
+      - $CODECOV_TOKEN
 
 sonarcloud.io:
   image: registry.gitlab.com/josm/docker-library/openjdk-11-josmplugin:latest
   stage: deploy
   environment:
     name: sonarcloud.io
-    url: https://sonarcloud.io/dashboard?id=mapwithai
+    url: https://sonarcloud.io/dashboard?id=$PLUGIN_NAME
   script:
-    - git fetch --unshallow || echo "Already unshallowed?"
+    - git fetch --unshallow || echo "Already unshallowed"
     - ./gradlew -Dsonar.login=$SONAR_TOKEN sonarqube
   needs: ["test"]
   dependencies:
     - test
   only:
+    refs:
+      - $CI_DEFAULT_BRANCH
     variables:
       - $SONAR_TOKEN =~ /[0-9a-z]+/
 
-release:
+GitLab Maven repo:
   stage: deploy
+  environment:
+    name: GitLab.com / Maven packages
+    url: $CI_PROJECT_URL/-/packages
+  script:
+    - ./gradlew publishAllPublicationsToGitlabRepository
+  needs: ["build", "compile against min JOSM", "compile against latest JOSM"]
+  rules:
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
+      when: always
+  cache:
+    <<: *global_cache
+    policy: pull
+
+
+#################
+# Release stage #
+#################
+
+release:
+  stage: release
   environment:
     name: pages branch / dist directory
     url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}
@@ -228,15 +315,18 @@ release:
     git stage .
     git commit -a -m "$commitMessage"
     git push origin pages
-  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
+  needs: ["build", "compile against min JOSM", "compile against latest JOSM"]
   dependencies:
     - build
   rules:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
       when: manual
+  cache:
+    <<: *global_cache
+    policy: pull
 
 release hotfix:
-  stage: deploy
+  stage: release
   environment:
     name: pages branch / dist directory
     url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}
@@ -255,7 +345,7 @@ release hotfix:
       when: always
 
 publish update site:
-  stage: deploy
+  stage: release
   environment:
     name: pages branch / snapshot update site
     url: ${CI_PAGES_URL}/${CI_PROJECT_NAME}/snapshot/${CI_COMMIT_REF_NAME}/update-site
@@ -269,7 +359,7 @@ publish update site:
     mkdir -pv "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     cp -v "build/snapshot-update-site" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/update-site"
     cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
-    cp -v "build/dist/mapwithai.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/mapwithai-dev.jar"
+    cp -v "build/dist/${PLUGIN_JAR_BASE_NAME}.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/${PLUGIN_JAR_BASE_NAME}-dev.jar"
   - *push_pages_branch
   needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
   dependencies:
@@ -278,17 +368,17 @@ publish update site:
     - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_REF_NAME != null'
       when: always
 
-publish to / GitLab.com packages:
-  stage: deploy
+release to Gitlab.com:
+  stage: release
   environment:
-    name: GitLab.com / ${CI_PROJECT_NAME} packages
-    url: ${CI_PROJECT_URL}/-/packages
+    name: GitLab.com / Releases
+    url: $CI_PROJECT_URL/-/releases
   script:
-  - ./gradlew publishAllPublicationsToGitlabRepository
-  - ./gradlew releaseToGitlab
-  needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
-  dependencies:
-    - build
+    - ./gradlew releaseToGitlab
+  needs: ["GitLab Maven repo"]
   rules:
-    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$SSH_PRIVATE_DEPLOY_KEY != null && $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG != null && $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: always
+  cache:
+    <<: *global_cache
+    policy: pull
