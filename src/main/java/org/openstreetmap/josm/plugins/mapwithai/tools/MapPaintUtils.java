@@ -255,7 +255,7 @@ public final class MapPaintUtils {
 
         for (String source : sources) {
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
-            String simpleSource = source.replaceAll("[() /\\${}:]", "_");
+            String simpleSource = source.replaceAll("[() /\\${}:,]", "_");
             StringBuilder sb = new StringBuilder(64).append("setting::").append(simpleSource).append("{")
                     .append("type:color;").append("default:").append(simpleSource)
                     .append(ColorHelper.color2html(getRandomColor(source))).append(";label:tr(\"{0} color\",\"")
