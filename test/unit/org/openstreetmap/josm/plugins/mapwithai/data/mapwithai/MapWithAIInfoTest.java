@@ -3,19 +3,20 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.management.ReflectionException;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Stream;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.management.ReflectionException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,6 +61,8 @@ class MapWithAIInfoTest {
 
     @Test
     void testCloneInitializer() throws ReflectionException, IllegalArgumentException, IllegalAccessException {
+        final List<String> ignoredFields = Collections
+                .singletonList("replacementTagsSupplier" /* The supplier shouldn't be copied */);
         MapWithAIInfo orig = new MapWithAIInfo("Test info");
         // Use random to ensure that I do not accidentally introduce a dependency
         Random random = new Random();
@@ -90,8 +93,8 @@ class MapWithAIInfoTest {
             } else if (f.getType().isAssignableFrom(JsonArray.class)) {
                 JsonArray array = Json.createArrayBuilder().addNull().addNull().build();
                 f.set(orig, array);
-            } else {
-                throw new IllegalArgumentException("Account for " + type.getSimpleName());
+            } else if (!ignoredFields.contains(f.getName())) {
+                throw new IllegalArgumentException("Account for " + type.getSimpleName() + " " + f.getName());
             }
         }
 

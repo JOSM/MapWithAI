@@ -59,11 +59,11 @@ public class MapWithAILayerInfo {
     private final Map<String, MapWithAIInfo> layerIds = new HashMap<>();
     private final ListenerList<LayerChangeListener> listeners = ListenerList.create();
     /** List of all available default layers */
-    static final List<MapWithAIInfo> defaultLayers = new ArrayList<>();
+    static final List<MapWithAIInfo> defaultLayers = Collections.synchronizedList(new ArrayList<>());
     /** List of all available default layers (including mirrors) */
-    static final List<MapWithAIInfo> allDefaultLayers = new ArrayList<>();
+    static final List<MapWithAIInfo> allDefaultLayers = Collections.synchronizedList(new ArrayList<>());
     /** List of all layer ids of available default layers (including mirrors) */
-    static final Map<String, MapWithAIInfo> defaultLayerIds = new HashMap<>();
+    static final Map<String, MapWithAIInfo> defaultLayerIds = Collections.synchronizedMap(new HashMap<>());
 
     /** The prefix for configuration of the MapWithAI sources */
     public static final String CONFIG_PREFIX = "mapwithai.sources.";
@@ -345,16 +345,20 @@ public class MapWithAILayerInfo {
 
         protected void finish() {
             defaultLayers.clear();
-            allDefaultLayers.clear();
-            defaultLayers.addAll(newLayers);
-            this.updateEsriLayers(newLayers);
-            allDefaultLayers.sort(new MapWithAIInfo.MapWithAIInfoCategoryComparator());
-            allDefaultLayers.sort(Comparator.comparing(TileSourceInfo::getName));
-            allDefaultLayers.sort(Comparator.comparing(info -> info.getCategory().getDescription()));
-            allDefaultLayers.sort(Comparator
-                    .comparingInt(info -> -info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)));
-            defaultLayerIds.clear();
-            buildIdMap(allDefaultLayers, defaultLayerIds);
+            synchronized (allDefaultLayers) {
+                allDefaultLayers.clear();
+                defaultLayers.addAll(newLayers);
+                this.updateEsriLayers(newLayers);
+                allDefaultLayers.sort(new MapWithAIInfo.MapWithAIInfoCategoryComparator());
+                allDefaultLayers.sort(Comparator.comparing(TileSourceInfo::getName));
+                allDefaultLayers.sort(Comparator.comparing(info -> info.getCategory().getDescription()));
+                allDefaultLayers.sort(Comparator
+                        .comparingInt(info -> -info.getAdditionalCategories().indexOf(MapWithAICategory.FEATURED)));
+                defaultLayerIds.clear();
+                synchronized (defaultLayerIds) {
+                    buildIdMap(allDefaultLayers, defaultLayerIds);
+                }
+            }
             updateEntriesFromDefaults(!loadError);
             buildIdMap(layers, layerIds);
             if (!loadError && !defaultLayerIds.isEmpty()) {

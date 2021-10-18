@@ -4,19 +4,20 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.JOptionPane;
+
 import java.awt.geom.Area;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
-
-import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
@@ -48,7 +49,7 @@ import org.openstreetmap.josm.tools.Utils;
  */
 public final class MapWithAIDataUtils {
     /** The maximum dimensions for MapWithAI data (in kilometers) */
-    public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1km, max is 10km, but 10km causes
+    public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1 km, max is 10 km, but 10 km causes
     // timeouts
     private static final int TOO_MANY_BBOXES = 4;
     private static ForkJoinPool forkJoinPool;
@@ -100,7 +101,7 @@ public final class MapWithAIDataUtils {
      * @return A DataSet with data inside the bounds
      */
     public static DataSet getData(Bounds bounds) {
-        return getData(Arrays.asList(bounds), MAXIMUM_SIDE_DIMENSIONS);
+        return getData(Collections.singletonList(bounds), MAXIMUM_SIDE_DIMENSIONS);
     }
 
     /**
@@ -112,7 +113,7 @@ public final class MapWithAIDataUtils {
      * @return A DataSet with data inside the bounds
      */
     public static DataSet getData(Bounds bounds, int maximumDimensions) {
-        return getData(Arrays.asList(bounds), maximumDimensions);
+        return getData(Collections.singletonList(bounds), maximumDimensions);
     }
 
     /**
@@ -287,7 +288,7 @@ public final class MapWithAIDataUtils {
      */
     public static boolean getMapWithAIData(MapWithAILayer layer) {
         final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
-                .stream().filter(obj -> !MapWithAILayer.class.isInstance(obj)).collect(Collectors.toList());
+                .stream().filter(obj -> !(obj instanceof MapWithAILayer)).collect(Collectors.toList());
         boolean gotData = false;
         for (final OsmDataLayer osmLayer : osmLayers) {
             if (!osmLayer.isLocked() && getMapWithAIData(layer, osmLayer)) {
@@ -343,7 +344,7 @@ public final class MapWithAIDataUtils {
                 } finally {
                     lock.unlock();
                 }
-                toDownload.stream().forEach(layer::onPostDownloadFromServer);
+                toDownload.forEach(layer::onPostDownloadFromServer);
             });
         }
         return !toDownload.isEmpty();
@@ -359,12 +360,12 @@ public final class MapWithAIDataUtils {
         // Lat is y, Lon is x
         final LatLon bottomLeft = bounds.getMin();
         final LatLon topRight = bounds.getMax();
-        final double minx = bottomLeft.getX();
-        final double maxx = topRight.getX();
-        final double miny = bottomLeft.getY();
-        final double maxy = topRight.getY();
-        final LatLon bottomRight = new LatLon(miny, maxx);
-        final LatLon topLeft = new LatLon(maxy, minx);
+        final double minX = bottomLeft.getX();
+        final double maxX = topRight.getX();
+        final double minY = bottomLeft.getY();
+        final double maxY = topRight.getY();
+        final LatLon bottomRight = new LatLon(minY, maxX);
+        final LatLon topLeft = new LatLon(maxY, minX);
         return Math.max(bottomLeft.greatCircleDistance(bottomRight), topLeft.greatCircleDistance(topRight));
     }
 
@@ -380,11 +381,10 @@ public final class MapWithAIDataUtils {
         final List<Bounds> returnBounds = new ArrayList<>();
         final double width = getWidth(bound);
         final double height = getHeight(bound);
-        final Double widthDivisions = width / maximumDimensions;
-        final Double heightDivisions = height / maximumDimensions;
-        final int widthSplits = widthDivisions.intValue() + ((widthDivisions - widthDivisions.intValue()) > 0 ? 1 : 0);
-        final int heightSplits = heightDivisions.intValue()
-                + ((heightDivisions - heightDivisions.intValue()) > 0 ? 1 : 0);
+        final double widthDivisions = width / maximumDimensions;
+        final double heightDivisions = height / maximumDimensions;
+        final int widthSplits = (int) widthDivisions + ((widthDivisions - Math.floor(widthDivisions)) > 0 ? 1 : 0);
+        final int heightSplits = (int) heightDivisions + ((heightDivisions - Math.floor(heightDivisions)) > 0 ? 1 : 0);
 
         final double newMinWidths = Math.abs(bound.getMaxLon() - bound.getMinLon()) / widthSplits;
         final double newMinHeights = Math.abs(bound.getMaxLat() - bound.getMinLat()) / heightSplits;

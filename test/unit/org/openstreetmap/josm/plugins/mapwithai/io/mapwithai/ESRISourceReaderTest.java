@@ -8,18 +8,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.Future;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 @Wiremock
 class ESRISourceReaderTest {
@@ -56,6 +61,9 @@ class ESRISourceReaderTest {
             info.setUrl(url);
             final ESRISourceReader reader = new ESRISourceReader(info);
             Collection<MapWithAIInfo> layers = reader.parse();
+            Future<?> workerQueue = MainApplication.worker.submit(() -> {
+                /* Sync threads */});
+            Awaitility.await().atMost(Durations.FIVE_SECONDS).until(workerQueue::isDone);
             assertFalse(layers.isEmpty(), "There should be a MapWithAI layer");
             assertTrue(layers.stream().noneMatch(i -> info.getUrl().equals(i.getUrl())),
                     "The ESRI server should be expanded to feature servers");

@@ -248,7 +248,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
         final List<OsmPrimitive> possibleDuplicates = searchDataSet(ds, primitive);
-        return possibleDuplicates.parallelStream().filter(prim -> !prim.isDeleted())
+        return possibleDuplicates.stream().filter(prim -> !prim.isDeleted())
                 .anyMatch(prim -> checkIfProbableDuplicate(prim, primitive));
     }
 

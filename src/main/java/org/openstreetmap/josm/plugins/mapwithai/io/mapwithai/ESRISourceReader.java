@@ -36,6 +36,7 @@ import org.apache.commons.jcs3.engine.behavior.IElementAttributes;
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -150,7 +151,7 @@ public class ESRISourceReader {
         MapWithAIInfo newInfo = new MapWithAIInfo(source);
         newInfo.setId(feature.getString("id"));
         if (feature.getString("type", "").equals("Feature Service")) {
-            newInfo.setUrl(featureService(newInfo, feature.getString("url")));
+            MainApplication.worker.execute(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))));
         } else {
             newInfo.setUrl(feature.getString("url"));
         }
@@ -278,7 +279,7 @@ public class ESRISourceReader {
                     .asJsonObject();
             if (layer.containsKey("id")) {
                 String partialUrl = (url.endsWith("/") ? url : url + "/") + layer.getInt("id");
-                mapwithaiInfo.setReplacementTags(getReplacementTags(partialUrl));
+                mapwithaiInfo.setReplacementTags(() -> getReplacementTags(partialUrl));
 
                 return partialUrl;
             }

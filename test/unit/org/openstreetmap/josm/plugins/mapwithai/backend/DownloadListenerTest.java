@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Test;
@@ -22,21 +21,25 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link DownloadListener}
  *
  * @author Taylor Smock
  */
-@NoExceptions
 @BasicPreferences
+@NoExceptions
+@Wiremock
 @MapWithAISources
 class DownloadListenerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().projection();
+    JOSMTestRules rule = new MapWithAITestRules().projection().territories();
 
     @Test
     void testDataSourceChange() {
@@ -62,9 +65,11 @@ class DownloadListenerTest {
         continuousDownload.actionPerformed(null);
 
         // Test when MapWithAI layer is continuous downloading
+        assertTrue(layer.getDataSet().isEmpty());
         ds.addDataSource(new DataSource(bounds, "Test bounds 2"));
 
-        assertTrue(layer.getDataSet().isEmpty());
+        Awaitility.await().atMost(Durations.FIVE_SECONDS)
+                .until(() -> MapWithAIDataUtils.getForkJoinPool().isQuiescent());
         Awaitility.await().atMost(Durations.FIVE_SECONDS).until(() -> !layer.getDataSet().isEmpty());
         assertFalse(layer.getDataSet().isEmpty());
 

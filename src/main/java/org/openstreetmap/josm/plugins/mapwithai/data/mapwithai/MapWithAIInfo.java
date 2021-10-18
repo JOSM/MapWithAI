@@ -3,6 +3,11 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.stream.JsonParser;
+
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -12,13 +17,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.stream.JsonParser;
 
 import org.openstreetmap.josm.data.StructUtils.StructEntry;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
@@ -35,6 +36,7 @@ public class MapWithAIInfo extends
 
     private List<MapWithAICategory> categories;
     private JsonArray parameters;
+    private Supplier<Map<String, String>> replacementTagsSupplier;
     private Map<String, String> replacementTags;
     private boolean conflate;
     private String conflationUrl;
@@ -97,8 +99,8 @@ public class MapWithAIInfo extends
             if (i.conflationParameters != null) {
                 conflationParameters = i.conflationParameters.toString();
             }
-            if (i.replacementTags != null) {
-                replacementTags = i.replacementTags;
+            if (i.getReplacementTags() != null) {
+                this.replacementTags = i.getReplacementTags();
             }
             source = i.source;
             conflate = i.conflate;
@@ -440,13 +442,31 @@ public class MapWithAIInfo extends
     }
 
     /**
+     * Set the required replacement tags (as a supplier -- used only to avoid making
+     * unnecessary requests)
+     *
+     * @param replacementTagsSupplier The supplier to get the tags to replace
+     */
+    public void setReplacementTags(final Supplier<Map<String, String>> replacementTagsSupplier) {
+        this.replacementTagsSupplier = replacementTagsSupplier;
+    }
+
+    /**
      * Get the requested tags to replace. These should be run before user requested
      * replacements.
      *
      * @return The required replacement tags
      */
     public Map<String, String> getReplacementTags() {
-        return replacementTags;
+        if (this.replacementTags == null && this.replacementTagsSupplier != null) {
+            synchronized (this) {
+                if (this.replacementTagsSupplier != null) {
+                    this.replacementTags = this.replacementTagsSupplier.get();
+                }
+                this.replacementTagsSupplier = null;
+            }
+        }
+        return this.replacementTags;
     }
 
     /**
