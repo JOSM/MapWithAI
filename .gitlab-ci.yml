@@ -103,7 +103,7 @@ code_navigation:
 build:
   stage: test
   script:
-    - ./gradlew build --stacktrace #--info
+    - ./gradlew build generatePot generateSnapshotUpdateSite --stacktrace #--info
   artifacts:
     paths:
     - build
