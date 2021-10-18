@@ -423,41 +423,43 @@ public class MapWithAILayerInfo {
         boolean changed = false;
         Collection<String> knownDefaults = new TreeSet<>(Config.getPref().getList(CONFIG_PREFIX + "layers.default"));
         Collection<String> newKnownDefaults = new TreeSet<>();
-        for (MapWithAIInfo def : defaultLayers) {
-            if (def.isDefaultEntry()) {
-                boolean isKnownDefault = false;
-                for (String entry : knownDefaults) {
-                    if (entry.equals(def.getId())) {
-                        isKnownDefault = true;
-                        newKnownDefaults.add(entry);
-                        knownDefaults.remove(entry);
-                        break;
-                    } else if (isSimilar(entry, def.getUrl())) {
-                        isKnownDefault = true;
+        synchronized (defaultLayers) {
+            for (MapWithAIInfo def : defaultLayers) {
+                if (def.isDefaultEntry()) {
+                    boolean isKnownDefault = false;
+                    for (String entry : knownDefaults) {
+                        if (entry.equals(def.getId())) {
+                            isKnownDefault = true;
+                            newKnownDefaults.add(entry);
+                            knownDefaults.remove(entry);
+                            break;
+                        } else if (isSimilar(entry, def.getUrl())) {
+                            isKnownDefault = true;
+                            if (def.getId() != null) {
+                                newKnownDefaults.add(def.getId());
+                            }
+                            knownDefaults.remove(entry);
+                            break;
+                        }
+                    }
+                    boolean isInUserList = false;
+                    if (!isKnownDefault) {
                         if (def.getId() != null) {
                             newKnownDefaults.add(def.getId());
-                        }
-                        knownDefaults.remove(entry);
-                        break;
-                    }
-                }
-                boolean isInUserList = false;
-                if (!isKnownDefault) {
-                    if (def.getId() != null) {
-                        newKnownDefaults.add(def.getId());
-                        for (MapWithAIInfo i : layers) {
-                            if (isSimilar(def, i)) {
-                                isInUserList = true;
-                                break;
+                            for (MapWithAIInfo i : layers) {
+                                if (isSimilar(def, i)) {
+                                    isInUserList = true;
+                                    break;
+                                }
                             }
+                        } else {
+                            Logging.error("Default imagery ''{0}'' has no id. Skipping.", def.getName());
                         }
-                    } else {
-                        Logging.error("Default imagery ''{0}'' has no id. Skipping.", def.getName());
                     }
-                }
-                if (!isKnownDefault && !isInUserList) {
-                    add(new MapWithAIInfo(def));
-                    changed = true;
+                    if (!isKnownDefault && !isInUserList) {
+                        add(new MapWithAIInfo(def));
+                        changed = true;
+                    }
                 }
             }
         }
