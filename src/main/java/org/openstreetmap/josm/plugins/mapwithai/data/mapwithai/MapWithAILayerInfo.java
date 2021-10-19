@@ -309,7 +309,7 @@ public class MapWithAILayerInfo {
         }
 
         protected void loadSource(String source) {
-            boolean online = NetworkManager.isOffline(source);
+            boolean online = !NetworkManager.isOffline(source);
             if (clearCache && online) {
                 CachedFile.cleanup(source);
             }
