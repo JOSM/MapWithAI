@@ -31,11 +31,12 @@ public abstract class CommonSourceReader<T> implements AutoCloseable {
      * @throws IOException if any I/O error occurs
      */
     public Optional<T> parse() throws IOException {
-        cachedFile = new CachedFile(source);
-        cachedFile.setFastFail(fastFail);
+        this.cachedFile = new CachedFile(this.source);
         if (this.clearCache) {
-            cachedFile.clear();
+            this.cachedFile.clear();
+            this.cachedFile = new CachedFile(this.source);
         }
+        this.cachedFile.setFastFail(this.fastFail);
         try (JsonReader reader = Json.createReader(cachedFile.setMaxAge(CachedFile.DAYS)
                 .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
             JsonStructure struct = reader.read();
