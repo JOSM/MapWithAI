@@ -3,6 +3,16 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
+import javax.swing.SpinnerNumberModel;
+
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -16,16 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
-import javax.swing.SpinnerNumberModel;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
@@ -212,6 +212,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     public boolean ok() {
         MapWithAIPreferenceHelper.setSwitchLayers(switchLayerCheckBox.isSelected(), true);
         final Object value = maximumAdditionSpinner.getValue();
+        MapWithAIPreferenceHelper.setMergeBuildingAddress(this.mergeBuildingAddressCheckBox.isSelected(), true);
         if (value instanceof Number) {
             MapWithAIPreferenceHelper.setMaximumAddition(((Number) value).intValue(), true);
         }
