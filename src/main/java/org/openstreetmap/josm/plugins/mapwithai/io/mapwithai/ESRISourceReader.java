@@ -38,6 +38,7 @@ import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.CachedFile;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
@@ -103,7 +104,7 @@ public class ESRISourceReader {
         int next = 1;
         String searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
 
-        final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+        final ForkJoinPool forkJoinPool = MapWithAIDataUtils.getForkJoinPool();
         ArrayList<Future<?>> futureList = new ArrayList<>();
         while (next != -1) {
             final String finalUrl = url + "content/groups/" + group + searchUrl;

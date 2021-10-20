@@ -231,11 +231,14 @@ public final class MapWithAIDataUtils {
      * @return The {@link ForkJoinPool} for MapWithAI use.
      */
     public static ForkJoinPool getForkJoinPool() {
-        if (Objects.isNull(forkJoinPool) || forkJoinPool.isShutdown()) {
-            forkJoinPool = Utils.newForkJoinPool(MapWithAIPlugin.NAME.concat(".forkjoinpoolthreads"),
-                    MapWithAIPlugin.NAME, Thread.NORM_PRIORITY);
+        if (Utils.isRunningWebStart() || System.getSecurityManager() != null) {
+            if (Objects.isNull(forkJoinPool) || forkJoinPool.isShutdown()) {
+                forkJoinPool = Utils.newForkJoinPool(MapWithAIPlugin.NAME.concat(".forkjoinpoolthreads"),
+                        MapWithAIPlugin.NAME, Thread.NORM_PRIORITY);
+            }
+            return forkJoinPool;
         }
-        return forkJoinPool;
+        return ForkJoinPool.commonPool();
     }
 
     /**
