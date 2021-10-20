@@ -5,9 +5,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.diffplug.spotless" version "5.15.2"
+  id "com.diffplug.spotless" version "5.17.0"
   id "com.github.ben-manes.versions" version "0.39.0"
-  id "com.github.spotbugs" version "4.7.6"
+  id "com.github.spotbugs" version "4.7.8"
   // id "de.aaschmid.cpd" version "3.3"
   id "eclipse"
   id "jacoco"
@@ -80,7 +80,7 @@ def versions = [
   jmockit: "1.49",
   junit: "5.8.1",
   pmd: "6.20.0",
-  spotbugs: "4.4.1",
+  spotbugs: "4.4.2",
   wiremock: "2.27.2",
   findsecbugs: "1.11.0",
 ]
