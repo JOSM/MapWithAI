@@ -83,7 +83,8 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
         final Collection<IPrimitive> nodesInside = Geometry.filterInsideAnyPolygon(toCheck, object);
 
         final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
-                .filter(node -> node.hasKey("addr:housenumber", "addr:housename")).collect(Collectors.toList());
+                .filter(node -> node.hasKey("addr:housenumber", "addr:housename", "addr:postcode"))
+                .collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
         if (nodesWithAddresses.size() == 1
