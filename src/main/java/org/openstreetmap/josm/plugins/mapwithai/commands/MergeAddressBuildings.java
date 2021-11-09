@@ -78,8 +78,7 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
     }
 
     private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, OsmPrimitive object) {
-        final List<IPrimitive> toCheck = new ArrayList<>();
-        toCheck.addAll(affectedDataSet.searchNodes(object.getBBox()));
+        final List<IPrimitive> toCheck = new ArrayList<>(affectedDataSet.searchNodes(object.getBBox()));
         final Collection<IPrimitive> nodesInside = Geometry.filterInsideAnyPolygon(toCheck, object);
 
         final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
