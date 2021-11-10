@@ -210,9 +210,11 @@ public class ESRISourceReader {
     @Nullable
     private static String getJsonString(@Nonnull final String url, final long defaultMaxAge, final boolean fastFail) {
         String jsonString = SOURCE_CACHE.get(url);
-        // TODO FIXME remove sometime after January 2022 (give it a chance to cleanup
-        // directories)
-        CachedFile.cleanup(url);
+        if (Config.getPref() != null) {
+            // TODO FIXME remove sometime after January 2022 (give it a chance to cleanup
+            // directories)
+            CachedFile.cleanup(url);
+        }
         if (jsonString == null) {
             synchronized (SOURCE_CACHE) {
                 jsonString = SOURCE_CACHE.get(url);

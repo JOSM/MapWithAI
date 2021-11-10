@@ -3,6 +3,9 @@ package org.openstreetmap.josm.plugins.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,9 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.actions.PreferencesAction;
@@ -47,6 +47,8 @@ import org.openstreetmap.josm.plugins.mapwithai.gui.MapWithAIMenu;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadOptions;
 import org.openstreetmap.josm.plugins.mapwithai.gui.download.MapWithAIDownloadSourceType;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIUrls;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapWithAICopyProhibit;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -80,6 +82,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     public MapWithAIPlugin(PluginInformation info) {
         super(info);
+
+        MapWithAIConfig.setUrlsProvider(MapWithAIUrls.getInstance());
 
         preferenceSetting = new MapWithAIPreferences();
 

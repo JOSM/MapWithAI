@@ -38,14 +38,12 @@ import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.tools.ColorHelper;
 import org.openstreetmap.josm.tools.Logging;
 
 public final class MapPaintUtils {
     /** The default url for the MapWithAI paint style */
-    public static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
-
-    private static String paintStyleResourceUrl = DEFAULT_PAINT_STYLE_RESOURCE_URL;
     private static final Pattern TEST_PATTERN = Pattern
             .compile("^https?:\\/\\/(www\\.)?localhost[:0-9]*\\/josmfile\\?page=Styles\\/MapWithAI&zip=1$");
 
@@ -95,8 +93,8 @@ public final class MapPaintUtils {
                 .forEach(MapPaintStyles::removeStyle);
 
         if (!checkIfMapWithAIPaintStyleExists()) {
-            final MapCSSStyleSource style = new MapCSSStyleSource(paintStyleResourceUrl, MapWithAIPlugin.NAME,
-                    "MapWithAI");
+            final MapCSSStyleSource style = new MapCSSStyleSource(MapWithAIConfig.getUrls().getMapWithAIPaintStyle(),
+                    MapWithAIPlugin.NAME, "MapWithAI");
             return MapPaintStyles.addStyle(style);
         }
         return getMapWithAIPaintStyle();
@@ -104,7 +102,8 @@ public final class MapPaintUtils {
 
     public static synchronized boolean checkIfMapWithAIPaintStyleExists() {
         return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
-                .map(MapCSSStyleSource.class::cast).anyMatch(source -> paintStyleResourceUrl.equals(source.url)
+                .map(MapCSSStyleSource.class::cast)
+                .anyMatch(source -> MapWithAIConfig.getUrls().getMapWithAIPaintStyle().equals(source.url)
                         || TEST_PATTERN.matcher(source.url).matches());
     }
 
@@ -114,7 +113,8 @@ public final class MapPaintUtils {
     public static synchronized void removeMapWithAIPaintStyles() {
         // WebStart has issues with streams and EDT permissions. Don't use streams.
         for (StyleSource style : new ArrayList<>(MapPaintStyles.getStyles().getStyleSources())) {
-            if (paintStyleResourceUrl.equals(style.url) || TEST_PATTERN.matcher(style.url).matches()) {
+            if (MapWithAIConfig.getUrls().getMapWithAIPaintStyle().equals(style.url)
+                    || TEST_PATTERN.matcher(style.url).matches()) {
                 GuiHelper.runInEDT(() -> MapPaintStyles.removeStyle(style));
             }
         }
@@ -126,27 +126,10 @@ public final class MapPaintUtils {
      * @return get the MapWithAI Paint style
      */
     public static synchronized StyleSource getMapWithAIPaintStyle() {
-        return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(
-                source -> paintStyleResourceUrl.equals(source.url) || TEST_PATTERN.matcher(source.url).matches())
+        return MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                .filter(source -> MapWithAIConfig.getUrls().getMapWithAIPaintStyle().equals(source.url)
+                        || TEST_PATTERN.matcher(source.url).matches())
                 .findAny().orElse(null);
-    }
-
-    /**
-     * Set the URL for the MapWithAI paint style
-     *
-     * @param paintUrl The paint style for MapWithAI
-     */
-    public static synchronized void setPaintStyleUrl(String paintUrl) {
-        paintStyleResourceUrl = paintUrl;
-    }
-
-    /**
-     * Get the url for the paint style for MapWithAI
-     *
-     * @return The url for the paint style
-     */
-    public static synchronized String getPaintStyleUrl() {
-        return paintStyleResourceUrl;
     }
 
     /**

@@ -97,9 +97,12 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
                     .append(protocolVersion.getProtocol()).append('/').append(protocolVersion.getMajor()).append('.')
                     .append(protocolVersion.getMinor()).append(' ').append(response.getStatusLine().getStatusCode())
                     .toString());
-            this.done = true;
         } catch (IOException | UnsupportedOperationException | IllegalDataException e) {
             Logging.error(e);
+        }
+        this.done = true;
+        synchronized (this) {
+            this.notifyAll();
         }
     }
 
@@ -113,6 +116,9 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
         }
         this.done = true;
         this.cancelled = true;
+        synchronized (this) {
+            this.notifyAll();
+        }
         return true;
     }
 
@@ -128,8 +134,10 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
 
     @Override
     public DataSet get() throws InterruptedException, ExecutionException {
-        while (!isDone()) {
-            Thread.sleep(100);
+        synchronized (this) {
+            while (!isDone()) {
+                this.wait(100);
+            }
         }
         return this.conflatedData;
     }
@@ -139,9 +147,11 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
         long realtime = unit.toMillis(timeout);
         long waitTime = realtime > MAX_POLLS ? realtime / MAX_POLLS : 1;
         long timeWaited = 0;
-        while (!isDone()) {
-            Thread.sleep(waitTime);
-            timeWaited += waitTime;
+        synchronized (this) {
+            while (!isDone()) {
+                this.wait(waitTime);
+                timeWaited += waitTime;
+            }
         }
         if (!isDone() && timeWaited > realtime) {
             throw new TimeoutException();

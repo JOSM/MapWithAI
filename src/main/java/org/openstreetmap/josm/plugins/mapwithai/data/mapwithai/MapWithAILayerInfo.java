@@ -3,12 +3,8 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.annotation.Nonnull;
-import javax.swing.SwingUtilities;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +20,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+import javax.swing.SwingUtilities;
+
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Preferences;
@@ -37,6 +36,7 @@ import org.openstreetmap.josm.io.imagery.ImageryReader;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
@@ -68,15 +68,15 @@ public class MapWithAILayerInfo {
     /** The prefix for configuration of the MapWithAI sources */
     public static final String CONFIG_PREFIX = "mapwithai.sources.";
 
-    private static final String[] DEFAULT_LAYER_SITES = {
-            "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json" };
-
     /** Unique instance -- MUST be after DEFAULT_LAYER_SITES */
     private static MapWithAILayerInfo instance;
 
     public static MapWithAILayerInfo getInstance() {
+        if (instance != null) {
+            return instance;
+        }
         final AtomicBoolean finished = new AtomicBoolean();
-        synchronized (DEFAULT_LAYER_SITES) {
+        synchronized (MapWithAILayerInfo.class) {
             if (instance == null) {
                 instance = new MapWithAILayerInfo(() -> {
                     synchronized (finished) {
@@ -111,7 +111,8 @@ public class MapWithAILayerInfo {
      * @since 7434
      */
     public static Collection<String> getImageryLayersSites() {
-        return Config.getPref().getList(CONFIG_PREFIX + "layers.sites", Arrays.asList(DEFAULT_LAYER_SITES));
+        return Config.getPref().getList(CONFIG_PREFIX + "layers.sites",
+                Collections.singletonList(MapWithAIConfig.getUrls().getMapWithAISourcesJson()));
     }
 
     /**
@@ -122,7 +123,11 @@ public class MapWithAILayerInfo {
      *         {@link org.openstreetmap.josm.spi.preferences.IPreferences#putList}
      */
     public static boolean setImageryLayersSites(Collection<String> sites) {
-        return Config.getPref().putList(CONFIG_PREFIX + "layers.sites", new ArrayList<>(sites));
+        if (sites == null || sites.isEmpty()) {
+            return Config.getPref().put(CONFIG_PREFIX + "layers.sites", null);
+        } else {
+            return Config.getPref().putList(CONFIG_PREFIX + "layers.sites", new ArrayList<>(sites));
+        }
     }
 
     private MapWithAILayerInfo(FinishListener listener) {

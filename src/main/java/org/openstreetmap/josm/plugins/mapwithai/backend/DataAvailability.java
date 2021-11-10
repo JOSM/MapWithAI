@@ -24,15 +24,12 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
 
 public class DataAvailability {
-    /** The default server URL */
-    public static final String DEFAULT_SERVER_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
-    /** This points to a list of default sources that can be used with MapWithAI */
-    private static String defaultServerUrl = DEFAULT_SERVER_URL;
     /** A map of tag -&gt; message of possible data types */
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
@@ -51,15 +48,13 @@ public class DataAvailability {
      */
     private static final List<Class<? extends DataAvailability>> DATA_SOURCES = new ArrayList<>();
 
+    private static DataAvailability instance;
+
     /**
      * A map of countries to a map of available types
      * ({@code Map<Country, Map<Type, IsAvailable>>}
      */
     static final Map<String, Map<String, Boolean>> COUNTRIES = new HashMap<>();
-
-    private static class InstanceHelper {
-        static DataAvailability instance = new DataAvailability();
-    }
 
     protected DataAvailability() {
         if (DataAvailability.class.equals(this.getClass())) {
@@ -71,7 +66,7 @@ public class DataAvailability {
      * Initialize the class
      */
     private static void initialize() {
-        try (CachedFile jsonFile = new CachedFile(defaultServerUrl);
+        try (CachedFile jsonFile = new CachedFile(MapWithAIConfig.getUrls().getMapWithAISourcesJson());
                 JsonParser jsonParser = Json.createParser(jsonFile.getContentReader());) {
             jsonFile.setMaxAge(SEVEN_DAYS_IN_SECONDS);
             jsonParser.next();
@@ -162,11 +157,11 @@ public class DataAvailability {
      * @return the unique instance
      */
     public static DataAvailability getInstance() {
-        if (InstanceHelper.instance == null || COUNTRIES.isEmpty()
+        if (instance == null || COUNTRIES.isEmpty()
                 || MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
-            InstanceHelper.instance = new DataAvailability();
+            instance = new DataAvailability();
         }
-        return InstanceHelper.instance;
+        return instance;
     }
 
     /**
@@ -248,7 +243,7 @@ public class DataAvailability {
      *
      * @return List of terms of use urls
      */
-    public static final List<String> getTermsOfUse() {
+    public static List<String> getTermsOfUse() {
         return Stream.concat(MapWithAILayerInfo.getInstance().getLayers().stream().map(MapWithAIInfo::getTermsOfUseURL),
                 DATA_SOURCES.stream().map(clazz -> {
                     try {
@@ -267,7 +262,7 @@ public class DataAvailability {
      *
      * @return List of privacy policy urls
      */
-    public static final List<String> getPrivacyPolicy() {
+    public static List<String> getPrivacyPolicy() {
         return Stream
                 .concat(MapWithAILayerInfo.getInstance().getLayers().stream().map(MapWithAIInfo::getPrivacyPolicyURL),
                         DATA_SOURCES.stream().map(clazz -> {
@@ -281,23 +276,5 @@ public class DataAvailability {
                         }))
                 .filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).distinct()
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Set the URL to use to get MapWithAI information (`sources.json`)
-     *
-     * @param url The URL which serves MapWithAI servers
-     */
-    public static void setReleaseUrl(String url) {
-        defaultServerUrl = url;
-    }
-
-    /**
-     * Get the URL for the `sources.json`.
-     *
-     * @return The URL which serves MapWithAI servers
-     */
-    public static String getReleaseUrl() {
-        return defaultServerUrl;
     }
 }

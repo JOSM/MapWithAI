@@ -12,10 +12,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
@@ -28,15 +29,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @NoExceptions
 @BasicPreferences
+@Wiremock
 class MapWithAISourceReaderTestIT {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     public JOSMTestRules rule = new JOSMTestRules().territories().projection();
 
     @Test
+    @Wiremock(false)
     void testDefaultSourceIT() throws IOException {
-        DataAvailability.setReleaseUrl(DataAvailability.DEFAULT_SERVER_URL);
-        try (MapWithAISourceReader source = new MapWithAISourceReader(DataAvailability.getReleaseUrl())) {
+        try (MapWithAISourceReader source = new MapWithAISourceReader(
+                MapWithAIConfig.getUrls().getMapWithAISourcesJson())) {
             List<MapWithAIInfo> infoList = source.parse().orElse(Collections.emptyList());
             assertFalse(infoList.isEmpty(), "There should be viable sources");
             for (MapWithAIType type : Arrays.asList(MapWithAIType.FACEBOOK, MapWithAIType.THIRD_PARTY)) {

@@ -10,15 +10,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JCheckBox;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 @BasicPreferences
+@Wiremock
 class MapWithAIDownloadSourceTypeTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")

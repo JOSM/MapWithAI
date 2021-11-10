@@ -5,10 +5,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -18,7 +16,11 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.IMapWithAIUrls;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
+import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIUrls;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
+import org.openstreetmap.josm.testutils.annotations.AnnotationUtils;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.HTTP;
@@ -39,9 +41,7 @@ import com.github.tomakehurst.wiremock.http.Response;
 @Target({ ElementType.PARAMETER, ElementType.TYPE, ElementType.METHOD })
 @BasicPreferences
 @HTTP
-@ExtendWith(Wiremock.DataAvailabilityExtension.class)
-@ExtendWith(Wiremock.MapPaintUtilsExtension.class)
-@ExtendWith(Wiremock.MapWithAIConflationCategoryExtension.class)
+@ExtendWith(Wiremock.TestMapWithAIUrls.class)
 @BasicWiremock(value = "test/resources/wiremock", responseTransformers = Wiremock.WireMockUrlTransformer.class)
 public @interface Wiremock {
     /**
@@ -98,27 +98,6 @@ public @interface Wiremock {
     }
 
     /**
-     * Extension for {@link MapPaintUtils}
-     */
-    class MapPaintUtilsExtension extends WiremockExtension {
-        @Override
-        public void afterAll(ExtensionContext context) throws Exception {
-            try {
-                super.afterAll(context);
-            } finally {
-                MapPaintUtils.removeMapWithAIPaintStyles();
-                MapPaintUtils.setPaintStyleUrl("https://invalid.url/josmfile?page=Styles/MapWithAI&zip=1");
-            }
-        }
-
-        @Override
-        public void beforeAll(ExtensionContext context) throws Exception {
-            super.beforeAll(context);
-            MapPaintUtils.setPaintStyleUrl(replaceUrl(getWiremock(context), MapPaintUtils.getPaintStyleUrl()));
-        }
-    }
-
-    /**
      * Extension for {@link MapWithAILayerInfo}
      */
     class MapWithAILayerInfoExtension extends WiremockExtension {
@@ -127,8 +106,6 @@ public @interface Wiremock {
             try {
                 super.afterAll(context);
             } finally {
-                MapWithAILayerInfo.setImageryLayersSites(
-                        Collections.singleton("https://invalid.url/JOSM_MapWithAI/json/sources.json"));
                 resetMapWithAILayerInfo();
             }
         }
@@ -136,9 +113,7 @@ public @interface Wiremock {
         @Override
         public void beforeAll(ExtensionContext context) throws Exception {
             super.beforeAll(context);
-            MapWithAILayerInfo.setImageryLayersSites(
-                    MapWithAILayerInfo.getImageryLayersSites().stream().map(t -> replaceUrl(getWiremock(context), t))
-                            .filter(Objects::nonNull).collect(Collectors.toList()));
+            MapWithAILayerInfo.setImageryLayersSites(null);
             AtomicBoolean finished = new AtomicBoolean();
             MapWithAILayerInfo.getInstance().clear();
             MapWithAILayerInfo.getInstance().load(false, () -> finished.set(true));
@@ -158,45 +133,78 @@ public @interface Wiremock {
 
     }
 
-    /**
-     * Extension for {@link DataAvailability}
-     */
-    class DataAvailabilityExtension extends WiremockExtension {
+    class TestMapWithAIUrls extends WiremockExtension implements IMapWithAIUrls {
+        ExtensionContext context;
+        private static boolean conflationServerInitialized;
+
         @Override
-        public void afterAll(ExtensionContext context) throws Exception {
-            try {
-                super.afterAll(context);
-            } finally {
-                DataAvailability.setReleaseUrl("https://invalid.url/JOSM_MapWithAI/json/sources.json");
-            }
+        public String getConflationServerJson() {
+            conflationServerInitialized = true;
+            return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getConflationServerJson());
         }
 
         @Override
-        public void beforeAll(ExtensionContext context) throws Exception {
-            super.beforeAll(context);
-            DataAvailability.setReleaseUrl(replaceUrl(getWiremock(context), DataAvailability.getReleaseUrl()));
+        public String getMapWithAISourcesJson() {
+            return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getMapWithAISourcesJson());
         }
-    }
 
-    /**
-     * Extension for {@link MapWithAIConflationCategory}
-     */
-    class MapWithAIConflationCategoryExtension extends WiremockExtension {
         @Override
-        public void afterAll(ExtensionContext context) throws Exception {
-            try {
-                super.afterAll(context);
-            } finally {
-                MapWithAIConflationCategory.resetConflationJsonLocation();
-            }
+        public String getMapWithAIPaintStyle() {
+            return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getMapWithAIPaintStyle());
         }
-
         @Override
         public void beforeAll(ExtensionContext context) throws Exception {
             super.beforeAll(context);
-            MapWithAIConflationCategory.setConflationJsonLocation(
-                    replaceUrl(getWiremock(context), MapWithAIConflationCategory.getConflationJsonLocation()));
+            final Optional<Wiremock> annotation = AnnotationUtils.findFirstParentAnnotation(context, Wiremock.class);
+            this.context = context;
+            if (Boolean.FALSE.equals(annotation.map(Wiremock::value).orElse(Boolean.TRUE))) {
+                MapWithAIConfig.setUrlsProvider(MapWithAIUrls.getInstance());
+            } else {
+                MapWithAIConfig.setUrlsProvider(this);
+            }
+            if (conflationServerInitialized) {
+                MapWithAIConflationCategory.initialize();
+            }
+            AnnotationUtils.resetStaticClass(DataAvailability.class);
+        }
+
+        @Override
+        public void beforeEach(ExtensionContext context) throws Exception {
+            final Optional<Wiremock> annotation = AnnotationUtils.findFirstParentAnnotation(context, Wiremock.class);
+            if (annotation.isPresent()) {
+                this.beforeAll(context);
+            }
+            super.beforeEach(context);
+        }
+
+        @Override
+        public void afterAll(ExtensionContext context) throws Exception {
+            // @Wiremock stops the WireMockServer prior to this method being called
+            getWiremock(context).start();
+            MapPaintUtils.removeMapWithAIPaintStyles();
+            try {
+                // This stops the WireMockServer again.
+                super.afterAll(context);
+            } finally {
+                MapWithAIConfig.setUrlsProvider(new InvalidMapWithAIUrls());
+            }
         }
     }
 
+    class InvalidMapWithAIUrls implements IMapWithAIUrls {
+        @Override
+        public String getConflationServerJson() {
+            throw new UnsupportedOperationException("Please use the @Wiremock annotation");
+        }
+
+        @Override
+        public String getMapWithAISourcesJson() {
+            return this.getConflationServerJson();
+        }
+
+        @Override
+        public String getMapWithAIPaintStyle() {
+            return this.getConflationServerJson();
+        }
+    }
 }

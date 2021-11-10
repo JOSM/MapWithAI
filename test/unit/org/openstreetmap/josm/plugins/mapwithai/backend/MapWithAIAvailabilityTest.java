@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +21,8 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAIS
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.tools.Territories;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for testing availability
@@ -60,7 +61,7 @@ class MapWithAIAvailabilityTest {
     }
 
     @Test
-    void testgetDataLatLon() {
+    void testGetDataLatLon() {
         assertTrue(DataAvailability.getDataTypes(new LatLon(0, 0)).isEmpty(), "There should not be data in the ocean");
         assertTrue(DataAvailability.getDataTypes(new LatLon(40, -100)).getOrDefault("highway", false),
                 "The US should have highway data");
@@ -81,7 +82,7 @@ class MapWithAIAvailabilityTest {
         new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())
                 .forEach(i -> MapWithAILayerInfo.getInstance().remove(i));
         DataAvailability.getInstance();
-        testgetDataLatLon();
+        testGetDataLatLon();
         MapWithAILayerInfo.getInstance().getLayers().forEach(i -> MapWithAILayerInfo.getInstance().remove(i));
         DataAvailability.getInstance();
         testHasDataLatLon();
