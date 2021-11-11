@@ -261,12 +261,12 @@ task generateSnapshotUpdateSite(type: GeneratePluginList) {
 project.afterEvaluate {
   publishing {
     publications {
-      plugin(MavenPublication) {
-        groupId = "org.openstreetmap.josm.plugins"
-        artifactId = archivesBaseName
-        version = project.version
-
-        from components.java
+      josmPlugin(MavenPublication) {
+        pom {
+          groupId = "org.openstreetmap.josm.plugins"
+          artifactId = archivesBaseName
+          version = project.version
+        }
       }
     }
   }
