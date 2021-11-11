@@ -31,6 +31,7 @@ import org.openstreetmap.josm.io.OsmWriterFactory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Utils;
 
 /**
  * Conflate data with a third party server
@@ -66,39 +67,41 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
     @Override
     public void run() {
         String url = MapWithAIConflationCategory.conflationUrlFor(category);
-        this.client = HttpClients.createDefault();
-        try (CloseableHttpClient currentClient = this.client) {
-            MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-            if (osm != null) {
+        if (!Utils.isBlank(url)) {
+            this.client = HttpClients.createDefault();
+            try (CloseableHttpClient currentClient = this.client) {
+                MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+                if (osm != null) {
+                    StringWriter output = new StringWriter();
+                    try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
+                        writer.write(osm);
+                        multipartEntityBuilder.addTextBody("openstreetmap", output.toString(),
+                                ContentType.APPLICATION_XML);
+                    }
+                }
+                // We need to reset the writers to avoid writing previous streams
                 StringWriter output = new StringWriter();
                 try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
-                    writer.write(osm);
-                    multipartEntityBuilder.addTextBody("openstreetmap", output.toString(), ContentType.APPLICATION_XML);
+                    writer.write(external);
+                    multipartEntityBuilder.addTextBody("external", output.toString(), ContentType.APPLICATION_XML);
                 }
-            }
-            // We need to reset the writers to avoid writing previous streams
-            StringWriter output = new StringWriter();
-            try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
-                writer.write(external);
-                multipartEntityBuilder.addTextBody("external", output.toString(), ContentType.APPLICATION_XML);
-            }
-            HttpEntity postData = multipartEntityBuilder.build();
-            HttpUriRequest request = RequestBuilder.post(url).setEntity(postData).build();
+                HttpEntity postData = multipartEntityBuilder.build();
+                HttpUriRequest request = RequestBuilder.post(url).setEntity(postData).build();
 
-            HttpResponse response = currentClient.execute(request);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                conflatedData = OsmReader.parseDataSet(response.getEntity().getContent(), NullProgressMonitor.INSTANCE,
-                        OsmReader.Options.SAVE_ORIGINAL_ID);
-            } else {
-                conflatedData = null;
+                HttpResponse response = currentClient.execute(request);
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    conflatedData = OsmReader.parseDataSet(response.getEntity().getContent(),
+                            NullProgressMonitor.INSTANCE, OsmReader.Options.SAVE_ORIGINAL_ID);
+                } else {
+                    conflatedData = null;
+                }
+                ProtocolVersion protocolVersion = response.getStatusLine().getProtocolVersion();
+                Logging.info(request.getMethod() + ' ' + url + " -> " + protocolVersion.getProtocol() + '/'
+                        + protocolVersion.getMajor() + '.' + protocolVersion.getMinor() + ' '
+                        + response.getStatusLine().getStatusCode());
+            } catch (IOException | UnsupportedOperationException | IllegalDataException e) {
+                Logging.error(e);
             }
-            ProtocolVersion protocolVersion = response.getStatusLine().getProtocolVersion();
-            Logging.info(new StringBuilder(request.getMethod()).append(' ').append(url).append(" -> ")
-                    .append(protocolVersion.getProtocol()).append('/').append(protocolVersion.getMajor()).append('.')
-                    .append(protocolVersion.getMinor()).append(' ').append(response.getStatusLine().getStatusCode())
-                    .toString());
-        } catch (IOException | UnsupportedOperationException | IllegalDataException e) {
-            Logging.error(e);
         }
         this.done = true;
         synchronized (this) {

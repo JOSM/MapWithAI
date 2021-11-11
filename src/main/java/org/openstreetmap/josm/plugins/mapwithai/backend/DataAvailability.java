@@ -1,6 +1,12 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+import javax.json.stream.JsonParser;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -12,12 +18,6 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.json.Json;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParser;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -157,8 +157,7 @@ public class DataAvailability {
      * @return the unique instance
      */
     public static DataAvailability getInstance() {
-        if (instance == null || COUNTRIES.isEmpty()
-                || MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
+        if (instance == null || COUNTRIES.isEmpty() || MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
             instance = new DataAvailability();
         }
         return instance;

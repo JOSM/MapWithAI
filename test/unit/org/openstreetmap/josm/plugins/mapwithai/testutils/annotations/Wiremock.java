@@ -26,6 +26,7 @@ import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.HTTP;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.FileSource;
 import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
@@ -71,6 +72,7 @@ public @interface Wiremock {
         @Override
         public Response transform(Request request, Response response, FileSource files, Parameters parameters) {
             if (!request.getUrl().endsWith("/capabilities")
+                    && response.getHeaders().getContentTypeHeader().mimeTypePart() != null
                     && !response.getHeaders().getContentTypeHeader().mimeTypePart().contains("application/zip")) {
                 String origBody = response.getBodyAsString();
                 String newBody = origBody.replaceAll("https?://.*?/",
@@ -152,6 +154,7 @@ public @interface Wiremock {
         public String getMapWithAIPaintStyle() {
             return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getMapWithAIPaintStyle());
         }
+
         @Override
         public void beforeAll(ExtensionContext context) throws Exception {
             super.beforeAll(context);
@@ -171,10 +174,20 @@ public @interface Wiremock {
         @Override
         public void beforeEach(ExtensionContext context) throws Exception {
             final Optional<Wiremock> annotation = AnnotationUtils.findFirstParentAnnotation(context, Wiremock.class);
+            this.context = context;
             if (annotation.isPresent()) {
                 this.beforeAll(context);
             }
+            final WireMockServer wireMockServer = getWiremock(context);
+
             super.beforeEach(context);
+
+            if (wireMockServer.getStubMappings().stream().filter(mapping -> mapping.getRequest().getUrl() != null)
+                    .noneMatch(mapping -> mapping.getRequest().getUrl()
+                            .equals("/JOSM_MapWithAI/json/conflation_servers.json"))) {
+                wireMockServer.stubFor(WireMock.get("/JOSM_MapWithAI/json/conflation_servers.json")
+                        .willReturn(WireMock.aResponse().withBody("{}")).atPriority(-5));
+            }
         }
 
         @Override
@@ -188,6 +201,10 @@ public @interface Wiremock {
             } finally {
                 MapWithAIConfig.setUrlsProvider(new InvalidMapWithAIUrls());
             }
+        }
+
+        public WireMockServer getWireMockServer() {
+            return getWiremock(context);
         }
     }
 
