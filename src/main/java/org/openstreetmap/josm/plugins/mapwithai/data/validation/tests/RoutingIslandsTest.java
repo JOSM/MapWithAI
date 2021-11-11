@@ -4,6 +4,9 @@ package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -203,7 +206,7 @@ public class RoutingIslandsTest extends Test {
             if (lastNode != null && lastNode.isOutsideDownloadArea()) {
                 outgoingWays.add(way);
             }
-            if (isOneway == 0 && firstNode != null && lastNode != null
+            if (isOneway != null && isOneway == 0 && firstNode != null && lastNode != null
                     && (firstNode.isOutsideDownloadArea() || lastNode.isOutsideDownloadArea())) {
                 incomingWays.add(way);
                 outgoingWays.add(way);
@@ -301,7 +304,8 @@ public class RoutingIslandsTest extends Test {
                 Set<Way> referrers = node.getReferrers(true).parallelStream().filter(Way.class::isInstance)
                         .map(Way.class::cast).filter(tWay -> !directional.contains(tWay)).collect(Collectors.toSet());
                 for (Way tWay : referrers) {
-                    if (isOneway(tWay, currentTransportMode) == 0 || predicate.test(tWay, way) || tWay.isClosed()) {
+                    Integer oneWay = isOneway(tWay, currentTransportMode);
+                    if ((oneWay != null && oneWay == 0) || predicate.test(tWay, way) || tWay.isClosed()) {
                         toAdd.add(tWay);
                     }
                 }
@@ -363,7 +367,8 @@ public class RoutingIslandsTest extends Test {
      * @return See {@link Way#isOneway} (but may additionally return {@code null} if
      *         the transport type cannot route down that way)
      */
-    public static Integer isOneway(Way way, String transportType) {
+    @Nullable
+    public static Integer isOneway(@Nonnull Way way, @Nullable String transportType) {
         if (transportType == null || transportType.trim().isEmpty()) {
             return way.isOneway();
         }

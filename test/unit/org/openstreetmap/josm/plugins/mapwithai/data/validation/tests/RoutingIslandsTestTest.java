@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -12,8 +13,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,12 +27,17 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.preferences.sources.ValidatorPrefHelper;
 import org.openstreetmap.josm.data.validation.Severity;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.tools.Access;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link RoutingIslandsTest}
@@ -238,6 +244,34 @@ class RoutingIslandsTestTest {
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), outgoingSet, null);
         assertEquals(2, outgoingSet.size());
         assertTrue(outgoingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2).contains(way)));
+    }
+
+    /**
+     * Non-regression test for #21551
+     */
+    @Test
+    void testNonRegression21551() {
+        ValidatorPrefHelper.PREF_OTHER.put(Boolean.TRUE);
+        final DataSet dataSet = new DataSet();
+        dataSet.addDataSource(new DataSource(new Bounds(-18, -180, 18, 180), "World bounds testNonRegression21551"));
+        final Way way1 = new Way();
+        way1.setNodes(DoubleStream.iterate(0, d -> d + 1).limit(20).mapToObj(d -> new LatLon(d, d)).map(Node::new)
+                .collect(Collectors.toList()));
+        final Way way2 = new Way();
+        way2.setNodes(DoubleStream.iterate(-1, d -> d - 1).limit(19).mapToObj(d -> new LatLon(d, d)).map(Node::new)
+                .collect(Collectors.toList()));
+        way2.addNode(way1.firstNode());
+        addToDataSet(dataSet, way1);
+        addToDataSet(dataSet, way2);
+        way1.put("highway", "residential");
+        way2.put("highway", "residential");
+        way2.put(Access.AccessTags.MOTOR_VEHICLE.getKey() + ":forward", Access.AccessTags.NO.getKey());
+        way2.put(Access.AccessTags.MOTOR_VEHICLE.getKey() + ":backward", Access.AccessTags.NO.getKey());
+        final RoutingIslandsTest test = new RoutingIslandsTest();
+        test.startTest(NullProgressMonitor.INSTANCE);
+        test.visit(way1);
+        test.visit(way2);
+        assertDoesNotThrow(test::endTest);
     }
 
     /**
