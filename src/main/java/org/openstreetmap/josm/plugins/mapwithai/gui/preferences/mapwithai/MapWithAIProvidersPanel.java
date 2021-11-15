@@ -826,7 +826,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         @Override
         public void changeEvent(MapWithAIInfo modified) {
-            updateEnabledState();
+            GuiHelper.runInEDT(this::updateEnabledState);
         }
     }
 
