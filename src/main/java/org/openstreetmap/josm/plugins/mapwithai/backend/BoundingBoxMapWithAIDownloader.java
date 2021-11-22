@@ -32,7 +32,6 @@ import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
@@ -168,10 +167,9 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     @Override
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds;
-        String contentType = this.activeConnection.getResponse().getHeaderField("Content-Type");
-        if (contentType.contains("text/xml")) {
-            ds = OsmReader.parseDataSet(source, progressMonitor, OsmReader.Options.SAVE_ORIGINAL_ID);
-        } else if (MapWithAIType.ESRI_FEATURE_SERVER == this.info.getSourceType()) {
+        String contentType = this.activeConnection.getResponse().getContentType();
+        if (contentType.contains("text/json") || contentType.contains("application/json")
+                || contentType.contains("application/geo+json")) {
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
                 GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
