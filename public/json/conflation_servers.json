@@ -1,2 +1,11 @@
 {
+   "Taylor's Address Conflation Server" : {
+      "categories" : [
+         "addresses"
+      ],
+      "description" : "Originally developed for use with local datasets, it now accepts external datasets for conflation purposes. In the event of a failure, the plugin will use the original dataset.",
+      "license" : "AGPL",
+      "source" : "https://gitlab.com/smocktaylor/serve_osm_files/",
+      "url" : "https://importdata.riverviewtechnologies.com/conflate"
+   }
 }
