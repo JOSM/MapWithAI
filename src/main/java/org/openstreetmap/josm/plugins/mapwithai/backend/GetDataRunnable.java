@@ -49,6 +49,7 @@ import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
+import org.openstreetmap.josm.tools.Utils;
 
 /**
  * Get data in a parallel manner
@@ -305,6 +306,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 .filter(entry -> entry.getKey().contains(EQUALS) && entry.getValue().contains(EQUALS))
                 .map(entry -> new Pair<>(Tag.ofString(entry.getKey()), Tag.ofString(entry.getValue())))
                 .collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
+        MapWithAIPreferenceHelper.getReplacementTags().entrySet().parallelStream()
+                .filter(entry -> !entry.getKey().equals(EQUALS) && Utils.isBlank(entry.getValue()))
+                .map(entry -> new Tag(entry.getKey(), null)).forEach(tag -> replaceTags.put(tag, tag));
         replaceTags(dataSet, replaceTags);
     }
 
@@ -315,8 +319,11 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param replaceTags The tags to replace
      */
     public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
-        replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
-                .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())).forEach(prim -> prim.put(replace)));
+        replaceTags
+                .forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
+                        .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())
+                                || prim.hasKey(orig.getKey()) && Utils.isBlank(orig.getValue()))
+                        .forEach(prim -> prim.put(replace)));
     }
 
     /**
