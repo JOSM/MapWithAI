@@ -29,6 +29,7 @@ import org.openstreetmap.josm.data.Preferences;
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
@@ -302,12 +303,14 @@ public class MapWithAILayerInfo {
                 if (preferences != null) {
                     // saveOnPut is pretty much always true
                     preferences.enableSaveOnPut(true);
-                    try {
-                        preferences.save();
-                    } catch (IOException e) {
-                        // This is highly unlikely to happen
-                        Logging.error(e);
-                    }
+                    MainApplication.worker.execute(() -> {
+                        try {
+                            preferences.save();
+                        } catch (IOException e) {
+                            // This is highly unlikely to happen
+                            Logging.error(e);
+                        }
+                    });
                 }
             }
             this.finish();

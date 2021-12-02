@@ -319,11 +319,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param replaceTags The tags to replace
      */
     public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
-        replaceTags
-                .forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
-                        .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())
-                                || prim.hasKey(orig.getKey()) && Utils.isBlank(orig.getValue()))
-                        .forEach(prim -> prim.put(replace)));
+        replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().parallelStream()
+                .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())
+                        || prim.hasKey(orig.getKey()) && Utils.isBlank(orig.getValue()))
+                .forEach(prim -> prim.put(replace)));
     }
 
     /**
