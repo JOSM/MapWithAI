@@ -163,14 +163,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
-        Bounds boundsToUse;
+        final Bounds boundsToUse;
         if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
-            boundsToUse = dataSet.getDataSourceBounds().get(0);
+            boundsToUse = new Bounds(dataSet.getDataSourceBounds().get(0));
             dataSet.getDataSourceBounds().forEach(boundsToUse::extend);
         } else if (bounds == null) {
             boundsToUse = new Bounds(0, 0, 0, 0);
         } else {
-            boundsToUse = bounds;
+            boundsToUse = new Bounds(bounds);
         }
         replaceTags(dataSet);
         removeCommonTags(dataSet);

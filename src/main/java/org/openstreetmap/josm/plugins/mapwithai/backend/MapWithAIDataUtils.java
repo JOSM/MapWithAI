@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.Lock;
@@ -37,6 +38,7 @@ import org.openstreetmap.josm.io.IllegalDataException;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
@@ -148,32 +150,7 @@ public final class MapWithAIDataUtils {
                     realBounds.parallelStream()
                             .forEach(bound -> new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl())
                                     .parallelStream().filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty())
-                                    .forEach(i -> {
-                                        BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(
-                                                bound, i, DetectTaskingManagerUtils.hasTaskingManagerLayer());
-                                        try {
-                                            DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
-                                            synchronized (MapWithAIDataUtils.class) {
-                                                dataSet.mergeFrom(ds);
-                                            }
-                                        } catch (OsmTransferException e) {
-                                            if (e.getCause() instanceof SocketTimeoutException
-                                                    && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10
-                                                    && maximumDimensions / 2f > 0.5) {
-                                                dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
-                                            } else if (e.getCause() instanceof IllegalDataException) {
-                                                Logging.error(e);
-                                                Notification notification = new Notification();
-                                                notification.setContent(tr("MapWithAI servers may be down."));
-                                                GuiHelper.runInEDT(notification::show);
-                                            } else {
-                                                Logging.error(e);
-                                                Notification notification = new Notification();
-                                                notification.setContent(e.getLocalizedMessage());
-                                                GuiHelper.runInEDT(notification::show);
-                                            }
-                                        }
-                                    }));
+                                    .forEach(i -> download(monitor, dataSet, bound, i, maximumDimensions)));
                 } finally {
                     monitor.finishTask();
                     monitor.close();
@@ -184,6 +161,7 @@ public final class MapWithAIDataUtils {
                     () -> MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
                             "There are no defined URLs. Attempting to add the appropriate servers.\nPlease try again."))
                             : new Notification(tr("No URLS are enabled")));
+            Objects.requireNonNull(noUrls);
             noUrls.setDuration(Notification.TIME_DEFAULT);
             noUrls.setIcon(JOptionPane.INFORMATION_MESSAGE);
             noUrls.setHelpTopic(ht("Plugin/MapWithAI#Preferences"));
@@ -195,6 +173,42 @@ public final class MapWithAIDataUtils {
             }
         }
         return dataSet;
+    }
+
+    /**
+     * Download an area
+     *
+     * @param monitor           The monitor to update
+     * @param dataSet           The dataset to add to
+     * @param bound             The bounds that are being downloading
+     * @param mapWithAIInfo     The source of the data
+     * @param maximumDimensions The maximum dimensions to download
+     */
+    private static void download(PleaseWaitProgressMonitor monitor, DataSet dataSet, Bounds bound,
+            MapWithAIInfo mapWithAIInfo, int maximumDimensions) {
+        BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
+                DetectTaskingManagerUtils.hasTaskingManagerLayer());
+        try {
+            DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
+            synchronized (MapWithAIDataUtils.class) {
+                dataSet.mergeFrom(ds);
+            }
+        } catch (OsmTransferException e) {
+            if (e.getCause() instanceof SocketTimeoutException && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10
+                    && maximumDimensions / 2f > 0.5) {
+                dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
+            } else if (e.getCause() instanceof IllegalDataException) {
+                Logging.error(e);
+                Notification notification = new Notification();
+                notification.setContent(tr("MapWithAI servers may be down."));
+                GuiHelper.runInEDT(notification::show);
+            } else {
+                Logging.error(e);
+                Notification notification = new Notification();
+                GuiHelper.runInEDT(() -> notification.setContent(e.getLocalizedMessage()));
+                GuiHelper.runInEDT(notification::show);
+            }
+        }
     }
 
     private static boolean confirmBigDownload(List<Bounds> realBounds) {
@@ -460,9 +474,11 @@ public final class MapWithAIDataUtils {
      * @return The number of objects added from the MapWithAI data layer
      */
     public static Long getAddedObjects() {
-        return GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands())
-                .parallelStream().filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
-                .mapToLong(MapWithAIAddCommand::getAddedObjects).sum();
+        return Optional
+                .ofNullable(GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands()))
+                .map(commands -> commands.parallelStream().filter(MapWithAIAddCommand.class::isInstance)
+                        .map(MapWithAIAddCommand.class::cast).mapToLong(MapWithAIAddCommand::getAddedObjects).sum())
+                .orElse(0L);
     }
 
     /**
@@ -471,8 +487,11 @@ public final class MapWithAIDataUtils {
      * @return The source tags for Objects added from the MapWithAI data layer
      */
     public static List<String> getAddedObjectsSource() {
-        return GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands())
-                .parallelStream().filter(MapWithAIAddCommand.class::isInstance).map(MapWithAIAddCommand.class::cast)
-                .flatMap(com -> com.getSourceTags().stream()).distinct().collect(Collectors.toList());
+        return Optional
+                .ofNullable(GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands()))
+                .map(commands -> commands.parallelStream().filter(MapWithAIAddCommand.class::isInstance)
+                        .map(MapWithAIAddCommand.class::cast).flatMap(com -> com.getSourceTags().stream()).distinct()
+                        .collect(Collectors.toList()))
+                .orElseGet(Collections::emptyList);
     }
 }
