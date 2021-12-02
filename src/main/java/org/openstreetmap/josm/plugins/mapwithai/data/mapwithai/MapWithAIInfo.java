@@ -25,9 +25,9 @@ import org.openstreetmap.josm.data.StructUtils.StructEntry;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
+import org.openstreetmap.josm.data.preferences.BooleanProperty;
 import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
-import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -40,6 +40,8 @@ public class MapWithAIInfo extends
     private Map<String, String> replacementTags;
     private boolean conflate;
     private String conflationUrl;
+    public static BooleanProperty THIRD_PARTY_CONFLATE = new BooleanProperty("mapwithai.third_party.conflate", true);
+
     /**
      * The preferred source string for the source. This is added as a source tag on
      * the object _and_ is added to the changeset tags.
@@ -391,7 +393,7 @@ public class MapWithAIInfo extends
 
     public String getUrlExpanded() {
         StringBuilder sb;
-        if (conflate && Config.getPref().getBoolean("mapwithai.third_party.conflate", true)) {
+        if (conflate && THIRD_PARTY_CONFLATE.get()) {
             sb = getConflationUrl();
         } else {
             sb = getNonConflatedUrl();
