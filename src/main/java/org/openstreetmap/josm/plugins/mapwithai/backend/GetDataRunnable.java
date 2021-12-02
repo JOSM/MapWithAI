@@ -199,12 +199,12 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     public static void removeEmptyTags(DataSet dataSet, Bounds bounds) {
         Bounds boundsToUse;
         if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
-            boundsToUse = dataSet.getDataSourceBounds().get(0);
+            boundsToUse = new Bounds(dataSet.getDataSourceBounds().get(0));
             dataSet.getDataSourceBounds().forEach(boundsToUse::extend);
         } else if (bounds == null) {
             boundsToUse = new Bounds(-MAX_LATITUDE, -MAX_LONGITUDE, MAX_LATITUDE, MAX_LONGITUDE);
         } else {
-            boundsToUse = bounds;
+            boundsToUse = new Bounds(bounds);
         }
         dataSet.searchPrimitives(boundsToUse.toBBox()).forEach(GetDataRunnable::realRemoveEmptyTags);
     }
