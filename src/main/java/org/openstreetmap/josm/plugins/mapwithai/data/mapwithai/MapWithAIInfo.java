@@ -40,7 +40,8 @@ public class MapWithAIInfo extends
     private Map<String, String> replacementTags;
     private boolean conflate;
     private String conflationUrl;
-    public static BooleanProperty THIRD_PARTY_CONFLATE = new BooleanProperty("mapwithai.third_party.conflate", true);
+    public static final BooleanProperty THIRD_PARTY_CONFLATE = new BooleanProperty("mapwithai.third_party.conflate",
+            true);
 
     /**
      * The preferred source string for the source. This is added as a source tag on

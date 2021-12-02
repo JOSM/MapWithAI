@@ -197,7 +197,7 @@ public class ESRISourceReader {
             newInfo.setSource(sourceTag.toString());
         }
         newInfo.setTermsOfUseURL("https://wiki.openstreetmap.org/wiki/Esri/ArcGIS_Datasets#License");
-        return (newInfo);
+        return newInfo;
     }
 
     /**
