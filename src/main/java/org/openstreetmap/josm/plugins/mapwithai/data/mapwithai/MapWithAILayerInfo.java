@@ -18,7 +18,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -344,7 +346,16 @@ public class MapWithAILayerInfo {
         private void updateEsriLayers(@Nonnull final Collection<MapWithAIInfo> layers) {
             for (MapWithAIInfo layer : layers) {
                 if (MapWithAIType.ESRI == layer.getSourceType()) {
-                    allDefaultLayers.addAll(parseEsri(layer));
+                    for (Future<MapWithAIInfo> future : parseEsri(layer)) {
+                        try {
+                            allDefaultLayers.add(future.get());
+                        } catch (InterruptedException e) {
+                            Logging.error(e);
+                            Thread.currentThread().interrupt();
+                        } catch (ExecutionException e) {
+                            Logging.error(e);
+                        }
+                    }
                 } else {
                     allDefaultLayers.add(layer);
                 }
@@ -385,7 +396,7 @@ public class MapWithAILayerInfo {
          * @param layer The layer to parse
          * @return The Feature Servers for the ESRI layer
          */
-        private Collection<MapWithAIInfo> parseEsri(MapWithAIInfo layer) {
+        private Collection<Future<MapWithAIInfo>> parseEsri(MapWithAIInfo layer) {
             try {
                 return new ESRISourceReader(layer).parse();
             } catch (IOException e) {

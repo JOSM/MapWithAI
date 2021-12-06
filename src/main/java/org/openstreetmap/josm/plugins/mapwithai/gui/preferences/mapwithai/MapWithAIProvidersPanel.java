@@ -36,6 +36,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -658,8 +660,15 @@ public class MapWithAIProvidersPanel extends JPanel {
                     if (MapWithAIType.ESRI == info.getSourceType()) {
                         final ESRISourceReader reader = new ESRISourceReader(info);
                         try {
-                            for (MapWithAIInfo i : reader.parse()) {
-                                ACTIVE_MODEL.addRow(i);
+                            for (Future<MapWithAIInfo> i : reader.parse()) {
+                                try {
+                                    ACTIVE_MODEL.addRow(i.get());
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    Logging.error(e);
+                                } catch (ExecutionException e) {
+                                    Logging.error(e);
+                                }
                             }
                         } catch (IOException e) {
                             Logging.error(e);

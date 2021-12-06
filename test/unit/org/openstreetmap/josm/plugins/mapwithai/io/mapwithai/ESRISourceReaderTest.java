@@ -4,11 +4,14 @@ package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -60,7 +63,14 @@ class ESRISourceReaderTest {
         for (String url : Arrays.asList(tUrl, tUrl + "/")) {
             info.setUrl(url);
             final ESRISourceReader reader = new ESRISourceReader(info);
-            Collection<MapWithAIInfo> layers = reader.parse();
+            List<MapWithAIInfo> layers = reader.parse().stream().map(future -> {
+                try {
+                    return future.get();
+                } catch (ExecutionException | InterruptedException e) {
+                    fail(e);
+                }
+                return null;
+            }).collect(Collectors.toList());
             Future<?> workerQueue = MainApplication.worker.submit(() -> {
                 /* Sync threads */});
             Awaitility.await().atMost(Durations.FIVE_SECONDS).until(workerQueue::isDone);

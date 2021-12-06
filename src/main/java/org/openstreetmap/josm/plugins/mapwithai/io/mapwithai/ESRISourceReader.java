@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
@@ -36,7 +37,6 @@ import org.apache.commons.jcs3.engine.behavior.IElementAttributes;
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
-import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
@@ -89,7 +89,7 @@ public class ESRISourceReader {
      * @return list of source info
      * @throws IOException if any I/O error occurs
      */
-    public List<MapWithAIInfo> parse() throws IOException {
+    public List<Future<MapWithAIInfo>> parse() throws IOException {
         Pattern startReplace = Pattern.compile("\\{start}");
         String search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=" + INITIAL_SEARCH
                 + "&start={start}";
@@ -99,7 +99,7 @@ public class ESRISourceReader {
             url = url.concat("/");
         }
 
-        final List<MapWithAIInfo> information = Collections.synchronizedList(new ArrayList<>());
+        final List<Future<MapWithAIInfo>> information = Collections.synchronizedList(new ArrayList<>());
 
         int next = 1;
         String searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
@@ -124,7 +124,7 @@ public class ESRISourceReader {
                     JsonArray features = obj.getJsonArray("results");
                     for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
                         futureList.add(forkJoinPool.submit(() -> {
-                            MapWithAIInfo info = parse(feature);
+                            Future<MapWithAIInfo> info = parse(feature);
                             information.add(info);
                         }));
                     }
@@ -147,13 +147,16 @@ public class ESRISourceReader {
         return information;
     }
 
-    private MapWithAIInfo parse(JsonObject feature) {
+    private Future<MapWithAIInfo> parse(JsonObject feature) {
         // Use the initial esri server information to keep conflation info
         MapWithAIInfo newInfo = new MapWithAIInfo(source);
         newInfo.setId(feature.getString("id"));
+        Future<MapWithAIInfo> future;
         if (feature.getString("type", "").equals("Feature Service")) {
-            MainApplication.worker.execute(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))));
+            future = MapWithAIDataUtils.getForkJoinPool()
+                    .submit(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))), newInfo);
         } else {
+            future = CompletableFuture.completedFuture(newInfo);
             newInfo.setUrl(feature.getString("url"));
         }
         newInfo.setName(feature.getString("title", feature.getString("name")));
@@ -197,7 +200,7 @@ public class ESRISourceReader {
             newInfo.setSource(sourceTag.toString());
         }
         newInfo.setTermsOfUseURL("https://wiki.openstreetmap.org/wiki/Esri/ArcGIS_Datasets#License");
-        return newInfo;
+        return future;
     }
 
     /**
