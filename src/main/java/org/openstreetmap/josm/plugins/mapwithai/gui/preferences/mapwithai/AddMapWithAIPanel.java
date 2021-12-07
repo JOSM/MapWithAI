@@ -3,17 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.LayoutManager;
-import java.awt.event.ItemEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -28,6 +17,17 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
+
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.LayoutManager;
+import java.awt.event.ItemEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryType;
@@ -196,8 +196,8 @@ class AddMapWithAIPanel extends JPanel {
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (Map.Entry<String, Pair<String, Boolean>> entry : parameters.entrySet()) {
             JsonObjectBuilder entryBuilder = Json.createObjectBuilder();
-            entryBuilder.add("parameter", entry.getKey());
-            entryBuilder.add("description", entry.getValue().a);
+            entryBuilder.add("description", entry.getKey());
+            entryBuilder.add("parameter", entry.getValue().a);
             entryBuilder.add("enabled", entry.getValue().b);
             builder.add(entryBuilder.build());
         }

@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 
 import java.io.Serializable;
@@ -30,10 +31,12 @@ import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Utils;
 
 public class MapWithAIInfo extends
         SourceInfo<MapWithAICategory, MapWithAIType, ImageryInfo.ImageryBounds, MapWithAIInfo.MapWithAIPreferenceEntry> {
 
+    private static final String PARAMETER_STRING = "parameter";
     private List<MapWithAICategory> categories;
     private JsonArray parameters;
     private Supplier<Map<String, String>> replacementTagsSupplier;
@@ -300,9 +303,29 @@ public class MapWithAIInfo extends
                 && Objects.equals(this.categories, other.categories)
                 && Objects.equals(this.alreadyConflatedKey, other.alreadyConflatedKey)
                 && (this.source == null || other.source == null || Objects.equals(this.source, other.source))
-                && ((this.parameters == null && other.parameters == null)
-                        || Objects.equals(this.parameters, other.parameters));
+                && compareParameters(this.parameters, other.parameters);
         // CHECKSTYLE.ON: BooleanExpressionComplexity
+    }
+
+    private static boolean compareParameters(JsonArray first, JsonArray second) {
+        if (Objects.equals(first, second)) {
+            return true;
+        }
+        if (first != null && second != null && first.size() == second.size()) {
+            for (JsonObject value : Utils.filteredCollection(first, JsonObject.class)) {
+                if (value.containsKey(PARAMETER_STRING)
+                        && value.get(PARAMETER_STRING).getValueType() == JsonValue.ValueType.STRING
+                        && Utils.filteredCollection(second, JsonObject.class).stream()
+                                .filter(obj -> obj.containsKey(PARAMETER_STRING)
+                                        && obj.get(PARAMETER_STRING).getValueType() == JsonValue.ValueType.STRING)
+                                .map(obj -> obj.getString(PARAMETER_STRING))
+                                .noneMatch(obj -> value.getString(PARAMETER_STRING).equals(obj))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private static final Map<String, String> localizedCountriesCache = new HashMap<>();
@@ -378,8 +401,9 @@ public class MapWithAIInfo extends
     private static List<String> getParametersString(JsonArray parameters) {
         return parameters == null ? Collections.emptyList()
                 : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
-                        .filter(map -> map.getBoolean("enabled", false)).filter(map -> map.containsKey("parameter"))
-                        .map(map -> map.getString("parameter")).collect(Collectors.toList());
+                        .filter(map -> map.getBoolean("enabled", false))
+                        .filter(map -> map.containsKey(PARAMETER_STRING)).map(map -> map.getString(PARAMETER_STRING))
+                        .collect(Collectors.toList());
 
     }
 
