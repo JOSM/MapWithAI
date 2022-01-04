@@ -3,7 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.json.Json;
+import javax.json.JsonValue;
+import javax.json.stream.JsonParser;
+
 import java.awt.geom.Area;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
@@ -32,8 +37,10 @@ import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.tools.HttpClient;
+import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -169,7 +176,31 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         DataSet ds;
         String contentType = this.activeConnection.getResponse().getContentType();
         if (contentType.contains("text/json") || contentType.contains("application/json")
-                || contentType.contains("application/geo+json")) {
+                || contentType.contains("application/geo+json")
+                // Fall back to Esri Feature Server check. They don't always indicate a json
+                // return type. :(
+                || this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {
+            if (source.markSupported()) {
+                source.mark(1024);
+                try (JsonParser parser = Json.createParser(source)) {
+                    while (parser.hasNext()) {
+                        JsonParser.Event event = parser.next();
+                        if (event == JsonParser.Event.START_OBJECT) {
+                            parser.getObjectStream().filter(entry -> "properties".equals(entry.getKey()))
+                                    .filter(entry -> entry.getValue().getValueType() == JsonValue.ValueType.OBJECT)
+                                    .map(entry -> entry.getValue().asJsonObject())
+                                    .filter(value -> value.containsKey("exceededTransferLimit") && value
+                                            .get("exceededTransferLimit").getValueType() == JsonValue.ValueType.TRUE)
+                                    .findFirst().ifPresent(val -> {
+                                        Logging.error("Could not fully download {0}", this.downloadArea);
+                                    });
+                        }
+                    }
+                    source.reset();
+                } catch (IOException e) {
+                    throw new JosmRuntimeException(e);
+                }
+            }
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
                 GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
