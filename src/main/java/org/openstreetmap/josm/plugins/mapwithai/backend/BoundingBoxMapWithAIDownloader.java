@@ -3,6 +3,10 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.json.Json;
+import javax.json.JsonValue;
+import javax.json.stream.JsonParser;
+
 import java.awt.geom.Area;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -16,10 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParser;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;

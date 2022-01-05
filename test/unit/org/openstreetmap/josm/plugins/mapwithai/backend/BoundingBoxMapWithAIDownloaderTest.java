@@ -6,11 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -76,7 +77,9 @@ class BoundingBoxMapWithAIDownloaderTest {
         Logging.clearLastErrorAndWarnings();
         final DataSet ds = assertDoesNotThrow(
                 () -> boundingBoxMapWithAIDownloader.parseOsm(NullProgressMonitor.INSTANCE));
-        List<String> errors = Logging.getLastErrorAndWarnings();
+        List<String> errors = new ArrayList<>(Logging.getLastErrorAndWarnings());
+        // Needed to avoid CI failures
+        errors.removeIf(str -> str.contains("Failed to persist preferences"));
         assertEquals(1, errors.size(),
                 "We weren't handling transfer limit issues. Are we now?\n" + String.join("\n", errors));
         assertTrue(errors.get(0).contains("Could not fully download"));
