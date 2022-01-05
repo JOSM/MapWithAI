@@ -8,6 +8,7 @@ import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 
 import java.awt.geom.Area;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
@@ -180,30 +181,31 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 // Fall back to Esri Feature Server check. They don't always indicate a json
                 // return type. :(
                 || this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {
-            if (source.markSupported()) {
-                source.mark(1024);
-                try (JsonParser parser = Json.createParser(source)) {
-                    while (parser.hasNext()) {
-                        JsonParser.Event event = parser.next();
-                        if (event == JsonParser.Event.START_OBJECT) {
-                            parser.getObjectStream().filter(entry -> "properties".equals(entry.getKey()))
-                                    .filter(entry -> entry.getValue().getValueType() == JsonValue.ValueType.OBJECT)
-                                    .map(entry -> entry.getValue().asJsonObject())
-                                    .filter(value -> value.containsKey("exceededTransferLimit") && value
-                                            .get("exceededTransferLimit").getValueType() == JsonValue.ValueType.TRUE)
-                                    .findFirst().ifPresent(val -> {
-                                        Logging.error("Could not fully download {0}", this.downloadArea);
-                                    });
-                        }
-                    }
-                    source.reset();
-                } catch (IOException e) {
-                    throw new JosmRuntimeException(e);
-                }
+            if (!source.markSupported()) {
+                source = new BufferedInputStream(source);
             }
-            ds = GeoJSONReader.parseDataSet(source, progressMonitor);
-            if (info.getReplacementTags() != null) {
-                GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
+            source.mark(1024);
+            try (JsonParser parser = Json.createParser(source)) {
+                while (parser.hasNext()) {
+                    JsonParser.Event event = parser.next();
+                    if (event == JsonParser.Event.START_OBJECT) {
+                        parser.getObjectStream().filter(entry -> "properties".equals(entry.getKey()))
+                                .filter(entry -> entry.getValue().getValueType() == JsonValue.ValueType.OBJECT)
+                                .map(entry -> entry.getValue().asJsonObject())
+                                .filter(value -> value.containsKey("exceededTransferLimit") && value
+                                        .get("exceededTransferLimit").getValueType() == JsonValue.ValueType.TRUE)
+                                .findFirst().ifPresent(val -> {
+                                    Logging.error("Could not fully download {0}", this.downloadArea);
+                                });
+                    }
+                }
+                source.reset();
+                ds = GeoJSONReader.parseDataSet(source, progressMonitor);
+                if (info.getReplacementTags() != null) {
+                    GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
+                }
+            } catch (IOException e) {
+                throw new JosmRuntimeException(e);
             }
         } else {
             // Fall back to XML parsing
