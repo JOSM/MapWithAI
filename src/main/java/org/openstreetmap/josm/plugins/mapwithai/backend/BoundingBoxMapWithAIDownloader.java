@@ -3,15 +3,12 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParser;
-
 import java.awt.geom.Area;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,6 +16,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
+import javax.json.Json;
+import javax.json.JsonValue;
+import javax.json.stream.JsonParser;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
@@ -176,8 +177,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds;
         String contentType = this.activeConnection.getResponse().getContentType();
-        if (contentType.contains("text/json") || contentType.contains("application/json")
-                || contentType.contains("application/geo+json")
+        if (Arrays.asList("text/json", "application/json", "application/geo+json").contains(contentType)
                 // Fall back to Esri Feature Server check. They don't always indicate a json
                 // return type. :(
                 || this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {

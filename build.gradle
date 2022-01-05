@@ -81,7 +81,7 @@ def versions = [
   junit: "5.8.2",
   pmd: "6.20.0",
   spotbugs: "4.5.0",
-  wiremock: "2.27.2",
+  wiremock: "2.32.0",
   findsecbugs: "1.11.0",
 ]
 
@@ -99,7 +99,7 @@ dependencies {
   testImplementation("org.jmockit:jmockit:${versions.jmockit}")
   testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
   testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
-  testImplementation("com.github.tomakehurst:wiremock:${versions.wiremock}")
+  testImplementation("com.github.tomakehurst:wiremock-jre8:${versions.wiremock}")
   testImplementation("org.awaitility:awaitility:${versions.awaitility}")
 }
 
