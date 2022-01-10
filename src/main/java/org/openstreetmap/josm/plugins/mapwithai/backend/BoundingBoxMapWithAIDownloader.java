@@ -173,7 +173,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         if (Arrays.asList("text/json", "application/json", "application/geo+json").contains(contentType)
                 // Fall back to Esri Feature Server check. They don't always indicate a json
                 // return type. :(
-                || this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {
+                || (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated())) {
             ds = GeoJSONReader.parseDataSet(source, progressMonitor);
             if (info.getReplacementTags() != null) {
                 GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
