@@ -357,9 +357,12 @@ publish update site:
   - |
     rm -vrf "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     mkdir -pv "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
+    rm -vrf "pages/public/snapshot/libs"
+    mkdir -pv "pages/public/snapshot/libs"
     cp -v "build/snapshot-update-site" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/update-site"
     cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     cp -v "build/dist/${PLUGIN_JAR_BASE_NAME}.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/${PLUGIN_JAR_BASE_NAME}-dev.jar"
+    cp -v "build/libs/*test-fixture*" "pages/public/snapshot/libs"
   - *push_pages_branch
   needs: ["compile against min JOSM", "compile against latest JOSM", "build"]
   dependencies:
