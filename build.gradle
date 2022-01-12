@@ -5,13 +5,14 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.diffplug.spotless" version "6.1.0"
+  id "com.diffplug.spotless" version "6.1.2"
   id "com.github.ben-manes.versions" version "0.41.0"
   id "com.github.spotbugs" version "4.8.0"
   // id "de.aaschmid.cpd" version "3.3"
   id "eclipse"
   id "jacoco"
   id "java"
+  id "java-test-fixtures" /* Used for publishing test fixtures package */
   id "maven-publish"
   id "net.ltgt.errorprone" version "2.0.2"
   id "org.openstreetmap.josm" version "0.7.1"
@@ -53,10 +54,19 @@ repositories {
 sourceSets {
   test {
     java {
-      srcDirs = ["test/unit"]
+      srcDirs = ["src/test/unit"]
     }
     resources {
-      srcDirs = ["test/data"]
+      srcDirs = ["src/test/resources"]
+    }
+  }
+  testFixtures {
+    java {
+      srcDirs = ["src/test/unit"]
+      setIncludes(new HashSet(['org/openstreetmap/josm/plugins/mapwithai/testutils/**/*.java']))
+    }
+    resources {
+      srcDirs = ["src/test/resources"]
     }
   }
   intTest {
@@ -65,10 +75,10 @@ sourceSets {
     runtimeClasspath += sourceSets.main.output
     runtimeClasspath += sourceSets.test.output
     java {
-      srcDirs = ["test/integration"]
+      srcDirs = ["src/test/integration"]
     }
     resources {
-      srcDirs = ["test/data"]
+      srcDirs = ["src/test/resources"]
     }
   }
 }
@@ -76,13 +86,14 @@ sourceSets {
 def versions = [
   awaitility: "4.1.1",
   errorprone: "2.10.0",
-  jacoco: "0.8.5",
+  jacoco: "0.8.7",
   jmockit: "1.49",
   junit: "5.8.2",
   pmd: "6.20.0",
   spotbugs: "4.5.3",
   wiremock: "2.32.0",
   findsecbugs: "1.11.0",
+  josm: properties.get("plugin.compile.version"),
 ]
 
 dependencies {
@@ -92,18 +103,21 @@ dependencies {
   spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${versions.findsecbugs}"
   errorprone("com.google.errorprone:error_prone_core:${versions.errorprone}")
 
-  testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
-  testImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
-  testImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
-  testImplementation("org.jmockit:jmockit:${versions.jmockit}")
-  testImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
-  testImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
-  testImplementation("com.github.tomakehurst:wiremock-jre8:${versions.wiremock}")
-  testImplementation("org.awaitility:awaitility:${versions.awaitility}")
+  testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
+  testFixturesRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
+  testFixturesImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
+  testFixturesImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
+  testFixturesImplementation("org.jmockit:jmockit:${versions.jmockit}")
+  testFixturesImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
+  testFixturesImplementation("org.openstreetmap.josm:josm:${versions.josm}")
+  testFixturesImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
+  testFixturesImplementation("com.github.tomakehurst:wiremock-jre8:${versions.wiremock}")
+  testFixturesImplementation("org.awaitility:awaitility:${versions.awaitility}")
 }
 
 configurations {
+    testImplementation.extendsFrom testFixturesImplementation
+    testRuntimeOnly.extendsFrom testFixturesRuntimeOnly
     intTestRuntimeOnly.extendsFrom testRuntimeOnly
     intTestImplementation.extendsFrom testImplementation
 }

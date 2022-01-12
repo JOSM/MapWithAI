@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="mapwithai" default="dist" basedir=".">
   <property name="plugin.src.dir" value="src/main/java"/>
+  <property name="plugin.test.dir" value="src/test"/>
 
   <!-- edit the properties of this plugin in the file `gradle.properties` -->
   <property file="${basedir}/gradle.properties"/>
