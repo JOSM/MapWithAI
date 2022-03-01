@@ -1,3 +1,4 @@
+import groovy.xml.XmlParser
 import net.ltgt.gradle.errorprone.CheckSeverity
 import org.openstreetmap.josm.gradle.plugin.task.GeneratePluginList
 
@@ -5,9 +6,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.diffplug.spotless" version "6.1.2"
-  id "com.github.ben-manes.versions" version "0.41.0"
-  id "com.github.spotbugs" version "4.8.0"
+  id "com.diffplug.spotless" version "6.3.0"
+  id "com.github.ben-manes.versions" version "0.42.0"
+  id "com.github.spotbugs" version "5.0.6"
   // id "de.aaschmid.cpd" version "3.3"
   id "eclipse"
   id "jacoco"
@@ -15,13 +16,32 @@ plugins {
   id "java-test-fixtures" /* Used for publishing test fixtures package */
   id "maven-publish"
   id "net.ltgt.errorprone" version "2.0.2"
-  id "org.openstreetmap.josm" version "0.7.1"
+  id "org.openstreetmap.josm" version "0.8.0"
   id "org.sonarqube" version "3.3"
   id "pmd"
 }
 
-java.sourceCompatibility = JavaVersion.VERSION_1_8
-java.targetCompatibility = JavaVersion.VERSION_1_8
+int getJavaVersion() {
+  // We want to use whatever Java version CI has as default
+  def ci = project.hasProperty("isCI") or project.hasProperty("CI") or System.getenv("CI") != null
+  // But we want to override if someone set a specific Java version
+  def javaVersion = System.getenv("JAVA_VERSION")?.isInteger() ? Integer.valueOf(System.getenv("JAVA_VERSION")) : null
+  if (javaVersion != null) {
+    return javaVersion
+  }
+  if (ci) {
+    return Integer.valueOf(JavaVersion.current().getMajorVersion())
+  }
+  return 8
+}
+
+logger.lifecycle("Using Java " + getJavaVersion())
+
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(getJavaVersion()))
+  }
+}
 
 // Set up Errorprone
 tasks.withType(JavaCompile).configureEach {
@@ -85,7 +105,8 @@ sourceSets {
 
 def versions = [
   awaitility: "4.1.1",
-  errorprone: "2.10.0",
+  // Errorprone 2.11 requires Java 11+
+  errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.11.0" : "2.10.0",
   jacoco: "0.8.7",
   jmockit: "1.49",
   junit: "5.8.2",
@@ -97,7 +118,7 @@ def versions = [
 ]
 
 dependencies {
-  if (!JavaVersion.current().isJava9Compatible()) {
+  if (!JavaVersion.toVersion(getJavaVersion()).isJava9Compatible()) {
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
   }
   spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${versions.findsecbugs}"
@@ -226,8 +247,8 @@ jacoco {
 jacocoTestReport {
   dependsOn test
   reports {
-    xml.enabled = true
-    html.enabled = true
+    xml.required.set(true)
+    html.required.set(true)
   }
 }
 check.dependsOn jacocoTestReport
@@ -249,8 +270,8 @@ spotbugs {
 }
 spotbugsMain {
   reports {
-    xml.enabled = false
-    html.enabled = true
+    xml.required.set(false)
+    html.required.set(true)
   }
 }
 
@@ -272,16 +293,14 @@ task generateSnapshotUpdateSite(type: GeneratePluginList) {
   }
 }
 
-project.afterEvaluate {
-  publishing {
-    publications {
-      josmPlugin(MavenPublication) {
-        pom {
-          groupId = "org.openstreetmap.josm.plugins"
-          artifactId = archivesBaseName
-          version = project.version
-        }
-      }
+publishing {
+  publications {
+    maven(MavenPublication) {
+      groupId = "org.openstreetmap.josm.plugins"
+      artifactId = archivesBaseName
+      version = project.version
+
+      from components.java
     }
   }
 }
