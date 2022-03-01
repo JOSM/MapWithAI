@@ -371,4 +371,10 @@ public class MergeDuplicateWays extends Command {
             currentCommand.fillModifiedData(modified, deleted, added);
         }
     }
+
+    @Override
+    public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        return commands.stream().flatMap(currentCommand -> currentCommand.getParticipatingPrimitives().stream())
+                .collect(Collectors.toSet());
+    }
 }

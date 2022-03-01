@@ -161,6 +161,12 @@ public abstract class AbstractConflationCommand extends Command {
         }
     }
 
+    @Override
+    public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        // This is used for debugging. Default to anything that might be affected.
+        return Collections.unmodifiableCollection(this.possiblyAffectedPrimitives);
+    }
+
     /**
      * Use this to ensure that something that cannot be undone without errors isn't
      * undone.

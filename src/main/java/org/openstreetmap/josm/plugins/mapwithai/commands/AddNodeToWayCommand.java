@@ -94,6 +94,11 @@ public class AddNodeToWayCommand extends Command {
         modified.addAll(Arrays.asList(getToAddNode(), getWay()));
     }
 
+    @Override
+    public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        return changeCommand.getParticipatingPrimitives();
+    }
+
     /**
      * Get the node that will be added to a way
      *

@@ -178,4 +178,9 @@ public class MovePrimitiveDataSetCommand extends Command {
             Collection<OsmPrimitive> added) {
         command.fillModifiedData(modified, deleted, added);
     }
+
+    @Override
+    public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        return command.getParticipatingPrimitives();
+    }
 }

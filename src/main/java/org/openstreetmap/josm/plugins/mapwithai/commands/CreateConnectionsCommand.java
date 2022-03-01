@@ -141,6 +141,11 @@ public class CreateConnectionsCommand extends Command {
         command.fillModifiedData(modified, deleted, added);
     }
 
+    @Override
+    public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        return command.getParticipatingPrimitives();
+    }
+
     /**
      * Add third-party commands that are run when conflating data.
      *

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
@@ -150,6 +151,12 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     public void fillModifiedData(Collection<OsmPrimitive> modified, Collection<OsmPrimitive> deleted,
             Collection<OsmPrimitive> added) {
         modified.addAll(primitives);
+    }
+
+    @Override
+    public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        return Stream.of(command.getParticipatingPrimitives(), primitives).flatMap(Collection::stream)
+                .collect(Collectors.toSet());
     }
 
     /**
