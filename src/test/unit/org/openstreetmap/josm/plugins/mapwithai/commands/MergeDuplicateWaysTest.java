@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,7 +45,7 @@ class MergeDuplicateWaysTest {
     JOSMTestRules test = new JOSMTestRules().projection();
 
     /**
-     * Test method for {@link MergeDuplicateWays#removeCommonTags(DataSet)}.
+     * Test method for {@link MergeDuplicateWays#removeCommonTags}.
      */
     @Test
     void testRemoveCommonTags() {
@@ -58,7 +59,7 @@ class MergeDuplicateWaysTest {
     }
 
     /**
-     * Test method for {@link MergeDuplicateWays#filterDataSet(DataSet)}.
+     * Test method for {@link MergeDuplicateWays#filterDataSet}.
      */
     @Test
     void testFilterDataSet() {
@@ -71,20 +72,24 @@ class MergeDuplicateWaysTest {
         ds1.addPrimitive(way1);
         ds1.addPrimitive(way2);
 
-        new MergeDuplicateWays(ds1).executeCommand();
+        MergeDuplicateWays command = new MergeDuplicateWays(ds1);
+        command.executeCommand();
         assertFalse(way1.isDeleted(), "way1 should not yet be deleted");
         assertFalse(way2.isDeleted(), "way2 should not yet be deleted");
         way1.getNodes().forEach(node -> assertFalse(way2.containsNode(node)));
         way2.getNodes().forEach(node -> assertFalse(way1.containsNode(node)));
+        assertTrue(command.getParticipatingPrimitives().isEmpty());
 
         final Node tNode = new Node(new LatLon(1, 1));
         ds1.addPrimitive(tNode);
         way1.addNode(1, tNode);
 
-        new MergeDuplicateWays(ds1).executeCommand();
-        assertNotSame(way1.isDeleted(), way2.isDeleted(), "Either way1 or way2 should be delted, but not both");
+        command = new MergeDuplicateWays(ds1);
+        command.executeCommand();
+        assertNotSame(way1.isDeleted(), way2.isDeleted(), "Either way1 or way2 should be deleted, but not both");
         final Way tWay = way1.isDeleted() ? way2 : way1;
         assertEquals(4, tWay.getNodesCount(), "The undeleted way should have the missing node(s) from the other way");
+        assertTrue(command.getParticipatingPrimitives().containsAll(Arrays.asList(way1, way2)));
     }
 
     /**
@@ -170,26 +175,26 @@ class MergeDuplicateWaysTest {
                     "The second node of way1 should be the second node of way2");
             command.undoCommand();
         }
-
-        assertThrows(NullPointerException.class, () -> MergeDuplicateWays.mergeWays(null, null, null),
-                "Throw NPE if any argument is null");
-        assertNull(MergeDuplicateWays.mergeWays(new Way(), new Way(), Collections.emptySet()),
-                "We should return null if there is no overlap");
-        assertNull(MergeDuplicateWays.mergeWays(new Way(), new Way(), set),
-                "We should return null if there is no overlap");
+        assertAll(
+                () -> assertThrows(NullPointerException.class, () -> MergeDuplicateWays.mergeWays(null, null, null),
+                        "Throw NPE if any argument is null"),
+                () -> assertNull(MergeDuplicateWays.mergeWays(new Way(), new Way(), Collections.emptySet()),
+                        "We should return null if there is no overlap"),
+                () -> assertNull(MergeDuplicateWays.mergeWays(new Way(), new Way(), set),
+                        "We should return null if there is no overlap"));
     }
 
     private static void checkCommand(Command command, Way way1, Way way2, int expectedNodes) {
         int way1InitialNodes = way1.getNodesCount();
         command.executeCommand();
-        assertTrue(way2.isDeleted(), "way2 should be deleted");
-        assertFalse(way1.isDeleted(), "way1 should not be deleted");
-        assertEquals(expectedNodes, way1.getNodesCount(), "way1 should have an additional node");
+        assertAll(() -> assertTrue(way2.isDeleted(), "way2 should be deleted"),
+                () -> assertFalse(way1.isDeleted(), "way1 should not be deleted"),
+                () -> assertEquals(expectedNodes, way1.getNodesCount(), "way1 should have an additional node"));
 
         command.undoCommand();
-        assertFalse(way2.isDeleted(), "way2 should not be deleted");
-        assertFalse(way1.isDeleted(), "way1 should not be deleted");
-        assertEquals(way1InitialNodes, way1.getNodesCount(), "way1 should not have an additional node");
+        assertAll(() -> assertFalse(way2.isDeleted(), "way2 should not be deleted"),
+                () -> assertFalse(way1.isDeleted(), "way1 should not be deleted"),
+                () -> assertEquals(way1InitialNodes, way1.getNodesCount(), "way1 should not have an additional node"));
     }
 
     /**
@@ -241,7 +246,7 @@ class MergeDuplicateWaysTest {
         integerList.remove(3);
         assertFalse(MergeDuplicateWays.sorted(integerList), "The list is not sorted");
 
-        integerList = Arrays.asList(1);
+        integerList = Collections.singletonList(1);
         assertTrue(MergeDuplicateWays.sorted(integerList), "The list is sorted");
     }
 
@@ -255,20 +260,20 @@ class MergeDuplicateWaysTest {
 
         Map<Pair<Integer, Node>, Map<Integer, Node>> duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
         assertEquals(2, duplicateNodes.size(), "There should be two duplicate pairs");
-        assertEquals(2, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count());
+        assertEquals(2, duplicateNodes.values().stream().mapToLong(col -> col.keySet().size()).sum());
 
         way2.addNode(new Node(new LatLon(0, 0)));
 
         duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
         assertEquals(2, duplicateNodes.size(), "There should be two duplicate pairs");
-        assertEquals(3, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count(),
+        assertEquals(3, duplicateNodes.values().stream().mapToLong(col -> col.keySet().size()).sum(),
                 "There are three nodes that should be in the list");
 
         way2.addNode(way2.firstNode());
 
         duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
         assertEquals(2, duplicateNodes.size(), "There should be two duplicate pairs");
-        assertEquals(4, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count(),
+        assertEquals(4, duplicateNodes.values().stream().mapToLong(col -> col.keySet().size()).sum(),
                 "There should be four nodes in the duplicate values list");
 
         way2.setNodes(way2.getNodes().stream().limit(2).collect(Collectors.toList()));
@@ -276,7 +281,7 @@ class MergeDuplicateWaysTest {
 
         duplicateNodes = MergeDuplicateWays.getDuplicateNodes(way1, way2);
         assertEquals(2, duplicateNodes.size(), "There should be two duplicate pairs");
-        assertEquals(2, duplicateNodes.values().stream().flatMap(col -> col.keySet().stream()).count(),
+        assertEquals(2, duplicateNodes.values().stream().mapToLong(col -> col.keySet().size()).sum(),
                 "There should only be two duplicate nodes");
     }
 
@@ -333,7 +338,9 @@ class MergeDuplicateWaysTest {
             ds.addPrimitive(way);
         }
         way2.firstNode().setDeleted(true);
-        assertDoesNotThrow(() -> new MergeDuplicateWays(ds, ways).executeCommand());
+        final MergeDuplicateWays command = new MergeDuplicateWays(ds, ways);
+        assertDoesNotThrow(command::executeCommand);
+        assertTrue(command.getParticipatingPrimitives().isEmpty());
     }
 
     /**
@@ -351,6 +358,8 @@ class MergeDuplicateWaysTest {
             ds.addPrimitive(way);
         }
         way2.setDeleted(true);
-        assertDoesNotThrow(() -> new MergeDuplicateWays(ds, ways).executeCommand());
+        final MergeDuplicateWays command = new MergeDuplicateWays(ds, ways);
+        assertDoesNotThrow(command::executeCommand);
+        assertTrue(command.getParticipatingPrimitives().isEmpty());
     }
 }

@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -41,29 +43,32 @@ class MovePrimitiveDataSetCommandTest {
         final DataSet from = new DataSet();
         final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0.1, 0.1)));
-        way1.getNodes().stream().forEach(node -> from.addPrimitive(node));
+        way1.getNodes().forEach(from::addPrimitive);
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 
         final MovePrimitiveDataSetCommand move = new MovePrimitiveDataSetCommand(to, from, Collections.singleton(way1));
-        assertEquals(0, to.allNonDeletedPrimitives().size());
-        assertEquals(4, from.allNonDeletedPrimitives().size());
+        assertAll(() -> assertEquals(0, to.allNonDeletedPrimitives().size()),
+                () -> assertEquals(4, from.allNonDeletedPrimitives().size()));
 
         move.executeCommand();
         move.fillModifiedData(modified, deleted, added);
-        assertEquals(0, deleted.size());
-        assertEquals(0, added.size()); // the JOSM Add command doesn't add to this list
-        assertEquals(0, modified.size());
-        assertEquals(1, from.allNonDeletedPrimitives().size());
-        assertEquals(3, to.allNonDeletedPrimitives().size());
-        assertNotNull(to.getPrimitiveById(way1));
-        assertTrue(way1.isDeleted());
+        final Collection<? extends OsmPrimitive> participatingPrimitives = move.getParticipatingPrimitives();
+        assertAll(() -> assertEquals(0, deleted.size()), () -> assertEquals(0, added.size()), // the JOSM Add command
+                                                                                              // doesn't add to this
+                                                                                              // list
+                () -> assertEquals(0, modified.size()), () -> assertEquals(1, from.allNonDeletedPrimitives().size()),
+                () -> assertEquals(3, to.allNonDeletedPrimitives().size()),
+                () -> assertNotNull(to.getPrimitiveById(way1)), () -> assertTrue(way1.isDeleted()),
+                // This should be 6 (3 from originating dataset
+                () -> assertEquals(3, participatingPrimitives.size()),
+                () -> assertTrue(participatingPrimitives.contains(way1)),
+                () -> assertTrue(participatingPrimitives.containsAll(way1.getNodes())));
 
         move.undoCommand();
-        assertEquals(0, to.allNonDeletedPrimitives().size());
-        assertEquals(4, from.allNonDeletedPrimitives().size());
-        assertNotNull(from.getPrimitiveById(way1));
-        assertFalse(way1.isDeleted());
+        assertAll(() -> assertEquals(0, to.allNonDeletedPrimitives().size()),
+                () -> assertEquals(4, from.allNonDeletedPrimitives().size()),
+                () -> assertNotNull(from.getPrimitiveById(way1)), () -> assertFalse(way1.isDeleted()));
     }
 
     @Test
@@ -75,7 +80,7 @@ class MovePrimitiveDataSetCommandTest {
         final DataSet from = new DataSet();
         final Way way1 = TestUtils.newWay("highway=tertiary", new Node(new LatLon(0, 0)),
                 new Node(new LatLon(0.1, 0.1)));
-        way1.getNodes().stream().forEach(node -> from.addPrimitive(node));
+        way1.getNodes().forEach(from::addPrimitive);
         from.addPrimitive(way1);
         from.addPrimitive(new Node(new LatLon(-0.1, 0.1)));
 
@@ -83,30 +88,36 @@ class MovePrimitiveDataSetCommandTest {
 
         way1.firstNode().put("highway", "stop");
 
-        modified.clear();
-        added.clear();
-        deleted.clear();
         move.executeCommand();
         move.fillModifiedData(modified, deleted, added);
-        assertEquals(0, deleted.size());
-        assertEquals(0, added.size()); // the JOSM Add command doesn't add to this list
-        assertEquals(0, modified.size());
-        assertEquals(1, from.allNonDeletedPrimitives().size());
-        assertEquals(3, to.allNonDeletedPrimitives().size());
-        assertNotNull(to.getPrimitiveById(way1));
+        final List<OsmPrimitive> participatingPrimitives = new ArrayList<>(move.getParticipatingPrimitives());
+        assertAll(() -> assertEquals(0, deleted.size()), () -> assertEquals(0, added.size()), // the JOSM Add command
+                                                                                              // doesn't add to this
+                                                                                              // list
+                () -> assertEquals(0, modified.size()), () -> assertEquals(1, from.allNonDeletedPrimitives().size()),
+                () -> assertEquals(3, to.allNonDeletedPrimitives().size()),
+                () -> assertNotNull(to.getPrimitiveById(way1)),
+                // This should be 6, but due to the way hashCode is implemented in
+                // OsmPrimitive, it is 3 (the code hashes the id only).
+                // Fortunately, Sets use the hashcode to check contains
+                () -> assertEquals(3, participatingPrimitives.size()));
 
         move.undoCommand();
-        assertEquals(0, to.allNonDeletedPrimitives().size());
-        assertEquals(4, from.allNonDeletedPrimitives().size());
-        assertEquals(from, way1.getDataSet());
+        assertAll(() -> assertEquals(0, to.allNonDeletedPrimitives().size()),
+                () -> assertEquals(4, from.allNonDeletedPrimitives().size()),
+                () -> assertEquals(from, way1.getDataSet()));
 
         for (final DataSet ds : Arrays.asList(from, to)) {
             ds.lock();
             move = new MovePrimitiveDataSetCommand(to, from, Collections.singleton(way1));
             move.executeCommand();
-            assertEquals(0, to.allNonDeletedPrimitives().size());
-            assertEquals(4, from.allNonDeletedPrimitives().size());
-            assertNotNull(from.getPrimitiveById(way1));
+            participatingPrimitives.clear();
+            participatingPrimitives.addAll(move.getParticipatingPrimitives());
+            assertAll(() -> assertEquals(0, to.allNonDeletedPrimitives().size()),
+                    () -> assertEquals(4, from.allNonDeletedPrimitives().size()),
+                    () -> assertNotNull(from.getPrimitiveById(way1)),
+                    // Nothing should change...
+                    () -> assertTrue(participatingPrimitives.isEmpty()));
             move.undoCommand();
             assertFalse(from.getPrimitiveById(way1).isDeleted());
             ds.unlock();
@@ -114,17 +125,21 @@ class MovePrimitiveDataSetCommandTest {
 
         move = new MovePrimitiveDataSetCommand(to, null, Collections.singleton(way1));
         move.executeCommand();
-        assertEquals(0, to.allNonDeletedPrimitives().size());
-        assertEquals(4, from.allNonDeletedPrimitives().size());
-        assertNotNull(from.getPrimitiveById(way1));
+        participatingPrimitives.clear();
+        participatingPrimitives.addAll(move.getParticipatingPrimitives());
+        assertAll(() -> assertEquals(0, to.allNonDeletedPrimitives().size()),
+                () -> assertEquals(4, from.allNonDeletedPrimitives().size()),
+                () -> assertNotNull(from.getPrimitiveById(way1)), () -> assertTrue(participatingPrimitives.isEmpty()));
         move.undoCommand();
         assertFalse(from.getPrimitiveById(way1).isDeleted());
 
         move = new MovePrimitiveDataSetCommand(to, to, Collections.singleton(way1));
         move.executeCommand();
-        assertEquals(0, to.allNonDeletedPrimitives().size());
-        assertEquals(4, from.allNonDeletedPrimitives().size());
-        assertNotNull(from.getPrimitiveById(way1));
+        participatingPrimitives.clear();
+        participatingPrimitives.addAll(move.getParticipatingPrimitives());
+        assertAll(() -> assertEquals(0, to.allNonDeletedPrimitives().size()),
+                () -> assertEquals(4, from.allNonDeletedPrimitives().size()),
+                () -> assertNotNull(from.getPrimitiveById(way1)), () -> assertTrue(participatingPrimitives.isEmpty()));
         move.undoCommand();
         assertFalse(from.getPrimitiveById(way1).isDeleted());
     }

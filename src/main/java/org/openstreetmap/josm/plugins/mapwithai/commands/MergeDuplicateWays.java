@@ -44,10 +44,6 @@ public class MergeDuplicateWays extends Command {
         this(data, null, null);
     }
 
-    public MergeDuplicateWays(DataSet data, Way way1) {
-        this(data, way1, null);
-    }
-
     public MergeDuplicateWays(Way way1) {
         this(way1.getDataSet(), way1, null);
     }
@@ -180,10 +176,10 @@ public class MergeDuplicateWays extends Command {
         final Map<Pair<Integer, Node>, Map<Integer, Node>> duplicateNodes = getDuplicateNodes(way1, way2);
         final Set<Map.Entry<Pair<Integer, Node>, Map<Integer, Node>>> duplicateEntrySet = duplicateNodes.entrySet();
         final Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> compressed = duplicateNodes.entrySet().stream()
-                .map(entry -> new Pair<Pair<Integer, Node>, Pair<Integer, Node>>(entry.getKey(),
+                .map(entry -> new Pair<>(entry.getKey(),
                         new Pair<>(entry.getValue().entrySet().iterator().next().getKey(),
                                 entry.getValue().entrySet().iterator().next().getValue())))
-                .sorted((pair1, pair2) -> pair1.a.a - pair2.a.a).collect(Collectors.toSet());
+                .sorted((pair1, pair2) -> pair1.a.a - pair2.a.a).collect(Collectors.toCollection(LinkedHashSet::new));
         if (compressed.parallelStream().anyMatch(entry -> entry.a.b.isDeleted() || entry.b.b.isDeleted())) {
             Logging.error("Bad node");
             Logging.error("{0}", way1);

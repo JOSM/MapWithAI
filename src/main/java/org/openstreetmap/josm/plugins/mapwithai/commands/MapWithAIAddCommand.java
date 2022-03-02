@@ -5,10 +5,12 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -155,8 +157,10 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
-        return Stream.of(command.getParticipatingPrimitives(), primitives).flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+        return Stream
+                .of(Optional.ofNullable(command).map(Command::getParticipatingPrimitives)
+                        .orElseGet(Collections::emptySet), primitives)
+                .flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
     /**

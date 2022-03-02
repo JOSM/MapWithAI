@@ -7,9 +7,11 @@ import static org.openstreetmap.josm.tools.I18n.trn;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -162,8 +164,6 @@ public class MovePrimitiveDataSetCommand extends Command {
                 }
                 command = DeleteCommand.delete(command.getParticipatingPrimitives());
                 command.executeCommand();
-            } catch (Exception e) {
-                throw e;
             }
         }
     }
@@ -181,6 +181,6 @@ public class MovePrimitiveDataSetCommand extends Command {
 
     @Override
     public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
-        return command.getParticipatingPrimitives();
+        return Optional.ofNullable(command).map(Command::getParticipatingPrimitives).orElseGet(Collections::emptySet);
     }
 }

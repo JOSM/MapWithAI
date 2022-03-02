@@ -36,6 +36,7 @@ class MergeBuildingAddressTest {
         addr.put("addr:housenumber", "1");
         MergeBuildingAddress conflation = new MergeBuildingAddress(ds);
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
         final double square = 0.0001;
         Way way = TestUtils.newWay("", new Node(new LatLon(-square, -square)), new Node(new LatLon(-square, square)),
                 new Node(new LatLon(square, square)), new Node(new LatLon(square, -square)));
@@ -48,6 +49,7 @@ class MergeBuildingAddressTest {
         Command command = conflation.getCommand(Collections.singletonList(addr));
         command.executeCommand();
         assertEquals("1", way.get("addr:housenumber"));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
         command.undoCommand();
 
         way.remove("building");
@@ -60,6 +62,7 @@ class MergeBuildingAddressTest {
         command = conflation.getCommand(Collections.singletonList(addr));
         command.executeCommand();
         assertEquals("1", multipolygon.get("addr:housenumber"));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
         command.undoCommand();
     }
 
@@ -76,6 +79,7 @@ class MergeBuildingAddressTest {
         addr2.put("addr:street", "Test");
         MergeBuildingAddress conflation = new MergeBuildingAddress(ds);
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
         final double square = 0.0001;
         Way way = TestUtils.newWay("", new Node(new LatLon(-square, -square)), new Node(new LatLon(-square, square)),
                 new Node(new LatLon(square, square)), new Node(new LatLon(square, -square)));
@@ -83,9 +87,11 @@ class MergeBuildingAddressTest {
         ds.addPrimitive(way);
         way.addNode(way.firstNode());
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
 
         way.put("building", "yes");
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
 
         way.remove("building");
         Relation multipolygon = new Relation();
@@ -93,7 +99,9 @@ class MergeBuildingAddressTest {
         multipolygon.put("type", "multipolygon");
         ds.addPrimitive(multipolygon);
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
         multipolygon.put("building", "yes");
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
+        assertEquals(1, conflation.getParticipatingPrimitives().size());
     }
 }
