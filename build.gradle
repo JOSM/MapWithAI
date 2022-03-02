@@ -71,6 +71,9 @@ def gitlabRepositoryName = "JOSM_MapWithAI"
 
 repositories {
   mavenCentral()
+  maven {
+    url "https://josm.openstreetmap.de/nexus/content/repositories/releases/"
+  }
 }
 
 sourceSets {
@@ -110,7 +113,7 @@ def versions = [
   // Errorprone 2.11 requires Java 11+
   errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.11.0" : "2.10.0",
   jacoco: "0.8.7",
-  jmockit: "1.49",
+  jmockit: "1.49.a",
   junit: "5.8.2",
   pmd: "6.20.0",
   spotbugs: "4.5.3",
