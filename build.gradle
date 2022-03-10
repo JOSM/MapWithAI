@@ -109,14 +109,14 @@ sourceSets {
 }
 
 def versions = [
-  awaitility: "4.1.1",
+  awaitility: "4.2.0",
   // Errorprone 2.11 requires Java 11+
   errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.11.0" : "2.10.0",
   jacoco: "0.8.7",
   jmockit: "1.49.a",
   junit: "5.8.2",
   pmd: "6.20.0",
-  spotbugs: "4.5.3",
+  spotbugs: "4.6.0",
   wiremock: "2.32.0",
   findsecbugs: "1.11.0",
   josm: properties.get("plugin.compile.version"),
