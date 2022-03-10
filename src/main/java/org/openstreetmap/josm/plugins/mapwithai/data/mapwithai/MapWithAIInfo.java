@@ -418,7 +418,7 @@ public class MapWithAIInfo extends
 
     public String getUrlExpanded() {
         StringBuilder sb;
-        if (conflate && THIRD_PARTY_CONFLATE.get()) {
+        if (this.isConflated()) {
             sb = getConflationUrl();
         } else {
             sb = getNonConflatedUrl();
@@ -512,7 +512,7 @@ public class MapWithAIInfo extends
      * @return {@code true} if it should be returned already conflated
      */
     public boolean isConflated() {
-        return this.conflate;
+        return this.conflate && THIRD_PARTY_CONFLATE.get();
     }
 
     /**
