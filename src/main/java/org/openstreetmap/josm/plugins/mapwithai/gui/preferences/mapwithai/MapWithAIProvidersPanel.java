@@ -222,7 +222,7 @@ public class MapWithAIProvidersPanel extends JPanel {
     private static class MapWithAILicenseTableCellRenderer extends MapWithAITableCellRenderer<String> {
 
         MapWithAILicenseTableCellRenderer() {
-            super(s -> !s.isEmpty() ? "<html><a href=\"" + s + "\">License</a>" : "",
+            super(s -> s != null && !s.isEmpty() ? "<html><a href=\"" + s + "\">License</a>" : "",
                     u -> MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
                             .filter(i -> u.equals(i.getUrl())).findFirst().orElse(null),
                     u -> u, null, true);
