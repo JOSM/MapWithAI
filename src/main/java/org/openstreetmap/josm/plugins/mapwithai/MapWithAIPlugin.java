@@ -22,6 +22,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.download.DownloadDialog;
+import org.openstreetmap.josm.gui.download.DownloadSelection;
 import org.openstreetmap.josm.gui.download.OSMDownloadSource;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.gui.util.GuiHelper;
@@ -124,12 +125,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MapPaintUtils.addMapWithAIPaintStyles();
 
         destroyables = new ArrayList<>();
-        // Run in EDT to avoid blocking (has to be run before MapWithAIDownloadOptions
-        // so its already initialized)
-        GuiHelper.runInEDT(MapWithAILayerInfo::getInstance);
-        MapWithAIDownloadOptions mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
-        mapWithAIDownloadOptions.addGui(DownloadDialog.getInstance());
-        destroyables.add(mapWithAIDownloadOptions);
 
         setVersionInfo(info.localversion);
         RequestProcessor.addRequestHandlerClass("mapwithai", MapWithAIRemoteControl.class);
@@ -141,6 +136,17 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));
 
         destroyables.add(new MapWithAICopyProhibit());
+    }
+
+    @Override
+    public void addDownloadSelection(List<DownloadSelection> list) {
+        // Run in EDT to avoid blocking (has to be run before MapWithAIDownloadOptions
+        // so its already initialized)
+        GuiHelper.runInEDT(MapWithAILayerInfo::getInstance);
+        MapWithAIDownloadOptions mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
+        MainApplication.worker
+                .execute(() -> GuiHelper.runInEDT(() -> mapWithAIDownloadOptions.addGui(DownloadDialog.getInstance())));
+        destroyables.add(mapWithAIDownloadOptions);
     }
 
     @Override

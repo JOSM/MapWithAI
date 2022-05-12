@@ -39,7 +39,7 @@ public final class CountryUtils {
      */
     public static Optional<ImageryInfo.ImageryBounds> getCountryShape(String country) {
         GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country);
-        if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
+        if (geoPropertyIndex != null && geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
             DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
             Rectangle2D areaBounds = prop.getArea().getBounds2D();
             ImageryInfo.ImageryBounds tmp = new ImageryInfo.ImageryBounds(bboxToBoundsString(

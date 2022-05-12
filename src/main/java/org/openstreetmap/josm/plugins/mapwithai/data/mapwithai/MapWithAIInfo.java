@@ -229,7 +229,7 @@ public class MapWithAIInfo extends
             if (e.shapes != null) {
                 try {
                     for (String s : e.shapes.split(";", -1)) {
-                        if (s.matches("[\\d,]+")) {
+                        if (s.matches("[\\d,.-]+")) {
                             bounds.addShape(new Shape(s, ","));
                         } else {
                             CountryUtils.getCountryShape(s).map(SourceBounds::getShapes)
