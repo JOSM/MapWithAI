@@ -35,7 +35,6 @@ import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
@@ -193,7 +192,7 @@ public class MapWithAILayerInfo {
         if (System.getSecurityManager() != null) {
             Logging.trace("MapWithAI loaded: {0}", ESRISourceReader.SOURCE_CACHE.getClass());
         }
-        loadDefaults(false, MapWithAIDataUtils.getForkJoinPool(), fastFail, listener);
+        loadDefaults(false, MainApplication.worker, fastFail, listener);
     }
 
     /**

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,6 +28,7 @@ import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
+import org.openstreetmap.josm.data.sources.SourceBounds;
 import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
@@ -116,6 +118,22 @@ public class MapWithAIInfo extends
                         .collect(Collectors.joining(";"));
             }
             alreadyConflatedKey = i.alreadyConflatedKey;
+            if (i.bounds != null && this.shapes != null && this.shapes.length() > Byte.MAX_VALUE) {
+                List<String> parts = new ArrayList<>(i.bounds.getShapes().size());
+                for (Shape s : i.bounds.getShapes()) {
+                    Optional<String> country = CountryUtils.shapeToCountry(s);
+                    if (country.isPresent()) {
+                        if (!parts.contains(country.get())) {
+                            parts.add(country.get());
+                        }
+                    } else {
+                        parts.add(s.encodeAsString(","));
+                    }
+                }
+                if (!parts.isEmpty()) {
+                    shapes = String.join(";", parts);
+                }
+            }
         }
 
         @Override
@@ -211,7 +229,12 @@ public class MapWithAIInfo extends
             if (e.shapes != null) {
                 try {
                     for (String s : e.shapes.split(";", -1)) {
-                        bounds.addShape(new Shape(s, ","));
+                        if (s.matches("[\\d,]+")) {
+                            bounds.addShape(new Shape(s, ","));
+                        } else {
+                            CountryUtils.getCountryShape(s).map(SourceBounds::getShapes)
+                                    .orElseThrow(IllegalStateException::new).forEach(bounds::addShape);
+                        }
                     }
                 } catch (IllegalArgumentException ex) {
                     Logging.warn(ex);

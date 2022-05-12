@@ -1,19 +1,13 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
-import static org.openstreetmap.josm.tools.I18n.tr;
-
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
 import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,16 +15,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
-import org.openstreetmap.josm.data.imagery.Shape;
-import org.openstreetmap.josm.data.osm.BBox;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.CountryUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
-import org.openstreetmap.josm.tools.DefaultGeoProperty;
-import org.openstreetmap.josm.tools.GeoPropertyIndex;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
@@ -43,9 +33,6 @@ import org.openstreetmap.josm.tools.Territories;
  * source</a>.
  */
 public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo>> implements Closeable {
-
-    private static final int COORD_ARRAY_SIZE = 6;
-
     /**
      * Constructs a {@code MapWithAISourceReader} from a given filename, URL or
      * internal resource.
@@ -143,15 +130,7 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
                 List<ImageryBounds> bounds = new ArrayList<>();
                 for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
                     if (codes.contains(country.getKey())) {
-                        GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country.getKey());
-                        if (geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
-                            DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
-                            Rectangle2D areaBounds = prop.getArea().getBounds2D();
-                            ImageryBounds tmp = new ImageryBounds(bboxToBoundsString(new BBox(areaBounds.getMinX(),
-                                    areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY())), ",");
-                            areaToShapes(prop.getArea()).forEach(tmp::addShape);
-                            bounds.add(tmp);
-                        }
+                        CountryUtils.getCountryShape(country.getKey()).ifPresent(bounds::add);
                     }
                 }
                 return bounds;
@@ -161,39 +140,5 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
 
         }
         return new ArrayList<>();
-    }
-
-    private static Collection<Shape> areaToShapes(java.awt.Shape shape) {
-        PathIterator iterator = shape.getPathIterator(new AffineTransform());
-        Shape defaultShape = new Shape();
-        Collection<Shape> shapes = new ArrayList<>();
-        float[] moveTo = null;
-        while (!iterator.isDone()) {
-            float[] coords = new float[COORD_ARRAY_SIZE];
-            int type = iterator.currentSegment(coords);
-            if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
-                if (type == PathIterator.SEG_MOVETO) {
-                    moveTo = coords;
-                }
-                defaultShape.addPoint(Float.toString(coords[1]), Float.toString(coords[0]));
-            } else if (type == PathIterator.SEG_CLOSE && moveTo != null) {
-                defaultShape.addPoint(Float.toString(moveTo[1]), Float.toString(moveTo[0]));
-                shapes.add(defaultShape);
-                defaultShape = new Shape();
-            } else {
-                Logging.error(tr("No implementation for converting a segment of type {0} to coordinates", type));
-            }
-            iterator.next();
-        }
-        if (!defaultShape.getPoints().isEmpty()) {
-            shapes.add(defaultShape);
-        }
-        return shapes;
-    }
-
-    private static String bboxToBoundsString(BBox bbox) {
-        return String.join(",", LatLon.cDdFormatter.format(bbox.getBottomRightLat()),
-                LatLon.cDdFormatter.format(bbox.getTopLeftLon()), LatLon.cDdFormatter.format(bbox.getTopLeftLat()),
-                LatLon.cDdFormatter.format(bbox.getBottomRightLon()));
     }
 }
