@@ -61,6 +61,7 @@ import org.openstreetmap.josm.gui.preferences.imagery.ImageryProvidersPanel;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.gui.widgets.FilterField;
 import org.openstreetmap.josm.gui.widgets.HtmlPanel;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -854,7 +855,7 @@ public class MapWithAIProvidersPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent evt) {
             this.setEnabled(false);
-            MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false, () ->
+            MapWithAILayerInfo.getInstance().loadDefaults(true, MapWithAIDataUtils.getForkJoinPool(), false, () ->
             // This needs to be run in a block to avoid race conditions.
             GuiHelper.runInEDT(() -> {
                 defaultTable.getSelectionModel().clearSelection();

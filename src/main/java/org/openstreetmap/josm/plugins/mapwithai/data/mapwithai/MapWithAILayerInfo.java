@@ -19,8 +19,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,7 @@ import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
@@ -192,7 +194,7 @@ public class MapWithAILayerInfo {
         if (System.getSecurityManager() != null) {
             Logging.trace("MapWithAI loaded: {0}", ESRISourceReader.SOURCE_CACHE.getClass());
         }
-        loadDefaults(false, MainApplication.worker, fastFail, listener);
+        loadDefaults(false, MapWithAIDataUtils.getForkJoinPool(), fastFail, listener);
     }
 
     /**
@@ -210,7 +212,7 @@ public class MapWithAILayerInfo {
      * @param listener   A listener to call when the everything is done
      * @since 12634
      */
-    public void loadDefaults(boolean clearCache, ExecutorService worker, boolean fastFail, FinishListener listener) {
+    public void loadDefaults(boolean clearCache, ForkJoinPool worker, boolean fastFail, FinishListener listener) {
         final DefaultEntryLoader loader = new DefaultEntryLoader(clearCache, fastFail);
         if (this.finishListenerListenerList == null) {
             this.finishListenerListenerList = ListenerList.create();
@@ -227,7 +229,7 @@ public class MapWithAILayerInfo {
 
                 @Override
                 protected void realRun() {
-                    loader.run();
+                    loader.compute();
                 }
 
                 @Override
@@ -257,7 +259,7 @@ public class MapWithAILayerInfo {
     /**
      * Loader/updater of the available imagery entries
      */
-    class DefaultEntryLoader implements Runnable {
+    class DefaultEntryLoader extends RecursiveTask<List<MapWithAIInfo>> {
 
         private final boolean clearCache;
         private final boolean fastFail;
@@ -277,7 +279,7 @@ public class MapWithAILayerInfo {
         }
 
         @Override
-        public void run() {
+        public List<MapWithAIInfo> compute() {
             if (this.clearCache) {
                 ESRISourceReader.SOURCE_CACHE.clear();
             }
@@ -294,7 +296,7 @@ public class MapWithAILayerInfo {
                 }
                 for (String source : getImageryLayersSites()) {
                     if (canceled) {
-                        return;
+                        return this.newLayers;
                     }
                     loadSource(source);
                 }
@@ -315,6 +317,7 @@ public class MapWithAILayerInfo {
                 }
             }
             this.finish();
+            return this.newLayers;
         }
 
         protected void loadSource(String source) {
@@ -609,11 +612,11 @@ public class MapWithAILayerInfo {
     }
 
     /**
-     * Remove preview layers, if {@link SHOW_PREVIEW} is not {@code true}
+     * Remove preview layers, if {@link #SHOW_PREVIEW} is not {@code true}
      *
      * @param layers The layers to filter
-     * @return The layers without any preview layers, if {@link SHOW_PREVIEW} is not
-     *         {@code true}.
+     * @return The layers without any preview layers, if {@link #SHOW_PREVIEW} is
+     *         not {@code true}.
      */
     private static List<MapWithAIInfo> filterPreview(List<MapWithAIInfo> layers) {
         if (Boolean.TRUE.equals(SHOW_PREVIEW.get()) && ExpertToggleAction.isExpert()) {

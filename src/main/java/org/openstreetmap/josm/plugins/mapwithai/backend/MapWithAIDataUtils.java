@@ -168,7 +168,7 @@ public final class MapWithAIDataUtils {
             GuiHelper.runInEDT(noUrls::show);
             if (MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()
                     && MapWithAILayerInfo.getInstance().getDefaultLayers().isEmpty()) {
-                MapWithAILayerInfo.getInstance().loadDefaults(true, MainApplication.worker, false,
+                MapWithAILayerInfo.getInstance().loadDefaults(true, MapWithAIDataUtils.getForkJoinPool(), false,
                         () -> Logging.info("MapWithAI Sources: Initialized sources"));
             }
         }
