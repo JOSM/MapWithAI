@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -349,7 +349,7 @@ public class MapWithAILayerInfo {
         private void updateEsriLayers(@Nonnull final Collection<MapWithAIInfo> layers) {
             for (MapWithAIInfo layer : layers) {
                 if (MapWithAIType.ESRI == layer.getSourceType()) {
-                    for (Future<MapWithAIInfo> future : parseEsri(layer)) {
+                    for (ForkJoinTask<MapWithAIInfo> future : parseEsri(layer)) {
                         try {
                             allDefaultLayers.add(future.get());
                         } catch (InterruptedException e) {
@@ -399,7 +399,7 @@ public class MapWithAILayerInfo {
          * @param layer The layer to parse
          * @return The Feature Servers for the ESRI layer
          */
-        private Collection<Future<MapWithAIInfo>> parseEsri(MapWithAIInfo layer) {
+        private Collection<ForkJoinTask<MapWithAIInfo>> parseEsri(MapWithAIInfo layer) {
             try {
                 return new ESRISourceReader(layer).parse();
             } catch (IOException e) {

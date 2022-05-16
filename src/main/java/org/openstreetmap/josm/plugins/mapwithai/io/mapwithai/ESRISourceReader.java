@@ -23,10 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
@@ -38,7 +36,6 @@ import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
 import org.openstreetmap.josm.io.CachedFile;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
@@ -89,7 +86,7 @@ public class ESRISourceReader {
      * @return list of source info
      * @throws IOException if any I/O error occurs
      */
-    public List<Future<MapWithAIInfo>> parse() throws IOException {
+    public List<ForkJoinTask<MapWithAIInfo>> parse() throws IOException {
         Pattern startReplace = Pattern.compile("\\{start}");
         String search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=" + INITIAL_SEARCH
                 + "&start={start}";
@@ -99,13 +96,11 @@ public class ESRISourceReader {
             url = url.concat("/");
         }
 
-        final List<Future<MapWithAIInfo>> information = Collections.synchronizedList(new ArrayList<>());
+        final List<ForkJoinTask<MapWithAIInfo>> information = new ArrayList<>();
 
         int next = 1;
         String searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
 
-        final ForkJoinPool forkJoinPool = MapWithAIDataUtils.getForkJoinPool();
-        ArrayList<Future<?>> futureList = new ArrayList<>();
         while (next != -1) {
             final String finalUrl = url + "content/groups/" + group + searchUrl;
             final String jsonString = getJsonString(finalUrl, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()) / 7,
@@ -118,15 +113,11 @@ public class ESRISourceReader {
                 JsonStructure parser = reader.read();
                 if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
                     JsonObject obj = parser.asJsonObject();
-                    futureList.ensureCapacity(obj.getInt("total", INITIAL_SEARCH));
                     next = obj.getInt("nextStart", -1);
                     searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
                     JsonArray features = obj.getJsonArray("results");
                     for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
-                        futureList.add(forkJoinPool.submit(() -> {
-                            Future<MapWithAIInfo> info = parse(feature);
-                            information.add(info);
-                        }));
+                        information.add(parse(feature));
                     }
                 }
             } catch (ClassCastException e) {
@@ -134,8 +125,9 @@ public class ESRISourceReader {
                 next = -1;
             }
         }
-        for (Future<?> future : futureList) {
+        for (ForkJoinTask<MapWithAIInfo> future : information) {
             try {
+                future.join();
                 future.get(1, TimeUnit.MINUTES);
             } catch (InterruptedException interruptedException) {
                 Logging.warn(interruptedException);
@@ -147,17 +139,17 @@ public class ESRISourceReader {
         return information;
     }
 
-    private Future<MapWithAIInfo> parse(JsonObject feature) {
+    private ForkJoinTask<MapWithAIInfo> parse(JsonObject feature) {
         // Use the initial esri server information to keep conflation info
         MapWithAIInfo newInfo = new MapWithAIInfo(source);
         newInfo.setId(feature.getString("id"));
-        Future<MapWithAIInfo> future;
+        ForkJoinTask<MapWithAIInfo> future;
         if (feature.getString("type", "").equals("Feature Service")) {
-            future = MapWithAIDataUtils.getForkJoinPool()
-                    .submit(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))), newInfo);
+            future = ForkJoinTask
+                    .adapt(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))), newInfo).fork();
         } else {
-            future = CompletableFuture.completedFuture(newInfo);
             newInfo.setUrl(feature.getString("url"));
+            future = ForkJoinTask.adapt(() -> newInfo).fork();
         }
         newInfo.setName(feature.getString("title", feature.getString("name")));
         String[] extent = feature.getJsonArray("extent").getValuesAs(JsonArray.class).stream()
@@ -219,38 +211,30 @@ public class ESRISourceReader {
             CachedFile.cleanup(url);
         }
         if (jsonString == null) {
-            synchronized (SOURCE_CACHE) {
-                jsonString = SOURCE_CACHE.get(url);
-                if (jsonString == null) {
-                    HttpClient client = null;
-                    try {
-                        client = HttpClient.create(new URL(url));
-                        if (fastFail) {
-                            client.setReadTimeout(1000);
-                        }
-                        final HttpClient.Response response = client.connect();
-                        jsonString = response.fetchContent();
-                        if (jsonString != null && response.getResponseCode() < 400
-                                && response.getResponseCode() >= 200) {
-                            final IElementAttributes elementAttributes = SOURCE_CACHE.getDefaultElementAttributes();
-                            // getExpiration returns milliseconds
-                            final long expirationTime = response.getExpiration();
-                            if (expirationTime > 0) {
-                                elementAttributes.setMaxLife(response.getExpiration());
-                            } else {
-                                elementAttributes.setMaxLife(defaultMaxAge);
-                            }
-                            SOURCE_CACHE.put(url, jsonString, elementAttributes);
-                        } else {
-                            jsonString = null;
-                        }
-                    } catch (final IOException e) {
-                        Logging.error(e);
-                    } finally {
-                        if (client != null) {
-                            client.disconnect();
-                        }
+            HttpClient client = null;
+            try {
+                client = HttpClient.create(new URL(url));
+                if (fastFail) {
+                    client.setReadTimeout(1000);
+                }
+                final HttpClient.Response response = client.connect();
+                jsonString = response.fetchContent();
+                if (jsonString != null && response.getResponseCode() < 400 && response.getResponseCode() >= 200) {
+                    // getExpiration returns milliseconds
+                    final long expirationTime = response.getExpiration();
+                    final IElementAttributes elementAttributes = SOURCE_CACHE.getDefaultElementAttributes();
+                    if (expirationTime > 0) {
+                        elementAttributes.setMaxLife(response.getExpiration());
+                    } else {
+                        elementAttributes.setMaxLife(defaultMaxAge);
                     }
+                    SOURCE_CACHE.put(url, jsonString, elementAttributes);
+                }
+            } catch (final IOException e) {
+                Logging.error(e);
+            } finally {
+                if (client != null) {
+                    client.disconnect();
                 }
             }
         }
