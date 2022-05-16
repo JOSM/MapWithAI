@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -105,11 +106,13 @@ class MapWithAIPluginTest {
                 MapPaintStyles.getStyles().getStyleSources().parallelStream()
                         .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
                 "The paint style was not added");
+        plugin.addDownloadSelection(Collections.emptyList());
         plugin.destroy();
 
         for (boolean existed : Arrays.asList(false, true)) { // false, true order is important
             plugin = new MapWithAIPlugin(info);
             Config.getPref().putBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS, existed);
+            plugin.addDownloadSelection(Collections.emptyList());
             plugin.destroy();
             assertEquals(dataMenuSize, dataMenu.getMenuComponentCount(),
                     "Menu items were added after they were already added");
@@ -123,6 +126,7 @@ class MapWithAIPluginTest {
 
         for (int i = 0; i < 3; i++) {
             plugin = new MapWithAIPlugin(info);
+            plugin.addDownloadSelection(Collections.emptyList());
             assertEquals(dataMenuSize + 1, dataMenu.getMenuComponentCount(),
                     "The menu items were added multiple times");
             assertEquals(1,
