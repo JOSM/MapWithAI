@@ -156,8 +156,9 @@ public class MapWithAIProvidersPanel extends JPanel {
         /**
          * Initialize a cell renderer with specific rules
          *
-         * @param mapper            Map from <T> to an Object (to get a cell renderer)
-         * @param reverseMapper     Map from an Object to <T>
+         * @param mapper            Map from &lt;T&gt; to an Object (to get a cell
+         *                          renderer)
+         * @param reverseMapper     Map from an Object to &lt;T&gt;
          * @param tooltip           The tooltip to show
          * @param decorator         The decorator
          * @param highlightIfActive If true, highlight when the entry is activated

@@ -47,8 +47,8 @@ import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
- * Take a {@link MapWithAIInfo.MapWithAIType#ESRI} layer and convert it to a
- * list of "true" layers.
+ * Take a {@link MapWithAIType#ESRI} layer and convert it to a list of "true"
+ * layers.
  */
 public class ESRISourceReader {
     private static final int INITIAL_SEARCH = 100;

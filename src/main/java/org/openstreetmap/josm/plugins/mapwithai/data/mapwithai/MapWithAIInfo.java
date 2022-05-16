@@ -64,9 +64,8 @@ public class MapWithAIInfo extends
      * {@link MapWithAIPreferenceEntry#MapWithAIPreferenceEntry(MapWithAIInfo)
      * MapWithAIPreferenceEntry constructor}
      * {@link MapWithAIInfo#MapWithAIInfo(MapWithAIPreferenceEntry) ImageryInfo
-     * constructor} {@link MapWithAIInfo#MapWithAIInfo(ImageryInfo) MapWithAIInfo
-     * constructor} {@link MapWithAIInfo#equalsPref(MapWithAIPreferenceEntry)
-     * equalsPref method}
+     * constructor} {@link MapWithAIInfo#MapWithAIInfo MapWithAIInfo constructor}
+     * {@link MapWithAIInfo#equalsPref equalsPref method}
      **/
     public static class MapWithAIPreferenceEntry extends SourcePreferenceEntry<MapWithAIInfo> {
         @StructEntry
