@@ -1,11 +1,21 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.actions;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import javax.imageio.ImageIO;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -16,6 +26,7 @@ import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -25,6 +36,11 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAIS
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.tools.ImageProvider;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 /**
  * Test class for {@link AddMapWithAILayerAction}
@@ -36,12 +52,13 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 @MapWithAISources
 class AddMapWithAILayerActionTest {
     @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().projection();
+    static JOSMTestRules rule = new MapWithAITestRules().projection();
 
     @Test
     void testAddMapWithAILayerActionTest() {
         MapWithAIInfo info = MapWithAILayerInfo.getInstance().getLayers().stream()
                 .filter(i -> i.getName().equalsIgnoreCase("MapWithAI")).findAny().orElse(null);
+        assertNotNull(info);
         AddMapWithAILayerAction action = new AddMapWithAILayerAction(info);
         assertDoesNotThrow(() -> action.actionPerformed(null));
         OsmDataLayer osmLayer = new OsmDataLayer(new DataSet(), "TEST DATA", null);
@@ -76,7 +93,44 @@ class AddMapWithAILayerActionTest {
         action.actionPerformed(null);
         Awaitility.await().atMost(Durations.FIVE_SECONDS).until(() -> !mapwithaiLayer.getDataSet().isEmpty());
         assertFalse(mapwithaiLayer.getDataSet().isEmpty());
+    }
 
+    @Test
+    void testRemoteIcon() throws IOException, ExecutionException, InterruptedException {
+        final ImageIcon blankImage = ImageProvider.createBlankIcon(ImageProvider.ImageSizes.LARGEICON);
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        // BufferedImage is what the current implementation uses. Otherwise, we will
+        // have to copy it into a BufferedImage.
+        assertTrue(blankImage.getImage() instanceof BufferedImage);
+        final BufferedImage bi = (BufferedImage) blankImage.getImage();
+        ImageIO.write(bi, "png", byteArrayOutputStream);
+        byte[] originalImage = byteArrayOutputStream.toByteArray();
+        final WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
+        try {
+            wireMockServer.start();
+            wireMockServer.addStubMapping(wireMockServer
+                    .stubFor(WireMock.get("/icon").willReturn(WireMock.aResponse().withBody(originalImage))));
+            final MapWithAIInfo info = MapWithAILayerInfo.getInstance().getLayers().stream()
+                    .filter(i -> i.getName().equalsIgnoreCase("MapWithAI")).findAny().orElse(null);
+            assertNotNull(info);
+            final MapWithAIInfo remoteInfo = new MapWithAIInfo(info);
+            remoteInfo.setIcon(wireMockServer.baseUrl() + "/icon");
+            final AddMapWithAILayerAction action = new AddMapWithAILayerAction(remoteInfo);
+            GuiHelper.runInEDTAndWait(() -> {
+                /* Sync EDT */});
+            MainApplication.worker.submit(() -> {
+                /* Sync worker thread */}).get();
+            final Object image = action.getValue(Action.LARGE_ICON_KEY);
+            assertTrue(image instanceof ImageIcon);
+            final ImageIcon attachedIcon = (ImageIcon) image;
+            assertTrue(attachedIcon.getImage() instanceof BufferedImage);
+            byteArrayOutputStream.reset();
+            ImageIO.write((BufferedImage) attachedIcon.getImage(), "png", byteArrayOutputStream);
+            final byte[] downloadedImage = byteArrayOutputStream.toByteArray();
+            assertArrayEquals(originalImage, downloadedImage);
+        } finally {
+            wireMockServer.stop();
+        }
     }
 
 }
