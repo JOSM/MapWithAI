@@ -33,6 +33,7 @@ import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
@@ -316,7 +317,7 @@ public class MapWithAILayerInfo {
                     });
                 }
             }
-            this.finish();
+            GuiHelper.runInEDTAndWait(this::finish);
             return this.newLayers;
         }
 
