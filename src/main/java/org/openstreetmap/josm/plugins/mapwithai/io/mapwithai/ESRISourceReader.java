@@ -36,6 +36,7 @@ import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
 import org.openstreetmap.josm.io.CachedFile;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
@@ -145,12 +146,13 @@ public class ESRISourceReader {
         newInfo.setId(feature.getString("id"));
         ForkJoinTask<MapWithAIInfo> future;
         if (feature.getString("type", "").equals("Feature Service")) {
-            future = ForkJoinTask
-                    .adapt(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))), newInfo).fork();
+            future = ForkJoinTask.adapt(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))),
+                    newInfo);
         } else {
             newInfo.setUrl(feature.getString("url"));
-            future = ForkJoinTask.adapt(() -> newInfo).fork();
+            future = ForkJoinTask.adapt(() -> newInfo);
         }
+        MapWithAIDataUtils.getForkJoinPool().execute(future);
         newInfo.setName(feature.getString("title", feature.getString("name")));
         String[] extent = feature.getJsonArray("extent").getValuesAs(JsonArray.class).stream()
                 .flatMap(array -> array.getValuesAs(JsonNumber.class).stream()).map(JsonNumber::doubleValue)
