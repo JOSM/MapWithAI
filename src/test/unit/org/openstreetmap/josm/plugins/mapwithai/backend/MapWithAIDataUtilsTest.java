@@ -54,7 +54,7 @@ public class MapWithAIDataUtilsTest {
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().main().projection().fakeAPI().territories();
+    static JOSMTestRules test = new MapWithAITestRules().main().projection().fakeAPI().territories();
 
     /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to
@@ -111,10 +111,6 @@ public class MapWithAIDataUtilsTest {
         assertEquals(source, way1.get("source"), "The source for the data should be the specified source");
     }
 
-    public static BBox getTestBBox() {
-        return getTestBounds().toBBox();
-    }
-
     public static Bounds getTestBounds() {
         Bounds bound = new Bounds(new LatLon(39.0734162, -108.5707107));
         bound.extend(39.0738791, -108.5715723);
@@ -148,19 +144,19 @@ public class MapWithAIDataUtilsTest {
     @Test
     void testMapWithAIURLPreferences() {
         final String fakeUrl = "https://fake.url";
-        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .noneMatch(map -> fakeUrl.equals(map.getUrl())), "fakeUrl shouldn't be in the current MapWithAI urls");
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().stream().noneMatch(map -> fakeUrl.equals(map.getUrl())),
+                "fakeUrl shouldn't be in the current MapWithAI urls");
         MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("Fake", fakeUrl), true, true);
-        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> fakeUrl.equals(map.getUrl())), "fakeUrl should have been added");
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().stream().anyMatch(map -> fakeUrl.equals(map.getUrl())),
+                "fakeUrl should have been added");
         final List<MapWithAIInfo> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl());
         assertEquals(2, urls.size(), "There should be two urls (fakeUrl and the default)");
         MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("MapWithAI", DEFAULT_MAPWITHAI_API), true, true);
-        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().stream()
                 .anyMatch(map -> DEFAULT_MAPWITHAI_API.equals(map.getUrl())), "The default URL should exist");
         MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("Fake2", fakeUrl), true, false);
-        assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .filter(map -> fakeUrl.equals(map.getUrl())).count(), "There should only be one fakeUrl");
+        assertEquals(1, MapWithAIPreferenceHelper.getMapWithAIUrl().stream().filter(map -> fakeUrl.equals(map.getUrl()))
+                .count(), "There should only be one fakeUrl");
     }
 
     @Test
@@ -170,8 +166,7 @@ public class MapWithAIDataUtilsTest {
             bounds.extend(i, i);
             List<BBox> bboxes = MapWithAIDataUtils.reduceBoundSize(bounds, 5_000).stream().map(Bounds::toBBox)
                     .collect(Collectors.toList());
-            assertEquals(getExpectedNumberOfBBoxes(bounds, 5_000), bboxes.size(),
-                    "The bbox should be appropriately reduced");
+            assertEquals(getExpectedNumberOfBBoxes(bounds), bboxes.size(), "The bbox should be appropriately reduced");
             checkInBBox(bounds.toBBox(), bboxes);
             checkBBoxesConnect(bounds.toBBox(), bboxes);
         }
@@ -185,15 +180,15 @@ public class MapWithAIDataUtilsTest {
         assertNotNull(MapWithAIDataUtils.getLayer(true));
         Logging.getLastErrorAndWarnings().stream().filter(str -> !str.contains("Failed to locate image"))
                 .forEach(Logging::error);
-        assertTrue(Logging.getLastErrorAndWarnings().stream().filter(str -> !str.contains("Failed to locate image"))
-                .collect(Collectors.toList()).isEmpty());
+        assertEquals(0, Logging.getLastErrorAndWarnings().stream()
+                .filter(str -> !str.contains("Failed to locate image")).count());
     }
 
-    private static int getExpectedNumberOfBBoxes(Bounds bbox, int maximumDimensions) {
+    private static int getExpectedNumberOfBBoxes(Bounds bbox) {
         double width = MapWithAIDataUtils.getWidth(bbox);
         double height = MapWithAIDataUtils.getHeight(bbox);
-        int widthDivisions = (int) Math.ceil(width / maximumDimensions);
-        int heightDivisions = (int) Math.ceil(height / maximumDimensions);
+        int widthDivisions = (int) Math.ceil(width / 5000);
+        int heightDivisions = (int) Math.ceil(height / 5000);
         return widthDivisions * heightDivisions;
     }
 

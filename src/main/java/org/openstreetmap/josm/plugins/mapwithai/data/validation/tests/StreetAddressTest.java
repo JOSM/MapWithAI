@@ -67,7 +67,7 @@ public class StreetAddressTest extends Test {
 
     @Override
     public void endTest() {
-        Map<String, List<OsmPrimitive>> values = namePrimitiveMap.parallelStream()
+        Map<String, List<OsmPrimitive>> values = namePrimitiveMap.stream()
                 .collect(Collectors.groupingBy(p -> p.get(ADDR_STREET)));
         values.forEach(this::createError);
         namePrimitiveMap.clear();
@@ -91,7 +91,7 @@ public class StreetAddressTest extends Test {
     }
 
     public static Collection<String> getWayNames(Collection<Way> ways) {
-        return ways.parallelStream().flatMap(w -> w.getInterestingTags().entrySet().parallelStream())
+        return ways.stream().flatMap(w -> w.getInterestingTags().entrySet().stream())
                 .filter(e -> (e.getKey().contains("name") || e.getKey().contains("ref"))
                         && !e.getKey().contains("tiger"))
                 .map(Map.Entry::getValue).flatMap(s -> Stream.of(s.split(";", -1))).map(String::trim)
@@ -104,12 +104,11 @@ public class StreetAddressTest extends Test {
         BBox addrBox = expandBBox(new BBox(address.getBBox()), BBOX_EXPANSION);
         int expansions = 0;
         int maxExpansions = Config.getPref().getInt("mapwithai.validator.streetaddresstest.maxexpansions", 20);
-        while (ds.searchWays(addrBox).parallelStream().filter(StreetAddressTest::isHighway).count() == 0
-                && expansions < maxExpansions) {
+        while (ds.searchWays(addrBox).stream().noneMatch(StreetAddressTest::isHighway) && expansions < maxExpansions) {
             expandBBox(addrBox, BBOX_EXPANSION);
             expansions++;
         }
-        return ds.searchWays(addrBox).parallelStream().filter(StreetAddressTest::isHighway).collect(Collectors.toSet());
+        return ds.searchWays(addrBox).stream().filter(StreetAddressTest::isHighway).collect(Collectors.toSet());
     }
 
     /**

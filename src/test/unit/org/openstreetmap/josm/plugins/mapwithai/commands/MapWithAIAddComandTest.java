@@ -65,7 +65,7 @@ class MapWithAIAddComandTest {
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().projection().assertionsInEDT().main();
+    static JOSMTestRules test = new MapWithAITestRules().projection().assertionsInEDT().main();
 
     @BeforeEach
     void setUp() {
@@ -233,7 +233,7 @@ class MapWithAIAddComandTest {
     }
 
     /**
-     * https://josm.openstreetmap.de/ticket/18351
+     * JOSM <a href="https://josm.openstreetmap.de/ticket/18351">#18351</a>
      *
      */
     @Test
@@ -304,7 +304,7 @@ class MapWithAIAddComandTest {
         DataSet osmData = new DataSet();
         OsmDataLayer layer = new OsmDataLayer(osmData, "Test Layer", null);
         for (Way way : Arrays.asList(way1, way2)) {
-            way.getNodes().parallelStream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
+            way.getNodes().stream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
             if (way.getDataSet() == null) {
                 ds.addPrimitive(way);
             }

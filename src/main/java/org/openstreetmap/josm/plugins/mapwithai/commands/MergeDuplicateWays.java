@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -118,12 +119,12 @@ public class MergeDuplicateWays extends Command {
     }
 
     public static void filterDataSet(DataSet dataSet, List<Command> commands, Bounds bound) {
-        final List<Way> ways = new ArrayList<>(
-                (bound == null ? dataSet.getWays() : dataSet.searchWays(bound.toBBox())).parallelStream()
-                        .filter(prim -> !prim.isIncomplete() && !prim.isDeleted()).collect(Collectors.toList()));
+        final List<Way> ways = (bound == null ? dataSet.getWays() : dataSet.searchWays(bound.toBBox())).stream()
+                .filter(prim -> !prim.isIncomplete() && !prim.isDeleted())
+                .collect(Collectors.toCollection(ArrayList::new));
         for (int i = 0; i < ways.size(); i++) {
             final Way way1 = ways.get(i);
-            final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).parallelStream()
+            final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).stream()
                     .filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
             nearbyWays.remove(way1);
             for (final Way way2 : nearbyWays) {
@@ -179,14 +180,13 @@ public class MergeDuplicateWays extends Command {
                 .map(entry -> new Pair<>(entry.getKey(),
                         new Pair<>(entry.getValue().entrySet().iterator().next().getKey(),
                                 entry.getValue().entrySet().iterator().next().getValue())))
-                .sorted((pair1, pair2) -> pair1.a.a - pair2.a.a).collect(Collectors.toCollection(LinkedHashSet::new));
-        if (compressed.parallelStream().anyMatch(entry -> entry.a.b.isDeleted() || entry.b.b.isDeleted())) {
+                .sorted(Comparator.comparingInt(pair -> pair.a.a)).collect(Collectors.toCollection(LinkedHashSet::new));
+        if (compressed.stream().anyMatch(entry -> entry.a.b.isDeleted() || entry.b.b.isDeleted())) {
             Logging.error("Bad node");
             Logging.error("{0}", way1);
             Logging.error("{0}", way2);
         }
-        if ((compressed.size() > 1)
-                && duplicateEntrySet.parallelStream().noneMatch(entry -> entry.getValue().size() > 1)) {
+        if ((compressed.size() > 1) && duplicateEntrySet.stream().noneMatch(entry -> entry.getValue().size() > 1)) {
             final List<Integer> initial = compressed.stream().map(entry -> entry.a.a).sorted()
                     .collect(Collectors.toList());
             final List<Integer> after = compressed.stream().map(entry -> entry.b.a).sorted()
@@ -240,18 +240,19 @@ public class MergeDuplicateWays extends Command {
             before.forEach(node -> newWay.addNode(0, node));
             after.forEach(newWay::addNode);
             if (newWay.getNodesCount() > 0) {
-                commands.add(new ChangeCommand(way1, newWay));
+                final ChangeCommand changeCommand = new ChangeCommand(way1, newWay);
+                commands.add(changeCommand);
                 /*
                  * This must be executed, otherwise the delete command will believe that way2
                  * nodes don't belong to anything See Issue #46
                  */
-                commands.get(commands.size() - 1).executeCommand();
+                changeCommand.executeCommand();
                 commands.add(DeleteCommand.delete(Collections.singleton(way2), true, true));
                 /*
                  * Just to ensure that the dataset is consistent prior to the "real"
                  * executeCommand
                  */
-                commands.get(commands.size() - 2).undoCommand();
+                changeCommand.undoCommand();
             }
             if (commands.contains(null)) {
                 commands = commands.stream().filter(Objects::nonNull).collect(Collectors.toList());

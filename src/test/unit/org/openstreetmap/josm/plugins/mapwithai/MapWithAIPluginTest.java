@@ -47,7 +47,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 class MapWithAIPluginTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().main().projection();
+    static JOSMTestRules test = new MapWithAITestRules().main().projection();
 
     PluginInformation info;
     MapWithAIPlugin plugin;
@@ -103,7 +103,7 @@ class MapWithAIPluginTest {
         plugin = new MapWithAIPlugin(info);
         assertEquals(dataMenuSize + 1, dataMenu.getMenuComponentCount(), "Menu items were not added");
         assertEquals(1,
-                MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                MapPaintStyles.getStyles().getStyleSources().stream()
                         .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
                 "The paint style was not added");
         plugin.addDownloadSelection(Collections.emptyList());
@@ -119,7 +119,7 @@ class MapWithAIPluginTest {
             Awaitility.await().atMost(Durations.FIVE_SECONDS)
                     .until(() -> existed == MapPaintUtils.checkIfMapWithAIPaintStyleExists());
             assertEquals(Config.getPref().getBoolean(MapWithAIPlugin.PAINTSTYLE_PREEXISTS) ? 1 : 0,
-                    MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                    MapPaintStyles.getStyles().getStyleSources().stream()
                             .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
                     "The paint style was added multiple times");
         }
@@ -130,7 +130,7 @@ class MapWithAIPluginTest {
             assertEquals(dataMenuSize + 1, dataMenu.getMenuComponentCount(),
                     "The menu items were added multiple times");
             assertEquals(1,
-                    MapPaintStyles.getStyles().getStyleSources().parallelStream()
+                    MapPaintStyles.getStyles().getStyleSources().stream()
                             .filter(source -> source.url != null && source.name.contains("MapWithAI")).count(),
                     "The paint style was added multiple times");
             plugin.destroy();

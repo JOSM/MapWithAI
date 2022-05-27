@@ -129,16 +129,12 @@ public abstract class AbstractConflationCommand extends Command {
                     .toMap(entry -> new SimplePrimitiveId(entry.getValue().a, entry.getValue().b), Map.Entry::getKey));
             final List<PrimitiveId> toFetch = new ArrayList<>(ids.keySet());
             final Optional<OsmDataLayer> optionalLayer = MainApplication.getLayerManager()
-                    .getLayersOfType(OsmDataLayer.class).parallelStream()
-                    .filter(layer -> layer.getDataSet().equals(dataSet)).findFirst();
+                    .getLayersOfType(OsmDataLayer.class).stream().filter(layer -> layer.getDataSet().equals(dataSet))
+                    .findFirst();
 
-            OsmDataLayer layer;
             final String generatedLayerName = "EvKlVarShAiAllsM generated layer";
-            if (optionalLayer.isPresent()) {
-                layer = optionalLayer.get();
-            } else {
-                layer = new OsmDataLayer(dataSet, generatedLayerName, null);
-            }
+            final OsmDataLayer layer = optionalLayer
+                    .orElseGet(() -> new OsmDataLayer(dataSet, generatedLayerName, null));
 
             final ProgressMonitor monitor;
             if (GraphicsEnvironment.isHeadless()) {
@@ -150,7 +146,7 @@ public abstract class AbstractConflationCommand extends Command {
                     monitor);
             downloadPrimitivesTask.run();
             for (final Map.Entry<PrimitiveId, Integer> entry : ids.entrySet()) {
-                final int index = entry.getValue().intValue();
+                final int index = entry.getValue();
                 final OsmPrimitive primitive = dataSet.getPrimitiveById(entry.getKey());
                 primitiveConnections[index] = primitive;
             }

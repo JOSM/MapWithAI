@@ -23,6 +23,7 @@ import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -54,7 +55,7 @@ class RoutingIslandsTestTest {
      */
     @RegisterExtension
     @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().projection().timeout(30000);
+    static JOSMTestRules rule = new JOSMTestRules().projection().timeout(30000);
 
     /**
      * Test method for {@link RoutingIslandsTest#RoutingIslandsTest()} and the
@@ -178,29 +179,29 @@ class RoutingIslandsTestTest {
         assertSame(way1, incomingSet.iterator().next());
 
         Way way2 = TestUtils.newWay("highway=residential", way1.firstNode(), new Node(new LatLon(-1, -2)));
-        way2.getNodes().parallelStream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
+        way2.getNodes().stream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
         ds.addPrimitive(way2);
 
         RoutingIslandsTest.checkForUnconnectedWays(incomingSet, Collections.emptySet(), null);
         assertEquals(2, incomingSet.size());
-        assertTrue(incomingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2).contains(way)));
+        assertTrue(Arrays.asList(way1, way2).containsAll(incomingSet));
 
         Way way3 = TestUtils.newWay("highway=residential", way2.lastNode(), new Node(new LatLon(-2, -1)));
-        way3.getNodes().parallelStream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
+        way3.getNodes().stream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
         ds.addPrimitive(way3);
 
         incomingSet.clear();
         incomingSet.add(way1);
         RoutingIslandsTest.checkForUnconnectedWays(incomingSet, Collections.emptySet(), null);
         assertEquals(3, incomingSet.size());
-        assertTrue(incomingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2, way3).contains(way)));
+        assertTrue(Arrays.asList(way1, way2, way3).containsAll(incomingSet));
 
         Config.getPref().putInt("validator.routingislands.maxrecursion", 1);
         incomingSet.clear();
         incomingSet.add(way1);
         RoutingIslandsTest.checkForUnconnectedWays(incomingSet, Collections.emptySet(), null);
         assertEquals(2, incomingSet.size());
-        assertTrue(incomingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2).contains(way)));
+        assertTrue(Arrays.asList(way1, way2).containsAll(incomingSet));
     }
 
     /**
@@ -221,29 +222,29 @@ class RoutingIslandsTestTest {
         assertSame(way1, outgoingSet.iterator().next());
 
         Way way2 = TestUtils.newWay("highway=residential", way1.firstNode(), new Node(new LatLon(-1, -2)));
-        way2.getNodes().parallelStream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
+        way2.getNodes().stream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
         ds.addPrimitive(way2);
 
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), outgoingSet, null);
         assertEquals(2, outgoingSet.size());
-        assertTrue(outgoingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2).contains(way)));
+        assertTrue(Arrays.asList(way1, way2).containsAll(outgoingSet));
 
         Way way3 = TestUtils.newWay("highway=residential", way2.lastNode(), new Node(new LatLon(-2, -1)));
-        way3.getNodes().parallelStream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
+        way3.getNodes().stream().filter(node -> node.getDataSet() == null).forEach(ds::addPrimitive);
         ds.addPrimitive(way3);
 
         outgoingSet.clear();
         outgoingSet.add(way1);
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), outgoingSet, null);
         assertEquals(3, outgoingSet.size());
-        assertTrue(outgoingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2, way3).contains(way)));
+        assertTrue(Arrays.asList(way1, way2, way3).containsAll(outgoingSet));
 
         Config.getPref().putInt("validator.routingislands.maxrecursion", 1);
         outgoingSet.clear();
         outgoingSet.add(way1);
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), outgoingSet, null);
         assertEquals(2, outgoingSet.size());
-        assertTrue(outgoingSet.parallelStream().allMatch(way -> Arrays.asList(way1, way2).contains(way)));
+        assertTrue(Arrays.asList(way1, way2).containsAll(outgoingSet));
     }
 
     /**
@@ -410,14 +411,14 @@ class RoutingIslandsTestTest {
 
     private static void addToDataSet(DataSet ds, OsmPrimitive primitive) {
         if (primitive instanceof Way) {
-            ((Way) primitive).getNodes().parallelStream().distinct().filter(node -> node.getDataSet() == null)
+            ((Way) primitive).getNodes().stream().distinct().filter(node -> node.getDataSet() == null)
                     .forEach(ds::addPrimitive);
         }
         if (primitive.getDataSet() == null) {
             ds.addPrimitive(primitive);
         }
-        Long id = Math.max(ds.allPrimitives().parallelStream().mapToLong(prim -> prim.getId()).max().orElse(0L), 0L);
-        for (OsmPrimitive osm : ds.allPrimitives().parallelStream().filter(prim -> prim.getUniqueId() < 0)
+        long id = Math.max(ds.allPrimitives().stream().mapToLong(AbstractPrimitive::getId).max().orElse(0L), 0L);
+        for (OsmPrimitive osm : ds.allPrimitives().stream().filter(prim -> prim.getUniqueId() < 0)
                 .collect(Collectors.toList())) {
             id++;
             osm.setOsmId(id, 1);

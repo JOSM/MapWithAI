@@ -83,11 +83,11 @@ public class RoutingIslandsTest extends Test {
 
     @Override
     public void endTest() {
-        Access.AccessTags.getByTransportType(Access.AccessTags.LAND_TRANSPORT_TYPE).parallelStream().forEach(mode -> {
+        Access.AccessTags.getByTransportType(Access.AccessTags.LAND_TRANSPORT_TYPE).forEach(mode -> {
             runTest(mode.getKey(), potentialHighways);
             progressMonitor.setCustomText(mode.getKey());
         });
-        Access.AccessTags.getByTransportType(Access.AccessTags.WATER_TRANSPORT_TYPE).parallelStream().forEach(mode -> {
+        Access.AccessTags.getByTransportType(Access.AccessTags.WATER_TRANSPORT_TYPE).forEach(mode -> {
             progressMonitor.setCustomText(mode.getKey());
             runTest(mode.getKey(), potentialWaterways);
         });
@@ -99,12 +99,11 @@ public class RoutingIslandsTest extends Test {
         if (way.isUsable()
                 && ((way.hasKey(HIGHWAY) && !IGNORE_TAGS_HIGHWAY.contains(way.get(HIGHWAY)))
                         || (way.hasKey(WATERWAY) && !IGNORE_TAGS_WATERWAY.contains(way.get(WATERWAY))))
-                && way.getNodes().parallelStream().anyMatch(node -> way.getDataSet().getDataSourceBounds()
-                        .parallelStream().anyMatch(source -> source.contains(node.getCoor())))) {
-            if ((way.hasKey(HIGHWAY) || way.hasKey(WATERWAY))
-                    && way.getNodes().parallelStream().flatMap(node -> node.getReferrers().parallelStream()).distinct()
-                            .allMatch(way::equals)
-                    && way.getNodes().parallelStream().noneMatch(Node::isOutsideDownloadArea)) {
+                && way.getNodes().stream().anyMatch(node -> way.getDataSet().getDataSourceBounds().stream()
+                        .anyMatch(source -> source.contains(node.getCoor())))) {
+            if ((way.hasKey(HIGHWAY) || way.hasKey(WATERWAY)) && way.getNodes().stream()
+                    .flatMap(node -> node.getReferrers().stream()).distinct().allMatch(way::equals)
+                    && way.getNodes().stream().noneMatch(Node::isOutsideDownloadArea)) {
                 errors.add(TestError.builder(this, SEVERITY_MAP.get(LONELY_WAY), LONELY_WAY).primitives(way)
                         .message(tr("MapWithAI (experimental)"), marktr("Routable way not connected to other ways"))
                         .build());
@@ -125,7 +124,7 @@ public class RoutingIslandsTest extends Test {
         Set<Way> outgoingWays = new HashSet<>();
         findConnectedWays(currentTransportMode, potentialWays, incomingWays, outgoingWays);
         Collection<Way> realPotentialWays = (incomingWays.isEmpty() || outgoingWays.isEmpty())
-                ? expandNetwork(currentTransportMode, potentialWays)
+                ? expandNetwork(potentialWays)
                 : potentialWays;
 
         if (incomingWays.isEmpty() || outgoingWays.isEmpty()) {
@@ -138,19 +137,18 @@ public class RoutingIslandsTest extends Test {
     /**
      * Expand a network from an initial selection
      *
-     * @param currentTransportMode The current transport mode
-     * @param initial              The initial collection of ways
+     * @param initial The initial collection of ways
      * @return An expanded collection of ways, which should be all connected ways
      *         that allow the current transport mode.
      */
-    private static Collection<Way> expandNetwork(String currentTransportMode, Collection<Way> initial) {
-        Collection<Way> connected = initial.parallelStream().flatMap(way -> way.getNodes().parallelStream())
-                .flatMap(node -> node.getReferrers().parallelStream()).filter(Way.class::isInstance)
-                .map(Way.class::cast).distinct().collect(Collectors.toSet());
+    private static Collection<Way> expandNetwork(Collection<Way> initial) {
+        Collection<Way> connected = initial.stream().flatMap(way -> way.getNodes().stream())
+                .flatMap(node -> node.getReferrers().stream()).filter(Way.class::isInstance).map(Way.class::cast)
+                .collect(Collectors.toSet());
         if (connected.containsAll(initial) && initial.containsAll(connected)) {
             return connected;
         }
-        return expandNetwork(currentTransportMode, connected);
+        return expandNetwork(connected);
     }
 
     /**
@@ -163,7 +161,7 @@ public class RoutingIslandsTest extends Test {
      */
     private void runGenericTest(String currentTransportMode, Collection<Way> potentialWays,
             Collection<Way> incomingWays, Collection<Way> outgoingWays) {
-        Set<Way> toIgnore = potentialWays.parallelStream()
+        Set<Way> toIgnore = potentialWays.stream()
                 .filter(way -> incomingWays.contains(way) || outgoingWays.contains(way))
                 .filter(way -> !Access.getPositiveAccessValues().contains(
                         getDefaultAccessTags(way).getOrDefault(currentTransportMode, Access.AccessTags.NO.getKey())))
@@ -172,12 +170,12 @@ public class RoutingIslandsTest extends Test {
         outgoingWays.removeAll(toIgnore);
 
         checkForUnconnectedWays(incomingWays, outgoingWays, currentTransportMode);
-        List<Pair<String, Set<Way>>> problematic = collectConnected(potentialWays.parallelStream()
+        List<Pair<String, Set<Way>>> problematic = collectConnected(potentialWays.stream()
                 .filter(way -> !incomingWays.contains(way) || !outgoingWays.contains(way))
                 .filter(way -> Access.getPositiveAccessValues().contains(
                         getDefaultAccessTags(way).getOrDefault(currentTransportMode, Access.AccessTags.NO.getKey())))
                 .collect(Collectors.toSet()))
-                        .parallelStream()
+                        .stream()
                         .map(way -> new Pair<>(
                                 (incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
                         .collect(Collectors.toList());
@@ -247,10 +245,9 @@ public class RoutingIslandsTest extends Test {
 
     private static boolean getConnected(Collection<Way> ways) {
         TagMap defaultAccess = getDefaultAccessTags(ways.iterator().next());
-        return ways.addAll(ways.parallelStream().flatMap(way -> way.getNodes().parallelStream())
-                .flatMap(node -> node.getReferrers().parallelStream()).filter(Way.class::isInstance)
-                .map(Way.class::cast).filter(way -> getDefaultAccessTags(way).equals(defaultAccess))
-                .collect(Collectors.toSet()));
+        return ways.addAll(ways.stream().flatMap(way -> way.getNodes().stream())
+                .flatMap(node -> node.getReferrers().stream()).filter(Way.class::isInstance).map(Way.class::cast)
+                .filter(way -> getDefaultAccessTags(way).equals(defaultAccess)).collect(Collectors.toSet()));
     }
 
     /**
@@ -301,8 +298,8 @@ public class RoutingIslandsTest extends Test {
         Set<Way> toAdd = new HashSet<>();
         for (Way way : directional) {
             for (Node node : way.getNodes()) {
-                Set<Way> referrers = node.getReferrers(true).parallelStream().filter(Way.class::isInstance)
-                        .map(Way.class::cast).filter(tWay -> !directional.contains(tWay)).collect(Collectors.toSet());
+                Set<Way> referrers = node.getReferrers(true).stream().filter(Way.class::isInstance).map(Way.class::cast)
+                        .filter(tWay -> !directional.contains(tWay)).collect(Collectors.toSet());
                 for (Way tWay : referrers) {
                     Integer oneWay = isOneway(tWay, currentTransportMode);
                     if ((oneWay != null && oneWay == 0) || predicate.test(tWay, way) || tWay.isClosed()) {
@@ -327,15 +324,15 @@ public class RoutingIslandsTest extends Test {
     public static boolean checkAccessibility(Way from, Way to, String currentTransportMode) {
         boolean isAccessible = true;
 
-        List<Relation> relations = from.getReferrers().parallelStream().distinct().filter(Relation.class::isInstance)
+        List<Relation> relations = from.getReferrers().stream().distinct().filter(Relation.class::isInstance)
                 .map(Relation.class::cast).filter(relation -> "restriction".equals(relation.get("type")))
                 .collect(Collectors.toList());
         for (Relation relation : relations) {
             if (((relation.hasKey("except") && relation.get("except").contains(currentTransportMode))
                     || (currentTransportMode == null || currentTransportMode.trim().isEmpty()))
-                    && relation.getMembersFor(Collections.singleton(from)).parallelStream()
+                    && relation.getMembersFor(Collections.singleton(from)).stream()
                             .anyMatch(member -> "from".equals(member.getRole()))
-                    && relation.getMembersFor(Collections.singleton(to)).parallelStream()
+                    && relation.getMembersFor(Collections.singleton(to)).stream()
                             .anyMatch(member -> "to".equals(member.getRole()))) {
                 isAccessible = false;
             }
@@ -351,12 +348,8 @@ public class RoutingIslandsTest extends Test {
      *         transport
      */
     public static Boolean outsideConnections(Node node) {
-        boolean outsideConnections = false;
-        if (node.isOutsideDownloadArea() || node.hasTag("amenity", "parking_entrance", "parking", "parking_space",
-                "motorcycle_parking", "ferry_terminal")) {
-            outsideConnections = true;
-        }
-        return outsideConnections;
+        return node.isOutsideDownloadArea() || node.hasTag("amenity", "parking_entrance", "parking", "parking_space",
+                "motorcycle_parking", "ferry_terminal");
     }
 
     /**
@@ -448,7 +441,7 @@ public class RoutingIslandsTest extends Test {
         tags.putAll(Access.expandAccessValues(tags));
 
         for (String direction : Arrays.asList("", "forward:", "backward:")) {
-            Access.getTransportModes().parallelStream().map(direction::concat).filter(tags::containsKey)
+            Access.getTransportModes().stream().map(direction::concat).filter(tags::containsKey)
                     .forEach(mode -> access.put(mode, tags.get(direction.concat(mode))));
         }
         return access;
@@ -468,7 +461,7 @@ public class RoutingIslandsTest extends Test {
             tags.putIfAbsent(Access.AccessTags.FOOT.getKey(), Access.AccessTags.YES.getKey());
         }
 
-        if (tags.keySet().parallelStream()
+        if (tags.keySet().stream()
                 .anyMatch(str -> str.contains("cycleway") && !Access.AccessTags.NO.getKey().equals(tags.get(str)))) {
             tags.putIfAbsent(Access.AccessTags.BICYCLE.getKey(), Access.AccessTags.YES.getKey());
         }

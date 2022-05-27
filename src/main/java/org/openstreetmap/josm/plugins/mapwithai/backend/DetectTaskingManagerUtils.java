@@ -50,8 +50,8 @@ final class DetectTaskingManagerUtils {
      *         {@link DetectTaskingManagerUtils#PATTERNS} or {@code null}.
      */
     public static Layer getTaskingManagerLayer() {
-        return MainApplication.getLayerManager().getLayers().parallelStream().filter(tlayer -> Stream.of(PATTERNS)
-                .parallel().anyMatch(pattern -> pattern.matcher(tlayer.getName()).matches())).findFirst().orElse(null);
+        return MainApplication.getLayerManager().getLayers().stream().filter(tlayer -> Stream.of(PATTERNS).parallel()
+                .anyMatch(pattern -> pattern.matcher(tlayer.getName()).matches())).findFirst().orElse(null);
     }
 
     /**

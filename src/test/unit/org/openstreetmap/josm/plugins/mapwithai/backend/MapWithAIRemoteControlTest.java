@@ -44,7 +44,7 @@ class MapWithAIRemoteControlTest {
      */
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().main().projection().territories();
+    static JOSMTestRules test = new MapWithAITestRules().main().projection().territories();
 
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();
@@ -57,10 +57,9 @@ class MapWithAIRemoteControlTest {
     /**
      * Unit test for bad request - invalid URL.
      *
-     * @throws Exception if any error occurs
      */
     @Test
-    void testBadRequestInvalidUrl() throws Exception {
+    void testBadRequestInvalidUrl() {
         MapWithAIRemoteControl handler = assertDoesNotThrow(() -> newHandler("https://localhost?url=invalid_url"));
         Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);
         assertEquals("MalformedURLException: no protocol: invalid_url", exception.getMessage());
@@ -95,8 +94,7 @@ class MapWithAIRemoteControlTest {
                 .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
-        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().parallelStream()
-                .anyMatch(map -> badUrl.equals(map.getUrl())));
+        assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().stream().anyMatch(map -> badUrl.equals(map.getUrl())));
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
         assertTrue(MapWithAIPreferenceHelper.getMapWithAIUrl().stream().map(MapWithAIInfo::getUrl)
                 .noneMatch(badUrl::equals));
@@ -110,17 +108,17 @@ class MapWithAIRemoteControlTest {
 
     @Test
     void testTemporaryMaxAdd() throws Exception {
-        final Integer maxObj = 1;
-        newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj="
-                + maxObj.toString()).handle();
+        final int maxObj = 1;
+        newHandler("http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=" + maxObj)
+                .handle();
         await().atMost(Durations.TWO_SECONDS)
                 .until(() -> !MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
         assertFalse(MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).isEmpty());
 
-        assertEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
+        assertEquals(maxObj, MapWithAIPreferenceHelper.getMaximumAddition());
         MainApplication.getLayerManager().removeLayer(MapWithAIDataUtils.getLayer(false));
-        assertNotEquals(maxObj.intValue(), MapWithAIPreferenceHelper.getMaximumAddition());
+        assertNotEquals(maxObj, MapWithAIPreferenceHelper.getMaximumAddition());
         final MapWithAIRemoteControl handler = assertDoesNotThrow(() -> newHandler(
                 "http://127.0.0.1:8111/mapwithai?bbox=" + getTestBBox().toStringCSV(",") + "&max_obj=BAD_VALUE"));
         Exception exception = assertThrows(RequestHandlerBadRequestException.class, handler::handle);

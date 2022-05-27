@@ -192,7 +192,7 @@ class MapWithAILayerTest {
         assertTrue(prim instanceof Way);
         SwingUtilities.invokeAndWait(() -> ds.setSelected(((Way) prim).getNodes()));
         assertEquals(((Way) prim).getNodes().size(), ds.getSelected().size());
-        assertTrue(((Way) prim).getNodes().parallelStream().allMatch(ds::isSelected));
+        assertTrue(((Way) prim).getNodes().stream().allMatch(ds::isSelected));
     }
 
     @Test
@@ -215,18 +215,18 @@ class MapWithAILayerTest {
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
         await().atMost(Durations.TEN_SECONDS).until(() -> !mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty());
         assertFalse(mapWithAILayer.getDataSet().getDataSourceBounds().isEmpty(), "There should be a data source");
-        assertEquals(1, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
+        assertEquals(1, mapWithAILayer.getDataSet().getDataSourceBounds().stream().distinct().count(),
                 "There should only be one data source");
 
         osm.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "random test"));
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
-        await().atMost(Durations.TEN_SECONDS).until(
-                () -> mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count() == 2);
-        assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
+        await().atMost(Durations.TEN_SECONDS)
+                .until(() -> mapWithAILayer.getDataSet().getDataSourceBounds().stream().distinct().count() == 2);
+        assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().stream().distinct().count(),
                 "There should be two data sources");
 
         MapWithAIDataUtils.getMapWithAIData(mapWithAILayer);
-        assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().parallelStream().distinct().count(),
+        assertEquals(2, mapWithAILayer.getDataSet().getDataSourceBounds().stream().distinct().count(),
                 "There should be two data sources");
     }
 

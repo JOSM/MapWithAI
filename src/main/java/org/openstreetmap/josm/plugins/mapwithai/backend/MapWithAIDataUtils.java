@@ -476,7 +476,7 @@ public final class MapWithAIDataUtils {
     public static Long getAddedObjects() {
         return Optional
                 .ofNullable(GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands()))
-                .map(commands -> commands.parallelStream().filter(MapWithAIAddCommand.class::isInstance)
+                .map(commands -> commands.stream().filter(MapWithAIAddCommand.class::isInstance)
                         .map(MapWithAIAddCommand.class::cast).mapToLong(MapWithAIAddCommand::getAddedObjects).sum())
                 .orElse(0L);
     }
@@ -489,7 +489,7 @@ public final class MapWithAIDataUtils {
     public static List<String> getAddedObjectsSource() {
         return Optional
                 .ofNullable(GuiHelper.runInEDTAndWaitAndReturn(() -> UndoRedoHandler.getInstance().getUndoCommands()))
-                .map(commands -> commands.parallelStream().filter(MapWithAIAddCommand.class::isInstance)
+                .map(commands -> commands.stream().filter(MapWithAIAddCommand.class::isInstance)
                         .map(MapWithAIAddCommand.class::cast).flatMap(com -> com.getSourceTags().stream()).distinct()
                         .collect(Collectors.toList()))
                 .orElseGet(Collections::emptyList);

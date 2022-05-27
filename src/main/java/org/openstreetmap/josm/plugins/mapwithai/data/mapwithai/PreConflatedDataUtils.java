@@ -47,7 +47,7 @@ public class PreConflatedDataUtils implements PreferenceChangedListener, Destroy
     public static void removeConflatedData(DataSet dataSet, MapWithAIInfo info) {
         if (info != null && info.getAlreadyConflatedKey() != null && !info.getAlreadyConflatedKey().trim().isEmpty()) {
             String key = info.getAlreadyConflatedKey();
-            dataSet.allPrimitives().parallelStream().filter(p -> p.hasKey(key))
+            dataSet.allPrimitives().stream().filter(p -> p.hasKey(key))
                     .forEach(p -> new ChangePropertyKeyCommand(p, key, getConflatedKey()).executeCommand());
             hideConflatedData(dataSet);
         }
@@ -61,7 +61,7 @@ public class PreConflatedDataUtils implements PreferenceChangedListener, Destroy
     public static void hideConflatedData(DataSet dataSet) {
         boolean hide = Config.getPref().getBoolean(PREF_KEY, true);
         boolean fullHide = Config.getPref().getBoolean(PREF_KEY_FULL, false);
-        dataSet.allPrimitives().parallelStream().filter(p -> p.hasKey(getConflatedKey())).forEach(p -> {
+        dataSet.allPrimitives().stream().filter(p -> p.hasKey(getConflatedKey())).forEach(p -> {
             if (hide) {
                 p.setDisabledState(fullHide);
             } else {

@@ -105,7 +105,7 @@ public class MovePrimitiveDataSetCommand extends Command {
 
         final List<PrimitiveData> primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save)
                 .collect(Collectors.toList());
-        primitiveAddData.parallelStream().map(data -> {
+        primitiveAddData.stream().map(data -> {
             if (data.getUniqueId() > 0) {
                 // Don't do this with conn data?
                 data.clearOsmMetadata();

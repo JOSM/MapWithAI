@@ -87,7 +87,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             synchronized (BoundingBoxMapWithAIDownloader.class) {
                 externalData = super.parseOsm(progressMonitor);
             }
-            if (MapWithAIInfo.THIRD_PARTY_CONFLATE.get() && !this.info.isConflated()
+            if (Boolean.TRUE.equals(MapWithAIInfo.THIRD_PARTY_CONFLATE.get()) && !this.info.isConflated()
                     && !MapWithAIConflationCategory.conflationUrlFor(this.info.getCategory()).isEmpty()) {
                 if (externalData.getDataSourceBounds().isEmpty()) {
                     externalData.addDataSource(new DataSource(this.downloadArea, "External Data"));

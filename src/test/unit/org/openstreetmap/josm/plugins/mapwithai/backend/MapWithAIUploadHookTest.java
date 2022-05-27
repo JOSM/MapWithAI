@@ -156,8 +156,7 @@ class MapWithAIUploadHookTest {
         MapWithAIPreferenceHelper.setMapWithAIUrl(new MapWithAIInfo("False URL", superLongURL), true, false);
         Map<String, String> tags = new TreeMap<>();
         hook.modifyChangesetTags(tags);
-        assertTrue(tags.entrySet().parallelStream().map(Map.Entry::getValue).mapToInt(String::length).max()
-                .orElse(256) <= 255);
+        assertTrue(tags.values().stream().mapToInt(String::length).max().orElse(256) <= 255);
         String fullTags = tags.entrySet().stream().filter(e -> e.getKey().contains("mapwithai:options"))
                 .map(Map.Entry::getValue).collect(Collectors.joining());
         String url = fullTags.split("url_ids=", -1)[1];

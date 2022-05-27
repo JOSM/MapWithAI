@@ -31,6 +31,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
+import org.openstreetmap.josm.tools.Utils;
 
 public class MapWithAIAddCommand extends Command implements Runnable {
     private final DataSet editable;
@@ -64,12 +65,11 @@ public class MapWithAIAddCommand extends Command implements Runnable {
         super(editable);
         this.mapWithAI = mapWithAI;
         this.editable = editable;
-        Collection<Way> nodeReferrers = selection.parallelStream().filter(Node.class::isInstance).map(Node.class::cast)
-                .map(Node::getReferrers).flatMap(List::stream).filter(Way.class::isInstance).map(Way.class::cast)
-                .collect(Collectors.toList());
+        Collection<Way> nodeReferrers = Utils.filteredCollection(selection, Node.class).stream().map(Node::getReferrers)
+                .flatMap(List::stream).filter(Way.class::isInstance).map(Way.class::cast).collect(Collectors.toList());
         this.primitives = new HashSet<>(selection);
         this.primitives.addAll(nodeReferrers);
-        sources = selection.parallelStream()
+        sources = selection.stream()
                 .map(prim -> new Pair<>(prim,
                         prim.hasKey("source") ? prim.get("source")
                                 : prim.get(GetDataRunnable.MAPWITHAI_SOURCE_TAG_KEY)))
@@ -182,9 +182,8 @@ public class MapWithAIAddCommand extends Command implements Runnable {
     }
 
     public Collection<String> getSourceTags() {
-        return sources.entrySet().parallelStream()
-                .filter(entry -> validPrimitive(editable.getPrimitiveById(entry.getKey()))).map(Map.Entry::getValue)
-                .filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
+        return sources.entrySet().stream().filter(entry -> validPrimitive(editable.getPrimitiveById(entry.getKey())))
+                .map(Map.Entry::getValue).filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList());
     }
 
     private static boolean validPrimitive(OsmPrimitive prim) {

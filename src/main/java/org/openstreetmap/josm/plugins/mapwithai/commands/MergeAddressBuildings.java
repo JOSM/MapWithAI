@@ -86,8 +86,7 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
                 .collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
-        if (nodesWithAddresses.size() == 1
-                && nodesWithAddresses.parallelStream().allMatch(n -> n.getParentWays().isEmpty())) {
+        if (nodesWithAddresses.size() == 1 && nodesWithAddresses.stream().allMatch(n -> n.getParentWays().isEmpty())) {
             String currentKey = null;
             Node node = nodesWithAddresses.get(0);
             List<String> sources = new ArrayList<>();

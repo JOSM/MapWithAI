@@ -48,7 +48,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 class GetDataRunnableTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().projection().fakeAPI();
+    static JOSMTestRules rule = new MapWithAITestRules().projection().fakeAPI();
 
     @Test
     void testAddMissingElement() {
@@ -92,14 +92,14 @@ class GetDataRunnableTest {
 
         GetDataRunnable.cleanupArtifacts(way1);
 
-        assertEquals(2, ds.getWays().parallelStream().filter(way -> !way.isDeleted()).count());
+        assertEquals(2, ds.getWays().stream().filter(way -> !way.isDeleted()).count());
 
         Node tNode = new Node(Objects.requireNonNull(way1.lastNode()), true);
         ds.addPrimitive(tNode);
         way2.addNode(tNode);
 
         GetDataRunnable.cleanupArtifacts(way1);
-        assertEquals(1, ds.getWays().parallelStream().filter(way -> !way.isDeleted()).count());
+        assertEquals(1, ds.getWays().stream().filter(way -> !way.isDeleted()).count());
     }
 
     /**

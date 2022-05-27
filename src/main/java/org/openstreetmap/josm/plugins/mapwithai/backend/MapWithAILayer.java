@@ -3,6 +3,15 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -21,15 +30,6 @@ import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
@@ -57,6 +57,7 @@ import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.Utils;
 
 /**
  * This layer shows MapWithAI data. For various reasons, we currently only allow
@@ -253,10 +254,10 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
                 || maximumAdditionSelection < event.getSelection().size())
                 && (MapWithAIPreferenceHelper.getMaximumAddition() != 0 || !ExpertToggleAction.isExpert())) {
             Collection<OsmPrimitive> selection;
-            if (event.getSelection().parallelStream().filter(Node.class::isInstance).map(Node.class::cast)
+            final Collection<Way> oldWays = Utils.filteredCollection(event.getOldSelection(), Way.class);
+            if (Utils.filteredCollection(event.getSelection(), Node.class).stream()
                     .filter(n -> !event.getOldSelection().contains(n))
-                    .allMatch(n -> event.getOldSelection().parallelStream().filter(Way.class::isInstance)
-                            .map(Way.class::cast).anyMatch(w -> w.containsNode(n)))) {
+                    .allMatch(n -> oldWays.stream().anyMatch(w -> w.containsNode(n)))) {
                 selection = event.getSelection();
             } else {
                 OsmComparator comparator = new OsmComparator(event.getOldSelection());

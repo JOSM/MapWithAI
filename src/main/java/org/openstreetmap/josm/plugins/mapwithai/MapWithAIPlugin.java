@@ -94,7 +94,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
         dataMenu.add(mapwithaiMenu);
         for (final Map.Entry<Class<? extends JosmAction>, Boolean> entry : MENU_ENTRIES.entrySet()) {
-            if (Arrays.asList(mapwithaiMenu.getMenuComponents()).parallelStream().filter(JMenuItem.class::isInstance)
+            if (Arrays.stream(mapwithaiMenu.getMenuComponents()).filter(JMenuItem.class::isInstance)
                     .map(JMenuItem.class::cast)
                     .noneMatch(component -> entry.getKey().equals(component.getAction().getClass()))) {
                 try {
@@ -151,7 +151,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     @Override
     public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
-        final Optional<MapWithAIObject> possibleMapWithAIObject = destroyables.parallelStream()
+        final Optional<MapWithAIObject> possibleMapWithAIObject = destroyables.stream()
                 .filter(MapWithAIObject.class::isInstance).map(MapWithAIObject.class::cast).findFirst();
         final MapWithAIObject mapWithAIObject = possibleMapWithAIObject.orElse(new MapWithAIObject());
         if ((oldFrame != null) && (oldFrame.statusLine != null)) {
@@ -192,7 +192,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
     public void destroy() {
         MainApplication.getMenu().dataMenu.remove(this.mapwithaiMenu);
 
-        MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class).stream()
+        MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class)
                 .forEach(layer -> MainApplication.getLayerManager().removeLayer(layer));
 
         if (!Config.getPref().getBoolean(PAINTSTYLE_PREEXISTS)) {

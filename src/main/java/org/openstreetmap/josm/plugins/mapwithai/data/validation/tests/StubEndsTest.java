@@ -8,11 +8,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.Severity;
@@ -71,7 +73,7 @@ public class StubEndsTest extends Test {
             Way tWay = new Way(way);
             List<Node> tNodes = tWay.getNodes();
             boolean reversed = false;
-            if (tWay.lastNode().equals(nodes.get(0))) {
+            if (Objects.equals(tWay.lastNode(), nodes.get(0))) {
                 reversed = true;
                 Collections.reverse(tNodes);
             }
@@ -112,13 +114,14 @@ public class StubEndsTest extends Test {
         // isOutsideDownloadArea returns false if new or undeleted as well
         if (!previous.isOutsideDownloadArea()) {
             for (Node node : nodeOrder) {
-                List<Way> connectingWays = previous.getReferrers().parallelStream().filter(Way.class::isInstance)
-                        .map(Way.class::cast).filter(tWay -> !tWay.equals(way))
-                        .filter(tWay -> tWay.hasTag(HIGHWAY) && !BAD_HIGHWAYS.contains(tWay.get(HIGHWAY)))
-                        .collect(Collectors.toList());
+                List<Way> connectingWays = getConnectingWays(previous, way);
                 if (!node.equals(previous) && connectingWays.isEmpty()) {
                     nodesToConnection.add(previous);
-                    distance += node.getCoor().greatCircleDistance(previous.getCoor());
+                    final LatLon nodeCoor = node.getCoor();
+                    final LatLon prevCoor = previous.getCoor();
+                    if (nodeCoor != null && prevCoor != null) {
+                        distance += nodeCoor.greatCircleDistance(prevCoor);
+                    }
                     previous = node;
                 }
                 if (!connectingWays.isEmpty()) {
@@ -127,5 +130,18 @@ public class StubEndsTest extends Test {
             }
         }
         return distance;
+    }
+
+    /**
+     * Get the connecting ways for a node
+     *
+     * @param node        The node to look for
+     * @param wayToIgnore The way to ignore, if any
+     * @return The connected ways
+     */
+    private static List<Way> getConnectingWays(final Node node, final Way wayToIgnore) {
+        return node.referrers(Way.class).filter(tWay -> !tWay.equals(wayToIgnore))
+                .filter(tWay -> tWay.hasTag(HIGHWAY) && !BAD_HIGHWAYS.contains(tWay.get(HIGHWAY)))
+                .collect(Collectors.toList());
     }
 }

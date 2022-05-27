@@ -65,13 +65,13 @@ public class StreetAddressOrder extends Test {
      */
     public static List<IPrimitive> getNearbyAddresses(Way way) {
         BBox bbox = StreetAddressTest.expandBBox(new BBox(way.getBBox()), StreetAddressTest.BBOX_EXPANSION);
-        List<Node> addrNodes = way.getDataSet().searchNodes(bbox).parallelStream()
+        List<Node> addrNodes = way.getDataSet().searchNodes(bbox).stream()
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
-        List<Way> addrWays = way.getDataSet().searchWays(bbox).parallelStream()
+        List<Way> addrWays = way.getDataSet().searchWays(bbox).stream().filter(StreetAddressTest::hasStreetAddressTags)
+                .collect(Collectors.toList());
+        List<Relation> addrRelations = way.getDataSet().searchRelations(bbox).stream()
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
-        List<Relation> addrRelations = way.getDataSet().searchRelations(bbox).parallelStream()
-                .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
-        return Stream.of(addrNodes, addrWays, addrRelations).flatMap(List::parallelStream)
+        return Stream.of(addrNodes, addrWays, addrRelations).flatMap(List::stream)
                 .filter(prim -> isNearestRoad(way, prim)).collect(Collectors.toList());
     }
 
@@ -84,7 +84,7 @@ public class StreetAddressOrder extends Test {
      */
     public static boolean isNearestRoad(Way way, OsmPrimitive prim) {
         BBox primBBox = StreetAddressTest.expandBBox(new BBox(prim.getBBox()), StreetAddressTest.BBOX_EXPANSION);
-        List<Pair<Way, Double>> sorted = way.getDataSet().searchWays(primBBox).parallelStream()
+        List<Pair<Way, Double>> sorted = way.getDataSet().searchWays(primBBox).stream()
                 .filter(StreetAddressTest::isHighway).map(iway -> StreetAddressTest.distanceToWay(iway, prim))
                 .sorted(Comparator.comparing(p -> p.b)).collect(Collectors.toList());
 
@@ -177,7 +177,7 @@ public class StreetAddressOrder extends Test {
         way.setNodes(Collections.emptyList());
         List<T> badPrimitives = issueCentroids.stream().map(centroids::indexOf).map(primitives::get)
                 .collect(Collectors.toList());
-        return badPrimitives.stream().map(p -> new Pair<T, List<T>>(p, getNeighbors(p, primitives)))
+        return badPrimitives.stream().map(p -> new Pair<>(p, getNeighbors(p, primitives)))
                 .collect(Collectors.toMap(p -> p.a, p -> p.b));
     }
 
@@ -242,7 +242,7 @@ public class StreetAddressOrder extends Test {
             return (Node) primitive;
         } else if (primitive instanceof Way) {
             return new Node(Geometry.getCentroid(((Way) primitive).getNodes()));
-        } else if (primitive instanceof Relation && "multipolygon".equals(((Relation) primitive).get("type"))) {
+        } else if (primitive instanceof Relation && "multipolygon".equals(primitive.get("type"))) {
             // This is not perfect by any stretch of the imagination
             List<Node> nodes = new ArrayList<>();
             for (RelationMember member : ((Relation) primitive).getMembers()) {

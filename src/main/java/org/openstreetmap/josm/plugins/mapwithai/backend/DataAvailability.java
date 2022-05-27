@@ -122,7 +122,7 @@ public class DataAvailability {
             Map<String, Boolean> providesMap = countriesMap.getOrDefault(entry.getKey(), new TreeMap<>());
             countriesMap.putIfAbsent(entry.getKey(), providesMap);
             if (JsonValue.ValueType.ARRAY == entry.getValue().getValueType()) {
-                for (String provide : entry.getValue().asJsonArray().parallelStream()
+                for (String provide : entry.getValue().asJsonArray().stream()
                         .filter(c -> JsonValue.ValueType.STRING == c.getValueType()).map(JsonValue::toString)
                         .map(DataAvailability::stripQuotes).collect(Collectors.toList())) {
                     providesMap.put(provide, true);
@@ -177,7 +177,7 @@ public class DataAvailability {
         corners.add(bounds.getMax());
         corners.add(new LatLon(bounds.getMaxLat(), bounds.getMinLon()));
         corners.add(bounds.getCenter());
-        return corners.parallelStream().anyMatch(this::hasData);
+        return corners.stream().anyMatch(this::hasData);
     }
 
     /**
@@ -191,7 +191,7 @@ public class DataAvailability {
         for (final Map.Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
             Logging.debug(entry.getKey());
             if (Territories.isIso3166Code(entry.getKey(), latLon)) {
-                returnBoolean = entry.getValue().entrySet().parallelStream().anyMatch(Map.Entry::getValue);
+                returnBoolean = entry.getValue().entrySet().stream().anyMatch(Map.Entry::getValue);
                 break;
             }
         }
@@ -205,7 +205,7 @@ public class DataAvailability {
      * @return A map that may have available data types (or be empty)
      */
     public static Map<String, Boolean> getDataTypes(LatLon latLon) {
-        return COUNTRIES.entrySet().parallelStream().filter(entry -> Territories.isIso3166Code(entry.getKey(), latLon))
+        return COUNTRIES.entrySet().stream().filter(entry -> Territories.isIso3166Code(entry.getKey(), latLon))
                 .map(Map.Entry::getValue).findFirst().orElse(Collections.emptyMap());
     }
 

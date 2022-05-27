@@ -80,17 +80,17 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
             toCheck.addAll(affectedDataSet.searchRelations(bbox));
             toCheck.addAll(affectedDataSet.searchNodes(bbox));
         });
-        List<OsmPrimitive> possibleDuplicates = toCheck.parallelStream().filter(prim -> prim.hasTag(KEY))
+        List<OsmPrimitive> possibleDuplicates = toCheck.stream().filter(prim -> prim.hasTag(KEY))
                 .filter(prim -> prim.get(KEY).equals(node.get(KEY))).filter(prim -> !prim.equals(node))
                 .collect(Collectors.toList());
         for (String tag : Arrays.asList("addr:street", "addr:unit")) {
             if (node.hasTag(tag)) {
-                possibleDuplicates = possibleDuplicates.parallelStream().filter(prim -> prim.hasTag(tag))
+                possibleDuplicates = possibleDuplicates.stream().filter(prim -> prim.hasTag(tag))
                         .filter(prim -> prim.get(tag).equals(node.get(tag))).collect(Collectors.toList());
             }
         }
 
-        List<OsmPrimitive> buildings = toCheck.parallelStream().filter(prim -> prim.hasTag("building"))
+        List<OsmPrimitive> buildings = toCheck.stream().filter(prim -> prim.hasTag("building"))
                 .filter(prim -> checkInside(node, prim)).collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
@@ -122,7 +122,7 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
 
     private static Collection<Node> getAddressPoints(OsmPrimitive prim) {
         return Geometry.filterInsideAnyPolygon(new ArrayList<>(prim.getDataSet().allNonDeletedPrimitives()), prim)
-                .parallelStream().filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasTag(KEY))
+                .stream().filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasTag(KEY))
                 .collect(Collectors.toList());
     }
 
@@ -137,7 +137,7 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
         if (prim instanceof Relation) {
             return !Geometry.filterInsideMultipolygon(Collections.singleton(node), (Relation) prim).isEmpty();
         } else if (prim instanceof Way) {
-            return !Geometry.filterInsidePolygon(Arrays.asList(node), (Way) prim).isEmpty();
+            return !Geometry.filterInsidePolygon(Collections.singletonList(node), (Way) prim).isEmpty();
         }
         return false;
     }

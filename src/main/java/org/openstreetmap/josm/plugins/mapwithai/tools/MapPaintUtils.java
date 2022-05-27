@@ -45,7 +45,7 @@ import org.openstreetmap.josm.tools.Logging;
 public final class MapPaintUtils {
     /** The default url for the MapWithAI paint style */
     private static final Pattern TEST_PATTERN = Pattern
-            .compile("^https?:\\/\\/(www\\.)?localhost[:0-9]*\\/josmfile\\?page=Styles\\/MapWithAI&zip=1$");
+            .compile("^https?://(www\\.)?localhost[:\\d]*/josmfile\\?page=Styles/MapWithAI&zip=1$");
 
     private static final String SOURCE_KEY = "source";
     private static final String MAPWITHAI_SOURCE_KEY = "mapwithai:" + SOURCE_KEY;
@@ -88,7 +88,7 @@ public final class MapPaintUtils {
         final List<Pattern> oldUrls = Arrays.asList(Pattern.compile(
                 "https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
                 TEST_PATTERN, Pattern.compile("resource://styles/standard/mapwithai.mapcss"));
-        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).parallelStream()
+        new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).stream()
                 .filter(style -> oldUrls.stream().anyMatch(p -> p.matcher(style.url).matches()))
                 .forEach(MapPaintStyles::removeStyle);
 
@@ -101,7 +101,7 @@ public final class MapPaintUtils {
     }
 
     public static synchronized boolean checkIfMapWithAIPaintStyleExists() {
-        return MapPaintStyles.getStyles().getStyleSources().parallelStream().filter(MapCSSStyleSource.class::isInstance)
+        return MapPaintStyles.getStyles().getStyleSources().stream().filter(MapCSSStyleSource.class::isInstance)
                 .map(MapCSSStyleSource.class::cast)
                 .anyMatch(source -> MapWithAIConfig.getUrls().getMapWithAIPaintStyle().equals(source.url)
                         || TEST_PATTERN.matcher(source.url).matches());
@@ -126,7 +126,7 @@ public final class MapPaintUtils {
      * @return get the MapWithAI Paint style
      */
     public static synchronized StyleSource getMapWithAIPaintStyle() {
-        return MapPaintStyles.getStyles().getStyleSources().parallelStream()
+        return MapPaintStyles.getStyles().getStyleSources().stream()
                 .filter(source -> MapWithAIConfig.getUrls().getMapWithAIPaintStyle().equals(source.url)
                         || TEST_PATTERN.matcher(source.url).matches())
                 .findAny().orElse(null);
@@ -238,7 +238,7 @@ public final class MapPaintUtils {
 
         for (String source : sources) {
             out.write(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
-            String simpleSource = source.replaceAll("[() /\\${}:,]", "_");
+            String simpleSource = source.replaceAll("[() /${}:,]", "_");
             StringBuilder sb = new StringBuilder(64).append("setting::").append(simpleSource).append("{")
                     .append("type:color;").append("default:").append(simpleSource)
                     .append(ColorHelper.color2html(getRandomColor(source))).append(";label:tr(\"{0} color\",\"")
@@ -262,7 +262,7 @@ public final class MapPaintUtils {
     }
 
     private static Color getRandomColor(String sourceName) {
-        if (Arrays.asList("mapwithai", "maxar", "digitalglobe", "microsoft/").stream()
+        if (Stream.of("mapwithai", "maxar", "digitalglobe", "microsoft/")
                 .anyMatch(i -> sourceName.toLowerCase(Locale.ROOT).contains(i.toLowerCase(Locale.ROOT)))) {
             return SafeColors.AI_MAGENTA.getColor();
         }

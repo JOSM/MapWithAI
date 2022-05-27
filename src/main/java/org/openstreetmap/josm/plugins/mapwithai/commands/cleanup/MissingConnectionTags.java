@@ -112,7 +112,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     protected void fixErrors(String prefKey, Collection<Command> commands, Collection<TestError> issues) {
         for (TestError issue : issues) {
             if (!issue.isFixable() || issue.getFix() == null
-                    || issue.getPrimitives().parallelStream().anyMatch(IPrimitive::isDeleted)) {
+                    || issue.getPrimitives().stream().anyMatch(IPrimitive::isDeleted)) {
                 continue;
             }
             GuiHelper.runInEDT(() -> getAffectedDataSet().setSelected(issue.getPrimitives()));
@@ -228,7 +228,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
     private static Command createIntersectionCommand(Way way, Collection<Node> intersectionNodes, double precision) {
         Collection<Command> commands = new ArrayList<>();
         if (intersectionNodes.stream().anyMatch(way::containsNode)) {
-            Collection<Way> searchWays = way.getDataSet().searchWays(way.getBBox()).parallelStream()
+            Collection<Way> searchWays = way.getDataSet().searchWays(way.getBBox()).stream()
                     .filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList());
             searchWays.remove(way);
             for (Way potential : searchWays) {

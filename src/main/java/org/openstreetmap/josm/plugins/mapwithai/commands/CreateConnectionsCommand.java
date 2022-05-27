@@ -96,7 +96,7 @@ public class CreateConnectionsCommand extends Command {
                 continue;
             }
             // If there are conflicting commands, don't add it.
-            if (runCommands.parallelStream().anyMatch(c -> abstractCommand.conflictedCommands().contains(c))) {
+            if (runCommands.stream().anyMatch(c -> abstractCommand.conflictedCommands().contains(c))) {
                 continue;
             }
             final Collection<OsmPrimitive> realPrimitives = collection.stream().map(dataSet::getPrimitiveById)
