@@ -38,7 +38,6 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
-import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
@@ -159,7 +158,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param info    The information used to download the data
      */
     public static void cleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
-        GuiHelper.runInEDTAndWait(() -> realCleanup(dataSet, bounds, info));
+        realCleanup(dataSet, bounds, info);
     }
 
     private static synchronized void realCleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
