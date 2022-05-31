@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.jcs3.access.CacheAccess;
+import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.imagery.Shape;
@@ -27,6 +29,9 @@ import org.openstreetmap.josm.tools.Territories;
  * Get country data for use in info classes
  */
 public final class CountryUtils {
+    private static final CacheAccess<String, ImageryInfo.ImageryBounds> CACHED_COUNTRIES = JCSCacheManager
+            .getCache("mapwithai:country:shapes");
+
     private CountryUtils() {
         /* Hide constructor */
     }
@@ -38,6 +43,10 @@ public final class CountryUtils {
      * @return The (optional) bounds (may be empty if no country matched)
      */
     public static Optional<ImageryInfo.ImageryBounds> getCountryShape(String country) {
+        ImageryInfo.ImageryBounds shape = CACHED_COUNTRIES.get(country);
+        if (shape != null) {
+            return Optional.of(shape);
+        }
         GeoPropertyIndex<Boolean> geoPropertyIndex = Territories.getGeoPropertyIndex(country);
         if (geoPropertyIndex != null && geoPropertyIndex.getGeoProperty() instanceof DefaultGeoProperty) {
             DefaultGeoProperty prop = (DefaultGeoProperty) geoPropertyIndex.getGeoProperty();
@@ -46,6 +55,7 @@ public final class CountryUtils {
                     new BBox(areaBounds.getMinX(), areaBounds.getMinY(), areaBounds.getMaxX(), areaBounds.getMaxY())),
                     ",");
             areaToShapes(prop.getArea()).forEach(tmp::addShape);
+            CACHED_COUNTRIES.put(country, tmp);
             return Optional.of(tmp);
         }
         return Optional.empty();
