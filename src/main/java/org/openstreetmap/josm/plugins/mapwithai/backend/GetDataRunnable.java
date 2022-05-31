@@ -4,9 +4,9 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.RecursiveTask;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
@@ -135,7 +136,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                         .map(bound -> new GetDataRunnable(bound, dataSet, monitor.createSubTaskMonitor(0, true)))
                         .collect(Collectors.toList());
                 tasks.forEach(GetDataRunnable::fork);
-                tasks.stream().forEach(runnable -> {
+                tasks.forEach(runnable -> {
                     runnable.join();
                     monitor.worked(1);
                 });
@@ -363,7 +364,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     public static void removeCommonTags(DataSet dataSet) {
         dataSet.allPrimitives().stream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
                 .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
-        dataSet.getNodes().stream().forEach(node -> node.remove(SERVER_ID_KEY));
+        dataSet.getNodes().forEach(node -> node.remove(SERVER_ID_KEY));
         final List<Node> emptyNodes = dataSet.getNodes().stream().distinct().filter(node -> !node.isDeleted())
                 .filter(node -> node.getReferrers().isEmpty() && !node.hasKeys()).collect(Collectors.toList());
         if (!emptyNodes.isEmpty()) {
@@ -439,8 +440,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         } catch (ReflectiveOperationException e) {
             throw new JosmRuntimeException(e);
         }
-        final Node toAdd = entry.getValue().stream()
-                .flatMap(seg -> Arrays.asList(seg.getFirstNode(), seg.getSecondNode()).stream())
+        final Node toAdd = entry.getValue().stream().flatMap(seg -> Stream.of(seg.getFirstNode(), seg.getSecondNode()))
                 .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
         if ((toAdd != null) && (convertToMeters(
                 Geometry.getDistance(waySegmentWay, toAdd)) < (MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))) {
@@ -523,7 +523,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                     }).collect(Collectors.toList());
             if ((replacements.size() != 2) || replacements.stream().anyMatch(seg -> {
                 try {
-                    return waySegment1.getNodes().containsAll(seg.toWay().getNodes());
+                    return new HashSet<>(waySegment1.getNodes()).containsAll(seg.toWay().getNodes());
                 } catch (ReflectiveOperationException e) {
                     throw new JosmRuntimeException(e);
                 }
@@ -546,7 +546,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         final DataSet dataSet = new DataSet();
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
-        new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers()).stream().forEach(map -> {
+        for (MapWithAIInfo map : new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())) {
             try {
                 BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bounds, map,
                         DetectTaskingManagerUtils.hasTaskingManagerLayer());
@@ -554,7 +554,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
             } catch (OsmTransferException e1) {
                 Logging.debug(e1);
             }
-        });
+        }
         dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
         return dataSet;
     }
