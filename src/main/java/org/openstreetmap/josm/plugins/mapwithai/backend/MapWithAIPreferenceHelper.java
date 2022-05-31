@@ -1,7 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +8,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.openstreetmap.josm.data.osm.Tag;
+import org.openstreetmap.josm.data.preferences.BooleanProperty;
+import org.openstreetmap.josm.data.preferences.DoubleProperty;
+import org.openstreetmap.josm.data.preferences.IntegerProperty;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
@@ -19,6 +21,13 @@ public final class MapWithAIPreferenceHelper {
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
     private static final String MAXIMUMSELECTION = MapWithAIPlugin.NAME.concat(".maximumselection");
+    private static final DoubleProperty PROPERTY_DUPLICATE_NODE_DISTANCE = new DoubleProperty(
+            MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.6);
+    private static final IntegerProperty PROPERTY_MAXIMUM_SELECTION = new IntegerProperty(MAXIMUMSELECTION,
+            getDefaultMaximumAddition());
+    private static final BooleanProperty PROPERTY_MERGEBUILDINGADDRESSES = new BooleanProperty(MERGEBUILDINGADDRESSES,
+            true);
+    private static final BooleanProperty PROPERTY_AUTOSWITCHLAYERS = new BooleanProperty(AUTOSWITCHLAYERS, true);
 
     private MapWithAIPreferenceHelper() {
         // Hide the constructor
@@ -58,7 +67,7 @@ public final class MapWithAIPreferenceHelper {
      */
     public static int getMaximumAddition() {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
-        Integer defaultReturn = Config.getPref().getInt(MAXIMUMSELECTION, getDefaultMaximumAddition());
+        Integer defaultReturn = PROPERTY_MAXIMUM_SELECTION.get();
         if ((mapWithAILayer != null) && (mapWithAILayer.getMaximumAddition() != null)) {
             defaultReturn = mapWithAILayer.getMaximumAddition();
         }
@@ -72,7 +81,7 @@ public final class MapWithAIPreferenceHelper {
      *         pre-existing addresses
      */
     public static boolean isMergeBuildingAddress() {
-        return Config.getPref().getBoolean(MERGEBUILDINGADDRESSES, true);
+        return PROPERTY_MERGEBUILDINGADDRESSES.get();
     }
 
     /**
@@ -82,7 +91,7 @@ public final class MapWithAIPreferenceHelper {
      */
     public static boolean isSwitchLayers() {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        boolean returnBoolean = Config.getPref().getBoolean(AUTOSWITCHLAYERS, true);
+        boolean returnBoolean = PROPERTY_AUTOSWITCHLAYERS.get();
         if ((layer != null) && (layer.isSwitchLayers() != null)) {
             returnBoolean = layer.isSwitchLayers();
         }
@@ -117,9 +126,9 @@ public final class MapWithAIPreferenceHelper {
         final MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(false);
         if (permanent) {
             if (getDefaultMaximumAddition() == max) {
-                Config.getPref().put(MAXIMUMSELECTION, null);
+                PROPERTY_MAXIMUM_SELECTION.remove();
             } else {
-                Config.getPref().putInt(MAXIMUMSELECTION, max);
+                PROPERTY_MAXIMUM_SELECTION.put(max);
             }
         } else if (mapWithAILayer != null) {
             mapWithAILayer.setMaximumAddition(max);
@@ -135,11 +144,7 @@ public final class MapWithAIPreferenceHelper {
      */
     public static void setMergeBuildingAddress(boolean selected, boolean permanent) {
         if (permanent) {
-            if (selected) {
-                Config.getPref().put(MERGEBUILDINGADDRESSES, null);
-            } else {
-                Config.getPref().putBoolean(MERGEBUILDINGADDRESSES, selected);
-            }
+            PROPERTY_MERGEBUILDINGADDRESSES.put(selected);
         }
     }
 
@@ -153,11 +158,7 @@ public final class MapWithAIPreferenceHelper {
     public static void setSwitchLayers(boolean selected, boolean permanent) {
         final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         if (permanent) {
-            if (selected) {
-                Config.getPref().put(AUTOSWITCHLAYERS, null);
-            } else {
-                Config.getPref().putBoolean(AUTOSWITCHLAYERS, selected);
-            }
+            PROPERTY_AUTOSWITCHLAYERS.put(selected);
         } else if (layer != null) {
             layer.setSwitchLayers(selected);
         }
@@ -169,7 +170,7 @@ public final class MapWithAIPreferenceHelper {
      * @return The max distance between nodes for duplicates
      */
     public static double getMaxNodeDistance() {
-        return Config.getPref().getDouble(MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.6);
+        return PROPERTY_DUPLICATE_NODE_DISTANCE.get();
     }
 
     /**
@@ -180,7 +181,7 @@ public final class MapWithAIPreferenceHelper {
     public static Map<String, String> getReplacementTags() {
         final Map<String, String> defaultMap = Collections.emptyMap();
         final List<Map<String, String>> listOfMaps = Config.getPref()
-                .getListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), Arrays.asList(defaultMap));
+                .getListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), Collections.singletonList(defaultMap));
         return listOfMaps.isEmpty() ? defaultMap : listOfMaps.get(0);
     }
 
@@ -191,7 +192,7 @@ public final class MapWithAIPreferenceHelper {
      */
     public static void setReplacementTags(Map<String, String> tagsToReplace) {
         final List<Map<String, String>> tags = tagsToReplace.isEmpty() ? null
-                : Arrays.asList(new TreeMap<>(tagsToReplace));
+                : Collections.singletonList(new TreeMap<>(tagsToReplace));
         Config.getPref().putListOfMaps(MapWithAIPlugin.NAME.concat(".replacementtags"), tags);
     }
 
