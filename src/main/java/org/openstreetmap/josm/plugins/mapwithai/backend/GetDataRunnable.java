@@ -409,7 +409,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean onlyHasHighwayParents(Node node) {
-        return node.getReferrers().stream().allMatch(prim -> prim.hasKey("highway"));
+        return node.referrers(OsmPrimitive.class).allMatch(prim -> prim.hasKey("highway"));
     }
 
     private static boolean basicNodeChecks(Node nearNode, Node node) {
