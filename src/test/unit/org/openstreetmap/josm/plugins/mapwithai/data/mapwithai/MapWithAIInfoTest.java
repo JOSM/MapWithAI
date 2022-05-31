@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.json.Json;
 import javax.json.JsonArray;
-import javax.management.ReflectionException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -22,8 +21,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Logging;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+
+@BasicPreferences
 class MapWithAIInfoTest {
 
     @ParameterizedTest
@@ -60,13 +64,13 @@ class MapWithAIInfoTest {
     }
 
     @Test
-    void testCloneInitializer() throws ReflectionException, IllegalArgumentException, IllegalAccessException {
+    void testCloneInitializer() throws IllegalArgumentException, IllegalAccessException {
         final List<String> ignoredFields = Collections
                 .singletonList("replacementTagsSupplier" /* The supplier shouldn't be copied */);
         MapWithAIInfo orig = new MapWithAIInfo("Test info");
         // Use random to ensure that I do not accidentally introduce a dependency
         Random random = new Random();
-        Long seed = random.nextLong();
+        long seed = random.nextLong();
         random.setSeed(seed);
         Logging.debug("Random seed for testCloneInitializer is {0}", seed);
         for (Field f : MapWithAIInfo.class.getDeclaredFields()) {
@@ -82,7 +86,7 @@ class MapWithAIInfoTest {
             } else if (f.getType().isAssignableFrom(Boolean.TYPE)) {
                 f.setBoolean(orig, !f.getBoolean(orig)); // just set to non-default
             } else if (f.getType().isAssignableFrom(String.class)) {
-                f.set(orig, "Random String Value " + Double.toString(random.nextDouble()));
+                f.set(orig, "Random String Value " + random.nextDouble());
             } else if (f.getType().isAssignableFrom(List.class)) {
                 List<?> list = new ArrayList<>();
                 list.add(null);
@@ -106,5 +110,11 @@ class MapWithAIInfoTest {
             f.setAccessible(true);
             assertEquals(f.get(orig), f.get(copy), MessageFormat.format("{0} should be the same", f.getName()));
         }
+    }
+
+    @Test
+    void testEquals() {
+        EqualsVerifier.forClass(MapWithAIInfo.class).suppress(Warning.NONFINAL_FIELDS)
+                .withOnlyTheseFields("url", "sourceType").usingGetClass().verify();
     }
 }

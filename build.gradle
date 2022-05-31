@@ -8,9 +8,9 @@ import java.nio.file.Paths
 import java.util.stream.Collectors
 
 plugins {
-  id "com.diffplug.spotless" version "6.6.0"
+  id "com.diffplug.spotless" version "6.6.1"
   id "com.github.ben-manes.versions" version "0.42.0"
-  id "com.github.spotbugs" version "5.0.6"
+  id "com.github.spotbugs" version "5.0.7"
   // id "de.aaschmid.cpd" version "3.3"
   id "eclipse"
   id "jacoco"
@@ -112,16 +112,17 @@ sourceSets {
 
 def versions = [
   awaitility: "4.2.0",
+  equalsverifier: "3.10",
   // Errorprone 2.11 requires Java 11+
-  errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.13.1" : "2.10.0",
+  errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.14.0" : "2.10.0",
+  findsecbugs: "1.12.0",
   jacoco: "0.8.7",
   jmockit: "1.49.a",
+  josm: properties.get("plugin.compile.version"),
   junit: "5.8.2",
   pmd: "6.20.0",
   spotbugs: "4.7.0",
   wiremock: "2.33.2",
-  findsecbugs: "1.12.0",
-  josm: properties.get("plugin.compile.version"),
 ]
 
 dependencies {
@@ -141,6 +142,7 @@ dependencies {
   testFixturesImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
   testFixturesImplementation("com.github.tomakehurst:wiremock-jre8:${versions.wiremock}")
   testFixturesImplementation("org.awaitility:awaitility:${versions.awaitility}")
+  testImplementation("nl.jqno.equalsverifier:equalsverifier:${versions.equalsverifier}")
 }
 
 configurations {
