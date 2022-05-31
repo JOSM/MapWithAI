@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -147,10 +148,18 @@ public final class MapWithAIDataUtils {
                 final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
                 try {
-                    realBounds.parallelStream()
-                            .forEach(bound -> new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl())
-                                    .parallelStream().filter(i -> i.getUrl() != null && !i.getUrl().trim().isEmpty())
-                                    .forEach(i -> download(monitor, dataSet, bound, i, maximumDimensions)));
+                    List<MapWithAIInfo> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl());
+                    final List<ForkJoinTask<DataSet>> downloadedDataSets = new ArrayList<>();
+                    for (final Bounds bound : realBounds) {
+                        for (MapWithAIInfo url : urls) {
+                            if (url.getUrl() != null && !Utils.isBlank(url.getUrl())) {
+                                ForkJoinTask<DataSet> ds = download(monitor, bound, url, maximumDimensions);
+                                downloadedDataSets.add(ds);
+                                MapWithAIDataUtils.getForkJoinPool().execute(ds);
+                            }
+                        }
+                    }
+                    mergeDataSets(dataSet, downloadedDataSets);
                 } finally {
                     monitor.finishTask();
                     monitor.close();
@@ -179,34 +188,48 @@ public final class MapWithAIDataUtils {
      * Download an area
      *
      * @param monitor           The monitor to update
-     * @param dataSet           The dataset to add to
      * @param bound             The bounds that are being downloading
      * @param mapWithAIInfo     The source of the data
      * @param maximumDimensions The maximum dimensions to download
+     * @return A future that will have downloaded the data
      */
-    private static void download(PleaseWaitProgressMonitor monitor, DataSet dataSet, Bounds bound,
+    private static ForkJoinTask<DataSet> download(PleaseWaitProgressMonitor monitor, Bounds bound,
             MapWithAIInfo mapWithAIInfo, int maximumDimensions) {
-        BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
-                DetectTaskingManagerUtils.hasTaskingManagerLayer());
-        try {
-            DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
-            synchronized (MapWithAIDataUtils.class) {
-                dataSet.mergeFrom(ds);
+        return ForkJoinTask.adapt(() -> {
+            BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
+                    DetectTaskingManagerUtils.hasTaskingManagerLayer());
+            try {
+                return downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
+            } catch (OsmTransferException e) {
+                if (e.getCause() instanceof SocketTimeoutException && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10
+                        && maximumDimensions / 2f > 0.5) {
+                    return getData(bound, maximumDimensions / 2);
+                }
+                throw e;
             }
-        } catch (OsmTransferException e) {
-            if (e.getCause() instanceof SocketTimeoutException && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10
-                    && maximumDimensions / 2f > 0.5) {
-                dataSet.mergeFrom(getData(bound, maximumDimensions / 2));
-            } else if (e.getCause() instanceof IllegalDataException) {
-                Logging.error(e);
-                Notification notification = new Notification();
-                notification.setContent(tr("MapWithAI servers may be down."));
-                GuiHelper.runInEDT(notification::show);
-            } else {
-                Logging.error(e);
-                Notification notification = new Notification();
-                GuiHelper.runInEDT(() -> notification.setContent(e.getLocalizedMessage()));
-                GuiHelper.runInEDT(notification::show);
+        });
+    }
+
+    /**
+     * Merge datasets
+     *
+     * @param original        The original dataset
+     * @param dataSetsToMerge The datasets to merge (futures)
+     */
+    private static void mergeDataSets(final DataSet original, final List<ForkJoinTask<DataSet>> dataSetsToMerge) {
+        for (ForkJoinTask<DataSet> ds : dataSetsToMerge) {
+            try {
+                original.mergeFrom(ds.join());
+            } catch (RuntimeException e) {
+                if (e.getCause() instanceof IllegalDataException) {
+                    Notification notification = new Notification();
+                    notification.setContent(tr("MapWithAI servers may be down."));
+                    GuiHelper.runInEDT(notification::show);
+                } else {
+                    Notification notification = new Notification();
+                    GuiHelper.runInEDT(() -> notification.setContent(e.getLocalizedMessage()));
+                    GuiHelper.runInEDT(notification::show);
+                }
             }
         }
     }
