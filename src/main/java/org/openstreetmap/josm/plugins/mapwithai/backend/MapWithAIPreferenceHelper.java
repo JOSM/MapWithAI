@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
+import org.openstreetmap.josm.data.preferences.CachingProperty;
 import org.openstreetmap.josm.data.preferences.DoubleProperty;
 import org.openstreetmap.josm.data.preferences.IntegerProperty;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
@@ -17,14 +18,12 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.spi.preferences.Config;
 
 public final class MapWithAIPreferenceHelper {
-    private static final int DEFAULT_MAXIMUM_ADDITION = 100;
     private static final String AUTOSWITCHLAYERS = MapWithAIPlugin.NAME.concat(".autoswitchlayers");
     private static final String MERGEBUILDINGADDRESSES = MapWithAIPlugin.NAME.concat(".mergebuildingaddresses");
     private static final String MAXIMUMSELECTION = MapWithAIPlugin.NAME.concat(".maximumselection");
-    private static final DoubleProperty PROPERTY_DUPLICATE_NODE_DISTANCE = new DoubleProperty(
-            MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.6);
-    private static final IntegerProperty PROPERTY_MAXIMUM_SELECTION = new IntegerProperty(MAXIMUMSELECTION,
-            getDefaultMaximumAddition());
+    private static final CachingProperty<Double> PROPERTY_DUPLICATE_NODE_DISTANCE = new DoubleProperty(
+            MapWithAIPlugin.NAME.concat(".duplicatenodedistance"), 0.6).cached();
+    private static final IntegerProperty PROPERTY_MAXIMUM_SELECTION = new IntegerProperty(MAXIMUMSELECTION, 100);
     private static final BooleanProperty PROPERTY_MERGEBUILDINGADDRESSES = new BooleanProperty(MERGEBUILDINGADDRESSES,
             true);
     private static final BooleanProperty PROPERTY_AUTOSWITCHLAYERS = new BooleanProperty(AUTOSWITCHLAYERS, true);
@@ -36,10 +35,10 @@ public final class MapWithAIPreferenceHelper {
     /**
      * The default maximum number of objects to add
      *
-     * @return {@link MapWithAIPreferenceHelper#DEFAULT_MAXIMUM_ADDITION}
+     * @return {@link MapWithAIPreferenceHelper#PROPERTY_MAXIMUM_SELECTION} default
      */
     public static int getDefaultMaximumAddition() {
-        return DEFAULT_MAXIMUM_ADDITION;
+        return PROPERTY_MAXIMUM_SELECTION.getDefaultValue();
     }
 
     /**
@@ -71,7 +70,7 @@ public final class MapWithAIPreferenceHelper {
         if ((mapWithAILayer != null) && (mapWithAILayer.getMaximumAddition() != null)) {
             defaultReturn = mapWithAILayer.getMaximumAddition();
         }
-        return defaultReturn > DEFAULT_MAXIMUM_ADDITION * 10 ? DEFAULT_MAXIMUM_ADDITION * 10 : defaultReturn;
+        return defaultReturn > getDefaultMaximumAddition() * 10 ? getDefaultMaximumAddition() * 10 : defaultReturn;
     }
 
     /**
