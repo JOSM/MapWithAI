@@ -98,39 +98,6 @@ public final class MapWithAIDataUtils {
     }
 
     /**
-     * Get a dataset from the API servers using a bounds
-     *
-     * @param bounds The bounds from which to get data
-     * @return A DataSet with data inside the bounds
-     */
-    public static DataSet getData(Bounds bounds) {
-        return getData(Collections.singletonList(bounds), MAXIMUM_SIDE_DIMENSIONS);
-    }
-
-    /**
-     * Get a dataset from the API servers using a bounds
-     *
-     * @param bounds            The bounds from which to get data
-     * @param maximumDimensions The maximum dimensions to try to download at any one
-     *                          time
-     * @return A DataSet with data inside the bounds
-     */
-    public static DataSet getData(Bounds bounds, int maximumDimensions) {
-        return getData(Collections.singletonList(bounds), maximumDimensions);
-    }
-
-    /**
-     *
-     * Get a dataset from the API servers using a list of bounds
-     *
-     * @param bounds The bounds from which to get data
-     * @return A DataSet with data inside the bounds
-     */
-    public static DataSet getData(List<Bounds> bounds) {
-        return getData(bounds, MAXIMUM_SIDE_DIMENSIONS);
-    }
-
-    /**
      * Get a dataset from the API servers using a list bounds
      *
      * @param bounds            The bounds from which to get data
@@ -138,7 +105,7 @@ public final class MapWithAIDataUtils {
      *                          time
      * @return A DataSet with data inside the bounds
      */
-    public static DataSet getData(List<Bounds> bounds, int maximumDimensions) {
+    public static DataSet getData(Collection<Bounds> bounds, int maximumDimensions) {
         final DataSet dataSet = new DataSet();
         final List<Bounds> realBounds = bounds.stream().filter(b -> !b.isOutOfTheWorld()).distinct()
                 .flatMap(bound -> MapWithAIDataUtils.reduceBoundSize(bound, maximumDimensions).stream())
@@ -203,7 +170,7 @@ public final class MapWithAIDataUtils {
             } catch (OsmTransferException e) {
                 if (e.getCause() instanceof SocketTimeoutException && maximumDimensions > MAXIMUM_SIDE_DIMENSIONS / 10
                         && maximumDimensions / 2f > 0.5) {
-                    return getData(bound, maximumDimensions / 2);
+                    return getData(Collections.singleton(bound), maximumDimensions / 2);
                 }
                 throw e;
             }
@@ -375,7 +342,7 @@ public final class MapWithAIDataUtils {
                         .collect(Collectors.toList());
         if (!toDownload.isEmpty()) {
             getForkJoinPool().execute(() -> {
-                final DataSet newData = getData(toDownload);
+                final DataSet newData = getData(toDownload, MAXIMUM_SIDE_DIMENSIONS);
                 final Lock lock = layer.getLock();
                 lock.lock();
                 try {

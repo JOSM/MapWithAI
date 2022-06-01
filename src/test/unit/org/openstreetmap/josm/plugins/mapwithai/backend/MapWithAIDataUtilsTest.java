@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -63,7 +64,8 @@ public class MapWithAIDataUtilsTest {
     @Test
     void testGetData() {
         final Bounds testBBox = getTestBounds();
-        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(testBBox));
+        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Collections.singleton(testBBox),
+                MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS));
         assertEquals(1, ds.getWays().size(), "There should only be one way in the testBBox");
     }
 
@@ -74,14 +76,15 @@ public class MapWithAIDataUtilsTest {
     void testGetDataMultiple() {
         final Bounds testBounds1 = getTestBounds();
         final Bounds testBounds2 = new Bounds(39.095376, -108.4495519, 39.0987811, -108.4422314);
-        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBounds1, testBounds2)));
+        final DataSet ds = new DataSet(MapWithAIDataUtils.getData(Arrays.asList(testBounds1, testBounds2),
+                MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS));
         int expectedBounds = 2;
         assertEquals(expectedBounds, ds.getDataSourceBounds().size(), "There should be two data sources");
     }
 
     /**
      * This gets data from MapWithAI. This test may fail if someone adds the data to
-     * OSM.
+     * OSM. Bounds: 39.0735906;-108.5710852;39.0736112;-108.5707442
      */
     @Test
     void testGetDataCropped() {
@@ -90,13 +93,16 @@ public class MapWithAIDataUtilsTest {
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0735205, -108.5711561)));
         gpxData.addWaypoint(new WayPoint(new LatLon(39.0736682, -108.5708568)));
         final GpxLayer gpx = new GpxLayer(gpxData, DetectTaskingManagerUtils.MAPWITHAI_CROP_AREA);
-        final DataSet originalData = MapWithAIDataUtils.getData(testBounds);
+        final DataSet originalData = MapWithAIDataUtils.getData(Collections.singleton(testBounds),
+                MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+        assertAll(() -> assertEquals(1, originalData.getWays().size(), "There should be one way in the testBBox"),
+                () -> assertEquals(4, originalData.getNodes().size(), "There should be four nodes in the testBBox"));
         MainApplication.getLayerManager().addLayer(gpx);
-        final DataSet ds = MapWithAIDataUtils.getData(testBounds);
-        assertEquals(1, ds.getWays().size(), "There should only be one way in the cropped testBBox");
-        assertEquals(3, ds.getNodes().size(), "There should be three nodes in the cropped testBBox");
-        assertEquals(1, originalData.getWays().size(), "There should be one way in the testBBox");
-        assertEquals(4, originalData.getNodes().size(), "There should be four nodes in the testBBox");
+        final DataSet ds = MapWithAIDataUtils.getData(Collections.singleton(testBounds),
+                MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+        assertAll(() -> assertEquals(1, ds.getWays().size(), "There should only be one way in the cropped testBBox"),
+                () -> assertEquals(4, ds.getNodes().size(),
+                        "There should be four nodes in the cropped testBBox due to the return"));
     }
 
     @Test
