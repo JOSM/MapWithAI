@@ -83,10 +83,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     public DataSet parseOsm(ProgressMonitor progressMonitor) throws OsmTransferException {
         long startTime = System.nanoTime();
         try {
-            DataSet externalData;
-            synchronized (BoundingBoxMapWithAIDownloader.class) {
-                externalData = super.parseOsm(progressMonitor);
-            }
+            DataSet externalData = super.parseOsm(progressMonitor);
             if (Boolean.TRUE.equals(MapWithAIInfo.THIRD_PARTY_CONFLATE.get()) && !this.info.isConflated()
                     && !MapWithAIConflationCategory.conflationUrlFor(this.info.getCategory()).isEmpty()) {
                 if (externalData.getDataSourceBounds().isEmpty()) {

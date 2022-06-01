@@ -33,6 +33,7 @@ import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.IllegalDataException;
@@ -160,8 +161,8 @@ public final class MapWithAIDataUtils {
      * @param maximumDimensions The maximum dimensions to download
      * @return A future that will have downloaded the data
      */
-    private static ForkJoinTask<DataSet> download(PleaseWaitProgressMonitor monitor, Bounds bound,
-            MapWithAIInfo mapWithAIInfo, int maximumDimensions) {
+    public static ForkJoinTask<DataSet> download(ProgressMonitor monitor, Bounds bound, MapWithAIInfo mapWithAIInfo,
+            int maximumDimensions) {
         return ForkJoinTask.adapt(() -> {
             BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
                     DetectTaskingManagerUtils.hasTaskingManagerLayer());

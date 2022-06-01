@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -11,8 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,6 +33,8 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Hash;
 import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
+import org.openstreetmap.josm.data.osm.IRelation;
+import org.openstreetmap.josm.data.osm.IWay;
 import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -37,12 +44,12 @@ import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagMap;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.osm.visitor.PrimitiveVisitor;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
-import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeDuplicateWays;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -50,7 +57,6 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
-import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -108,6 +114,30 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         public int getHashCode(Object k) {
             ILatLon coorK = getLatLon(k);
             return coorK == null ? 0 : coorK.hashCode();
+        }
+    }
+
+    /**
+     * This checks that all visited objects are highways
+     */
+    private static final class HighwayVisitor implements PrimitiveVisitor {
+        boolean onlyHighways = true;
+
+        @Override
+        public void visit(INode n) {
+            onlyHighways = false;
+        }
+
+        @Override
+        public void visit(IWay<?> w) {
+            if (!w.isTagged() || !w.hasTag("highway")) {
+                onlyHighways = false;
+            }
+        }
+
+        @Override
+        public void visit(IRelation<?> r) {
+            onlyHighways = false;
         }
     }
 
@@ -416,11 +446,22 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset to remove tags from
      */
     public static void removeCommonTags(DataSet dataSet) {
-        dataSet.allPrimitives().stream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
-                .forEach(prim -> prim.remove(MergeDuplicateWays.ORIG_ID));
-        dataSet.getNodes().forEach(node -> node.remove(SERVER_ID_KEY));
-        final List<Node> emptyNodes = dataSet.getNodes().stream().distinct().filter(node -> !node.isDeleted())
-                .filter(node -> node.getReferrers().isEmpty() && !node.hasKeys()).collect(Collectors.toList());
+        final Set<Node> emptyNodes = new HashSet<>();
+        for (OsmPrimitive tagged : dataSet.allPrimitives()) {
+            if (!tagged.hasKeys()) {
+                continue;
+            }
+            if (tagged.hasKey(MergeDuplicateWays.ORIG_ID)) {
+                tagged.remove(MergeDuplicateWays.ORIG_ID);
+            }
+            if (tagged instanceof Node) {
+                tagged.remove(SERVER_ID_KEY);
+                final Node node = (Node) tagged;
+                if (!node.isDeleted() && !node.hasKeys() && node.getReferrers().isEmpty()) {
+                    emptyNodes.add(node);
+                }
+            }
+        }
         if (!emptyNodes.isEmpty()) {
             new DeleteCommand(emptyNodes).executeCommand();
         }
@@ -483,21 +524,22 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         return basicNodeChecks(nearNode, node) && onlyHasHighwayParents(node)
                 && ((keyCheck(nearNode, node)
                         && distanceCheck(nearNode, node, MapWithAIPreferenceHelper.getMaxNodeDistance()))
-                        || (!nearNode.getKeys().isEmpty() && nearNode.getKeys().equals(node.getKeys())
+                        || (nearNode.hasKeys() && node.hasKeys() && nearNode.getKeys().equals(node.getKeys())
                                 && distanceCheck(nearNode, node, MapWithAIPreferenceHelper.getMaxNodeDistance() * 10)));
     }
 
-    private static boolean distanceCheck(INode nearNode, INode node, Double distance) {
-        return !(nearNode == null || node == null || nearNode.getCoor() == null || node.getCoor() == null)
-                && nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
+    private static boolean distanceCheck(Node nearNode, Node node, Double distance) {
+        return Geometry.getDistance(nearNode, node) < distance;
     }
 
     private static boolean keyCheck(INode nearNode, INode node) {
-        return nearNode.getKeys().equals(node.getKeys()) || nearNode.getKeys().isEmpty() || node.getKeys().isEmpty();
+        return !nearNode.hasKeys() || !node.hasKeys() || nearNode.getKeys().equals(node.getKeys());
     }
 
     private static boolean onlyHasHighwayParents(Node node) {
-        return node.referrers(OsmPrimitive.class).allMatch(prim -> prim.hasKey("highway"));
+        HighwayVisitor highwayVisitor = new HighwayVisitor();
+        node.visitReferrers(highwayVisitor);
+        return highwayVisitor.onlyHighways;
     }
 
     private static boolean basicNodeChecks(INode nearNode, INode node) {
@@ -506,16 +548,21 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static void mergeWays(DataSet dataSet) {
-        final List<Way> ways = dataSet.getWays().stream().filter(way -> !way.isDeleted()).collect(Collectors.toList());
-        for (final Way way1 : ways) {
+        for (final Way way1 : dataSet.getWays()) {
+            if (way1.isDeleted()) {
+                continue;
+            }
             final BBox bbox = new BBox();
             bbox.addPrimitive(way1, DEGREE_BUFFER);
-            final List<Way> nearbyWays = dataSet.searchWays(bbox).stream()
-                    .filter(way -> way.getNodes().stream().filter(node -> way1.getNodes().contains(node)).count() > 1)
-                    .collect(Collectors.toList());
-            way1.getNodePairs(false);
-            nearbyWays.stream().flatMap(way2 -> checkWayDuplications(way1, way2).entrySet().stream())
-                    .forEach(GetDataRunnable::addMissingElement);
+            for (Way nearbyWay : dataSet.searchWays(bbox)) {
+                if (nearbyWay.getNodes().stream().filter(way1::containsNode).count() > 1) {
+                    // way1.getNodePairs(false);
+                    for (Map.Entry<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> entry : checkWayDuplications(
+                            way1, nearbyWay).entrySet()) {
+                        GetDataRunnable.addMissingElement(entry);
+                    }
+                }
+            }
         }
     }
 
@@ -589,32 +636,26 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         final List<IWaySegment<Node, Way>> waySegments2 = way2.getNodePairs(false).stream()
                 .map(pair -> IWaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
         final Map<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> partials = new TreeMap<>();
+        final BiPredicate<IWaySegment<Node, Way>, IWaySegment<Node, Way>> connected = (segment1,
+                segment2) -> segment1.getFirstNode().equals(segment2.getFirstNode())
+                        || segment1.getSecondNode().equals(segment2.getFirstNode())
+                        || segment1.getFirstNode().equals(segment2.getSecondNode())
+                        || segment1.getSecondNode().equals(segment2.getSecondNode());
         for (final IWaySegment<Node, Way> segment1 : waySegments1) {
-            final Way waySegment1;
-            try {
-                waySegment1 = segment1.toWay();
-            } catch (ReflectiveOperationException e) {
-                throw new JosmRuntimeException(e);
-            }
             final List<IWaySegment<Node, Way>> replacements = waySegments2.stream()
-                    .filter(seg2 -> waySegment1.isFirstLastNode(seg2.getFirstNode())
-                            || waySegment1.isFirstLastNode(seg2.getSecondNode()))
-                    .filter(seg -> {
-                        final Node node2 = waySegment1.isFirstLastNode(seg.getFirstNode()) ? seg.getFirstNode()
-                                : seg.getSecondNode();
+                    .filter(seg2 -> connected.test(segment1, seg2)).filter(seg -> {
+                        final Node node2 = segment1.getFirstNode().equals(seg.getFirstNode())
+                                || segment1.getSecondNode().equals(seg.getFirstNode()) ? seg.getFirstNode()
+                                        : seg.getSecondNode();
                         final Node node1 = node2.equals(seg.getFirstNode()) ? seg.getSecondNode() : seg.getFirstNode();
-                        final Node node3 = waySegment1.getNode(0).equals(node2) ? waySegment1.getNode(1)
-                                : waySegment1.getNode(0);
+                        final Node node3 = segment1.getFirstNode().equals(node2) ? segment1.getSecondNode()
+                                : segment1.getFirstNode();
                         return Math.abs(Geometry.getCornerAngle(node1.getEastNorth(), node2.getEastNorth(),
                                 node3.getEastNorth())) < (Math.PI / 4);
                     }).collect(Collectors.toList());
-            if ((replacements.size() != 2) || replacements.stream().anyMatch(seg -> {
-                try {
-                    return new HashSet<>(waySegment1.getNodes()).containsAll(seg.toWay().getNodes());
-                } catch (ReflectiveOperationException e) {
-                    throw new JosmRuntimeException(e);
-                }
-            })) {
+            if ((replacements.size() != 2) || replacements.stream()
+                    .anyMatch(seg -> Arrays.asList(segment1.getFirstNode(), segment1.getSecondNode())
+                            .containsAll(Arrays.asList(seg.getFirstNode(), seg.getSecondNode())))) {
                 continue;
             }
             partials.put(segment1, replacements);
@@ -633,14 +674,14 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         final DataSet dataSet = new DataSet();
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
+        final List<ForkJoinTask<DataSet>> tasks = new ArrayList<>();
+        final ForkJoinPool pool = MapWithAIDataUtils.getForkJoinPool();
         for (MapWithAIInfo map : new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())) {
-            try {
-                BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bounds, map,
-                        DetectTaskingManagerUtils.hasTaskingManagerLayer());
-                dataSet.mergeFrom(downloader.parseOsm(monitor));
-            } catch (OsmTransferException e1) {
-                Logging.debug(e1);
-            }
+            tasks.add(pool.submit(
+                    MapWithAIDataUtils.download(monitor, bounds, map, MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS)));
+        }
+        for (ForkJoinTask<DataSet> task : tasks) {
+            dataSet.mergeFrom(task.join());
         }
         dataSet.setUploadPolicy(UploadPolicy.BLOCKED);
         return dataSet;

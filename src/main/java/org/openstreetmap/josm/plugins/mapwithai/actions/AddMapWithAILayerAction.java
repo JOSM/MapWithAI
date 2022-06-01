@@ -4,12 +4,17 @@ package org.openstreetmap.josm.plugins.mapwithai.actions;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.actions.AdaptableAction;
 import org.openstreetmap.josm.actions.AddImageryLayerAction;
 import org.openstreetmap.josm.actions.JosmAction;
+import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmData;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -17,8 +22,6 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.preferences.ToolbarPreferences;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
-import org.openstreetmap.josm.io.OsmTransferException;
-import org.openstreetmap.josm.plugins.mapwithai.backend.BoundingBoxMapWithAIDownloader;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -101,14 +104,17 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
             ds = null;
         }
         if (boundsSource != null && ds != null) {
-            boundsSource.getDataSourceBounds().forEach(b -> MainApplication.worker.execute(() -> {
-                try {
-                    ds.mergeFrom(
-                            new BoundingBoxMapWithAIDownloader(b, info, false).parseOsm(NullProgressMonitor.INSTANCE));
-                } catch (OsmTransferException error) {
-                    Logging.error(error);
-                }
-            }));
+            ForkJoinPool pool = MapWithAIDataUtils.getForkJoinPool();
+            List<ForkJoinTask<DataSet>> forkJoinTasks = new ArrayList<>(boundsSource.getDataSourceBounds().size());
+            for (Bounds b : boundsSource.getDataSourceBounds()) {
+                ForkJoinTask<DataSet> task = MapWithAIDataUtils.download(NullProgressMonitor.INSTANCE, b, info,
+                        MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
+                forkJoinTasks.add(task);
+                pool.execute(task);
+            }
+            for (ForkJoinTask<DataSet> task : forkJoinTasks) {
+                ds.mergeFrom(task.join());
+            }
         }
         if (layer != null) {
             layer.addDownloadedInfo(info);

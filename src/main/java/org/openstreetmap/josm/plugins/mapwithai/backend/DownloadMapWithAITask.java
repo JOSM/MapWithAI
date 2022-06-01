@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -18,7 +20,6 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
-import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmServerReader;
@@ -99,14 +100,9 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
     }
 
     class DownloadTask extends AbstractInternalTask {
-        BoundingBoxMapWithAIDownloader downloader;
+        List<ForkJoinTask<DataSet>> downloader;
         final Bounds bounds;
         private List<MapWithAIInfo> relevantUrls;
-
-        DownloadTask(DownloadParams settings, String title, boolean ignoreException, boolean zoomAfterDownload,
-                Bounds bounds) {
-            this(settings, title, NullProgressMonitor.INSTANCE, ignoreException, zoomAfterDownload, bounds);
-        }
 
         public DownloadTask(DownloadParams settings, String title, ProgressMonitor progressMonitor,
                 boolean ignoreException, boolean zoomAfterDownload, Bounds bounds) {
@@ -118,7 +114,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         protected void cancel() {
             setCanceled(true);
             if (downloader != null) {
-                downloader.cancel();
+                downloader.forEach(task -> task.cancel(true));
             }
         }
 
@@ -137,14 +133,17 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                 monitor.setTicksCount(relevantUrls.size());
             }
             downloadedData = new DataSet();
+            final ForkJoinPool pool = MapWithAIDataUtils.getForkJoinPool();
+            this.downloader = new ArrayList<>(relevantUrls.size());
             for (MapWithAIInfo info : relevantUrls) {
                 if (isCanceled()) {
                     break;
                 }
-                downloader = new BoundingBoxMapWithAIDownloader(bounds, info, false);
-                DataSet ds = downloader.parseOsm(monitor.createSubTaskMonitor(1, true));
-                downloadedData.mergeFrom(ds);
+                this.downloader.add(pool.submit(MapWithAIDataUtils.download(this.progressMonitor, bounds, info,
+                        MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS)));
             }
+            this.downloader
+                    .forEach(task -> downloadedData.mergeFrom(task.join(), monitor.createSubTaskMonitor(1, false)));
         }
 
         @Override
