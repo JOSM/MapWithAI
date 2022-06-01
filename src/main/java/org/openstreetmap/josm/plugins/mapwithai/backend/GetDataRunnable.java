@@ -20,16 +20,19 @@ import org.openstreetmap.josm.actions.MergeNodesAction;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.Hash;
 import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.Storage;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagMap;
 import org.openstreetmap.josm.data.osm.UploadPolicy;
@@ -57,6 +60,57 @@ import org.openstreetmap.josm.tools.Utils;
  * @author Taylor Smock
  */
 public class GetDataRunnable extends RecursiveTask<DataSet> {
+    /**
+     * This is functionally equivalent to
+     * {@link org.openstreetmap.josm.data.validation.tests.DuplicateNode#NodeHash}
+     */
+    private static class ILatLonHash implements Hash<Object, Object> {
+        private static final double PRECISION = DEGREE_BUFFER;
+
+        /**
+         * Returns the rounded coordinated according to {@link #PRECISION}
+         *
+         * @see LatLon#roundToOsmPrecision
+         */
+        private ILatLon roundCoord(ILatLon coor) {
+            return new LatLon(Math.round(coor.lat() / PRECISION) * PRECISION,
+                    Math.round(coor.lon() / PRECISION) * PRECISION);
+        }
+
+        @SuppressWarnings("unchecked")
+        protected ILatLon getLatLon(Object o) {
+            if (o instanceof INode) {
+                LatLon coor = ((INode) o).getCoor();
+                if (coor == null)
+                    return null;
+                if (PRECISION == 0)
+                    return coor.getRoundedToOsmPrecision();
+                return roundCoord(coor);
+            } else if (o instanceof List<?>) {
+                LatLon coor = ((List<Node>) o).get(0).getCoor();
+                if (coor == null)
+                    return null;
+                if (PRECISION == 0)
+                    return coor.getRoundedToOsmPrecision();
+                return roundCoord(coor);
+            } else
+                throw new AssertionError();
+        }
+
+        @Override
+        public boolean equals(Object k, Object t) {
+            ILatLon coorK = getLatLon(k);
+            ILatLon coorT = getLatLon(t);
+            return coorK == coorT || (coorK != null && coorT != null && coorK.equals(coorT));
+        }
+
+        @Override
+        public int getHashCode(Object k) {
+            ILatLon coorK = getLatLon(k);
+            return coorK == null ? 0 : coorK.hashCode();
+        }
+    }
+
     private static final long serialVersionUID = 258423685658089715L;
     private final transient List<Bounds> runnableBounds;
     private final transient DataSet dataSet;
@@ -372,24 +426,57 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
     }
 
-    private static void mergeNodes(DataSet dataSet) {
-        final List<Node> nodes = dataSet.getNodes().stream().filter(node -> !node.isDeleted())
-                .collect(Collectors.toList());
-        for (int i = 0; i < nodes.size(); i++) {
-            final Node n1 = nodes.get(i);
-            final List<Node> nearbyNodes = nearbyNodes(dataSet, n1);
-            final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, n1);
-            if (mergeCommand != null) {
-                mergeCommand.executeCommand();
-                nodes.removeAll(nearbyNodes);
+    /**
+     * Create an efficient collection ({@link Storage}) of {@link List<Node>} and
+     * {@link Node} objects
+     *
+     * @param dataSet The dataset to get nodes from
+     * @return The storage to use
+     */
+    private static Storage<Object> generateEfficientNodeSearchStorage(DataSet dataSet) {
+        final Storage<Object> nodes = new Storage<>(new ILatLonHash());
+        for (Node node : dataSet.getNodes()) {
+            if (!node.isDeleted()) {
+                final Object old = nodes.get(node);
+                if (old == null) {
+                    nodes.put(node);
+                } else if (old instanceof Node) {
+                    List<Node> list = new ArrayList<>(2);
+                    list.add((Node) old);
+                    list.add(node);
+                    nodes.put(list);
+                } else {
+                    @SuppressWarnings("unchecked")
+                    List<Node> list = (List<Node>) old;
+                    list.add(node);
+                }
             }
         }
+        return nodes;
     }
 
-    private static List<Node> nearbyNodes(DataSet ds, Node nearNode) {
-        final BBox bbox = new BBox();
-        bbox.addPrimitive(nearNode, DEGREE_BUFFER);
-        return ds.searchNodes(bbox).stream().filter(node -> usableNode(nearNode, node)).collect(Collectors.toList());
+    /**
+     * Merge nodes that have the same tags and (almost) the same location
+     *
+     * @param dataSet The dataset to merge nodes in
+     */
+    private static void mergeNodes(DataSet dataSet) {
+        final Storage<Object> nodes = generateEfficientNodeSearchStorage(dataSet);
+        for (Object obj : nodes) {
+            // We only care if there are multiple nodes at the location
+            if (obj instanceof List<?>) {
+                @SuppressWarnings("unchecked")
+                final List<Node> iNodes = (List<Node>) obj;
+                for (Node nearNode : iNodes) {
+                    final List<Node> nearbyNodes = new ArrayList<>(iNodes);
+                    nearbyNodes.removeIf(node -> !usableNode(nearNode, node));
+                    final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, nearNode);
+                    if (mergeCommand != null) {
+                        mergeCommand.executeCommand();
+                    }
+                }
+            }
+        }
     }
 
     private static boolean usableNode(Node nearNode, Node node) {
@@ -400,12 +487,12 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                                 && distanceCheck(nearNode, node, MapWithAIPreferenceHelper.getMaxNodeDistance() * 10)));
     }
 
-    private static boolean distanceCheck(Node nearNode, Node node, Double distance) {
+    private static boolean distanceCheck(INode nearNode, INode node, Double distance) {
         return !(nearNode == null || node == null || nearNode.getCoor() == null || node.getCoor() == null)
                 && nearNode.getCoor().greatCircleDistance(node.getCoor()) < distance;
     }
 
-    private static boolean keyCheck(Node nearNode, Node node) {
+    private static boolean keyCheck(INode nearNode, INode node) {
         return nearNode.getKeys().equals(node.getKeys()) || nearNode.getKeys().isEmpty() || node.getKeys().isEmpty();
     }
 
@@ -413,7 +500,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         return node.referrers(OsmPrimitive.class).allMatch(prim -> prim.hasKey("highway"));
     }
 
-    private static boolean basicNodeChecks(Node nearNode, Node node) {
+    private static boolean basicNodeChecks(INode nearNode, INode node) {
         return node != null && nearNode != null && !node.isDeleted() && !nearNode.isDeleted() && !nearNode.equals(node)
                 && node.isLatLonKnown() && nearNode.isLatLonKnown();
     }
