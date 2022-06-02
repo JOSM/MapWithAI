@@ -210,7 +210,7 @@ public final class MapWithAIDataUtils {
 
     private static class ConfirmBigDownload implements Runnable {
         Boolean bool;
-        List<?> realBounds;
+        final List<?> realBounds;
 
         public ConfirmBigDownload(List<?> realBounds) {
             this.realBounds = realBounds;

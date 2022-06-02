@@ -1,9 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.tools;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonException;
@@ -12,6 +9,9 @@ import javax.json.JsonReader;
 import javax.json.JsonString;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
+
+import java.io.BufferedReader;
+import java.io.IOException;
 
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
@@ -24,7 +24,7 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  *
  */
-public class BlacklistUtils {
+public final class BlacklistUtils {
     static final String DEFAULT_BLACKLIST_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/blacklisted_versions.json";
     private static String blacklistUrl = DEFAULT_BLACKLIST_URL;
 

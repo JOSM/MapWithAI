@@ -78,13 +78,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
          *
          * @see LatLon#roundToOsmPrecision
          */
-        private ILatLon roundCoord(ILatLon coor) {
+        private static ILatLon roundCoord(ILatLon coor) {
             return new LatLon(Math.round(coor.lat() / PRECISION) * PRECISION,
                     Math.round(coor.lon() / PRECISION) * PRECISION);
         }
 
         @SuppressWarnings("unchecked")
-        protected ILatLon getLatLon(Object o) {
+        protected static ILatLon getLatLon(Object o) {
             if (o instanceof INode) {
                 LatLon coor = ((INode) o).getCoor();
                 if (coor == null)
@@ -378,11 +378,11 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
             final BBox tBBox = new BBox();
             tBBox.addPrimitive((OsmPrimitive) primitive, DEGREE_BUFFER);
             if (primitive instanceof Node) {
-                return new ArrayList<>(ds.searchNodes(tBBox));
+                return Collections.unmodifiableList(ds.searchNodes(tBBox));
             } else if (primitive instanceof Way) {
-                return new ArrayList<>(ds.searchWays(tBBox));
+                return Collections.unmodifiableList(ds.searchWays(tBBox));
             } else if (primitive instanceof Relation) {
-                return new ArrayList<>(ds.searchRelations(tBBox));
+                return Collections.unmodifiableList(ds.searchRelations(tBBox));
             }
         }
         return Collections.emptyList();

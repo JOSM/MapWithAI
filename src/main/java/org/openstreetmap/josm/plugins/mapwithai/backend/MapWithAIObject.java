@@ -61,7 +61,7 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
     }
 
     private void setText() {
-        final Long addedObjects = MapWithAIDataUtils.getAddedObjects();
+        final long addedObjects = MapWithAIDataUtils.getAddedObjects();
         if (addedObjects == 0L) {
             mapWithAIObjects.setVisible(false);
             mapWithAIObjects.setVisible(true);
@@ -75,7 +75,7 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
             mapWithAIObjects.setBackground(MapStatus.PROP_BACKGROUND_COLOR.get());
         } else if (addedObjects < maxAdd) {
             mapWithAIObjects.setBackground(Color.GREEN);
-        } else if (addedObjects < 10 * maxAdd) {
+        } else if (addedObjects < 10L * maxAdd) {
             mapWithAIObjects.setBackground(Color.YELLOW);
         } else {
             mapWithAIObjects.setBackground(Color.RED);

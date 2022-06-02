@@ -4,6 +4,8 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.JOptionPane;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -11,8 +13,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.actions.JosmAction;
@@ -35,7 +35,7 @@ public class MapWithAIMoveAction extends JosmAction {
     private static final long serialVersionUID = 319374598;
 
     /** The maximum number of objects is this times the maximum add */
-    public static final int MAX_ADD_MULTIPLIER = 10;
+    public static final long MAX_ADD_MULTIPLIER = 10;
 
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), "mapwithai",

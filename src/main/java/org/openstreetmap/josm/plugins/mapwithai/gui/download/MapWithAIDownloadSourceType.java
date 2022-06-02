@@ -3,10 +3,10 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.util.stream.Stream;
-
 import javax.swing.JCheckBox;
 import javax.swing.event.ChangeListener;
+
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.actions.downloadtasks.AbstractDownloadTask;
 import org.openstreetmap.josm.data.Bounds;

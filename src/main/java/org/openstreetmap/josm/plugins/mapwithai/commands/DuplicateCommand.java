@@ -80,7 +80,7 @@ public class DuplicateCommand extends AbstractConflationCommand {
 
     @Override
     public Collection<Class<? extends OsmPrimitive>> getInterestedTypes() {
-        return Arrays.asList(Node.class);
+        return Collections.singletonList(Node.class);
     }
 
     @Override

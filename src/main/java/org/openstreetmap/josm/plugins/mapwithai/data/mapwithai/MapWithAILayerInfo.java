@@ -38,6 +38,7 @@ import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
@@ -84,9 +85,10 @@ public class MapWithAILayerInfo {
         synchronized (MapWithAILayerInfo.class) {
             if (instance == null) {
                 instance = new MapWithAILayerInfo(() -> {
-                    synchronized (finished) {
+                    synchronized (MapWithAILayerInfo.class) {
                         finished.set(true);
-                        finished.notifyAll();
+                        MapWithAILayer.class.notifyAll();
+                        ;
                     }
                 });
             } else {
@@ -95,10 +97,10 @@ public class MapWithAILayerInfo {
         }
         // Avoid a deadlock in the EDT.
         if (!finished.get() && !SwingUtilities.isEventDispatchThread()) {
-            synchronized (finished) {
+            synchronized (MapWithAILayerInfo.class) {
                 while (!finished.get()) {
                     try {
-                        finished.wait(1000);
+                        MapWithAILayerInfo.class.wait(1000);
                     } catch (InterruptedException e) {
                         Logging.error(e);
                         Thread.currentThread().interrupt();

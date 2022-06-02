@@ -9,7 +9,11 @@ import java.util.Objects;
  *
  * @author Taylor Smock
  */
-public class MapWithAIConfig {
+public final class MapWithAIConfig {
+    private MapWithAIConfig() {
+        // Hide constructor
+    }
+
     private static IMapWithAIUrls urls;
 
     /**

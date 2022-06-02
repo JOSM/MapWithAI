@@ -157,8 +157,12 @@ public class MapWithAIAddCommand extends Command implements Runnable {
 
     @Override
     public Collection<? extends OsmPrimitive> getParticipatingPrimitives() {
+        final Command tCommand;
+        synchronized (this) {
+            tCommand = this.command;
+        }
         return Stream
-                .of(Optional.ofNullable(command).map(Command::getParticipatingPrimitives)
+                .of(Optional.ofNullable(tCommand).map(Command::getParticipatingPrimitives)
                         .orElseGet(Collections::emptySet), primitives)
                 .flatMap(Collection::stream).collect(Collectors.toSet());
     }

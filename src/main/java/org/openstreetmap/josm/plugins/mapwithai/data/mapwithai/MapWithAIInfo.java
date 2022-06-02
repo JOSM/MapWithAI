@@ -497,7 +497,10 @@ public class MapWithAIInfo extends
      * @param replacementTagsSupplier The supplier to get the tags to replace
      */
     public void setReplacementTags(final Supplier<Map<String, String>> replacementTagsSupplier) {
-        this.replacementTagsSupplier = replacementTagsSupplier;
+        synchronized (this) {
+            this.replacementTagsSupplier = replacementTagsSupplier;
+        }
+        this.replacementTags = null;
     }
 
     /**
@@ -507,11 +510,12 @@ public class MapWithAIInfo extends
      * @return The required replacement tags
      */
     public Map<String, String> getReplacementTags() {
-        if (this.replacementTags == null && this.replacementTagsSupplier != null) {
-            synchronized (this) {
-                if (this.replacementTagsSupplier != null) {
-                    this.replacementTags = this.replacementTagsSupplier.get();
-                }
+        if (this.replacementTags != null) {
+            return this.replacementTags;
+        }
+        synchronized (this) {
+            if (this.replacementTagsSupplier != null) {
+                this.replacementTags = this.replacementTagsSupplier.get();
                 this.replacementTagsSupplier = null;
             }
         }
