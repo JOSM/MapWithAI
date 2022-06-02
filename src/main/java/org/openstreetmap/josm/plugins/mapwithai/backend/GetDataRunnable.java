@@ -317,22 +317,34 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     public static void removeAlreadyAddedData(DataSet dataSet) {
         final List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
                 .map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet)).collect(Collectors.toList());
-        dataSet.getWays().stream().filter(way -> !way.isDeleted() && way.getOsmId() <= 0)
-                .filter(way -> osmData.stream().anyMatch(ds -> checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)))
-                .forEach(way -> {
-                    final List<Node> nodes = way.getNodes();
-                    Optional.ofNullable(DeleteCommand.delete(Collections.singleton(way), true, true))
-                            .ifPresent(Command::executeCommand);
-                    nodes.stream().filter(
-                            node -> !node.isDeleted() && node.getReferrers().stream().allMatch(OsmPrimitive::isDeleted))
-                            .forEach(node -> node.setDeleted(true));
-                });
+        for (Way way : dataSet.getWays()) {
+            if (!way.isDeleted() && way.getOsmId() <= 0) {
+                for (DataSet ds : osmData) {
+                    if (checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)) {
+                        final List<Node> nodes = way.getNodes();
+                        Optional.ofNullable(DeleteCommand.delete(Collections.singleton(way), true, true))
+                                .ifPresent(Command::executeCommand);
+                        for (Node node : nodes) {
+                            if (!node.isDeleted()
+                                    && node.referrers(OsmPrimitive.class).allMatch(OsmPrimitive::isDeleted)) {
+                                node.setDeleted(true);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
         final List<OsmPrimitive> possibleDuplicates = searchDataSet(ds, primitive);
-        return possibleDuplicates.stream().filter(prim -> !prim.isDeleted())
-                .anyMatch(prim -> checkIfProbableDuplicate(prim, primitive));
+        for (OsmPrimitive dupe : possibleDuplicates) {
+            if (checkIfProbableDuplicate(dupe, primitive)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean checkIfProbableDuplicate(OsmPrimitive one, OsmPrimitive two) {
@@ -362,19 +374,18 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static <T extends AbstractPrimitive> List<OsmPrimitive> searchDataSet(DataSet ds, T primitive) {
-        List<OsmPrimitive> returnList = Collections.emptyList();
         if (primitive instanceof OsmPrimitive) {
             final BBox tBBox = new BBox();
             tBBox.addPrimitive((OsmPrimitive) primitive, DEGREE_BUFFER);
             if (primitive instanceof Node) {
-                returnList = new ArrayList<>(ds.searchNodes(tBBox));
+                return new ArrayList<>(ds.searchNodes(tBBox));
             } else if (primitive instanceof Way) {
-                returnList = new ArrayList<>(ds.searchWays(tBBox));
+                return new ArrayList<>(ds.searchWays(tBBox));
             } else if (primitive instanceof Relation) {
-                returnList = new ArrayList<>(ds.searchRelations(tBBox));
+                return new ArrayList<>(ds.searchRelations(tBBox));
             }
         }
-        return returnList;
+        return Collections.emptyList();
     }
 
     /**
