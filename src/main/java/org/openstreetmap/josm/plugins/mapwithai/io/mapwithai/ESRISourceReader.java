@@ -181,7 +181,8 @@ public class ESRISourceReader {
         if (this.ignoreConflationCategories.contains(newInfo.getCategory())) {
             newInfo.setConflation(false);
         }
-        if (feature.containsKey("accessInformation")) {
+        if (feature.containsKey("accessInformation")
+                && feature.get("accessInformation").getValueType() != JsonValue.ValueType.NULL) {
             newInfo.setAttributionText(feature.getString("accessInformation"));
         }
         newInfo.setDescription(feature.getString("snippet"));
