@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
@@ -87,6 +88,7 @@ public class MapWithAIDataUtilsTest {
      * OSM. Bounds: 39.0735906;-108.5710852;39.0736112;-108.5707442
      */
     @Test
+    @Disabled("Flaky -- sometimes it passes, sometimes it doesn't")
     void testGetDataCropped() {
         final Bounds testBounds = getTestBounds();
         final GpxData gpxData = new GpxData();
