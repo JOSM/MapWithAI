@@ -189,15 +189,17 @@ public final class MapWithAIDataUtils {
             try {
                 original.mergeFrom(ds.join());
             } catch (RuntimeException e) {
+                final String notificationMessage;
                 if (e.getCause() instanceof IllegalDataException) {
-                    Notification notification = new Notification();
-                    notification.setContent(tr("MapWithAI servers may be down."));
-                    GuiHelper.runInEDT(notification::show);
+                    notificationMessage = tr("MapWithAI servers may be down.");
+                } else if (!Utils.isBlank(e.getLocalizedMessage())) {
+                    notificationMessage = e.getLocalizedMessage();
                 } else {
-                    Notification notification = new Notification();
-                    GuiHelper.runInEDT(() -> notification.setContent(e.getLocalizedMessage()));
-                    GuiHelper.runInEDT(notification::show);
+                    notificationMessage = e.getMessage();
                 }
+                Notification notification = new Notification();
+                GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
+                GuiHelper.runInEDT(notification::show);
             }
         }
     }
