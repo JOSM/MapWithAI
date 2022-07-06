@@ -1,11 +1,4 @@
 import groovy.xml.XmlParser
-import net.ltgt.gradle.errorprone.CheckSeverity
-import org.openstreetmap.josm.gradle.plugin.config.JosmManifest
-import org.openstreetmap.josm.gradle.plugin.task.GeneratePluginList
-
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.stream.Collectors
 
 plugins {
   id "com.diffplug.spotless" version "6.6.1"
@@ -18,7 +11,7 @@ plugins {
   id "java-test-fixtures" /* Used for publishing test fixtures package */
   id "maven-publish"
   id "net.ltgt.errorprone" version "2.0.2"
-  id "org.openstreetmap.josm" version "0.8.0"
+  id "org.openstreetmap.josm" version "0.8.2"
   id "org.sonarqube" version "3.3"
   id "pmd"
 }
@@ -48,18 +41,22 @@ java {
 // Set up Errorprone
 tasks.withType(JavaCompile).configureEach {
   options.errorprone {
-    check("ClassCanBeStatic", CheckSeverity.ERROR)
-    check("ConstantField", CheckSeverity.WARN)
-    check("DefaultCharset", CheckSeverity.ERROR)
-    check("FieldCanBeFinal", CheckSeverity.WARN)
-    check("LambdaFunctionalInterface", CheckSeverity.WARN)
-    check("MethodCanBeStatic", CheckSeverity.WARN)
-    check("MultiVariableDeclaration", CheckSeverity.WARN)
-    check("PrivateConstructorForUtilityClass", CheckSeverity.WARN)
-    check("RemoveUnusedImports", CheckSeverity.WARN)
-    check("ReferenceEquality", CheckSeverity.ERROR)
-    check("UngroupedOverloads", CheckSeverity.WARN)
-    check("WildcardImport", CheckSeverity.ERROR)
+    error(
+      "ClassCanBeStatic",
+      "DefaultCharset",
+      "ReferenceEquality",
+      "WildcardImport"
+    )
+    warn(
+      "ConstantField",
+      "FieldCanBeFinal",
+      "LambdaFunctionalInterface",
+      "MethodCanBeStatic",
+      "MultiVariableDeclaration",
+      "PrivateConstructorForUtilityClass",
+      "RemoveUnusedImports",
+      "UngroupedOverloads"
+    )
   }
 }
 
@@ -281,70 +278,6 @@ spotbugsMain {
   reports {
     xml.required.set(false)
     html.required.set(true)
-  }
-}
-
-/**
- * Create a manifest map
- * @param manifest The manifest to convert
- * @return The map
- * @deprecated In v0.8.1 there will be a GenerateJarManifest class
- */
-@Deprecated
-Map<String, String> createUpdateManifest(JosmManifest manifest) {
-  def returnMap = new TreeMap<String, String>();
-  // Required fields first
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_MIN_JOSM_VERSION, manifest.minJosmVersion, false)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_VERSION, project.version.toString(), false)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_MAIN_CLASS, manifest.mainClass, false)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_DESCRIPTION, manifest.description, false)
-  putIfNotNull(returnMap, JosmManifest.Attribute.AUTHOR, manifest.author)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_MIN_JAVA_VERSION, manifest.minJavaVersion)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_PLATFORM, manifest.platform)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_PROVIDES, manifest.provides)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_EARLY, manifest.loadEarly)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_ICON, manifest.iconPath)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_DEPENDENCIES, manifest.pluginDependencies)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_LOAD_PRIORITY, manifest.loadPriority)
-  putIfNotNull(returnMap, JosmManifest.Attribute.PLUGIN_CAN_LOAD_AT_RUNTIME, manifest.canLoadAtRuntime)
-
-  return returnMap
-}
-
-static putIfNotNull(Map<String, String> map, JosmManifest.Attribute attribute, Object value, boolean optional = true) {
-  if (value instanceof Provider) {
-    value = value.getOrNull()
-  }
-  if (value instanceof Collection) {
-    value = (value as Collection).stream().map(Object::toString).collect(Collectors.joining(";"))
-  }
-  if (value != null && !value.toString().trim().isEmpty()) {
-    map.put(attribute.manifestKey, value.toString());
-  } else if (!optional) {
-    throw new IllegalArgumentException("Attribute " + attribute.manifestKey + " cannot be null or empty");
-  }
-}
-
-task generateSnapshotUpdateSite(type: GeneratePluginList) {
-  dependsOn(tasks.processResources)
-
-  outputFile = new File(project.buildDir, "snapshot-update-site")
-  versionSuffix = {a -> ""}
-  doFirst {
-    def pluginDownloadUrl = "https://${gitlabGroup}.gitlab.io/${gitlabRepositoryName}/snapshot/master/${archivesBaseName}-dev.jar"
-    it.iconBase64Provider = {
-      def file = new File(sourceSets.main.resources.srcDirs[0], it)
-      if (file.exists()) {
-        def contentType = file.name.endsWith(".svg") ? "svg+xml" : "png"
-        return "data:image/" + contentType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(Paths.get(file.toURI())));
-      }
-    }
-    /**
-     * Generate a plugin jar manifest map
-     * @deprecated GenerateJarManifest.kt was added after v0.8.0
-     */
-    def manifest = createUpdateManifest(project.josm.manifest as JosmManifest)
-    it.addPlugin("$archivesBaseName-dev.jar", manifest, new URL(pluginDownloadUrl))
   }
 }
 

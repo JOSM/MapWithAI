@@ -101,7 +101,7 @@ code_navigation:
 build:
   stage: test
   script:
-    - ./gradlew build generatePot generateSnapshotUpdateSite --stacktrace #--info
+    - ./gradlew build localDist --stacktrace #--info
   artifacts:
     paths:
     - build
@@ -359,6 +359,8 @@ publish update site:
     rm -vrf "pages/public/snapshot/libs"
     mkdir -pv "pages/public/snapshot/libs"
     cp -v "build/snapshot-update-site" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/update-site"
+    cp -v "build/localDist/list" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/update-site"
+    sed -i "1s/.*/${PLUGIN_JAR_BASE_NAME}-dev.jar;${CI_PAGES_URL}/${CI_PROJECT_NAME}/snapshot/${CI_COMMIT_REF_NAME}/${PLUGIN_JAR_BASE_NAME}-dev.jar"
     cp -v "build/dist/"* "pages/public/snapshot/${CI_COMMIT_REF_NAME}"
     cp -v "build/dist/${PLUGIN_JAR_BASE_NAME}.jar" "pages/public/snapshot/${CI_COMMIT_REF_NAME}/${PLUGIN_JAR_BASE_NAME}-dev.jar"
     cp -v "build/libs/"*"test-fixture"* "pages/public/snapshot/libs/mapwithai-test-fixture.jar"
