@@ -1,9 +1,9 @@
 import groovy.xml.XmlParser
 
 plugins {
-  id "com.diffplug.spotless" version "6.6.1"
+  id "com.diffplug.spotless" version "6.10.0"
   id "com.github.ben-manes.versions" version "0.42.0"
-  id "com.github.spotbugs" version "5.0.7"
+  id "com.github.spotbugs" version "5.0.10"
   // id "de.aaschmid.cpd" version "3.3"
   id "eclipse"
   id "jacoco"
@@ -14,6 +14,69 @@ plugins {
   id "org.openstreetmap.josm" version "0.8.2"
   id "org.sonarqube" version "3.3"
   id "pmd"
+}
+
+archivesBaseName = "mapwithai"
+def gitlabGroup = "gokaart"
+def gitlabRepositoryName = "JOSM_MapWithAI"
+
+repositories {
+  mavenCentral()
+  maven {
+    url "https://josm.openstreetmap.de/nexus/content/repositories/releases/"
+  }
+}
+
+def versions = [
+  awaitility: "4.2.0",
+  equalsverifier: "3.10.1",
+  // Errorprone 2.11 requires Java 11+
+  errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.15.0" : "2.10.0",
+  findsecbugs: "1.12.0",
+  jacoco: "0.8.7",
+  jmockit: "1.49.a",
+  josm: properties.get("plugin.compile.version"),
+  junit: "5.9.0",
+  pmd: "6.20.0",
+  spotbugs: "4.7.1",
+  wiremock: "2.33.2",
+]
+
+dependencies {
+  if (!JavaVersion.toVersion(getJavaVersion()).isJava9Compatible()) {
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+  }
+  spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${versions.findsecbugs}"
+  errorprone("com.google.errorprone:error_prone_core:${versions.errorprone}")
+
+  testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
+  testFixturesRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
+  testFixturesImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
+  testFixturesImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
+  testFixturesImplementation("org.jmockit:jmockit:${versions.jmockit}")
+  testFixturesImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
+  testFixturesImplementation("org.openstreetmap.josm:josm:${versions.josm}")
+  testFixturesImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
+  testFixturesImplementation("com.github.tomakehurst:wiremock-jre8:${versions.wiremock}")
+  testFixturesImplementation("org.awaitility:awaitility:${versions.awaitility}")
+  testImplementation("nl.jqno.equalsverifier:equalsverifier:${versions.equalsverifier}")
+}
+
+configurations {
+    testImplementation.extendsFrom testFixturesImplementation
+    testRuntimeOnly.extendsFrom testFixturesRuntimeOnly
+    intTestRuntimeOnly.extendsFrom testRuntimeOnly
+    intTestImplementation.extendsFrom testImplementation
+}
+
+// Add dependencies from ivy.xml
+def ivyModule = new XmlParser().parse(new File("$projectDir/ivy.xml"))
+logger.info("Dependencies from ivy.xml (added to configuration `packIntoJar`):")
+ivyModule.dependencies.dependency.each {
+  logger.info("  * ${it.@org}:${it.@name}:${it.@rev}")
+  if (!"${it.@conf}".contains("test")) {
+    project.dependencies.packIntoJar("${it.@org}:${it.@name}:${it.@rev}")
+  }
 }
 
 int getJavaVersion() {
@@ -64,16 +127,6 @@ rootProject.tasks.named("jar") {
     duplicatesStrategy = 'include'
 }
 
-archivesBaseName = "mapwithai"
-def gitlabGroup = "gokaart"
-def gitlabRepositoryName = "JOSM_MapWithAI"
-
-repositories {
-  mavenCentral()
-  maven {
-    url "https://josm.openstreetmap.de/nexus/content/repositories/releases/"
-  }
-}
 
 sourceSets {
   test {
@@ -107,57 +160,6 @@ sourceSets {
   }
 }
 
-def versions = [
-  awaitility: "4.2.0",
-  equalsverifier: "3.10",
-  // Errorprone 2.11 requires Java 11+
-  errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.14.0" : "2.10.0",
-  findsecbugs: "1.12.0",
-  jacoco: "0.8.7",
-  jmockit: "1.49.a",
-  josm: properties.get("plugin.compile.version"),
-  junit: "5.8.2",
-  pmd: "6.20.0",
-  spotbugs: "4.7.0",
-  wiremock: "2.33.2",
-]
-
-dependencies {
-  if (!JavaVersion.toVersion(getJavaVersion()).isJava9Compatible()) {
-    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-  }
-  spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${versions.findsecbugs}"
-  errorprone("com.google.errorprone:error_prone_core:${versions.errorprone}")
-
-  testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junit}")
-  testFixturesRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junit}")
-  testFixturesImplementation("org.junit.vintage:junit-vintage-engine:${versions.junit}")
-  testFixturesImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junit}")
-  testFixturesImplementation("org.jmockit:jmockit:${versions.jmockit}")
-  testFixturesImplementation("com.github.spotbugs:spotbugs-annotations:${versions.spotbugs}")
-  testFixturesImplementation("org.openstreetmap.josm:josm:${versions.josm}")
-  testFixturesImplementation("org.openstreetmap.josm:josm-unittest:"){changing=true}
-  testFixturesImplementation("com.github.tomakehurst:wiremock-jre8:${versions.wiremock}")
-  testFixturesImplementation("org.awaitility:awaitility:${versions.awaitility}")
-  testImplementation("nl.jqno.equalsverifier:equalsverifier:${versions.equalsverifier}")
-}
-
-configurations {
-    testImplementation.extendsFrom testFixturesImplementation
-    testRuntimeOnly.extendsFrom testFixturesRuntimeOnly
-    intTestRuntimeOnly.extendsFrom testRuntimeOnly
-    intTestImplementation.extendsFrom testImplementation
-}
-
-// Add dependencies from ivy.xml
-def ivyModule = new XmlParser().parse(new File("$projectDir/ivy.xml"))
-logger.info("Dependencies from ivy.xml (added to configuration `packIntoJar`):")
-ivyModule.dependencies.dependency.each {
-  logger.info("  * ${it.@org}:${it.@name}:${it.@rev}")
-  if (!"${it.@conf}".contains("test")) {
-    project.dependencies.packIntoJar("${it.@org}:${it.@name}:${it.@rev}")
-  }
-}
 
 test {
   project.afterEvaluate {
