@@ -38,7 +38,6 @@ import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.imagery.ImageryReader;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
-import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
@@ -87,8 +86,7 @@ public class MapWithAILayerInfo {
                 instance = new MapWithAILayerInfo(() -> {
                     synchronized (MapWithAILayerInfo.class) {
                         finished.set(true);
-                        MapWithAILayer.class.notifyAll();
-                        ;
+                        MapWithAILayerInfo.class.notifyAll();
                     }
                 });
             } else {
