@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
@@ -22,6 +23,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
+import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.io.OsmServerReader;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -142,8 +144,34 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                 this.downloader.add(pool.submit(MapWithAIDataUtils.download(this.progressMonitor, bounds, info,
                         MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS)));
             }
-            this.downloader
-                    .forEach(task -> downloadedData.mergeFrom(task.join(), monitor.createSubTaskMonitor(1, false)));
+            for (ForkJoinTask<DataSet> task : this.downloader) {
+                try {
+                    DownloadMapWithAITask.this.downloadedData.mergeFrom(task.get(),
+                            monitor.createSubTaskMonitor(1, false));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    this.downloader.forEach(t -> t.cancel(true));
+                    throw new IOException(e);
+                } catch (ExecutionException e) {
+                    // Throw the "original" exception type, if at all possible.
+                    Throwable current = e;
+                    while (current.getCause() != null && !current.equals(current.getCause())) {
+                        current = current.getCause();
+                    }
+                    if (current instanceof OsmApiException) {
+                        OsmApiException ex = (OsmApiException) current;
+                        OsmApiException here = new OsmApiException(ex.getResponseCode(), ex.getErrorHeader(),
+                                ex.getErrorBody(), ex.getAccessedUrl(), ex.getLogin(), ex.getContentType());
+                        here.initCause(e);
+                        here.setUrl(here.getAccessedUrl());
+                        throw here;
+                    }
+                    if (current instanceof OsmTransferException) {
+                        throw new OsmTransferException(current.getMessage(), e);
+                    }
+                    throw new IOException(e);
+                }
+            }
         }
 
         @Override
