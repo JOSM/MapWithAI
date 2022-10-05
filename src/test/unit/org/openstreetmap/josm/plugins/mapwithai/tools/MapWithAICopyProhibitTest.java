@@ -4,12 +4,20 @@ package org.openstreetmap.josm.plugins.mapwithai.tools;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.actions.CopyAction;
 import org.openstreetmap.josm.actions.PasteAction;
+import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -20,6 +28,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
+import org.openstreetmap.josm.tools.Logging;
 
 import mockit.Mock;
 import mockit.MockUp;
@@ -48,16 +57,40 @@ class MapWithAICopyProhibitTest {
         assertDoesNotThrow(
                 () -> MainApplication.getLayerManager().removeActiveLayerChangeListener(mapWithAICopyProhibit));
         MainLayerManager layerManager = MainApplication.getLayerManager();
-        IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class,
-                () -> layerManager.removeActiveLayerChangeListener(mapWithAICopyProhibit));
-        assertEquals("Attempted to remove listener that was not in list: " + mapWithAICopyProhibit,
-                illegalArgumentException.getMessage());
-        layerManager.addActiveLayerChangeListener(mapWithAICopyProhibit);
-        mapWithAICopyProhibit.destroy();
-        illegalArgumentException = assertThrows(IllegalArgumentException.class,
-                () -> layerManager.removeActiveLayerChangeListener(mapWithAICopyProhibit));
-        assertEquals("Attempted to remove listener that was not in list: " + mapWithAICopyProhibit,
-                illegalArgumentException.getMessage());
+        if (Version.getInstance().getVersion() < 18390) {
+            IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class,
+                    () -> layerManager.removeActiveLayerChangeListener(mapWithAICopyProhibit));
+            assertEquals("Attempted to remove listener that was not in list: " + mapWithAICopyProhibit,
+                    illegalArgumentException.getMessage());
+            layerManager.addActiveLayerChangeListener(mapWithAICopyProhibit);
+            mapWithAICopyProhibit.destroy();
+            illegalArgumentException = assertThrows(IllegalArgumentException.class,
+                    () -> layerManager.removeActiveLayerChangeListener(mapWithAICopyProhibit));
+            assertEquals("Attempted to remove listener that was not in list: " + mapWithAICopyProhibit,
+                    illegalArgumentException.getMessage());
+        } else {
+            Handler[] originalHandler = Logging.getLogger().getHandlers();
+            for (Handler handler : originalHandler) {
+                Logging.getLogger().removeHandler(handler);
+            }
+            try {
+                TestHandler handler = new TestHandler();
+                Logging.getLogger().addHandler(handler);
+                assertDoesNotThrow(() -> layerManager.removeActiveLayerChangeListener(mapWithAICopyProhibit));
+                assertTrue(handler.records.stream().map(LogRecord::getMessage).filter(Objects::nonNull)
+                        .anyMatch(str -> str.contains("Attempted to remove listener that was not in list")));
+                handler.records.clear();
+                layerManager.addActiveLayerChangeListener(mapWithAICopyProhibit);
+                mapWithAICopyProhibit.destroy();
+                assertDoesNotThrow(() -> layerManager.removeActiveLayerChangeListener(mapWithAICopyProhibit));
+                assertTrue(handler.records.stream().map(LogRecord::getMessage).filter(Objects::nonNull)
+                        .anyMatch(str -> str.contains("Attempted to remove listener that was not in list")));
+            } finally {
+                for (Handler handler : originalHandler) {
+                    Logging.getLogger().addHandler(handler);
+                }
+            }
+        }
     }
 
     @Test
@@ -97,6 +130,25 @@ class MapWithAICopyProhibitTest {
             }
         } finally {
             mapWithAICopyProhibit.destroy();
+        }
+    }
+
+    private static class TestHandler extends Handler {
+        final List<LogRecord> records = new ArrayList<>();
+
+        @Override
+        public void publish(LogRecord record) {
+            this.records.add(record);
+        }
+
+        @Override
+        public void flush() {
+            // Skip
+        }
+
+        @Override
+        public void close() throws SecurityException {
+            // Skip
         }
     }
 }
