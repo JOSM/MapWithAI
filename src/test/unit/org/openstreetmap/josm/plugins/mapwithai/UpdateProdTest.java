@@ -7,12 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import javax.swing.JOptionPane;
 
 import java.awt.GraphicsEnvironment;
-import java.lang.reflect.Field;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
-import org.openstreetmap.josm.data.Version;
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.OpenBrowserMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
@@ -24,16 +24,16 @@ import org.openstreetmap.josm.testutils.mockers.WindowMocker;
  */
 @BasicPreferences
 class UpdateProdTest {
+    @RegisterExtension
+    JOSMTestRules rules = new JOSMTestRules().assumeRevision("Revision: 15000\n");
+
     @Test
-    void testDoProd() throws ReflectiveOperationException {
+    void testDoProd() {
         TestUtils.assumeWorkingJMockit();
         new OpenBrowserMocker();
         if (GraphicsEnvironment.isHeadless()) {
             new WindowMocker();
         }
-        Field version = Version.class.getDeclaredField("version");
-        version.setAccessible(true);
-        version.setInt(Version.getInstance(), 15000);
         String booleanKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version"));
         String intKey = "message.".concat(MapWithAIPlugin.NAME.concat(".ignore_next_version")).concat(".value"); // "message.MapWithAI.ignore_next_version.value";
         Config.getPref().putBoolean(booleanKey, false);
