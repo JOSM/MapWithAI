@@ -48,4 +48,20 @@
   <target name="pre-compile" description="retrieve dependencies with Ivy" depends="init-ivy">
     <ivy:retrieve/>
   </target>
+
+  <target name="additional-manifest">
+    <manifest file="MANIFEST" mode="update">
+      <attribute name="17903_Plugin-Url" value="v1.8.7;https://github.com/JOSM/MapWithAI/releases/download/v1.8.7/mapwithai.jar" />
+      <attribute name="17084_Plugin-Url" value="v1.7.1.6;https://github.com/JOSM/MapWithAI/releases/download/v1.7.1.6/mapwithai.jar" />
+      <attribute name="16645_Plugin-Url" value="v1.6.8;https://github.com/JOSM/MapWithAI/releases/download/v1.6.8/mapwithai.jar" />
+      <attribute name="16284_Plugin-Url" value="v1.5.10;https://github.com/JOSM/MapWithAI/releases/download/v1.5.10/mapwithai.jar" />
+      <attribute name="16220_Plugin-Url" value="v1.4.7;https://github.com/JOSM/MapWithAI/releases/download/v1.4.7/mapwithai.jar" />
+      <attribute name="15820_Plugin-Url" value="v1.3.11;https://github.com/JOSM/MapWithAI/releases/download/v1.3.11/mapwithai.jar" />
+      <attribute name="15737_Plugin-Url" value="v1.2.7;https://github.com/JOSM/MapWithAI/releases/download/v1.2.7/mapwithai.jar" />
+      <attribute name="15609_Plugin-Url" value="v1.1.12;https://github.com/JOSM/MapWithAI/releases/download/v1.1.12/mapwithai.jar" />
+      <attribute name="15542_Plugin-Url" value="v1.0.9;https://github.com/JOSM/MapWithAI/releases/download/v1.0.9/mapwithai.jar" />
+      <attribute name="15233_Plugin-Url" value="v0.2.14;https://github.com/JOSM/MapWithAI/releases/download/v0.2.14/mapwithai.jar" />
+    </manifest>
+  </target>
+
 </project>
