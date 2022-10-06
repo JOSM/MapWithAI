@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -29,6 +30,7 @@ import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 import org.xml.sax.SAXException;
 
@@ -148,6 +150,9 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                 try {
                     DownloadMapWithAITask.this.downloadedData.mergeFrom(task.get(),
                             monitor.createSubTaskMonitor(1, false));
+                } catch (CancellationException e) {
+                    Logging.trace(e);
+                    return;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     this.downloader.forEach(t -> t.cancel(true));
