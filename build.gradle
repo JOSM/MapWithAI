@@ -69,16 +69,6 @@ configurations {
     intTestImplementation.extendsFrom testImplementation
 }
 
-// Add dependencies from ivy.xml
-def ivyModule = new XmlParser().parse(new File("$projectDir/ivy.xml"))
-logger.info("Dependencies from ivy.xml (added to configuration `packIntoJar`):")
-ivyModule.dependencies.dependency.each {
-  logger.info("  * ${it.@org}:${it.@name}:${it.@rev}")
-  if (!"${it.@conf}".contains("test")) {
-    project.dependencies.packIntoJar("${it.@org}:${it.@name}:${it.@rev}")
-  }
-}
-
 int getJavaVersion() {
   // We want to use whatever Java version CI has as default
   def ci = project.hasProperty("isCI") or project.hasProperty("CI") or System.getenv("CI") != null

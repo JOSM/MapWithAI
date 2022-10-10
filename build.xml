@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project xmlns:ivy="antlib:org.apache.ivy.ant" name="mapwithai" default="dist" basedir=".">
+<project name="mapwithai" default="dist" basedir=".">
   <property name="plugin.src.dir" value="src/main/java"/>
   <property name="plugin.test.dir" value="src/test"/>
 
@@ -24,30 +24,10 @@
     </copy>
   </target>
 
-  <property name="ivy.home" value="${user.home}/.ant"/>
-  <property name="ivy.jar.dir" value="${ivy.home}/lib"/>
-  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
-
   <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
     <include name="utilsplugin2.jar"/>
     <include name="apache-http.jar"/>
   </fileset>
-
-  <target name="download-ivy">
-    <mkdir dir="${ivy.jar.dir}"/>
-    <get src="https://jcenter.bintray.com/org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar" dest="${ivy.jar.file}" usetimestamp="true" ignoreerrors="true"/>
-  </target>
-
-  <target name="init-ivy" depends="download-ivy">
-    <path id="ivy.lib.path">
-      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
-    </path>
-    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
-  </target>
-
-  <target name="pre-compile" description="retrieve dependencies with Ivy" depends="init-ivy">
-    <ivy:retrieve/>
-  </target>
 
   <target name="additional-manifest">
     <manifest file="MANIFEST" mode="update">
