@@ -11,3 +11,7 @@ jobs:
       josm-revision: "r18218"
       update-pluginssource: true
       plugin-jar-name: 'mapwithai'
+    secrets:
+      trac-username: ${{ secrets.TRAC_USERNAME }}
+      trac-password: ${{ secrets.TRAC_PASSWORD }}
+
