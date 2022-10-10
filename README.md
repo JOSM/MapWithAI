@@ -1,6 +1,6 @@
 # JOSM MapWithAI Plugin (formerly RapiD Plugin)
 
-[![pipeline status](https://gitlab.com/gokaart/JOSM_MapWithAI/badges/master/pipeline.svg)](https://gitlab.com/gokaart/JOSM_MapWithAI/commits/master)
+[![pipeline status](https://github.com/JOSM/MapWithAI/actions/workflows/ant.yml/badge.svg)](https://github.com/JOSM/MapWithAI/actions/workflows/ant.yml)
 [![code coverage](https://gitlab.com/gokaart/JOSM_MapWithAI/badges/master/coverage.svg)](https://codecov.io/github/gokaart/JOSM_MapWithAI?branch=master)
 [![license](https://img.shields.io/badge/license-GPLv2-blue.svg?style=flat-square)](./LICENSE)
 
@@ -22,7 +22,7 @@ See the [wiki page](https://josm.openstreetmap.de/wiki/Help/Plugin/MapWithAI).
 
 ## Contributing
 
-- The **source code** is hosted on [GitLab](https://gitlab.com/gokaart/JOSM_MapWithAI).
+- The **source code** is hosted on [GitHub](https://github.com/JOSM/MapWithAI).
 - **Issues** are managed in [JOSM Trac](https://josm.openstreetmap.de/query?status=assigned&status=needinfo&status=new&status=reopened&component=Plugin+mapwithai&group=component&max=200&col=id&col=summary&col=component&col=status&col=type&col=priority&order=priority&report=17)
   - Report a [New Ticket](https://josm.openstreetmap.de/newticket?component=Plugin+mapwithai)
 - **Translations** are not currently done.

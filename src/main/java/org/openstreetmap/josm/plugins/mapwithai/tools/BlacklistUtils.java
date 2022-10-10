@@ -25,7 +25,7 @@ import org.openstreetmap.josm.tools.Logging;
  *
  */
 public final class BlacklistUtils {
-    static final String DEFAULT_BLACKLIST_URL = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/blacklisted_versions.json";
+    static final String DEFAULT_BLACKLIST_URL = "https://josm.github.io/MapWithAI/json/blacklisted_versions.json";
     private static String blacklistUrl = DEFAULT_BLACKLIST_URL;
 
     private BlacklistUtils() {

@@ -402,8 +402,8 @@ public class MapWithAIProvidersPanel extends JPanel {
         add(defaultToolbar, GBC.eol().anchor(GBC.SOUTH).insets(0, 0, 5, 0));
 
         HtmlPanel help = new HtmlPanel(
-                tr("New default entries can be added in the <a href=\"{0}\">GitLab Repository</a>.",
-                        "https://gitlab.com/gokaart/JOSM_MapWithAI/-/blob/pages/public/json/sources.json"));
+                tr("New default entries can be added in the <a href=\"{0}\">GitHub Repository</a>.",
+                        "https://github.com/JOSM/MapWithAI/blob/pages/json/sources.json"));
         help.enableClickableHyperlinks();
         add(help, GBC.eol().insets(10, 0, 0, 0).fill(GBC.HORIZONTAL));
 

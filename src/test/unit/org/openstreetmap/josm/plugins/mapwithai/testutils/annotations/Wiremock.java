@@ -184,8 +184,8 @@ public @interface Wiremock {
 
             if (wireMockServer.getStubMappings().stream().filter(mapping -> mapping.getRequest().getUrl() != null)
                     .noneMatch(mapping -> mapping.getRequest().getUrl()
-                            .equals("/JOSM_MapWithAI/json/conflation_servers.json"))) {
-                wireMockServer.stubFor(WireMock.get("/JOSM_MapWithAI/json/conflation_servers.json")
+                            .equals("/MapWithAI/json/conflation_servers.json"))) {
+                wireMockServer.stubFor(WireMock.get("/MapWithAI/json/conflation_servers.json")
                         .willReturn(WireMock.aResponse().withBody("{}")).atPriority(-5));
             }
         }

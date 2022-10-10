@@ -50,12 +50,12 @@ public @interface MapWithAIConfig {
 
             @Override
             public String getConflationServerJson() {
-                return this.wireMockServer.baseUrl() + "/JOSM_MapWithAI/json/conflation_servers.json";
+                return this.wireMockServer.baseUrl() + "/MapWithAI/json/conflation_servers.json";
             }
 
             @Override
             public String getMapWithAISourcesJson() {
-                return this.wireMockServer.baseUrl() + "/JOSM_MapWithAI/json/sources.json";
+                return this.wireMockServer.baseUrl() + "/MapWithAI/json/sources.json";
             }
 
             @Override

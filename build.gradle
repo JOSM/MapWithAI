@@ -225,16 +225,16 @@ spotless {
 josm {
   debugPort = 7055
   manifest {
-    oldVersionDownloadLink 17903, "v1.8.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.8.7/mapwithai.jar")
-    oldVersionDownloadLink 17084, "v1.7.1.6", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.7.1.6/mapwithai.jar")
-    oldVersionDownloadLink 16645, "v1.6.8", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.6.8/mapwithai.jar")
-    oldVersionDownloadLink 16284, "v1.5.10", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.5.10/mapwithai.jar")
-    oldVersionDownloadLink 16220, "v1.4.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.4.7/mapwithai.jar")
-    oldVersionDownloadLink 15820, "v1.3.11", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.3.11/mapwithai.jar")
-    oldVersionDownloadLink 15737, "v1.2.7", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.2.7/mapwithai.jar")
-    oldVersionDownloadLink 15609, "v1.1.12", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.1.12/mapwithai.jar")
-    oldVersionDownloadLink 15542, "v1.0.9", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v1.0.9/mapwithai.jar")
-    oldVersionDownloadLink 15233, "v0.2.14", new URL("https://gokaart.gitlab.io/JOSM_MapWithAI/dist/v0.2.14/mapwithai.jar")
+    oldVersionDownloadLink 17903, "v1.8.7", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.8.7/mapwithai.jar")
+    oldVersionDownloadLink 17084, "v1.7.1.6", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.7.1.6/mapwithai.jar")
+    oldVersionDownloadLink 16645, "v1.6.8", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.6.8/mapwithai.jar")
+    oldVersionDownloadLink 16284, "v1.5.10", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.5.10/mapwithai.jar")
+    oldVersionDownloadLink 16220, "v1.4.7", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.4.7/mapwithai.jar")
+    oldVersionDownloadLink 15820, "v1.3.11", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.3.11/mapwithai.jar")
+    oldVersionDownloadLink 15737, "v1.2.7", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.2.7/mapwithai.jar")
+    oldVersionDownloadLink 15609, "v1.1.12", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.1.12/mapwithai.jar")
+    oldVersionDownloadLink 15542, "v1.0.9", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.0.9/mapwithai.jar")
+    oldVersionDownloadLink 15233, "v0.2.14", new URL("https://github.com/JOSM/MapWithAI/releases/download/v0.2.14/mapwithai.jar")
   }
   i18n {
     pathTransformer = getPathTransformer(project.projectDir, "gitlab.com/${gitlabGroup}/${gitlabRepositoryName}/blob")

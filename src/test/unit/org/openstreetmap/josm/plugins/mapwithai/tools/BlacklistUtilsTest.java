@@ -40,7 +40,7 @@ class BlacklistUtilsTest {
         TestUtils.assumeWorkingJMockit();
         wireMock = new WireMockServer(options().dynamicPort());
         wireMock.start();
-        BlacklistUtils.setBlacklistUrl(wireMock.baseUrl() + "/JOSM_MapWithAI/json/blacklisted_versions.json");
+        BlacklistUtils.setBlacklistUrl(wireMock.baseUrl() + "/MapWithAI/json/blacklisted_versions.json");
         new MapWithAIPluginMock();
     }
 
@@ -58,7 +58,7 @@ class BlacklistUtilsTest {
 
     @Test
     void testArrayBad() {
-        wireMock.addStubMapping(get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json"))
+        wireMock.addStubMapping(get(urlMatching("/MapWithAI/json/blacklisted_versions.json"))
                 .willReturn(aResponse().withStatus(200).withBody("[\"" + MapWithAIPlugin.getVersionInfo() + "\"]"))
                 .build());
         assertTrue(BlacklistUtils.isBlacklisted());
@@ -66,37 +66,35 @@ class BlacklistUtilsTest {
 
     @Test
     void testArrayGood() {
-        wireMock.addStubMapping(get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json"))
+        wireMock.addStubMapping(get(urlMatching("/MapWithAI/json/blacklisted_versions.json"))
                 .willReturn(aResponse().withStatus(200).withBody("[null, 0, false]")).build());
         assertFalse(BlacklistUtils.isBlacklisted());
     }
 
     @Test
     void testObjectBad() {
-        wireMock.addStubMapping(get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("{ \"" + MapWithAIPlugin.getVersionInfo() + "\": \"reason here\"}"))
-                .build());
+        wireMock.addStubMapping(get(urlMatching("/MapWithAI/json/blacklisted_versions.json")).willReturn(aResponse()
+                .withStatus(200).withBody("{ \"" + MapWithAIPlugin.getVersionInfo() + "\": \"reason here\"}")).build());
         assertTrue(BlacklistUtils.isBlacklisted());
     }
 
     @Test
     void testObjectGood() {
-        wireMock.addStubMapping(get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json"))
+        wireMock.addStubMapping(get(urlMatching("/MapWithAI/json/blacklisted_versions.json"))
                 .willReturn(aResponse().withStatus(200).withBody("{ \"version\": \"reason here\"}")).build());
         assertFalse(BlacklistUtils.isBlacklisted());
     }
 
     @Test
     void testNullJson() {
-        wireMock.addStubMapping(get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json"))
+        wireMock.addStubMapping(get(urlMatching("/MapWithAI/json/blacklisted_versions.json"))
                 .willReturn(aResponse().withStatus(200).withBody("null")).build());
         assertTrue(BlacklistUtils.isBlacklisted());
     }
 
     @Test
     void testBrokenJson() {
-        wireMock.addStubMapping(get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json")).willReturn(
+        wireMock.addStubMapping(get(urlMatching("/MapWithAI/json/blacklisted_versions.json")).willReturn(
                 aResponse().withStatus(200).withBody("{ \"" + MapWithAIPlugin.getVersionInfo() + "\": \"reason here\""))
                 .build());
         assertTrue(BlacklistUtils.isBlacklisted());
@@ -105,14 +103,14 @@ class BlacklistUtilsTest {
     @Test
     void testNoResponse() {
         wireMock.addStubMapping(
-                get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json")).willReturn(noContent()).build());
+                get(urlMatching("/MapWithAI/json/blacklisted_versions.json")).willReturn(noContent()).build());
         assertTrue(BlacklistUtils.isBlacklisted());
     }
 
     @Test
     void testNotFound() {
         wireMock.addStubMapping(
-                get(urlMatching("/JOSM_MapWithAI/json/blacklisted_versions.json")).willReturn(notFound()).build());
+                get(urlMatching("/MapWithAI/json/blacklisted_versions.json")).willReturn(notFound()).build());
         assertTrue(BlacklistUtils.isBlacklisted());
     }
 }

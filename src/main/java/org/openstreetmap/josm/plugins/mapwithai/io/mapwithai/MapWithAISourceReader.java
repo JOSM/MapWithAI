@@ -29,7 +29,7 @@ import org.openstreetmap.josm.tools.Territories;
  * definition file.
  * <p>
  * The format is specified in the <a href=
- * "https://gitlab.com/gokaart/JOSM_MapWithAI/-/blob/pages/public/json/sources.json">MapWithAI
+ * "https://github.com/JOSM/MapWithAI/blob/pages/json/sources.json">MapWithAI
  * source</a>.
  */
 public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo>> implements Closeable {

@@ -185,7 +185,7 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         kaartLogo.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                OpenBrowser.displayUrl("https://gitlab.com/gokaart/JOSM_MapWithAI");
+                OpenBrowser.displayUrl("https://github.com/JOSM/MapWithAI");
             }
         });
         kaartLogo.setCursor(new Cursor(Cursor.HAND_CURSOR));

@@ -2,10 +2,12 @@
 package org.openstreetmap.josm.plugins.mapwithai.spi.preferences;
 
 public class MapWithAIUrls implements IMapWithAIUrls {
+    /** The base url */
+    private static final String BASE_URL = "https://josm.github.io/MapWithAI/";
     /** The default url for additional conflation servers */
-    private static final String DEFAULT_CONFLATION_JSON = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/conflation_servers.json";
+    private static final String DEFAULT_CONFLATION_JSON = BASE_URL + "json/conflation_servers.json";
     /** The default URL for the MapWithAI sources */
-    private static final String DEFAULT_MAPWITHAI_SOURCES_JSON = "https://gokaart.gitlab.io/JOSM_MapWithAI/json/sources.json";
+    private static final String DEFAULT_MAPWITHAI_SOURCES_JSON = BASE_URL + "json/sources.json";
     /** The default url for the MapWithAI paint style */
     private static final String DEFAULT_PAINT_STYLE_RESOURCE_URL = "https://josm.openstreetmap.de/josmfile?page=Styles/MapWithAI&zip=1";
 

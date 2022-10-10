@@ -2,7 +2,7 @@
   "id" : "fb2197f1-81fd-445d-bb90-b6219d187af6",
   "name" : "josm_mapwithai_json_conflation_serversjson",
   "request" : {
-    "url" : "/JOSM_MapWithAI/json/conflation_servers.json",
+    "url" : "/MapWithAI/json/conflation_servers.json",
     "method" : "GET"
   },
   "response" : {
