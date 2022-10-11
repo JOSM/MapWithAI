@@ -453,7 +453,29 @@ public class MapWithAIInfo extends
             return getNonConflatedUrl();
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(conflationUrl.replace("{id}", this.id));
+        if (this.conflationUrl.contains("{id}") && this.id != null) {
+            sb.append(conflationUrl.replace("{id}", this.id));
+        } else if (this.conflationUrl.contains("{id}")) {
+            // We need to trigger synchronization. This means that the current download
+            // may won't be conflated.
+            // But this should automatically correct the behavior for the next attempt.
+            final MapWithAILayerInfo mwli = MapWithAILayerInfo.getInstance();
+            mwli.load(false, () -> {
+                Optional<MapWithAIInfo> defaultLayer = mwli.getAllDefaultLayers().stream().filter(this::equals)
+                        .findFirst();
+                if (defaultLayer.isPresent()) {
+                    this.id = defaultLayer.get().id;
+                } else {
+                    MapWithAIInfo newInfo = mwli.getAllDefaultLayers().stream()
+                            .filter(layer -> Objects.equals(this.url, layer.url) && Objects.nonNull(layer.id))
+                            .findFirst().orElse(this);
+                    this.id = newInfo.id;
+                }
+            });
+            return getNonConflatedUrl();
+        } else {
+            sb.append(conflationUrl);
+        }
 
         List<String> parametersString = getConflationParameterString();
         if (!parametersString.isEmpty()) {

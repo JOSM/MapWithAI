@@ -1,7 +1,11 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -15,15 +19,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Logging;
 
+import mockit.Mock;
+import mockit.MockUp;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
@@ -116,5 +126,74 @@ class MapWithAIInfoTest {
     void testEquals() {
         EqualsVerifier.forClass(MapWithAIInfo.class).suppress(Warning.NONFINAL_FIELDS)
                 .withOnlyTheseFields("url", "sourceType").usingGetClass().verify();
+    }
+
+    /**
+     * Non-regression test for #22440: NPE in
+     * {@link MapWithAIInfo#getConflationUrl}. This is caused by the
+     * {@link MapWithAIInfo#getId()} being {@code null}.
+     */
+    @Test
+    void testNonRegression22440UpdateFallback() {
+        TestUtils.assumeWorkingJMockit();
+        MapWithAIInfo info = new MapWithAIInfo("22440", "https://test.example", null);
+        info.setConflationUrl("https://test.example/{id}");
+        info.setConflation(true);
+        MapWithAILayerInfo.getInstance().clear();
+        MapWithAILayerInfo.getInstance().add(info);
+        AtomicBoolean updateCalled = new AtomicBoolean();
+        new MockUp<MapWithAILayerInfo>() {
+            @Mock
+            public void load(boolean fastFail, MapWithAILayerInfo.FinishListener listener) {
+                updateCalled.set(true);
+                listener.onFinish();
+            }
+        };
+        assertDoesNotThrow(info::getUrlExpanded);
+        MainApplication.worker.submit(() -> {
+            /* Sync thread */ });
+        GuiHelper.runInEDTAndWait(() -> {
+            /* Sync thread */ });
+        assertTrue(updateCalled.get());
+        assertEquals(1, MapWithAILayerInfo.getInstance().getLayers().size());
+        assertSame(info, MapWithAILayerInfo.getInstance().getLayers().get(0));
+    }
+
+    /**
+     * Non-regression test for #22440: NPE in
+     * {@link MapWithAIInfo#getConflationUrl}. This is caused by the
+     * {@link MapWithAIInfo#getId()} being {@code null}.
+     */
+    @Test
+    void testNonRegression22440Update() {
+        TestUtils.assumeWorkingJMockit();
+        MapWithAIInfo info = new MapWithAIInfo("22440", "https://test.example", null);
+        info.setConflationUrl("https://test.example/{id}");
+        info.setConflation(true);
+        MapWithAILayerInfo.getInstance().clear();
+        MapWithAILayerInfo.getInstance().add(info);
+        AtomicBoolean updateCalled = new AtomicBoolean();
+        new MockUp<MapWithAILayerInfo>() {
+            @Mock
+            public void load(boolean fastFail, MapWithAILayerInfo.FinishListener listener) {
+                updateCalled.set(true);
+                listener.onFinish();
+            }
+
+            @Mock
+            public List<MapWithAIInfo> getAllDefaultLayers() {
+                return Collections.singletonList(new MapWithAIInfo("22440Update", "https://test.example", "22"));
+            }
+        };
+        assertNull(info.getId());
+        assertDoesNotThrow(info::getUrlExpanded);
+        MainApplication.worker.submit(() -> {
+            /* Sync thread */ });
+        GuiHelper.runInEDTAndWait(() -> {
+            /* Sync thread */ });
+        assertTrue(updateCalled.get());
+        assertEquals(1, MapWithAILayerInfo.getInstance().getLayers().size());
+        assertSame(info, MapWithAILayerInfo.getInstance().getLayers().get(0));
+        assertEquals("22", info.getId());
     }
 }
