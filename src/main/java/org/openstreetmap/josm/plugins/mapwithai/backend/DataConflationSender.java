@@ -12,16 +12,17 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.core5.http.message.StatusLine;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.io.IllegalDataException;
@@ -86,19 +87,21 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
                     multipartEntityBuilder.addTextBody("external", output.toString(), ContentType.APPLICATION_XML);
                 }
                 HttpEntity postData = multipartEntityBuilder.build();
-                HttpUriRequest request = RequestBuilder.post(url).setEntity(postData).build();
+                HttpUriRequest request = new HttpPost(url);
+                request.setEntity(postData);
 
-                HttpResponse response = currentClient.execute(request);
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                CloseableHttpResponse response = currentClient.execute(request);
+                StatusLine statusLine = new StatusLine(response);
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
                     conflatedData = OsmReader.parseDataSet(response.getEntity().getContent(),
                             NullProgressMonitor.INSTANCE, OsmReader.Options.SAVE_ORIGINAL_ID);
                 } else {
                     conflatedData = null;
                 }
-                ProtocolVersion protocolVersion = response.getStatusLine().getProtocolVersion();
+                ProtocolVersion protocolVersion = statusLine.getProtocolVersion();
                 Logging.info(request.getMethod() + ' ' + url + " -> " + protocolVersion.getProtocol() + '/'
                         + protocolVersion.getMajor() + '.' + protocolVersion.getMinor() + ' '
-                        + response.getStatusLine().getStatusCode());
+                        + statusLine.getStatusCode());
             } catch (IOException | UnsupportedOperationException | IllegalDataException e) {
                 Logging.error(e);
             }
