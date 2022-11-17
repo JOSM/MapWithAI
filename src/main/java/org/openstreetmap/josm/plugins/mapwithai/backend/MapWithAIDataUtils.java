@@ -349,7 +349,7 @@ public final class MapWithAIDataUtils {
                 final Lock lock = layer.getLock();
                 lock.lock();
                 try {
-                    mapWithAISet.mergeFrom(newData);
+                    mapWithAISet.update(() -> mapWithAISet.mergeFrom(newData));
                     GetDataRunnable.cleanup(mapWithAISet, null, null);
                 } finally {
                     lock.unlock();
