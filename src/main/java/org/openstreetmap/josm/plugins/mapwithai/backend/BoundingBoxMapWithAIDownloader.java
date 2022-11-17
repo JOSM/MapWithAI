@@ -3,6 +3,8 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.JOptionPane;
+
 import java.awt.geom.Area;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
@@ -33,6 +35,7 @@ import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.tools.HttpClient;
@@ -117,6 +120,15 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 GuiHelper.runInEDT(() -> note.setContent(tr(
                         "Attempting to download data in the background. This may fail or succeed in a few minutes.")));
                 GuiHelper.runInEDT(note::show);
+            } else if (e.getCause() instanceof IllegalDataException) {
+                MapWithAILayerInfo.getInstance().loadDefaults(true, MapWithAIDataUtils.getForkJoinPool(), false,
+                        () -> GuiHelper.runInEDT(() -> {
+                            Notification notification = new Notification(tr(
+                                    "MapWithAI layers reloaded. Removing and re-adding the MapWithAI layer may be necessary."));
+                            notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
+                            notification.setDuration(Notification.TIME_LONG);
+                            notification.show();
+                        }));
             } else {
                 throw e;
             }
