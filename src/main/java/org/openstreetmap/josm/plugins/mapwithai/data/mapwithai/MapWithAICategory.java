@@ -3,14 +3,15 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 
+import javax.annotation.Nonnull;
+import javax.swing.ImageIcon;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.swing.ImageIcon;
 
 import org.openstreetmap.josm.data.sources.ISourceCategory;
 import org.openstreetmap.josm.gui.tagging.presets.TaggingPresets;
@@ -23,7 +24,7 @@ import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
  * @author Taylor Smock
  *
  */
-public enum MapWithAICategory implements ISourceCategory<MapWithAICategory>, Serializable {
+public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
 
     BUILDING("data/closedway", "buildings", marktr("Buildings")),
     HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),
@@ -61,6 +62,13 @@ public enum MapWithAICategory implements ISourceCategory<MapWithAICategory>, Ser
                 .computeIfAbsent(this, x -> ImageProvider.get(x.icon, size));
     }
 
+    /**
+     * Get the category from a string
+     *
+     * @param s The string to get the category from
+     * @return The category, if found, else {@link #OTHER}
+     */
+    @Nonnull
     public static MapWithAICategory fromString(String s) {
         for (MapWithAICategory category : MapWithAICategory.values()) {
             if (category.getCategoryString().equals(s)) {
@@ -85,7 +93,12 @@ public enum MapWithAICategory implements ISourceCategory<MapWithAICategory>, Ser
         return OTHER;
     }
 
-    public static class DescriptionComparator implements Comparator<MapWithAICategory> {
+    /**
+     * Compare two MapWithAI categories
+     */
+    public static class DescriptionComparator implements Comparator<MapWithAICategory>, Serializable {
+
+        private static final long serialVersionUID = 9131636715279880580L;
 
         @Override
         public int compare(MapWithAICategory o1, MapWithAICategory o2) {

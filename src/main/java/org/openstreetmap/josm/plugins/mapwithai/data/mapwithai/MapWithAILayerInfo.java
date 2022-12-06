@@ -262,6 +262,7 @@ public class MapWithAILayerInfo {
      */
     class DefaultEntryLoader extends RecursiveTask<List<MapWithAIInfo>> {
 
+        private static final long serialVersionUID = 12550342142551680L;
         private final boolean clearCache;
         private final boolean fastFail;
         private final List<MapWithAIInfo> newLayers = new ArrayList<>();
@@ -301,8 +302,6 @@ public class MapWithAILayerInfo {
                     }
                     loadSource(source);
                 }
-            } catch (Exception e) {
-                Logging.error(e);
             } finally {
                 if (preferences != null) {
                     // saveOnPut is pretty much always true
@@ -629,11 +628,21 @@ public class MapWithAILayerInfo {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Add a data source
+     *
+     * @param info The source to add
+     */
     public static void addLayer(MapWithAIInfo info) {
         instance.add(info);
         instance.save();
     }
 
+    /**
+     * Add multiple data sources
+     *
+     * @param infos The sources to add
+     */
     public static void addLayers(Collection<MapWithAIInfo> infos) {
         infos.forEach(instance::add);
         instance.save();
@@ -667,6 +676,9 @@ public class MapWithAILayerInfo {
         return layerIds.get(id);
     }
 
+    /**
+     * Listen for the data source info to finish downloading
+     */
     public interface FinishListener {
         /**
          * Called when information is finished loading

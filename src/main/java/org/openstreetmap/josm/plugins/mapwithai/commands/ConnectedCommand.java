@@ -4,8 +4,8 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +21,9 @@ import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 
+/**
+ * Connect a way to another way (in between nodes)
+ */
 public class ConnectedCommand extends AbstractConflationCommand {
     public static final String KEY = "conn";
 
@@ -87,7 +90,7 @@ public class ConnectedCommand extends AbstractConflationCommand {
 
     @Override
     public Collection<Class<? extends OsmPrimitive>> getInterestedTypes() {
-        return Arrays.asList(Node.class);
+        return Collections.singletonList(Node.class);
     }
 
     @Override

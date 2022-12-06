@@ -1,7 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.spi.preferences;
 
-public class MapWithAIUrls implements IMapWithAIUrls {
+/**
+ * Store the MapWithAI URLs
+ */
+public final class MapWithAIUrls implements IMapWithAIUrls {
     /** The base url */
     private static final String BASE_URL = "https://josm.github.io/MapWithAI/";
     /** The default url for additional conflation servers */

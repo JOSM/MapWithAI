@@ -27,6 +27,11 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
     private static final double BBOX_SIMILARITY_DEGREES = 0.001;
     private static final Collection<DownloadListener> LISTENERS = new HashSet<>();
 
+    /**
+     * Listen to downloads in a dataset
+     *
+     * @param dataSet The dataset to listen to
+     */
     public DownloadListener(DataSet dataSet) {
         Objects.requireNonNull(dataSet, "DataSet cannot be null");
         ds = new WeakReference<>(dataSet);

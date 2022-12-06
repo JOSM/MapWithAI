@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
+import javax.annotation.Nonnull;
+
 import org.openstreetmap.josm.data.sources.ISourceType;
 
 /**
@@ -22,13 +24,20 @@ public enum MapWithAIType implements ISourceType<MapWithAIType> {
         return typeString;
     }
 
+    /**
+     * Get the type from a string
+     *
+     * @param s The string to parse
+     * @return The type
+     */
+    @Nonnull
     public static MapWithAIType fromString(String s) {
         for (MapWithAIType type : MapWithAIType.values()) {
             if (type.getTypeString().equals(s)) {
                 return type;
             }
         }
-        return null;
+        return MapWithAIType.THIRD_PARTY;
     }
 
     @Override

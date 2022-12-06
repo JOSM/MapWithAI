@@ -84,6 +84,9 @@ import org.openstreetmap.josm.tools.OpenBrowser;
  */
 public class MapWithAIProvidersPanel extends JPanel {
 
+    /**
+     * The options for the panel
+     */
     public enum Options {
         /** Hide the active table */
         SHOW_ACTIVE
@@ -127,8 +130,16 @@ public class MapWithAIProvidersPanel extends JPanel {
     /** Options that were passed to the constructor */
     private final Options[] options;
 
+    /**
+     * Listen for area updates
+     */
     protected interface AreaListener {
 
+        /**
+         * Update the area
+         *
+         * @param area The bounds to update
+         */
         void updateArea(Bounds area);
     }
 
@@ -211,7 +222,6 @@ public class MapWithAIProvidersPanel extends JPanel {
             return label;
         }
 
-        @SuppressWarnings("hiding")
         @Override
         public void updateArea(Bounds area) {
             this.area = area;

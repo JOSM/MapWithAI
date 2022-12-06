@@ -33,6 +33,9 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * Add data from the MapWithAI layer to the OSM data layer
+ */
 public class MapWithAIAddCommand extends Command implements Runnable {
     private final DataSet editable;
     private final DataSet mapWithAI;

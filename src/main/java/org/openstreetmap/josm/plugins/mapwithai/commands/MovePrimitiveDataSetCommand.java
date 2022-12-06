@@ -39,6 +39,13 @@ import org.openstreetmap.josm.tools.bugreport.ReportedException;
 public class MovePrimitiveDataSetCommand extends Command {
     private Command command;
 
+    /**
+     * Move primitives from one dataset to another
+     *
+     * @param to         The destination dataset
+     * @param from       The originating dataset
+     * @param primitives The primitives to move
+     */
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives) {
         super(to);
         if (from == null || to.isLocked() || from.isLocked() || to.equals(from)) {
@@ -48,6 +55,15 @@ public class MovePrimitiveDataSetCommand extends Command {
         }
     }
 
+    /**
+     * Move primitives from one dataset to another
+     *
+     * @param to            The destination dataset
+     * @param from          The originating dataset
+     * @param primitives    The primitives to move
+     * @param primitiveData A collection to be add the primitive data to (important
+     *                      if any positive ids are available)
+     */
     public MovePrimitiveDataSetCommand(DataSet to, DataSet from, Collection<OsmPrimitive> primitives,
             Collection<PrimitiveData> primitiveData) {
         super(to);

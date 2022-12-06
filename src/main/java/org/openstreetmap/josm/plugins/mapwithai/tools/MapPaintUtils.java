@@ -42,6 +42,9 @@ import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.tools.ColorHelper;
 import org.openstreetmap.josm.tools.Logging;
 
+/**
+ * Utils for the MapWithAI paint style
+ */
 public final class MapPaintUtils {
     /** The default url for the MapWithAI paint style */
     private static final Pattern TEST_PATTERN = Pattern
@@ -53,11 +56,16 @@ public final class MapPaintUtils {
     private static final String MAPWITHAI_MAPCSS_ZIP_NAME = "Styles_MapWithAI-style.mapcss";
     private static final double CRC_DIVIDE_TO_TEN_K_MAX = 429496.7296;
 
+    /**
+     * Safe colors
+     */
     public enum SafeColors {
-        RED(Color.RED), ORANGE(Color.ORANGE), GOLD(ColorHelper.html2color("#ffd700")),
-        LIME(ColorHelper.html2color("#00ff00")), CYAN(Color.CYAN), DODGER_BLUE(ColorHelper.html2color("#1e90ff")),
-        AI_MAGENTA(ColorHelper.html2color("#ff26d4")), PINK(Color.PINK), LIGHT_GREY(ColorHelper.html2color("#d3d3d3")),
-        LINEN(ColorHelper.html2color("#faf0e6"));
+        RED(Color.RED), ORANGE(Color.ORANGE), GOLD(Objects.requireNonNull(ColorHelper.html2color("#ffd700"))),
+        LIME(Objects.requireNonNull(ColorHelper.html2color("#00ff00"))), CYAN(Color.CYAN),
+        DODGER_BLUE(Objects.requireNonNull(ColorHelper.html2color("#1e90ff"))),
+        AI_MAGENTA(Objects.requireNonNull(ColorHelper.html2color("#ff26d4"))), PINK(Color.PINK),
+        LIGHT_GREY(Objects.requireNonNull(ColorHelper.html2color("#d3d3d3"))),
+        LINEN(Objects.requireNonNull(ColorHelper.html2color("#faf0e6")));
 
         private final Color color;
 
@@ -85,8 +93,9 @@ public final class MapPaintUtils {
      */
     public static synchronized StyleSource addMapWithAIPaintStyles() {
         // Remove old url's that were automatically added -- remove after Jan 01, 2020
-        final List<Pattern> oldUrls = Arrays.asList(Pattern.compile(
-                "https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
+        final List<Pattern> oldUrls = Arrays.asList(
+                Pattern.compile("https://gitlab.com/(gokaart/JOSM_MapWithAI|smocktaylor/rapid)"
+                        + "/raw/master/src/resources/styles/standard/(mapwithai|rapid).mapcss"),
                 TEST_PATTERN, Pattern.compile("resource://styles/standard/mapwithai.mapcss"));
         new ArrayList<>(MapPaintStyles.getStyles().getStyleSources()).stream()
                 .filter(style -> oldUrls.stream().anyMatch(p -> p.matcher(style.url).matches()))
@@ -100,6 +109,11 @@ public final class MapPaintUtils {
         return getMapWithAIPaintStyle();
     }
 
+    /**
+     * Check if the paint style exists
+     *
+     * @return {@code true} if the paint style exists
+     */
     public static synchronized boolean checkIfMapWithAIPaintStyleExists() {
         return MapPaintStyles.getStyles().getStyleSources().stream().filter(MapCSSStyleSource.class::isInstance)
                 .map(MapCSSStyleSource.class::cast)
@@ -171,10 +185,11 @@ public final class MapPaintUtils {
             try (ZipFile zipFile = new ZipFile(file.getAbsolutePath())) {
                 writeZipData(zipFile, group, sources);
             } catch (ZipException e) {
+                Logging.trace(e);
                 // Assume that it is a standard file, not a zip file.
                 try (OutputStream out = Files.newOutputStream(Paths.get(file.getName() + ".tmp"));
                         BufferedReader bufferedReader = new BufferedReader(
-                                new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8));) {
+                                new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8))) {
                     writeData(out, bufferedReader, group, sources);
                 }
                 Files.move(new File(file.getName() + ".tmp").toPath(), new File(file.getName()).toPath(),

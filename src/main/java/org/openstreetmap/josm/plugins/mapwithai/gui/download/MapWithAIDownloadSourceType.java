@@ -19,6 +19,9 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo.LayerChangeListener;
 
+/**
+ * Adds the MapWithAI download checkbox to the JOSM download UI
+ */
 public class MapWithAIDownloadSourceType implements IDownloadSourceType, LayerChangeListener {
     static final BooleanProperty IS_ENABLED = new BooleanProperty("download.mapwithai.data", false);
     JCheckBox cbDownloadMapWithAIData;

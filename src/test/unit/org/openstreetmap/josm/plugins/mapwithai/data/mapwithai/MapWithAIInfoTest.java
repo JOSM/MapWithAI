@@ -42,7 +42,7 @@ class MapWithAIInfoTest {
 
     @ParameterizedTest
     @MethodSource("provideMapWithAIInfoInitializers")
-    void assertInitializersWorked(MapWithAIInfo i, String name, String url, String id, MapWithAIType type) {
+    void testInitializersWorked(MapWithAIInfo i, String name, String url, String id, MapWithAIType type) {
         assertEquals(name, i.getName());
         assertEquals(id, i.getId());
         assertEquals(url, i.getUrl());

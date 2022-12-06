@@ -41,6 +41,9 @@ import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.OpenBrowser;
 
+/**
+ * The MapWithAI preference pane
+ */
 public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     private final JCheckBox switchLayerCheckBox;
     private final JCheckBox mergeBuildingAddressCheckBox;
@@ -49,6 +52,9 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
     private final List<PrefEntry> replacementTableDisplayData;
     private static final int MAX_SELECTED_TO_EDIT = 1;
 
+    /**
+     * Create the preference panel
+     */
     public MapWithAIPreferences() {
         super("mapwithai", tr("MapWithAI preferences"), tr("Modify MapWithAI preferences"), false, new JTabbedPane());
 
@@ -95,11 +101,12 @@ public class MapWithAIPreferences extends DefaultTabPreferenceSetting {
         switchLayer.setToolTipText(
                 tr("If checked, automatically switch from the {0} layer to the OSM layer when objects are added",
                         MapWithAIPlugin.NAME));
-        maximumAddition.setToolTipText(tr(
-                "This is the maximum number of complete OSM objects that can be added from the {0} layer, child objects do not count to this limit",
-                MapWithAIPlugin.NAME));
-        mergeBuildingWithAddress.setToolTipText(tr(
-                "If checked, automatically merge address nodes onto added buildings, if and only if one address is within the building boundary"));
+        maximumAddition.setToolTipText(
+                tr("This is the maximum number of complete OSM objects that can be added from the {0} layer, "
+                        + "child objects do not count to this limit", MapWithAIPlugin.NAME));
+        mergeBuildingWithAddress
+                .setToolTipText(tr("If checked, automatically merge address nodes onto added buildings, "
+                        + "if and only if one address is within the building boundary"));
 
         switchLayerCheckBox.setSelected(MapWithAIPreferenceHelper.isSwitchLayers());
         switchLayerCheckBox.setToolTipText(switchLayer.getToolTipText());

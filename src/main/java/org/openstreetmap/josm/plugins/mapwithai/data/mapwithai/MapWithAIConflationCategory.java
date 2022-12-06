@@ -13,6 +13,9 @@ import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ConflationSourceRea
 import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.tools.Logging;
 
+/**
+ * The conflation category
+ */
 public final class MapWithAIConflationCategory {
     private static final Map<MapWithAICategory, List<String>> CONFLATION_URLS = new EnumMap<>(MapWithAICategory.class);
     private static final String EMPTY_URL = "";
@@ -20,6 +23,9 @@ public final class MapWithAIConflationCategory {
         initialize();
     }
 
+    /**
+     * Initialize the {@link #CONFLATION_URLS}
+     */
     public static void initialize() {
         CONFLATION_URLS.clear();
         try (ConflationSourceReader reader = new ConflationSourceReader(

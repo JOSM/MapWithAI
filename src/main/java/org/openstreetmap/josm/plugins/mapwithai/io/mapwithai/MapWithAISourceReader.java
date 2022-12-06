@@ -8,6 +8,7 @@ import javax.json.JsonValue;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,7 +22,6 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.CountryUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
-import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 
 /**
@@ -124,21 +124,15 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
 
     private static List<ImageryInfo.ImageryBounds> getBounds(JsonValue countries) {
         if (JsonValue.ValueType.OBJECT == countries.getValueType()) {
-            Set<String> codes;
-            try {
-                codes = Territories.getKnownIso3166Codes();
-                List<ImageryBounds> bounds = new ArrayList<>();
-                for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
-                    if (codes.contains(country.getKey())) {
-                        CountryUtils.getCountryShape(country.getKey()).ifPresent(bounds::add);
-                    }
+            Set<String> codes = Territories.getKnownIso3166Codes();
+            List<ImageryBounds> bounds = new ArrayList<>();
+            for (Map.Entry<String, JsonValue> country : countries.asJsonObject().entrySet()) {
+                if (codes.contains(country.getKey())) {
+                    CountryUtils.getCountryShape(country.getKey()).ifPresent(bounds::add);
                 }
-                return bounds;
-            } catch (NullPointerException e) {
-                Logging.error(e);
             }
-
+            return Collections.unmodifiableList(bounds);
         }
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 }

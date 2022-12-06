@@ -5,6 +5,9 @@ import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.Action;
+import javax.swing.JOptionPane;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -13,9 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
-import javax.swing.Action;
-import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.AbstractMergeAction;
 import org.openstreetmap.josm.actions.JosmAction;
@@ -28,12 +28,18 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Shortcut;
 
+/**
+ * Create or download MapWithAI data
+ */
 public class MapWithAIAction extends JosmAction {
     /** UID */
     private static final long serialVersionUID = 8886705479253246588L;
     private static final String DOWNLOAD_DATA = marktr("{0}: Download Data");
     private static final String SWITCH_LAYERS = marktr("{0}: Switch Layers");
 
+    /**
+     * Create the action
+     */
     public MapWithAIAction() {
         super(tr(DOWNLOAD_DATA, MapWithAIPlugin.NAME), "mapwithai", tr("Get data from {0}", MapWithAIPlugin.NAME),
                 Shortcut.registerShortcut("data:mapWithAI", tr("Data: {0}", MapWithAIPlugin.NAME), KeyEvent.VK_R,

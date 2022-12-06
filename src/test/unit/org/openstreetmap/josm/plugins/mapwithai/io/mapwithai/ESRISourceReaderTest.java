@@ -4,7 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,6 +25,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
+import org.openstreetmap.josm.tools.JosmRuntimeException;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
@@ -67,9 +67,8 @@ class ESRISourceReaderTest {
                 try {
                     return future.get();
                 } catch (ExecutionException | InterruptedException e) {
-                    fail(e);
+                    throw new JosmRuntimeException(e);
                 }
-                return null;
             }).collect(Collectors.toList());
             Future<?> workerQueue = MainApplication.worker.submit(() -> {
                 /* Sync threads */});

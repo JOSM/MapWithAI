@@ -34,9 +34,15 @@ import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
+/**
+ * Check the street address order
+ */
 public class StreetAddressOrder extends Test {
     private static final SharpAngles ANGLES_TEST = new SharpAngles();
 
+    /**
+     * Create a new test object
+     */
     public StreetAddressOrder() {
         super(tr("Address order ({0})", MapWithAIPlugin.NAME), tr("Check that street address order makes sense"));
     }
@@ -127,9 +133,17 @@ public class StreetAddressOrder extends Test {
         return number;
     }
 
+    /**
+     * Create the error to show the user
+     *
+     * @param potentialBadAddress  The potential bad address
+     * @param surroundingAddresses The surrounding addresses that make the
+     *                             potentialBadAddress bad
+     */
     public void createError(IPrimitive potentialBadAddress, Collection<IPrimitive> surroundingAddresses) {
         if (potentialBadAddress instanceof OsmPrimitive) {
-            errors.add(TestError.builder(this, Severity.OTHER, 58542100).primitives((OsmPrimitive) potentialBadAddress)
+            errors.add(TestError.builder(this, Severity.OTHER, 58_542_100)
+                    .primitives((OsmPrimitive) potentialBadAddress)
                     .highlight(surroundingAddresses.stream().filter(OsmPrimitive.class::isInstance)
                             .map(OsmPrimitive.class::cast).collect(Collectors.toSet()))
                     .message(tr("{0} (experimental)", MapWithAIPlugin.NAME), marktr("Potential bad address")).build());

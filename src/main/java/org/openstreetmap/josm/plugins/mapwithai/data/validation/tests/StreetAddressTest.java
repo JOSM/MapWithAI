@@ -31,6 +31,9 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Pair;
 
+/**
+ * Check for addr:street and street name mismatches
+ */
 public class StreetAddressTest extends Test {
     /** Standard bbox expansion */
     public static final double BBOX_EXPANSION = 0.002;
@@ -45,6 +48,9 @@ public class StreetAddressTest extends Test {
             "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary", "secondary_link",
             "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "road"));
 
+    /**
+     * Create a new test object
+     */
     public StreetAddressTest() {
         super(tr("Mismatched street/street addresses ({0})", MapWithAIPlugin.NAME),
                 tr("Check for addr:street/street name mismatches"));
@@ -73,14 +79,20 @@ public class StreetAddressTest extends Test {
         namePrimitiveMap.clear();
     }
 
+    /**
+     * Create the error
+     *
+     * @param addrStreet The addr:street tag
+     * @param primitives The bad primitives
+     */
     public void createError(String addrStreet, List<OsmPrimitive> primitives) {
-        errors.add(TestError.builder(this, Severity.WARNING, 2136232)
+        errors.add(TestError.builder(this, Severity.WARNING, 2_136_232)
                 .message(tr("{0} (experimental)", MapWithAIPlugin.NAME),
                         marktr("Addresses are not nearby a matching road ({0})"), addrStreet)
                 .primitives(primitives).build());
     }
 
-    public void realVisit(OsmPrimitive primitive) {
+    private void realVisit(OsmPrimitive primitive) {
         if (primitive.isUsable() && hasStreetAddressTags(primitive) && !primitive.isOutsideDownloadArea()) {
             Collection<Way> surroundingWays = getSurroundingHighways(primitive);
             Collection<String> names = getWayNames(surroundingWays);
@@ -90,7 +102,7 @@ public class StreetAddressTest extends Test {
         }
     }
 
-    public static Collection<String> getWayNames(Collection<Way> ways) {
+    private static Collection<String> getWayNames(Collection<Way> ways) {
         return ways.stream().flatMap(w -> w.getInterestingTags().entrySet().stream())
                 .filter(e -> (e.getKey().contains("name") || e.getKey().contains("ref"))
                         && !e.getKey().contains("tiger"))
@@ -98,7 +110,7 @@ public class StreetAddressTest extends Test {
                 .filter(s -> !s.isEmpty()).collect(Collectors.toSet());
     }
 
-    public static Collection<Way> getSurroundingHighways(OsmPrimitive address) {
+    private static Collection<Way> getSurroundingHighways(OsmPrimitive address) {
         Objects.requireNonNull(address.getDataSet(), "Node must be part of a dataset");
         DataSet ds = address.getDataSet();
         BBox addrBox = expandBBox(new BBox(address.getBBox()), BBOX_EXPANSION);

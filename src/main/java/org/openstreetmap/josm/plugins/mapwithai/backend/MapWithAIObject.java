@@ -26,6 +26,9 @@ public class MapWithAIObject implements CommandQueueListener, Destroyable {
     private final JosmTextField mapWithAIObjects;
     private final List<MapStatus> statusLines;
 
+    /**
+     * Create a new status line for added objects
+     */
     public MapWithAIObject() {
         mapWithAIObjects = new JosmTextField(null, null, "MapWithAI Objects Added: 1000".length() - 10, false);
         mapWithAIObjects.setBackground(MapStatus.PROP_BACKGROUND_COLOR.get());

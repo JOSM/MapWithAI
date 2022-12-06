@@ -145,7 +145,7 @@ public class ESRISourceReader {
         MapWithAIInfo newInfo = new MapWithAIInfo(source);
         newInfo.setId(feature.getString("id"));
         ForkJoinTask<MapWithAIInfo> future;
-        if (feature.getString("type", "").equals("Feature Service")) {
+        if ("Feature Service".equals(feature.getString("type", ""))) {
             future = ForkJoinTask.adapt(() -> newInfo.setUrl(featureService(newInfo, feature.getString("url"))),
                     newInfo);
         } else {
@@ -208,11 +208,6 @@ public class ESRISourceReader {
     @Nullable
     private static String getJsonString(@Nonnull final String url, final long defaultMaxAge, final boolean fastFail) {
         String jsonString = SOURCE_CACHE.get(url);
-        if (Config.getPref() != null) {
-            // TODO FIXME remove sometime after January 2022 (give it a chance to cleanup
-            // directories)
-            CachedFile.cleanup(url);
-        }
         if (jsonString == null) {
             HttpClient client = null;
             try {

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openstreetmap.josm.TestUtils;
-import org.openstreetmap.josm.gui.preferences.advanced.PrefEntry;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 
@@ -60,11 +59,11 @@ class ReplacementPreferenceTableTest {
     void setUp() {
         TestUtils.assumeWorkingJMockit();
         new WindowMocker();
-        test = new ReplacementPreferenceTable(new ArrayList<PrefEntry>());
+        test = new ReplacementPreferenceTable(new ArrayList<>());
     }
 
     @Test
-    void test() {
+    void testReplacementPreferenceTable() {
         new ReplacementPreferenceTableMock(true);
         assertNotNull(test.addPreference(new JPanel()));
         new ReplacementPreferenceTableMock(false);

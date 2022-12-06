@@ -31,9 +31,12 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  */
 public class ConnectingNodeInformationTest extends Test {
-    private static final int ERROR_CODE = 827277536;
+    private static final int ERROR_CODE = 827_277_536;
     Map<String, String> badTags;
 
+    /**
+     * Create a new test instance
+     */
     public ConnectingNodeInformationTest() {
         super(tr("Left over conflation information (MapWithAI)"),
                 tr("Checks conflation keys that should not exist in OpenStreetMap."));
@@ -73,7 +76,7 @@ public class ConnectingNodeInformationTest extends Test {
 
     private void checkTags(OsmPrimitive prim) {
         DataSet ds = prim.getDataSet();
-        if (!UploadPolicy.BLOCKED.equals(ds.getUploadPolicy()) && !DownloadPolicy.BLOCKED.equals(ds.getDownloadPolicy())
+        if (UploadPolicy.BLOCKED != ds.getUploadPolicy() && DownloadPolicy.BLOCKED != ds.getDownloadPolicy()
                 && prim.hasKey(badTags.keySet().toArray(new String[0]))) {
             errors.add(TestError.builder(this, Severity.ERROR, ERROR_CODE).primitives(prim)
                     .message(tr("Don''t leave conflation keys in the data {0}",

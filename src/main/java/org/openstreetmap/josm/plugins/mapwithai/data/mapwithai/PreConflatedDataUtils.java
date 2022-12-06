@@ -31,6 +31,9 @@ public class PreConflatedDataUtils implements PreferenceChangedListener, Destroy
      */
     private static final String CONFLATED_KEY = "mapwithai:conflated";
 
+    /**
+     * Create a new util object
+     */
     public PreConflatedDataUtils() {
         Config.getPref().addKeyPreferenceChangeListener(PREF_KEY, this);
         Config.getPref().addKeyPreferenceChangeListener(PREF_KEY_FULL, this);

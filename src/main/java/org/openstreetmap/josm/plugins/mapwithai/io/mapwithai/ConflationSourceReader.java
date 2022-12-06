@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.tools.Pair;
 
+/**
+ * Read conflation entries from JSON
+ */
 public class ConflationSourceReader extends CommonSourceReader<Map<MapWithAICategory, List<String>>>
         implements Closeable {
 

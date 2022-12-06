@@ -14,6 +14,11 @@ import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * Read sources for MapWithAI
+ *
+ * @param <T> The expected type
+ */
 public abstract class CommonSourceReader<T> implements AutoCloseable {
     private final String source;
     private CachedFile cachedFile;

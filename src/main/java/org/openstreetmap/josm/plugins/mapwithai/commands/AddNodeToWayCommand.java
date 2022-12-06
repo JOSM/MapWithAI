@@ -3,7 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +16,11 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.tools.Geometry;
+import org.openstreetmap.josm.tools.Logging;
 
+/**
+ * Add a node to a way
+ */
 public class AddNodeToWayCommand extends Command {
     private final Node toAddNode;
     private final Way way;
@@ -50,12 +53,13 @@ public class AddNodeToWayCommand extends Command {
             IWaySegment.forNodePair(getWay(), getFirstNode(), getSecondNode());
             index = Math.max(getWay().getNodes().indexOf(getFirstNode()), getWay().getNodes().indexOf(getSecondNode()));
         } catch (IllegalArgumentException e) {
+            Logging.trace(e);
             // OK, someone has added a node between the two nodes since calculation
             Way tWay = new Way();
             tWay.setNodes(Arrays.asList(getFirstNode(), getSecondNode()));
-            List<Node> relevantNodes = new ArrayList<>(getWay().getNodes().stream()
+            List<Node> relevantNodes = getWay().getNodes().stream()
                     .filter(node -> Geometry.getDistance(tWay, node) < MapWithAIPreferenceHelper.getMaxNodeDistance())
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList());
             for (int i = 0; i < relevantNodes.size() - 1; i++) {
                 Way tWay2 = new Way();
                 tWay2.setNodes(Arrays.asList(relevantNodes.get(i), relevantNodes.get(i + 1)));

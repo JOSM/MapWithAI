@@ -3,6 +3,8 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.annotation.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +33,9 @@ public final class MergeBuildingNodeCommand {
      *
      * @param subjectNode     node to be replaced
      * @param referenceObject object with greater spatial quality
+     * @return The command that updates the node to a way/relation
      */
+    @Nullable
     public static Command buildUpgradeNodeCommand(Node subjectNode, OsmPrimitive referenceObject) {
         boolean keepNode = !subjectNode.isNew();
         if (keepNode) {

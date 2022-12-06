@@ -3,16 +3,16 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.stream.Stream;
-
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.gui.bbox.BBoxChooser;
@@ -32,6 +32,9 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     private DownloadDialog iGui;
     private final MapWithAIProvidersPanel mapwithaiProvidersPanel;
 
+    /**
+     * Create a new options panel
+     */
     public MapWithAIDownloadOptions() {
         optionPanel = new JPanel(new GridBagLayout());
         JPanel infoHeader = new JPanel();

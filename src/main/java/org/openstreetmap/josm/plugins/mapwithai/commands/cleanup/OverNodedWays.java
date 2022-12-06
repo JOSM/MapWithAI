@@ -22,6 +22,9 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.AbstractConflationComma
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * Look for ways that have too many nodes
+ */
 public class OverNodedWays extends AbstractConflationCommand {
 
     private class PostponedOverNodedWayCommand extends Command {

@@ -35,6 +35,9 @@ import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * The information needed to download external data
+ */
 public class MapWithAIInfo extends
         SourceInfo<MapWithAICategory, MapWithAIType, ImageryInfo.ImageryBounds, MapWithAIInfo.MapWithAIPreferenceEntry> {
 
@@ -146,7 +149,12 @@ public class MapWithAIInfo extends
         }
     }
 
+    /**
+     * Compare MapWithAI info
+     */
     public static class MapWithAIInfoCategoryComparator implements Comparator<MapWithAIInfo>, Serializable {
+
+        private static final long serialVersionUID = -7992892476979310835L;
 
         @Override
         public int compare(MapWithAIInfo o1, MapWithAIInfo o2) {
@@ -156,18 +164,39 @@ public class MapWithAIInfo extends
         }
     }
 
+    /**
+     * Create a simple info object
+     */
     public MapWithAIInfo() {
         this((String) null);
     }
 
+    /**
+     * Create a simple info object
+     *
+     * @param name The name of the source
+     */
     public MapWithAIInfo(String name) {
         this(name, null);
     }
 
+    /**
+     * Create a simple info object
+     *
+     * @param name    The name of the source
+     * @param baseUrl The URL of the source
+     */
     public MapWithAIInfo(String name, String baseUrl) {
         this(name, baseUrl, null);
     }
 
+    /**
+     * Create a simple info object
+     *
+     * @param name    The name of the source
+     * @param baseUrl The URL of the source
+     * @param id      The unique ID of the source
+     */
     public MapWithAIInfo(String name, String baseUrl, String id) {
         super();
         setName(name);
@@ -201,6 +230,11 @@ public class MapWithAIInfo extends
         }
     }
 
+    /**
+     * Create an info object from a preference entry
+     *
+     * @param e The preference entry to copy from
+     */
     public MapWithAIInfo(MapWithAIPreferenceEntry e) {
         this(e.name, e.url, e.id);
         CheckParameterUtil.ensureParameterNotNull(e.name, "name");
@@ -267,6 +301,11 @@ public class MapWithAIInfo extends
         alreadyConflatedKey = e.alreadyConflatedKey;
     }
 
+    /**
+     * Copy from another info object
+     *
+     * @param i The object to copy from
+     */
     public MapWithAIInfo(MapWithAIInfo i) {
         this(i.name, i.url, i.id);
         this.alreadyConflatedKey = i.alreadyConflatedKey;
@@ -313,6 +352,12 @@ public class MapWithAIInfo extends
 
     }
 
+    /**
+     * Check if this equals the other object as far as the preferences go
+     *
+     * @param other The other object to check against
+     * @return {@code true} if the object is effectively equal
+     */
     public boolean equalsPref(MapWithAIInfo other) {
         if (other == null) {
             return false;

@@ -29,6 +29,9 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * Check for data availability in an area
+ */
 public class DataAvailability {
     /** A map of tag -&gt; message of possible data types */
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
@@ -67,7 +70,7 @@ public class DataAvailability {
      */
     private static void initialize() {
         try (CachedFile jsonFile = new CachedFile(MapWithAIConfig.getUrls().getMapWithAISourcesJson());
-                JsonParser jsonParser = Json.createParser(jsonFile.getContentReader());) {
+                JsonParser jsonParser = Json.createParser(jsonFile.getContentReader())) {
             jsonFile.setMaxAge(SEVEN_DAYS_IN_SECONDS);
             jsonParser.next();
             JsonObject jsonObject = jsonParser.getObject();

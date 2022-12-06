@@ -4,7 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +20,9 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * Connect duplicate nodes
+ */
 public class DuplicateCommand extends AbstractConflationCommand {
     public static final String KEY = "dupe";
 
@@ -68,7 +70,7 @@ public class DuplicateCommand extends AbstractConflationCommand {
     public static Command replaceNode(Node original, Node newNode) {
         Command tCommand = null;
         if (original.getCoor().equalsEpsilon(newNode.getCoor())) {
-            tCommand = MergeNodesAction.mergeNodes(Arrays.asList(original), newNode, newNode);
+            tCommand = MergeNodesAction.mergeNodes(Collections.singletonList(original), newNode, newNode);
         }
         return tCommand;
     }

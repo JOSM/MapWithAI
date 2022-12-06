@@ -35,7 +35,7 @@ class AddMapWithAIPanelTest {
     JOSMTestRules rule = new MapWithAITestRules().territories().projection().assertionsInEDT();
 
     @Test
-    void test() throws ReflectiveOperationException {
+    void testAddMapWithAIPanel() throws ReflectiveOperationException {
         new WindowMocker();
         MapWithAIInfo oldInfo = new MapWithAIInfo();
         AddMapWithAIPanel panel = new AddMapWithAIPanel(oldInfo);

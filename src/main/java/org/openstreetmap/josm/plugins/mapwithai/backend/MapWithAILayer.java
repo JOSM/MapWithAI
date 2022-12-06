@@ -292,7 +292,11 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         GuiHelper.runInEDT(badData::show);
     }
 
+    /**
+     * Compare OsmPrimitives in a custom manner
+     */
     private static class OsmComparator implements Comparator<OsmPrimitive>, Serializable {
+        private static final long serialVersionUID = 594813918562412160L;
         final Collection<OsmPrimitive> previousSelection;
 
         public OsmComparator(Collection<OsmPrimitive> previousSelection) {
@@ -337,6 +341,11 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         private static final long serialVersionUID = -3528632887550700527L;
         private final transient MapWithAILayer layer;
 
+        /**
+         * Create a new continuous download toggle
+         *
+         * @param layer the layer to toggle continuous download for
+         */
         public ContinuousDownloadAction(MapWithAILayer layer) {
             super(tr("Continuous download"));
             new ImageProvider("download").getResource().attachImageIcon(this, true);

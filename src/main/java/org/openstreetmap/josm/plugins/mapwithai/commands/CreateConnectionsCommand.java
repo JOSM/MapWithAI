@@ -28,6 +28,9 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.OverNodedWays;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
+/**
+ * Create connections
+ */
 public class CreateConnectionsCommand extends Command {
     private final Collection<PrimitiveData> primitives;
     private Command command;
@@ -43,6 +46,12 @@ public class CreateConnectionsCommand extends Command {
         CONFLATION_COMMANDS.add(AlreadyConflatedCommand.class);
     }
 
+    /**
+     * Create a new command
+     *
+     * @param data       The dataset
+     * @param primitives The primitives to connect
+     */
     public CreateConnectionsCommand(DataSet data, Collection<PrimitiveData> primitives) {
         super(data);
         this.primitives = primitives;

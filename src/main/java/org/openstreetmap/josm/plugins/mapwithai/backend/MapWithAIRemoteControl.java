@@ -16,6 +16,9 @@ import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 
+/**
+ * Download MapWithAI data using remote control
+ */
 public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHandler {
 
     private static final PermissionPrefWithDefault PERMISSION_PREF_WITH_DEFAULT = new PermissionPrefWithDefault(
@@ -34,10 +37,6 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     private static final String CROP_BBOX = "crop_bbox";
     private static final String URL_STRING = "url";
     private static final String SOURCE_STRING = "source";
-
-    public MapWithAIRemoteControl() {
-        super();
-    }
 
     @Override
     protected void validateRequest() throws RequestHandlerBadRequestException {
@@ -171,7 +170,10 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     @Override
     public String[] getUsageExamples() {
         return new String[] { "/mapwithai", "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059",
-                "/mapwithai?url=https://www.mapwith.ai/maps/ml_roads?conflate_with_osm=true&theme=ml_road_vector&collaborator=josm&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}",
+                "/mapwithai?url=https://www.mapwith.ai/maps/ml_roads?conflate_with_osm=true"
+                        + "&theme=ml_road_vector&collaborator=josm"
+                        + "&token=ASb3N5o9HbX8QWn8G_NtHIRQaYv3nuG2r7_f3vnGld3KhZNCxg57IsaQyssIaEw5rfRNsPpMwg4TsnrSJtIJms5m"
+                        + "&hash=ASawRla3rBcwEjY4HIY&bbox={bbox}",
                 "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&max_obj=1",
                 "/mapwithai?bbox=-108.4625421,39.0621223,-108.4594728,39.0633059&switch_layer=false",
                 "/mapwithai?crop_bbox=-108.4625421,39.0621223,-108.4594728,39.0633059" };

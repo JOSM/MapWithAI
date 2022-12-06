@@ -192,10 +192,9 @@ public final class MapWithAIDataUtils {
                 final String notificationMessage;
                 if (e.getCause() instanceof IllegalDataException) {
                     notificationMessage = tr("MapWithAI servers may be down.");
-                } else if (!Utils.isBlank(e.getLocalizedMessage())) {
-                    notificationMessage = e.getLocalizedMessage();
+                    Logging.trace(e);
                 } else {
-                    notificationMessage = e.getMessage();
+                    throw e;
                 }
                 Notification notification = new Notification();
                 GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
@@ -227,6 +226,11 @@ public final class MapWithAIDataUtils {
                     null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION);
         }
 
+        /**
+         * Check if the user confirmed the download
+         *
+         * @return {@code true} if the user wants to continue
+         */
         public boolean confirmed() {
             return bool;
         }

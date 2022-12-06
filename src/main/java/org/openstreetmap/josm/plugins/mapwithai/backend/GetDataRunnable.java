@@ -172,6 +172,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     public static final String SOURCE_TAG_KEY = "source";
 
     /**
+     * Get data in the background
+     *
      * @param bbox    The initial bbox to get data from (don't reduce beforehand --
      *                it will be reduced here)
      * @param dataSet The dataset to add the data to
@@ -182,6 +184,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     /**
+     * Get data in the background
+     *
      * @param bbox    The initial bboxes to get data from (don't reduce beforehand
      *                -- it will be reduced here)
      * @param dataSet The dataset to add the data to
@@ -567,7 +571,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
             bbox.addPrimitive(way1, DEGREE_BUFFER);
             for (Way nearbyWay : dataSet.searchWays(bbox)) {
                 if (nearbyWay.getNodes().stream().filter(way1::containsNode).count() > 1) {
-                    // way1.getNodePairs(false);
                     for (Map.Entry<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> entry : checkWayDuplications(
                             way1, nearbyWay).entrySet()) {
                         GetDataRunnable.addMissingElement(entry);

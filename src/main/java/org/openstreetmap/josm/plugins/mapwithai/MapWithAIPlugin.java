@@ -56,6 +56,9 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 
+/**
+ * The POJO entry point for the plugin
+ */
 public final class MapWithAIPlugin extends Plugin implements Destroyable {
     /** The name of the plugin */
     public static final String NAME = "MapWithAI";

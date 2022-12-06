@@ -30,6 +30,9 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.tools.BlacklistUtils;
 import org.openstreetmap.josm.tools.Shortcut;
 
+/**
+ * Move data between the MapWithAI layer and an OSM data layer
+ */
 public class MapWithAIMoveAction extends JosmAction {
     /** UID for abstract action */
     private static final long serialVersionUID = 319374598;
@@ -37,6 +40,9 @@ public class MapWithAIMoveAction extends JosmAction {
     /** The maximum number of objects is this times the maximum add */
     public static final long MAX_ADD_MULTIPLIER = 10;
 
+    /**
+     * Create a new action
+     */
     public MapWithAIMoveAction() {
         super(tr("{0}: Add selected data", MapWithAIPlugin.NAME), "mapwithai",
                 tr("Add data from {0}", MapWithAIPlugin.NAME), obtainShortcut(), true, "mapwithai:movedata", true);

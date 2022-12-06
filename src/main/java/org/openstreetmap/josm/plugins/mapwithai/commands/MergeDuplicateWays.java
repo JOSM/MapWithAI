@@ -3,6 +3,9 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +34,9 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelpe
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
+/**
+ * Merge duplicate ways
+ */
 public class MergeDuplicateWays extends Command {
     public static final String ORIG_ID = "orig_id";
 
@@ -41,22 +47,51 @@ public class MergeDuplicateWays extends Command {
 
     private Bounds bound;
 
+    /**
+     * Merge duplicate ways
+     *
+     * @param data Merge all duplicate ways in the dataset
+     */
     public MergeDuplicateWays(DataSet data) {
         this(data, null, null);
     }
 
+    /**
+     * Merge duplicate ways
+     *
+     * @param way1 The way to merge duplicates to
+     */
     public MergeDuplicateWays(Way way1) {
         this(way1.getDataSet(), way1, null);
     }
 
+    /**
+     * Merge duplicate ways
+     *
+     * @param way1 The way to merge duplicates to
+     * @param way2 The way to merge from
+     */
     public MergeDuplicateWays(Way way1, Way way2) {
         this(way1.getDataSet(), way1, way2);
     }
 
+    /**
+     * Merge duplicate ways
+     *
+     * @param data The originating dataset
+     * @param way1 The first way to check against
+     * @param way2 The second way
+     */
     public MergeDuplicateWays(DataSet data, Way way1, Way way2) {
         this(data, Stream.of(way1, way2).filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
+    /**
+     * Merge duplicate ways
+     *
+     * @param data The originating dataset
+     * @param ways The ways to merge. If empty, the entire dataset will be checked.
+     */
     public MergeDuplicateWays(DataSet data, List<Way> ways) {
         super(data);
         this.ways = ways.stream().filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
@@ -118,7 +153,15 @@ public class MergeDuplicateWays extends Command {
         this.bound = bound;
     }
 
-    public static void filterDataSet(DataSet dataSet, List<Command> commands, Bounds bound) {
+    /**
+     * Look for duplicates in the dataset
+     *
+     * @param dataSet  The dataset to look through
+     * @param commands The command list to add to
+     * @param bound    The bounds to look at, may be {@code null}
+     */
+    public static void filterDataSet(@Nonnull DataSet dataSet, @Nonnull List<Command> commands,
+            @Nullable Bounds bound) {
         final List<Way> ways = (bound == null ? dataSet.getWays() : dataSet.searchWays(bound.toBBox())).stream()
                 .filter(prim -> !prim.isIncomplete() && !prim.isDeleted())
                 .collect(Collectors.toCollection(ArrayList::new));

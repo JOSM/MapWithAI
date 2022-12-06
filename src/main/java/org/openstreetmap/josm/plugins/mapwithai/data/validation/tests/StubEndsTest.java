@@ -24,6 +24,9 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
 
+/**
+ * Look for short ("stub") ends
+ */
 public class StubEndsTest extends Test {
     private static final String HIGHWAY = "highway";
     private static final List<String> BAD_HIGHWAYS = Arrays.asList("services", "rest_area");
@@ -32,6 +35,9 @@ public class StubEndsTest extends Test {
     // Initialize for use with just a `visit` statement
     private double maxLength = Config.getPref().getDouble(MapWithAIPlugin.NAME + ".stubendlength", DEFAULT_MAX_LENGTH);
 
+    /**
+     * Create a new test object
+     */
     public StubEndsTest() {
         super(tr("Stub Ends ({0})", MapWithAIPlugin.NAME), tr("Look for short ends on ways"));
     }

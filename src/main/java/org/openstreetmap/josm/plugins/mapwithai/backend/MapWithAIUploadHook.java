@@ -18,6 +18,11 @@ import org.openstreetmap.josm.tools.Destroyable;
 public class MapWithAIUploadHook implements UploadHook, Destroyable {
     private final String version;
 
+    /**
+     * Create the upload hook
+     *
+     * @param info The info to get version information from
+     */
     public MapWithAIUploadHook(PluginInformation info) {
         version = info.localversion;
         UploadAction.registerUploadHook(this);

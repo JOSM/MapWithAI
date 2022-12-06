@@ -34,10 +34,16 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 import org.xml.sax.SAXException;
 
+/**
+ * Download data from MapWithAI
+ */
 public class DownloadMapWithAITask extends DownloadOsmTask {
     private final List<MapWithAIInfo> urls;
 
-    private static class Notifications {
+    /**
+     * Show common notifications/issues
+     */
+    private static final class Notifications {
         private Notifications() {
             // Hide constructor
         }
@@ -72,6 +78,9 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         }
     }
 
+    /**
+     * Create a new download task
+     */
     public DownloadMapWithAITask() {
         urls = MapWithAILayerInfo.getInstance().getLayers();
         MapWithAILayerInfo.getInstance().save(); // Save preferences between downloads.
@@ -96,7 +105,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
             items.add(tr("OSM Server URL:") + ' ' + url.getHost());
             items.add(tr("Command") + ": " + url.getPath());
             if (url.getQuery() != null) {
-                items.add(tr("Request details: {0}", url.getQuery().replaceAll(",\\s*", ", ")));
+                items.add(tr("Request details: {0}", url.getQuery().replaceAll(",\\p{IsWhite_Space}*", ", ")));
             }
             return Utils.joinAsHtmlUnorderedList(items);
         }

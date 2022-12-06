@@ -31,6 +31,9 @@ public class MergeDuplicateWaysAction extends JosmAction {
      */
     private static final int COMPARE_WAYS_NUMBER = 2;
 
+    /**
+     * Create a new action
+     */
     public MergeDuplicateWaysAction() {
         super(tr("{0}: ".concat(DESCRIPTION), MapWithAIPlugin.NAME), "mapwithai", tr(DESCRIPTION),
                 Shortcut.registerShortcut("data:attemptmergeway", tr(DESCRIPTION), KeyEvent.VK_EXCLAMATION_MARK,
