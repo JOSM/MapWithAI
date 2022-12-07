@@ -22,7 +22,6 @@ import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
@@ -212,10 +211,9 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         Collection<Node> nodes = Geometry.addIntersections(error.getPrimitives().stream().filter(Way.class::isInstance)
                 .map(Way.class::cast).filter(w -> w.hasKey(HIGHWAY)).collect(Collectors.toList()), false,
                 new ArrayList<>());
-        if (nodes.stream().filter(MissingConnectionTags::noConflationKey).map(INode::getCoor).filter(Objects::nonNull)
-                .anyMatch(
-                        n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey).map(INode::getCoor)
-                                .filter(Objects::nonNull).anyMatch(wn -> n.greatCircleDistance(wn) < precision))) {
+        if (nodes.stream().filter(MissingConnectionTags::noConflationKey).filter(Objects::nonNull)
+                .anyMatch(n -> way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
+                        .filter(Objects::nonNull).anyMatch(wn -> n.greatCircleDistance(wn) < precision))) {
             return () -> createIntersectionCommand(way,
                     way.getNodes().stream().filter(MissingConnectionTags::noConflationKey)
                             .filter(n1 -> nodes.stream().anyMatch(n2 -> Geometry.getDistance(n1, n2) < precision))

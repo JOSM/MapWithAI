@@ -69,7 +69,7 @@ public class DuplicateCommand extends AbstractConflationCommand {
      */
     public static Command replaceNode(Node original, Node newNode) {
         Command tCommand = null;
-        if (original.getCoor().equalsEpsilon(newNode.getCoor())) {
+        if (original.equalsEpsilon(newNode)) {
             tCommand = MergeNodesAction.mergeNodes(Collections.singletonList(original), newNode, newNode);
         }
         return tCommand;

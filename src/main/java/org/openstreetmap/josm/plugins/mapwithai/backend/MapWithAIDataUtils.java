@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.UndoRedoHandler;
+import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -264,7 +265,7 @@ public final class MapWithAIDataUtils {
         final double minx = bottomLeft.getX();
         final double maxY = topRight.getY();
         final LatLon topLeft = new LatLon(maxY, minx);
-        return bottomLeft.greatCircleDistance(topLeft);
+        return bottomLeft.greatCircleDistance((ILatLon) topLeft);
     }
 
     /**
@@ -380,7 +381,8 @@ public final class MapWithAIDataUtils {
         final double maxY = topRight.getY();
         final LatLon bottomRight = new LatLon(minY, maxX);
         final LatLon topLeft = new LatLon(maxY, minX);
-        return Math.max(bottomLeft.greatCircleDistance(bottomRight), topLeft.greatCircleDistance(topRight));
+        return Math.max(bottomLeft.greatCircleDistance((ILatLon) bottomRight),
+                topLeft.greatCircleDistance((ILatLon) topRight));
     }
 
     /**

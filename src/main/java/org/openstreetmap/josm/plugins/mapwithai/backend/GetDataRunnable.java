@@ -359,14 +359,15 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         twoMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
         if (one.getClass().equals(two.getClass()) && oneMap.equals(twoMap)) {
             if (one instanceof Node) {
-                final LatLon coor1 = ((Node) one).getCoor();
-                final LatLon coor2 = ((Node) two).getCoor();
-                if (one.hasSameInterestingTags(two) && coor1 != null && coor2 != null && coor1.equalsEpsilon(coor2)) {
+                final ILatLon coor1 = ((Node) one);
+                final ILatLon coor2 = ((Node) two);
+                if (one.hasSameInterestingTags(two) && coor1.isLatLonKnown() && coor2.isLatLonKnown()
+                        && coor1.equalsEpsilon(coor2)) {
                     equivalent = true;
                 }
             } else if (one instanceof Way) {
-                equivalent = ((Way) one).getNodes().stream().map(INode::getCoor).filter(Objects::nonNull).allMatch(
-                        node1 -> ((Way) two).getNodes().stream().map(INode::getCoor).anyMatch(node1::equalsEpsilon));
+                equivalent = ((Way) one).getNodes().stream().filter(Objects::nonNull)
+                        .allMatch(node1 -> ((Way) two).getNodes().stream().anyMatch(node1::equalsEpsilon));
             } else if (one instanceof Relation) {
                 equivalent = ((Relation) one).getMembers().stream()
                         .allMatch(member1 -> ((Relation) two).getMembers().stream()

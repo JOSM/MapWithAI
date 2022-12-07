@@ -18,7 +18,7 @@ jobs:
   call-workflow:
     strategy:
       matrix:
-        josm-revision: ["", "r18218"]
+        josm-revision: ["", "r18464"]
     uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v1
     with:
       josm-revision: ${{ matrix.josm-revision }}

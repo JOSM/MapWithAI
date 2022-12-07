@@ -8,7 +8,7 @@ jobs:
   call-workflow:
     uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v1
     with:
-      josm-revision: "r18218"
+      josm-revision: "r18464"
       update-pluginssource: true
       plugin-jar-name: 'mapwithai'
     secrets:

@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
-import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.Severity;
@@ -123,10 +122,8 @@ public class StubEndsTest extends Test {
                 List<Way> connectingWays = getConnectingWays(previous, way);
                 if (!node.equals(previous) && connectingWays.isEmpty()) {
                     nodesToConnection.add(previous);
-                    final LatLon nodeCoor = node.getCoor();
-                    final LatLon prevCoor = previous.getCoor();
-                    if (nodeCoor != null && prevCoor != null) {
-                        distance += nodeCoor.greatCircleDistance(prevCoor);
+                    if (node.isLatLonKnown() && previous.isLatLonKnown()) {
+                        distance += node.greatCircleDistance(previous);
                     }
                     previous = node;
                 }

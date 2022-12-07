@@ -386,9 +386,8 @@ public class MergeDuplicateWays extends Command {
             final Node origNode = way1.getNode(j);
             for (int k = 0; k < way2.getNodesCount(); k++) {
                 final Node possDupeNode = way2.getNode(k);
-                if (origNode.equals(possDupeNode)
-                        || (origNode.getCoor().greatCircleDistance(possDupeNode.getCoor()) < MapWithAIPreferenceHelper
-                                .getMaxNodeDistance())) {
+                if (origNode.equals(possDupeNode) || (origNode
+                        .greatCircleDistance(possDupeNode) < MapWithAIPreferenceHelper.getMaxNodeDistance())) {
                     final Pair<Integer, Node> origNodePair = new Pair<>(j, origNode);
                     final Map<Integer, Node> dupeNodeMap = duplicateNodes.getOrDefault(origNodePair, new HashMap<>());
                     dupeNodeMap.put(k, possDupeNode);
