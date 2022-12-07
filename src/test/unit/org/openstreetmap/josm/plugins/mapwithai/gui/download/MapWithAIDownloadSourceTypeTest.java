@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtilsTest;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
@@ -21,6 +22,7 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @BasicPreferences
+@Territories
 @Wiremock
 class MapWithAIDownloadSourceTypeTest {
     @RegisterExtension

@@ -131,8 +131,8 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
                     CountryUtils.getCountryShape(country.getKey()).ifPresent(bounds::add);
                 }
             }
-            return Collections.unmodifiableList(bounds);
+            return bounds;
         }
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 }
