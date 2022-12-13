@@ -61,22 +61,18 @@ final class DetectTaskingManagerUtils {
      *         not valid.
      */
     public static Bounds getTaskingManagerBounds() {
-        Bounds returnBounds = new Bounds(0, 0, 0, 0);
         final Layer layer = getTaskingManagerLayer();
         if (layer instanceof GpxLayer) {
             final GpxLayer gpxLayer = (GpxLayer) layer;
             final Bounds realBounds = gpxLayer.data.recalculateBounds();
-            if (returnBounds.isCollapsed()) {
-                returnBounds = realBounds;
-            } else {
-                returnBounds.extend(realBounds);
-            }
+            return new Bounds(realBounds);
         } else if (layer instanceof OsmDataLayer && ((OsmDataLayer) layer).getDataSet().getWays().size() == 1) {
             final BBox bbox = ((OsmDataLayer) layer).getDataSet().getWays().iterator().next().getBBox();
+            Bounds returnBounds = new Bounds(bbox.getTopLeft());
             returnBounds.extend(bbox.getBottomRight());
-            returnBounds.extend(bbox.getTopLeft());
+            return returnBounds;
         }
-        return returnBounds;
+        return new Bounds(0, 0, 0, 0);
     }
 
     /**
