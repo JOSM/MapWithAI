@@ -4,31 +4,36 @@ package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.osm.BBox;
-import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWay;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.projection.ProjectionRegistry;
+import org.openstreetmap.josm.data.validation.OsmValidator;
 import org.openstreetmap.josm.data.validation.Severity;
 import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.data.validation.TestError;
+import org.openstreetmap.josm.data.validation.util.ValUtil;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
-import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Pair;
 
@@ -40,6 +45,8 @@ public class StreetAddressTest extends Test {
     public static final double BBOX_EXPANSION = 0.002;
     private static final String ADDR_STREET = "addr:street";
     private final Set<OsmPrimitive> namePrimitiveMap = new HashSet<>();
+    private final Map<Point2D, Set<String>> nameMap = new HashMap<>();
+    private final Map<Point2D, List<OsmPrimitive>> primitiveCellMap = new HashMap<>();
     /**
      * Classified highways. This uses a {@link Set} instead of a {@link List} since
      * the MapWithAI code doesn't care about order.
@@ -76,10 +83,29 @@ public class StreetAddressTest extends Test {
 
     @Override
     public void endTest() {
+        for (Map.Entry<Point2D, List<OsmPrimitive>> entry : this.primitiveCellMap.entrySet()) {
+            Collection<String> names = getSurroundingHighwayNames(entry.getKey());
+            for (OsmPrimitive primitive : entry.getValue()) {
+                if (!primitive.isOutsideDownloadArea()) {
+                    if (!names.contains(primitive.get(ADDR_STREET))) {
+                        namePrimitiveMap.add(primitive);
+                    }
+                    if (this.isCanceled()) {
+                        break;
+                    }
+                }
+            }
+            if (this.isCanceled()) {
+                break;
+            }
+        }
+
         Map<String, List<OsmPrimitive>> values = namePrimitiveMap.stream()
                 .collect(Collectors.groupingBy(p -> p.get(ADDR_STREET)));
         values.forEach(this::createError);
         namePrimitiveMap.clear();
+        this.nameMap.clear();
+        this.primitiveCellMap.clear();
     }
 
     /**
@@ -96,34 +122,66 @@ public class StreetAddressTest extends Test {
     }
 
     private void realVisit(OsmPrimitive primitive) {
-        if (primitive.isUsable() && hasStreetAddressTags(primitive) && !primitive.isOutsideDownloadArea()) {
-            Collection<Way> surroundingWays = getSurroundingHighways(primitive);
-            Collection<String> names = getWayNames(surroundingWays);
-            if (!names.contains(primitive.get(ADDR_STREET))) {
-                namePrimitiveMap.add(primitive);
+        if (primitive.isUsable()) {
+            final double gridDetail = OsmValidator.getGridDetail() / 100;
+            if (isHighway(primitive)) {
+                Collection<String> names = getWayNames((Way) primitive);
+                if (names.isEmpty()) {
+                    return;
+                }
+                List<Node> nodes = ((Way) primitive).getNodes();
+                for (int i = 0; i < nodes.size() - 1; i++) {
+                    // Populate the name map
+                    INode n1 = nodes.get(i);
+                    INode n2 = nodes.get(i + 1);
+                    for (Point2D cell : ValUtil.getSegmentCells(n1, n2, gridDetail)) {
+                        this.nameMap.computeIfAbsent(cell, k -> new HashSet<>()).addAll(names);
+                    }
+                }
+            } else if (hasStreetAddressTags(primitive) && !primitive.isOutsideDownloadArea()) {
+                final EastNorth en;
+                if (primitive instanceof Node) {
+                    en = ((Node) primitive).getEastNorth();
+                } else {
+                    en = primitive.getBBox().getCenter().getEastNorth(ProjectionRegistry.getProjection());
+                }
+                long x = (long) Math.floor(en.getX() * gridDetail);
+                long y = (long) Math.floor(en.getY() * gridDetail);
+                Point2D point = new Point2D.Double(x, y);
+                primitiveCellMap.computeIfAbsent(point, p -> new ArrayList<>()).add(primitive);
             }
         }
     }
 
-    private static Collection<String> getWayNames(Collection<Way> ways) {
-        return ways.stream().flatMap(w -> w.getInterestingTags().entrySet().stream())
+    private static Collection<String> getWayNames(Way way) {
+        return way.getInterestingTags().entrySet().stream()
                 .filter(e -> (e.getKey().contains("name") || e.getKey().contains("ref"))
                         && !e.getKey().contains("tiger"))
                 .map(Map.Entry::getValue).flatMap(s -> Stream.of(s.split(";", -1))).map(String::trim)
                 .filter(s -> !s.isEmpty()).collect(Collectors.toSet());
     }
 
-    private static Collection<Way> getSurroundingHighways(OsmPrimitive address) {
-        Objects.requireNonNull(address.getDataSet(), "Node must be part of a dataset");
-        DataSet ds = address.getDataSet();
-        BBox addrBox = expandBBox(new BBox(address.getBBox()), BBOX_EXPANSION);
-        int expansions = 0;
-        int maxExpansions = Config.getPref().getInt("mapwithai.validator.streetaddresstest.maxexpansions", 20);
-        while (ds.searchWays(addrBox).stream().noneMatch(StreetAddressTest::isHighway) && expansions < maxExpansions) {
-            expandBBox(addrBox, BBOX_EXPANSION);
-            expansions++;
+    private Collection<String> getSurroundingHighwayNames(Point2D point2D) {
+        if (this.nameMap.isEmpty()) {
+            return Collections.emptySet();
         }
-        return ds.searchWays(addrBox).stream().filter(StreetAddressTest::isHighway).collect(Collectors.toSet());
+        Set<String> surroundingWays = new HashSet<>();
+        int surrounding = 1;
+        while (surroundingWays.isEmpty()) {
+            for (int x = -surrounding; x <= surrounding; x++) {
+                for (int y = -surrounding; y <= surrounding; y++) {
+                    Point2D key = new Point2D.Double((long) Math.floor(point2D.getX() + x),
+                            (long) Math.floor(point2D.getY() + y));
+                    if (this.nameMap.containsKey(key)) {
+                        surroundingWays.addAll(this.nameMap.get(key));
+                    }
+                }
+            }
+            if (surroundingWays.isEmpty()) {
+                surrounding++;
+            }
+        }
+        return surroundingWays;
     }
 
     /**
@@ -154,7 +212,7 @@ public class StreetAddressTest extends Test {
             final Node b = wayNodes.get(i + 1);
             for (Node node : nodes) {
                 double tDist = getSegmentNodeDistSq(a, b, node);
-                if (Double.isNaN(tDist) || (!Double.isNaN(tDist) && tDist < dist)) {
+                if (Double.isNaN(dist) || (!Double.isNaN(tDist) && tDist < dist)) {
                     dist = tDist;
                 }
             }
