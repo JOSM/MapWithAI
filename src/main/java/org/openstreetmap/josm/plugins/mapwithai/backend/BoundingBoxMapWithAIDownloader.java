@@ -3,15 +3,29 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonStructure;
+import javax.json.JsonValue;
+import javax.json.stream.JsonParser;
 import javax.swing.JOptionPane;
 
 import java.awt.geom.Area;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -20,6 +34,7 @@ import java.util.stream.Collectors;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -39,6 +54,7 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.tools.HttpClient;
+import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -49,6 +65,7 @@ import org.openstreetmap.josm.tools.Logging;
 public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private final String url;
     private final boolean crop;
+    private final int start;
 
     private static long lastErrorTime;
 
@@ -66,11 +83,24 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
      * @param crop         Whether or not to crop the download area
      */
     public BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop) {
+        this(downloadArea, info, crop, 0);
+    }
+
+    /**
+     * Create a new {@link BoundingBoxMapWithAIDownloader} object
+     *
+     * @param downloadArea The area to download
+     * @param info         The info to use to get the url to download
+     * @param crop         Whether or not to crop the download area
+     * @param start        The number of objects to skip (Esri only please)
+     */
+    private BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop, int start) {
         super(downloadArea);
         this.info = info;
         this.url = info.getUrlExpanded();
         this.crop = crop;
         this.downloadArea = downloadArea;
+        this.start = start;
     }
 
     @Override
@@ -79,7 +109,8 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 .replace("{xmin}", Double.toString(lon1)).replace("{ymin}", Double.toString(lat1))
                 .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2))
                 + (crop ? "&crop_bbox=" + DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox().toStringCSV(",")
-                        : "");
+                        : "")
+                + (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER ? "&resultOffset=" + this.start : "");
     }
 
     @Override
@@ -87,7 +118,10 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         long startTime = System.nanoTime();
         try {
             DataSet externalData = super.parseOsm(progressMonitor);
-            if (Boolean.TRUE.equals(MapWithAIInfo.THIRD_PARTY_CONFLATE.get()) && !this.info.isConflated()
+            if ((this.info.getSourceType() != MapWithAIType.ESRI_FEATURE_SERVER || this.start == 0) // Don't call
+                                                                                                    // conflate code
+                                                                                                    // unnecessarily
+                    && Boolean.TRUE.equals(MapWithAIInfo.THIRD_PARTY_CONFLATE.get()) && !this.info.isConflated()
                     && !MapWithAIConflationCategory.conflationUrlFor(this.info.getCategory()).isEmpty()) {
                 if (externalData.getDataSourceBounds().isEmpty()) {
                     externalData.addDataSource(new DataSource(this.downloadArea, "External Data"));
@@ -183,7 +217,32 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 // Fall back to Esri Feature Server check. They don't always indicate a json
                 // return type. :(
                 || (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated())) {
-            ds = GeoJSONReader.parseDataSet(source, progressMonitor);
+            // Rather unfortunately, we need to read the entire json in order to figure out
+            // if we need to make additional calls
+            try (JsonReader reader = Json.createReader(source)) {
+                JsonStructure structure = reader.read();
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(
+                        structure.toString().getBytes(StandardCharsets.UTF_8))) {
+                    ds = GeoJSONReader.parseDataSet(bais, progressMonitor);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                /* We should only call this from the "root" call */
+                if (this.start == 0 && structure.getValueType() == JsonValue.ValueType.OBJECT) {
+                    final JsonObject serverObj = structure.asJsonObject();
+                    final boolean exceededTransferLimit = serverObj.entrySet().stream()
+                            .filter(entry -> "properties".equals(entry.getKey())
+                                    && entry.getValue().getValueType() == JsonValue.ValueType.OBJECT)
+                            .map(Map.Entry::getValue).map(JsonValue::asJsonObject)
+                            .map(obj -> obj.getBoolean("exceededTransferLimit", false)).findFirst().orElse(false);
+                    if (exceededTransferLimit && this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {
+                        final int size = serverObj.getJsonArray("features").size();
+                        final DataSet other = this.getAdditionalEsriData(progressMonitor,
+                                this.getRequestForBbox(this.lon1, this.lat1, this.lon2, this.lat2), size);
+                        ds.mergeFrom(other, progressMonitor.createSubTaskMonitor(0, false));
+                    }
+                }
+            }
             if (info.getReplacementTags() != null) {
                 GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
             }
@@ -201,6 +260,53 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
         GetDataRunnable.cleanup(ds, downloadArea, info);
         return ds;
+    }
+
+    private DataSet getAdditionalEsriData(ProgressMonitor progressMonitor, String baseUrl, int size) {
+        DataSet returnDs = new DataSet();
+        try {
+            HttpClient client = HttpClient.create(new URL(baseUrl + "&returnCountOnly=true"));
+            int objects = Integer.MIN_VALUE;
+            try (InputStream is = client.connect().getContent(); JsonParser parser = Json.createParser(is)) {
+                while (parser.hasNext()) {
+                    JsonParser.Event event = parser.next();
+                    if (event == JsonParser.Event.START_OBJECT) {
+                        OptionalInt objCount = parser.getObjectStream()
+                                .filter(entry -> "properties".equals(entry.getKey()))
+                                .map(entry -> entry.getValue().asJsonObject())
+                                .mapToInt(properties -> properties.getInt("count")).findFirst();
+                        if (objCount.isPresent()) {
+                            objects = objCount.getAsInt();
+                            break;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } finally {
+                client.disconnect();
+            }
+            // Zero indexed. Esri uses 2000 as the limit. 0-1999 is 2000 objects, so we want
+            // to start at 2000 for the next round.
+            try {
+                progressMonitor.beginTask(tr("Downloading additional data"), objects);
+                // We have already downloaded some of the objects. Set the ticks.
+                progressMonitor.worked(size);
+                while (progressMonitor.getTicks() < progressMonitor.getTicksCount() - 1) {
+                    DataSet next = new BoundingBoxMapWithAIDownloader(this.downloadArea, this.info, this.crop,
+                            this.start + size).parseOsm(progressMonitor.createSubTaskMonitor(0, false));
+                    progressMonitor.worked((int) next.allPrimitives().stream().filter(IPrimitive::isTagged).count());
+                    returnDs.mergeFrom(next);
+                }
+            } catch (OsmTransferException e) {
+                throw new JosmRuntimeException(e);
+            } finally {
+                progressMonitor.finishTask();
+            }
+        } catch (MalformedURLException e) {
+            throw new UncheckedIOException(e);
+        }
+        return returnDs;
     }
 
     private static String getMapWithAISourceTag(MapWithAIInfo info) {
