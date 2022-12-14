@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
@@ -28,7 +29,7 @@ import org.openstreetmap.josm.data.validation.Test;
 import org.openstreetmap.josm.data.validation.TestError;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.tools.Geometry;
+import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Pair;
 
 /**
@@ -40,13 +41,15 @@ public class StreetAddressTest extends Test {
     private static final String ADDR_STREET = "addr:street";
     private final Set<OsmPrimitive> namePrimitiveMap = new HashSet<>();
     /**
-     * Classified highways in order of importance
+     * Classified highways. This uses a {@link Set} instead of a {@link List} since
+     * the MapWithAI code doesn't care about order.
      *
      * Copied from {@link org.openstreetmap.josm.data.validation.tests.Highways}
      */
-    public static final List<String> CLASSIFIED_HIGHWAYS = Collections.unmodifiableList(Arrays.asList("motorway",
-            "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary", "secondary_link",
-            "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "road"));
+    public static final Set<String> CLASSIFIED_HIGHWAYS = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link", "primary",
+                    "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified",
+                    "residential", "living_street", "service", "road")));
 
     /**
      * Create a new test object
@@ -127,13 +130,75 @@ public class StreetAddressTest extends Test {
      * Get the distance to a way
      *
      * @param way  The way to get a distance to
-     * @param prim The primitive to get a distance from
+     * @param prim The primitive to get a distance from (LatLon space)
      * @return A Pair&lt;Way, Double&gt; of the distance from the primitive to the
-     *         way
+     *         way.
      */
-    public static Pair<Way, Double> distanceToWay(Way way, OsmPrimitive prim) {
-        return new Pair<>(way, Geometry.getDistance(way, prim));
+    static Pair<Way, Double> distanceToWay(Way way, OsmPrimitive prim) {
+        final Node[] nodes;
+        if (prim instanceof Node) {
+            nodes = new Node[] { (Node) prim };
+        } else if (prim instanceof Way) {
+            nodes = ((Way) prim).getNodes().toArray(new Node[0]);
+        } else if (prim instanceof Relation) {
+            nodes = ((Relation) prim).getMemberPrimitives().stream().filter(p -> p instanceof Node || p instanceof Way)
+                    .flatMap(p -> p instanceof Node ? Stream.of((Node) p) : ((Way) p).getNodes().stream())
+                    .toArray(Node[]::new);
+        } else {
+            throw new IllegalArgumentException("Unknown primitive type: " + prim.getClass());
+        }
+        double dist = Double.NaN;
+        List<Node> wayNodes = way.getNodes();
+        for (int i = 0; i < wayNodes.size() - 1; i++) {
+            final Node a = wayNodes.get(i);
+            final Node b = wayNodes.get(i + 1);
+            for (Node node : nodes) {
+                double tDist = getSegmentNodeDistSq(a, b, node);
+                if (Double.isNaN(tDist) || (!Double.isNaN(tDist) && tDist < dist)) {
+                    dist = tDist;
+                }
+            }
+        }
+        return new Pair<>(way, dist);
     }
+
+    // ****** START COPY FROM GEOMETRY (EastNorth -> ILatLon, perf is more important
+    // than accuracy, some modifications for zero memalloc) *******
+    /**
+     * Calculate closest distance between a line segment s1-s2 and a point p
+     *
+     * @param p1    start of segment
+     * @param p2    end of segment
+     * @param point the point
+     * @return the square of the euclidean distance from p to the closest point on
+     *         the segment
+     */
+    private static double getSegmentNodeDistSq(ILatLon p1, ILatLon p2, ILatLon point) {
+        CheckParameterUtil.ensureParameterNotNull(p1, "p1");
+        CheckParameterUtil.ensureParameterNotNull(p2, "p2");
+        CheckParameterUtil.ensureParameterNotNull(point, "point");
+
+        double ldx = p2.lon() - p1.lon();
+        double ldy = p2.lat() - p1.lat();
+
+        // segment zero length
+        if (ldx == 0 && ldy == 0)
+            return p1.distanceSq(point);
+
+        double pdx = point.lon() - p1.lon();
+        double pdy = point.lat() - p1.lat();
+
+        double offset = (pdx * ldx + pdy * ldy) / (ldx * ldx + ldy * ldy);
+
+        if (offset <= 0)
+            return p1.distanceSq(point);
+        else if (offset >= 1)
+            return p2.distanceSq(point);
+        // Math copied from ILatLon#interpolate to avoid memory allocation
+        return point.distanceSq((1 - offset) * p1.lon() + offset * p2.lon(),
+                (1 - offset) * p1.lat() + offset * p2.lat());
+    }
+    // ****** END COPY FROM GEOMETRY ********
 
     /**
      * Check if the primitive has an appropriate highway tag

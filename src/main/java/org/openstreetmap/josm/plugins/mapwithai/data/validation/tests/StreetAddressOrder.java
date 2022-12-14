@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.IPrimitive;
@@ -71,14 +70,35 @@ public class StreetAddressOrder extends Test {
      */
     public static List<IPrimitive> getNearbyAddresses(Way way) {
         BBox bbox = StreetAddressTest.expandBBox(new BBox(way.getBBox()), StreetAddressTest.BBOX_EXPANSION);
+        BBox competingHighwaysBbox = StreetAddressTest.expandBBox(new BBox(way.getBBox()),
+                2 * StreetAddressTest.BBOX_EXPANSION);
+        List<Way> competingHighways = way.getDataSet().searchWays(competingHighwaysBbox);
         List<Node> addrNodes = way.getDataSet().searchNodes(bbox).stream()
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
         List<Way> addrWays = way.getDataSet().searchWays(bbox).stream().filter(StreetAddressTest::hasStreetAddressTags)
                 .collect(Collectors.toList());
         List<Relation> addrRelations = way.getDataSet().searchRelations(bbox).stream()
                 .filter(StreetAddressTest::hasStreetAddressTags).collect(Collectors.toList());
-        return Stream.of(addrNodes, addrWays, addrRelations).flatMap(List::stream)
-                .filter(prim -> isNearestRoad(way, prim)).collect(Collectors.toList());
+        ArrayList<IPrimitive> foundObjects = new ArrayList<>(addrNodes.size() + addrWays.size() + addrRelations.size());
+        // This isn't as pretty as using a stream, but it significantly reduces the call
+        // stack size
+        for (Node node : addrNodes) {
+            if (isNearestRoad(way, competingHighways, node)) {
+                foundObjects.add(node);
+            }
+        }
+        for (Way addrWay : addrWays) {
+            if (isNearestRoad(way, competingHighways, addrWay)) {
+                foundObjects.add(addrWay);
+            }
+        }
+        for (Relation rel : addrRelations) {
+            if (isNearestRoad(way, competingHighways, rel)) {
+                foundObjects.add(rel);
+            }
+        }
+        foundObjects.trimToSize();
+        return foundObjects;
     }
 
     /**
@@ -88,11 +108,14 @@ public class StreetAddressOrder extends Test {
      * @param prim The primitive to get the distance from
      * @return {@code true} if the primitive is the nearest way
      */
-    public static boolean isNearestRoad(Way way, OsmPrimitive prim) {
+    static boolean isNearestRoad(Way way, Collection<Way> competingHighways, OsmPrimitive prim) {
         BBox primBBox = StreetAddressTest.expandBBox(new BBox(prim.getBBox()), StreetAddressTest.BBOX_EXPANSION);
-        List<Pair<Way, Double>> sorted = way.getDataSet().searchWays(primBBox).stream()
-                .filter(StreetAddressTest::isHighway).map(iway -> StreetAddressTest.distanceToWay(iway, prim))
-                .sorted(Comparator.comparing(p -> p.b)).collect(Collectors.toList());
+        List<Pair<Way, Double>> sorted = competingHighways.stream().filter(StreetAddressTest::isHighway)
+                .filter(w -> primBBox.intersects(w.getBBox())).map(iway -> {
+                    Pair<Way, Double> p = StreetAddressTest.distanceToWay(iway, prim);
+                    p.b = Math.sqrt(p.b);
+                    return p;
+                }).sorted(Comparator.comparingDouble(p -> p.b)).collect(Collectors.toList());
 
         if (!sorted.isEmpty()) {
             double minDistance = sorted.get(0).b;

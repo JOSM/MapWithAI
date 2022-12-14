@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.Node;
@@ -235,30 +236,39 @@ class StreetAddressOrderTest {
                 new Node(new LatLon(boxCorners, -boxCorners)));
         Way way2 = TestUtils.newWay("", new Node(new LatLon(-boxCorners, boxCorners)),
                 new Node(new LatLon(-boxCorners, -boxCorners)));
-        for (Way way : Arrays.asList(way1, way2)) {
-            way.getNodes().forEach(ds::addPrimitive);
-            ds.addPrimitive(way);
-        }
+        ds.addPrimitiveRecursive(way1);
+        ds.addPrimitiveRecursive(way2);
 
-        assertFalse(StreetAddressOrder.isNearestRoad(way1, node1));
-        assertFalse(StreetAddressOrder.isNearestRoad(way2, node1));
+        List<Way> competingWays = ds
+                .searchWays(StreetAddressTest.expandBBox(new BBox(node1.getBBox()), StreetAddressTest.BBOX_EXPANSION));
+        // We shouldn't find anything here (no highway tags)
+        assertFalse(StreetAddressOrder.isNearestRoad(way1, competingWays, node1));
+        assertFalse(StreetAddressOrder.isNearestRoad(way2, competingWays, node1));
 
         way1.put("highway", "residential");
         way2.put("highway", "motorway");
 
-        assertTrue(StreetAddressOrder.isNearestRoad(way1, node1));
-        assertTrue(StreetAddressOrder.isNearestRoad(way2, node1));
+        // Both ways are equidistant, so both are the "nearest" road
+        assertTrue(StreetAddressOrder.isNearestRoad(way1, competingWays, node1));
+        assertTrue(StreetAddressOrder.isNearestRoad(way2, competingWays, node1));
 
         node1.setCoor(new LatLon(boxCorners * 0.9, boxCorners * 0.9));
-        assertTrue(StreetAddressOrder.isNearestRoad(way1, node1));
-        assertFalse(StreetAddressOrder.isNearestRoad(way2, node1));
+        competingWays = ds
+                .searchWays(StreetAddressTest.expandBBox(new BBox(node1.getBBox()), StreetAddressTest.BBOX_EXPANSION));
+        // Nearest road should be way1
+        assertTrue(StreetAddressOrder.isNearestRoad(way1, competingWays, node1));
+        assertFalse(StreetAddressOrder.isNearestRoad(way2, competingWays, node1));
 
         node1.setCoor(new LatLon(-boxCorners * 0.9, -boxCorners * 0.9));
-        assertTrue(StreetAddressOrder.isNearestRoad(way2, node1));
-        assertFalse(StreetAddressOrder.isNearestRoad(way1, node1));
+        competingWays = ds
+                .searchWays(StreetAddressTest.expandBBox(new BBox(node1.getBBox()), StreetAddressTest.BBOX_EXPANSION));
+        assertTrue(StreetAddressOrder.isNearestRoad(way2, competingWays, node1));
+        assertFalse(StreetAddressOrder.isNearestRoad(way1, competingWays, node1));
 
         node1.setCoor(new LatLon(0.00005, 0.00005));
-        assertFalse(StreetAddressOrder.isNearestRoad(way2, node1));
-        assertTrue(StreetAddressOrder.isNearestRoad(way1, node1));
+        competingWays = ds
+                .searchWays(StreetAddressTest.expandBBox(new BBox(node1.getBBox()), StreetAddressTest.BBOX_EXPANSION));
+        assertFalse(StreetAddressOrder.isNearestRoad(way2, competingWays, node1));
+        assertTrue(StreetAddressOrder.isNearestRoad(way1, competingWays, node1));
     }
 }
