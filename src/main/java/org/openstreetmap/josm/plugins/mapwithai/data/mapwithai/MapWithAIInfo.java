@@ -659,7 +659,7 @@ public class MapWithAIInfo extends
      * Get the key that indicates an object is already conflated, and if so, to what
      * Please note that it may be `true`/`false` instead of an object id.
      *
-     * return The key returned by the server indicating the conflation object
+     * @return The key returned by the server indicating the conflation object
      */
     public String getAlreadyConflatedKey() {
         return alreadyConflatedKey;

@@ -68,7 +68,7 @@ import org.openstreetmap.josm.tools.Utils;
 public class GetDataRunnable extends RecursiveTask<DataSet> {
     /**
      * This is functionally equivalent to
-     * {@link org.openstreetmap.josm.data.validation.tests.DuplicateNode#NodeHash}
+     * {@link org.openstreetmap.josm.data.validation.tests.DuplicateNode.NodeHash}
      */
     private static class ILatLonHash implements Hash<Object, Object> {
         private static final double PRECISION = DEGREE_BUFFER;
@@ -76,6 +76,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         /**
          * Returns the rounded coordinated according to {@link #PRECISION}
          *
+         * @param coor The coordinate to round
+         * @return The rounded coordinate
          * @see LatLon#roundToOsmPrecision
          */
         private static ILatLon roundCoord(ILatLon coor) {
@@ -484,8 +486,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     /**
-     * Create an efficient collection ({@link Storage}) of {@link List<Node>} and
-     * {@link Node} objects
+     * Create an efficient collection ({@link Storage}) of {@link List} of
+     * {@link Node}s and {@link Node} objects
      *
      * @param dataSet The dataset to get nodes from
      * @return The storage to use

@@ -201,8 +201,9 @@ public class ESRISourceReader {
     /**
      * Get the json string for a URL
      *
-     * @param url      The URL to get
-     * @param fastFail Fail fast (1 second)
+     * @param url           The URL to get
+     * @param fastFail      Fail fast (1 second)
+     * @param defaultMaxAge the default max age for the response to be cached
      * @return The json string, or {@code null}.
      */
     @Nullable

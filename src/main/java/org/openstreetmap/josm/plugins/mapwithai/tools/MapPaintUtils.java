@@ -75,6 +75,8 @@ public final class MapPaintUtils {
 
         /**
          * Get the safe color
+         *
+         * @return The safe color
          */
         public Color getColor() {
             return new Color(this.color.getRGB());

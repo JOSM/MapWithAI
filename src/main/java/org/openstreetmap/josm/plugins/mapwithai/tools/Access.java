@@ -405,10 +405,10 @@ public final class Access {
     }
 
     /**
-     * The key for children modes for the map, see {@link Access#getAccessMethods}
+     * The key for children modes for the map, see {@link Access#accessMethods}
      */
     public static final String CHILDREN = "children";
-    /** The key for parent modes for the map, see {@link Access#getAccessMethods} */
+    /** The key for parent modes for the map, see {@link Access#accessMethods} */
     public static final String PARENT = "parent";
     /** This set has keys that indicate that access is possible */
     private static final Set<String> POSITIVE_ACCESS = new HashSet<>(
