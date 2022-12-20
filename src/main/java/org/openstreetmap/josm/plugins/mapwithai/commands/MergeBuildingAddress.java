@@ -100,7 +100,11 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
         OsmPrimitive object = null;
         sources.add(node.get(MergeAddressBuildings.SOURCE));
         if (possibleDuplicates.size() == 1) {
-            commandList.add(new ChangePropertyCommand(possibleDuplicates, node.getKeys()));
+            final ChangePropertyCommand changePropertyCommand = new ChangePropertyCommand(possibleDuplicates,
+                    node.getKeys());
+            if (changePropertyCommand.getObjectsNumber() > 0) {
+                commandList.add(changePropertyCommand);
+            }
             commandList.add(DeleteCommand.delete(Collections.singleton(node)));
             object = possibleDuplicates.get(0);
         } else if (buildings.size() == 1 && getAddressPoints(buildings.get(0)).size() == 1) {
