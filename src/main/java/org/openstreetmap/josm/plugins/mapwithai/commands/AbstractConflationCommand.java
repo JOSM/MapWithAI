@@ -7,6 +7,7 @@ import java.awt.GraphicsEnvironment;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,7 +79,7 @@ public abstract class AbstractConflationCommand extends Command {
      * @return The command that will be run (may be {@code null})
      */
     public Command getCommand(Collection<OsmPrimitive> primitives) {
-        possiblyAffectedPrimitives = primitives.stream().distinct().collect(Collectors.toList());
+        possiblyAffectedPrimitives = new HashSet<>(primitives);
         return getRealCommand();
     }
 

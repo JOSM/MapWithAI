@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
@@ -121,9 +123,13 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
     }
 
     private static Collection<Node> getAddressPoints(OsmPrimitive prim) {
-        return Geometry.filterInsideAnyPolygon(new ArrayList<>(prim.getDataSet().allNonDeletedPrimitives()), prim)
-                .stream().filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasTag(KEY))
-                .collect(Collectors.toList());
+        BBox bbox = prim.getBBox();
+        final Collection<IPrimitive> searchCollection = new HashSet<>();
+        searchCollection.addAll(prim.getDataSet().searchNodes(bbox));
+        searchCollection.addAll(prim.getDataSet().searchWays(bbox));
+        searchCollection.addAll(prim.getDataSet().searchRelations(bbox));
+        return Geometry.filterInsideAnyPolygon(searchCollection, prim).stream().filter(Node.class::isInstance)
+                .map(Node.class::cast).filter(n -> n.hasTag(KEY)).collect(Collectors.toList());
     }
 
     /**
