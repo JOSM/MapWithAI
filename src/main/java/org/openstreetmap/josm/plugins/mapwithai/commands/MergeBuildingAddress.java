@@ -74,18 +74,19 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
         return returnCommand;
     }
 
-    private static Collection<Command> mergeBuildingAddress(DataSet affectedDataSet, Node node) {
+    private Collection<Command> mergeBuildingAddress(DataSet affectedDataSet, Node node) {
         final List<OsmPrimitive> toCheck = new ArrayList<>();
-        final BBox bbox = new BBox(node.getCoor().getX(), node.getCoor().getY(), 0.001);
+        final BBox bbox = new BBox(node.lon(), node.lat(), 0.001);
         GuiHelper.runInEDTAndWait(() -> {
             toCheck.addAll(affectedDataSet.searchWays(bbox));
             toCheck.addAll(affectedDataSet.searchRelations(bbox));
             toCheck.addAll(affectedDataSet.searchNodes(bbox));
         });
         List<OsmPrimitive> possibleDuplicates = toCheck.stream().filter(prim -> prim.hasTag(KEY))
-                .filter(prim -> prim.get(KEY).equals(node.get(KEY))).filter(prim -> !prim.equals(node))
+                .filter(prim -> prim.get(KEY).equals(node.get(KEY)))
+                .filter(prim -> !prim.equals(node) && !this.possiblyAffectedPrimitives.contains(prim))
                 .collect(Collectors.toList());
-        for (String tag : Arrays.asList("addr:street", "addr:unit")) {
+        for (String tag : Arrays.asList("addr:street", "addr:unit", "addr:housenumber", "addr:housename")) {
             if (node.hasTag(tag)) {
                 possibleDuplicates = possibleDuplicates.stream().filter(prim -> prim.hasTag(tag))
                         .filter(prim -> prim.get(tag).equals(node.get(tag))).collect(Collectors.toList());

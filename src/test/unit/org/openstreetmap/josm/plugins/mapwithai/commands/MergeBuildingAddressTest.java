@@ -2,8 +2,10 @@
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
@@ -103,5 +105,43 @@ class MergeBuildingAddressTest {
         multipolygon.put("building", "yes");
         assertNull(conflation.getCommand(Collections.singletonList(addr)));
         assertEquals(1, conflation.getParticipatingPrimitives().size());
+    }
+
+    /**
+     * Adding two address nodes with the same tags shouldn't result in <i>both</i>
+     * objects being deleted. The example from Slack had the same address for two
+     * different buildings. There should probably be an `addr:unit` tag, but that
+     * can be added later, by something like StreetComplete.
+     */
+    @Test
+    void testMultiSameAddress() {
+        DataSet ds = new DataSet();
+        Node addr = new Node(new LatLon(0, 0));
+        Node addr2 = new Node(new LatLon(0.00005, 0.00005));
+        ds.addPrimitive(addr);
+        ds.addPrimitive(addr2);
+        addr.put("addr:housenumber", "1");
+        addr2.put("addr:housenumber", "1");
+        addr.put("addr:street", "Test");
+        addr2.put("addr:street", "Test");
+        Way building1 = TestUtils.newWay("building=yes", new Node(new LatLon(0.00001, 0.00001)),
+                new Node(new LatLon(0.00001, -0.00001)), new Node(new LatLon(-0.00001, -0.00001)),
+                new Node(new LatLon(-0.00001, 0.00001)));
+        Way building2 = TestUtils.newWay("building=yes", new Node(new LatLon(0.00006, 0.00006)),
+                new Node(new LatLon(0.00006, 0.00004)), new Node(new LatLon(0.00004, 0.00004)),
+                new Node(new LatLon(0.00004, 0.00006)));
+        ds.addPrimitiveRecursive(building1);
+        ds.addPrimitiveRecursive(building2);
+        building1.addNode(building1.firstNode());
+        building2.addNode(building2.firstNode());
+        MergeBuildingAddress conflation = new MergeBuildingAddress(ds);
+        Command command = conflation.getCommand(Arrays.asList(addr, addr2));
+        assertNotNull(command);
+        command.executeCommand();
+        assertEquals(3, building1.getInterestingTags().size());
+        assertEquals(3, building2.getInterestingTags().size());
+        assertEquals(building1.getInterestingTags(), building2.getInterestingTags());
+        assertEquals("Test", building1.get("addr:street"));
+        assertEquals("1", building1.get("addr:housenumber"));
     }
 }
