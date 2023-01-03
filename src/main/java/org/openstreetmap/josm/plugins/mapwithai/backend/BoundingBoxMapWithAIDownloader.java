@@ -110,7 +110,9 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2))
                 + (crop ? "&crop_bbox=" + DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox().toStringCSV(",")
                         : "")
-                + (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER ? "&resultOffset=" + this.start : "");
+                + (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated()
+                        ? "&resultOffset=" + this.start
+                        : "");
     }
 
     @Override
@@ -118,9 +120,8 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         long startTime = System.nanoTime();
         try {
             DataSet externalData = super.parseOsm(progressMonitor);
-            if ((this.info.getSourceType() != MapWithAIType.ESRI_FEATURE_SERVER || this.start == 0) // Don't call
-                                                                                                    // conflate code
-                                                                                                    // unnecessarily
+            // Don't call conflate code unnecessarily
+            if ((this.info.getSourceType() != MapWithAIType.ESRI_FEATURE_SERVER || this.start == 0)
                     && Boolean.TRUE.equals(MapWithAIInfo.THIRD_PARTY_CONFLATE.get()) && !this.info.isConflated()
                     && !MapWithAIConflationCategory.conflationUrlFor(this.info.getCategory()).isEmpty()) {
                 if (externalData.getDataSourceBounds().isEmpty()) {
