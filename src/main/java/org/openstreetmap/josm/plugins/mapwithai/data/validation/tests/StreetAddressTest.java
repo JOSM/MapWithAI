@@ -87,6 +87,17 @@ public class StreetAddressTest extends Test {
             Collection<String> names = getSurroundingHighwayNames(entry.getKey());
             for (OsmPrimitive primitive : entry.getValue()) {
                 if (!primitive.isOutsideDownloadArea()) {
+                    if (this.isBeforeUpload && !names.contains(primitive.get(ADDR_STREET))
+                            && primitive.getDataSet() != null) {
+                        BBox bbox = new BBox(primitive.getBBox());
+                        bbox.addPrimitive(primitive, 0.001);
+                        for (Way way : primitive.getDataSet().searchWays(bbox)) {
+                            if (isHighway(way)) {
+                                this.visit(way);
+                            }
+                        }
+                        names = getSurroundingHighwayNames(entry.getKey());
+                    }
                     if (!names.contains(primitive.get(ADDR_STREET))) {
                         namePrimitiveMap.add(primitive);
                     }
