@@ -6,14 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -23,6 +24,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeAddressBuildings;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 
@@ -33,7 +35,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 class MergeAddressBuildingsTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().projection().main();
+    static JOSMTestRules test = new JOSMTestRules().projection().main();
 
     private MergeAddressBuildings command;
     private DataSet ds;
@@ -71,11 +73,11 @@ class MergeAddressBuildingsTest {
 
         command = new MergeAddressBuildings(ds);
         address.setCoor(new LatLon(0.5, 0.5));
-        Command newCommand = command.getCommand(Arrays.asList(building));
+        Command newCommand = command.getCommand(Collections.singletonList(building));
         assertNull(newCommand);
 
         building.addNode(building.firstNode());
-        newCommand = command.getCommand(Arrays.asList(building));
+        newCommand = command.getCommand(Collections.singletonList(building));
 
         newCommand.executeCommand();
 
@@ -85,19 +87,37 @@ class MergeAddressBuildingsTest {
 
         address.setCoor(new LatLon(-1, -1));
 
-        newCommand = command.getCommand(Arrays.asList(building));
+        newCommand = command.getCommand(Collections.singletonList(building));
         assertNull(newCommand);
         assertEquals(6, ds.allNonDeletedPrimitives().size());
 
         address.setCoor(new LatLon(.75, .75));
 
         Node address2 = new Node(new LatLon(0.25, 0.25));
-        address.getKeys().forEach((key, value) -> address2.put(key, value));
+        address.getKeys().forEach(address2::put);
         ds.addPrimitive(address2);
 
-        newCommand = command.getCommand(Arrays.asList(building));
+        newCommand = command.getCommand(Collections.singletonList(building));
         assertNull(newCommand);
         assertEquals(7, ds.allNonDeletedPrimitives().size());
+    }
+
+    @Test
+    @LoggingHandler
+    void testDeletedAddress() {
+        Node addr = new Node(new LatLon(0, 0));
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(ds, "testDeletedAddress", null));
+        addr.put("addr:street", "Test");
+        addr.put("addr:housenumber", "1");
+        Way building1 = TestUtils.newWay("building=yes", new Node(new LatLon(0.00001, 0.00001)),
+                new Node(new LatLon(0.00001, -0.00001)), new Node(new LatLon(-0.00001, -0.00001)),
+                new Node(new LatLon(-0.00001, 0.00001)));
+        ds.addPrimitive(addr);
+        ds.addPrimitiveRecursive(building1);
+        building1.addNode(building1.firstNode());
+        DeleteCommand.delete(Collections.singletonList(addr)).executeCommand();
+        Command actualCommand = this.command.getCommand(Collections.singletonList(building1));
+        assertNull(actualCommand);
     }
 
     @Test

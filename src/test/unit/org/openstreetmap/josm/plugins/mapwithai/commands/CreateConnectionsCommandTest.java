@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -26,6 +27,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -33,7 +35,7 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Tests for {@link CreateConnections}
+ * Tests for {@link CreateConnectionsCommand}
  *
  * @author Taylor Smock
  */
@@ -43,7 +45,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 class CreateConnectionsCommandTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().projection();
+    static JOSMTestRules test = new MapWithAITestRules().projection();
 
     /**
      * Test method for
@@ -109,7 +111,7 @@ class CreateConnectionsCommandTest {
 
     /**
      * Test method for
-     * {@link CreateConnectionsCommand#addNodesToWay(Node, Node, Node, Node)}.
+     * {@link ConnectedCommand#addNodesToWay(Node, Way, Node, Node)}.
      */
     @Test
     void testAddNodesToWay() {
@@ -144,7 +146,7 @@ class CreateConnectionsCommandTest {
     }
 
     /**
-     * Test method for {@link CreateConnectionsCommand#replaceNode(Node, Node)}.
+     * Test method for {@link DuplicateCommand#replaceNode(Node, Node)}.
      */
     @Test
     void testReplaceNode() {
@@ -199,6 +201,25 @@ class CreateConnectionsCommandTest {
         assertNotNull(dataSet.getPrimitiveById(6146500887L, OsmPrimitiveType.NODE),
                 "We don't roll back downloaded data");
 
+    }
+
+    @Test
+    @LoggingHandler
+    void testDeletedAddressAddingBuilding() {
+        DataSet ds = new DataSet();
+        Node addr = new Node(new LatLon(0, 0));
+        MainApplication.getLayerManager().addLayer(new OsmDataLayer(ds, "testDeletedAddress", null));
+        addr.put("addr:street", "Test");
+        addr.put("addr:housenumber", "1");
+        Way building1 = TestUtils.newWay("building=yes", new Node(new LatLon(0.00001, 0.00001)),
+                new Node(new LatLon(0.00001, -0.00001)), new Node(new LatLon(-0.00001, -0.00001)),
+                new Node(new LatLon(-0.00001, 0.00001)));
+        ds.addPrimitive(addr);
+        ds.addPrimitiveRecursive(building1);
+        building1.addNode(building1.firstNode());
+        DeleteCommand.delete(Collections.singletonList(addr)).executeCommand();
+        Command actualCommand = new CreateConnectionsCommand(ds, Collections.singleton(building1.save()));
+        actualCommand.executeCommand();
     }
 
     /**

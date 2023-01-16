@@ -22,6 +22,9 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * Test class for {@link ConnectedCommand}
+ */
 @NoExceptions
 class ConnectedCommandTest {
     /**
@@ -29,7 +32,7 @@ class ConnectedCommandTest {
      */
     @RegisterExtension
     @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().projection();
+    static JOSMTestRules rule = new JOSMTestRules().projection();
 
     @Test
     void testVariousConditions() {

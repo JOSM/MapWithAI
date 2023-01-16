@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -22,13 +23,16 @@ import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * Test class for {@link MergeBuildingAddress}
+ */
 class MergeBuildingAddressTest {
     /**
      * Setup test.
      */
     @RegisterExtension
     @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().projection();
+    static JOSMTestRules rule = new JOSMTestRules().projection();
 
     @Test
     void testSingleAddress() {
@@ -143,5 +147,23 @@ class MergeBuildingAddressTest {
         assertEquals(building1.getInterestingTags(), building2.getInterestingTags());
         assertEquals("Test", building1.get("addr:street"));
         assertEquals("1", building1.get("addr:housenumber"));
+    }
+
+    @Test
+    void testDeletedBuilding() {
+        DataSet ds = new DataSet();
+        Node addr = new Node(new LatLon(0, 0));
+        addr.put("addr:street", "Test");
+        addr.put("addr:housenumber", "1");
+        Way building1 = TestUtils.newWay("building=yes", new Node(new LatLon(0.00001, 0.00001)),
+                new Node(new LatLon(0.00001, -0.00001)), new Node(new LatLon(-0.00001, -0.00001)),
+                new Node(new LatLon(-0.00001, 0.00001)));
+        ds.addPrimitive(addr);
+        ds.addPrimitiveRecursive(building1);
+        building1.addNode(building1.firstNode());
+        MergeBuildingAddress conflation = new MergeBuildingAddress(ds);
+        DeleteCommand.delete(Collections.singletonList(building1)).executeCommand();
+        Command command = conflation.getCommand(Collections.singletonList(addr));
+        assertNull(command);
     }
 }
