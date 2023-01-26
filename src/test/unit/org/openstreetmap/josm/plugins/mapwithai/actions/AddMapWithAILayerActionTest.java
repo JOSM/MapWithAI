@@ -15,7 +15,14 @@ import javax.swing.ImageIcon;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -31,16 +38,22 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.Logging;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.matching.AnythingPattern;
+import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import com.github.tomakehurst.wiremock.matching.StringValuePattern;
+import com.github.tomakehurst.wiremock.matching.UrlPathPattern;
 
 /**
  * Test class for {@link AddMapWithAILayerAction}
@@ -133,4 +146,63 @@ class AddMapWithAILayerActionTest {
         }
     }
 
+    @Test
+    void testNonRegression22683() throws ExecutionException, InterruptedException {
+        final MapWithAIInfo info = MapWithAILayerInfo.getInstance().getLayers().stream()
+                .filter(i -> i.getName().equalsIgnoreCase("MapWithAI")).findAny().orElse(null);
+        assertNotNull(info);
+        final OsmDataLayer layer = new OsmDataLayer(new DataSet(), "testNonRegression22683", null);
+        layer.getDataSet().addDataSource(new DataSource(new Bounds(0, 0, 0.001, 0.001), "Area 1"));
+        layer.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "Area 2"));
+        MainApplication.getLayerManager().addLayer(layer);
+        final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
+        final Map<String, StringValuePattern> parameterMap = new HashMap<>();
+        final AnythingPattern anythingPattern = new AnythingPattern();
+        parameterMap.put("geometryType", anythingPattern);
+        parameterMap.put("geometry", anythingPattern);
+        parameterMap.put("inSR", new EqualToPattern("4326"));
+        parameterMap.put("f", new EqualToPattern("geojson"));
+        parameterMap.put("outfields", new EqualToPattern("*"));
+        parameterMap.put("result_type", new EqualToPattern("road_building_vector_xml"));
+        parameterMap.put("resultOffset", anythingPattern);
+        server.stubFor(WireMock.get(new UrlPathPattern(new EqualToPattern("/query"), false))
+                .withQueryParams(parameterMap).willReturn(WireMock.aResponse().withBody("{\"test\":0}")));
+        final List<LogRecord> logs = new ArrayList<>();
+        Handler testHandler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                logs.add(record);
+            }
+
+            @Override
+            public void flush() {
+                // Do nothing
+            }
+
+            @Override
+            public void close() {
+                // Do nothing
+            }
+        };
+        Logging.getLogger().addHandler(testHandler);
+        try {
+            server.start();
+            info.setUrl(server.baseUrl());
+            info.setSourceType(MapWithAIType.ESRI_FEATURE_SERVER);
+            final AddMapWithAILayerAction action = new AddMapWithAILayerAction(info);
+            Logging.clearLastErrorAndWarnings();
+            assertDoesNotThrow(() -> action.actionPerformed(null));
+            GuiHelper.runInEDTAndWait(() -> {
+                /* Sync thread */ });
+            MainApplication.worker.submit(() -> {
+                /* Sync thread */ }).get();
+            final List<LogRecord> ides = logs.stream()
+                    .filter(record -> record.getThrown() instanceof IllegalArgumentException)
+                    .collect(Collectors.toList());
+            assertTrue(ides.isEmpty(), ides.stream().map(LogRecord::getMessage).collect(Collectors.joining("\n")));
+        } finally {
+            server.stop();
+            Logging.getLogger().removeHandler(testHandler);
+        }
+    }
 }

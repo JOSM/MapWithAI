@@ -20,6 +20,7 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -63,6 +64,11 @@ import org.openstreetmap.josm.tools.Logging;
  * @author Taylor Smock
  */
 public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
+    /**
+     * The time that the data URL's were last updated. See #22683 for why this is
+     * necessary.
+     */
+    private static Instant DATA_LAST_UPDATED = Instant.EPOCH;
     private final String url;
     private final boolean crop;
     private final int start;
@@ -156,14 +162,24 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                         "Attempting to download data in the background. This may fail or succeed in a few minutes.")));
                 GuiHelper.runInEDT(note::show);
             } else if (e.getCause() instanceof IllegalDataException) {
-                MapWithAILayerInfo.getInstance().loadDefaults(true, MapWithAIDataUtils.getForkJoinPool(), false,
-                        () -> GuiHelper.runInEDT(() -> {
-                            Notification notification = new Notification(tr(
-                                    "MapWithAI layers reloaded. Removing and re-adding the MapWithAI layer may be necessary."));
-                            notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
-                            notification.setDuration(Notification.TIME_LONG);
-                            notification.show();
-                        }));
+                final Instant lastUpdated;
+                final Instant now;
+                synchronized (BoundingBoxMapWithAIDownloader.class) {
+                    lastUpdated = DATA_LAST_UPDATED;
+                    now = Instant.now();
+                    DATA_LAST_UPDATED = now;
+                }
+                // Only force an update if the last update time is sufficiently old.
+                if (now.toEpochMilli() - lastUpdated.toEpochMilli() > TimeUnit.MINUTES.toMillis(10)) {
+                    MapWithAILayerInfo.getInstance().loadDefaults(true, MapWithAIDataUtils.getForkJoinPool(), false,
+                            () -> GuiHelper.runInEDT(() -> {
+                                Notification notification = new Notification(tr(
+                                        "MapWithAI layers reloaded. Removing and re-adding the MapWithAI layer may be necessary."));
+                                notification.setIcon(JOptionPane.INFORMATION_MESSAGE);
+                                notification.setDuration(Notification.TIME_LONG);
+                                notification.show();
+                            }));
+                }
             } else {
                 throw e;
             }

@@ -36,6 +36,7 @@ import org.openstreetmap.josm.tools.Logging;
  * Largely copied from {@link AddImageryLayerAction}.
  */
 public class AddMapWithAILayerAction extends JosmAction implements AdaptableAction {
+    private static final long serialVersionUID = 1403912860658467920L;
     private final transient MapWithAIInfo info;
 
     /**
