@@ -625,6 +625,7 @@ public class MapWithAILayerInfo {
         return layers.stream()
                 .filter(i -> i.getCategory() != MapWithAICategory.PREVIEW
                         && !i.getAdditionalCategories().contains(MapWithAICategory.PREVIEW))
+                .filter(info -> !Utils.isBlank(info.getUrlExpanded()) && !Utils.isBlank(info.getUrl()))
                 .collect(Collectors.toList());
     }
 

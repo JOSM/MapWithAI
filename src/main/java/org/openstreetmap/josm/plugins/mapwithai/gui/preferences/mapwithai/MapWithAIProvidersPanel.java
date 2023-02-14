@@ -187,6 +187,19 @@ public class MapWithAIProvidersPanel extends JPanel {
         @SuppressWarnings("unchecked")
         public final Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                 boolean hasFocus, int row, int column) {
+            // See #22740
+            if (value == null) {
+                final StringBuilder message = new StringBuilder();
+                for (int tableRow = 0; tableRow < table.getRowCount(); tableRow++) {
+                    message.append('|');
+                    for (int tableCol = 0; tableCol < table.getColumnCount(); tableCol++) {
+                        final Object tableVal = table.getValueAt(tableRow, tableCol);
+                        message.append(tableVal).append('|');
+                    }
+                    message.append(System.lineSeparator());
+                }
+                throw new IllegalArgumentException("value was null:" + System.lineSeparator() + message);
+            }
             T obj = (T) value;
             JLabel label = (JLabel) super.getTableCellRendererComponent(table, mapper.apply(obj), isSelected, hasFocus,
                     row, column);
