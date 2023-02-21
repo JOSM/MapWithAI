@@ -1,8 +1,14 @@
 name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - v.**
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 jobs:
   call-workflow:
@@ -11,7 +17,53 @@ jobs:
       josm-revision: "r18589"
       update-pluginssource: true
       plugin-jar-name: 'mapwithai'
-    secrets:
-      trac-username: ${{ secrets.TRAC_USERNAME }}
-      trac-password: ${{ secrets.TRAC_PASSWORD }}
 
+
+  createrelease:
+    needs: call-workflow
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set revision env variable
+        id: create_revision
+        run: |
+          if [[ ! -z "${{ inputs.tag }}" ]]; then
+            revision="${{ inputs.tag }}"
+          else
+            revision="${{ github.ref_name }}"
+          fi
+          echo "revision=$revision" >> $GITHUB_OUTPUT
+          echo "revision_number=${revision#v}" >> $GITHUB_OUTPUT
+      - name: Get build
+        id: cache-plugin-build
+        uses: actions/cache@v3.0.0
+        with:
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ steps.create_revision.outputs.revision_number }}
+          path: |
+            josm/dist/mapwithai.jar
+            josm/dist/mapwithai-javadoc.jar
+            josm/dist/mapwithai-sources.jar
+      - name: Generate update site
+        id: create_update_site
+        run: |
+          ls -R .
+          jarname="mapwithai.jar"
+          jarurl="https://github.com/${{ github.repository }}/releases/download/${{ steps.create_revision.outputs.revision }}/${jarname}"
+          echo "${jarname};$jarurl" > updatesite
+          unzip -p "josm/dist/${jarname}" META-INF/MANIFEST.MF | sed 's/^/\t/' >> updatesite
+      - name: Release
+        run: |
+          target="${{ steps.create_revision.outputs.revision }}"
+          if [ -z "$(gh --repo ${{ github.repository }} release view \"${target}\")" ]; then
+            gh release --repo ${{ github.repository }} create "${target}" \
+              --title "${target}" \
+              --latest \
+              --generate-notes
+          fi
+          gh release --repo ${{ github.repository }} upload --clobber "${target}" \
+            "josm/dist/mapwithai.jar" \
+            "josm/dist/mapwithai-javadoc.jar" \
+            "josm/dist/mapwithai-sources.jar" \
+            "updatesite"
+        env:
+          GH_TOKEN: ${{ github.token }}
