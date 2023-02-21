@@ -153,4 +153,17 @@ class GetDataRunnableTest {
         DataSet ds = new DataSet();
         assertDoesNotThrow(() -> GetDataRunnable.replaceTags(ds));
     }
+
+    @Test
+    void testDoNotMergeEmptyNodesWithTaggedNodes() {
+        final DataSet ds = new DataSet();
+        final Node emptyNode = new Node(LatLon.ZERO);
+        final Node taggedNode = new Node(LatLon.ZERO);
+        taggedNode.put("building", "house");
+        ds.addPrimitive(emptyNode);
+        ds.addPrimitive(taggedNode);
+        GetDataRunnable.cleanup(ds, null, null);
+        assertAll(() -> assertFalse(emptyNode.isDeleted()), () -> assertFalse(taggedNode.isDeleted()),
+                () -> assertTrue(ds.containsNode(emptyNode)), () -> assertTrue(ds.containsNode(taggedNode)));
+    }
 }

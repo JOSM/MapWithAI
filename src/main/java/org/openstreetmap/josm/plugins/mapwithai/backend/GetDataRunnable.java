@@ -528,7 +528,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 final List<Node> iNodes = (List<Node>) obj;
                 for (Node nearNode : iNodes) {
                     final List<Node> nearbyNodes = new ArrayList<>(iNodes);
-                    nearbyNodes.removeIf(node -> !usableNode(nearNode, node));
+                    nearbyNodes.removeIf(node -> !nearNode.hasSameInterestingTags(node) || !usableNode(nearNode, node));
                     final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, nearNode);
                     if (mergeCommand != null) {
                         mergeCommand.executeCommand();
