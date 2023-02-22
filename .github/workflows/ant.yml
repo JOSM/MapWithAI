@@ -23,32 +23,6 @@ jobs:
     with:
       josm-revision: ${{ matrix.josm-revision }}
       plugin-jar-name: 'mapwithai'
-  createtag:
-    if: ${{ github.repository == 'JOSM/MapWithAI' && github.ref_type == 'branch' && github.ref_name == 'master' }}
-    needs: call-workflow
-    name: Create Tag
-    runs-on: ubuntu-latest
-    outputs:
-      revision: ${{ steps.create_revision.outputs.revision }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set revision env variable
-        id: create_revision
-        # Count the total commits for this branch
-        run: |
-          revision="v$(git rev-list --count HEAD)"
-          git tag $revision
-          git push -u origin $revision
-          echo "revision=$revision" >> $GITHUB_OUTPUT
-
-  releasing:
-    needs: createtag
-    name: Run release actions
-    uses: ./.github/workflows/ant-release.yml
-    with:
-      tag: ${{ needs.createtag.outputs.revision }}
+      perform-revision-tagging: ${{ github.repository == 'JOSM/MapWithAI' && github.ref_type == 'branch' && github.ref_name == 'master' && github.event_name != 'schedule' && github.event_name != 'pull_request' }}
     secrets: inherit
+
