@@ -22,6 +22,7 @@ jobs:
     uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v1
     with:
       josm-revision: ${{ matrix.josm-revision }}
+      plugin-jar-name: 'mapwithai'
   createtag:
     if: ${{ github.repository == 'JOSM/MapWithAI' && github.ref_type == 'branch' && github.ref_name == 'master' }}
     needs: call-workflow

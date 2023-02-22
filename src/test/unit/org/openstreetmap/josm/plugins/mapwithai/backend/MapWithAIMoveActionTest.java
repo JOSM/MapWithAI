@@ -1,16 +1,21 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Future;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -18,8 +23,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.openstreetmap.josm.TestUtils;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -38,6 +43,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
@@ -47,6 +53,7 @@ import mockit.Mock;
 import mockit.MockUp;
 
 @BasicPreferences
+@Projection
 @Wiremock
 class MapWithAIMoveActionTest {
     private MapWithAIMoveAction moveAction;
@@ -59,11 +66,13 @@ class MapWithAIMoveActionTest {
 
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().main().projection().territories().assertionsInEDT();
+    JOSMTestRules test = new MapWithAITestRules().main().territories().assertionsInEDT();
 
     @BeforeAll
     static void beforeAll() {
         new MapWithAIPluginMock();
+        // TODO remove with @Territories annotation
+        Territories.initialize();
     }
 
     @BeforeEach
@@ -201,9 +210,6 @@ class MapWithAIMoveActionTest {
      */
     @Test
     void testBuildingAndAddressAdd() {
-        // Required to avoid an NPE in Territories.getRegionalTaginfoUrls. TODO remove
-        // with @Territories
-        Future<?> territoriesRegionalTaginfo = MainApplication.worker.submit(Territories::initialize);
         DataSet ds = MapWithAIDataUtils.getLayer(true).getDataSet();
         Way building = TestUtils.newWay("building=yes", new Node(new LatLon(38.236811, -104.62571)),
                 new Node(new LatLon(38.236811, -104.625493)), new Node(new LatLon(38.236716, -104.625493)),
@@ -223,8 +229,6 @@ class MapWithAIMoveActionTest {
         // This is due to only allowing 1 additional selection at a time.
         ds.setSelected(building);
         ds.addSelected(address);
-        // Wait for territories to finish
-        assertDoesNotThrow((ThrowingSupplier<?>) territoriesRegionalTaginfo::get);
         GuiHelper.runInEDTAndWaitWithException(() -> moveAction.actionPerformed(null));
         while (UndoRedoHandler.getInstance().hasUndoCommands()) {
             assertDoesNotThrow(() -> UndoRedoHandler.getInstance().undo());
@@ -269,7 +273,6 @@ class MapWithAIMoveActionTest {
         MainApplication.getLayerManager().addLayer(osmDataLayer);
         MainApplication.getLayerManager().addLayer(mapwithaiLayer);
         MainApplication.getLayerManager().setActiveLayer(mapwithaiLayer);
-        Territories.initialize();
         mapwithai.setSelected(Collections.singleton(ma1w));
 
         Config.getPref().put("simplify-way.auto.remember", "yes");
@@ -279,5 +282,85 @@ class MapWithAIMoveActionTest {
                 Logging.getLastErrorAndWarnings().isEmpty() ? "" : Logging.getLastErrorAndWarnings().get(0));
         assertTrue(osm.allPrimitives().size() > 4);
         assertTrue(osm.allPrimitives().stream().anyMatch(p -> p.hasTag("source", "digitalglobe")));
+    }
+
+    /**
+     * Non-regression test for #22760: IAE when merging address and building
+     * features
+     */
+    @Test
+    void testNonRegression22760() {
+        final Node originalAddrNode = TestUtils.newNode("addr:city=Topeka\naddr:housenumber=1824\naddr:postcode=66615\n"
+                + "addr:street=Southwest Stutley Road\nbuilding=residential\nlbcs:activity:code=1100\n"
+                + "lbcs:activity:name=Household activities\nlbcs:function:code=1101\nlbcs:function:name=Single family residence (detached)");
+        final Way mwaiBuilding1 = TestUtils.newWay(
+                "building=yes mapwithai:source=MapWithAI source=microsoft/BuildingFootprints",
+                new Node(new LatLon(39.0331214, -95.7912026)), new Node(new LatLon(39.0331129, -95.7909617)),
+                new Node(new LatLon(39.0331516, -95.7909595)), new Node(new LatLon(39.0331495, -95.7909006)),
+                new Node(new LatLon(39.0332057, -95.7908973)), new Node(new LatLon(39.0332074, -95.7909467)),
+                new Node(new LatLon(39.0332864, -95.7909421)), new Node(new LatLon(39.0332909, -95.7910693)),
+                new Node(new LatLon(39.0331869, -95.7910754)), new Node(new LatLon(39.0331912, -95.7911985)));
+        // This is an exact duplicate of building 1
+        final Way mwaiBuilding2 = TestUtils.newWay("", mwaiBuilding1.getNodes().toArray(new Node[0]));
+        final Node mwaiAddrNode = TestUtils.newNode(
+                "addr:city=Unincorporated\n" + "addr:housenumber=1824\n" + "addr:postcode=66615\n" + "addr:state=KS\n"
+                        + "addr:street=Southwest Stutley Road\n" + "building=yes\n" + "source=esri_USDOT_Kansas");
+        final DataSet osm = new DataSet();
+        final DataSet mwai = new DataSet();
+        final OsmDataLayer osmLayer = new OsmDataLayer(osm, "testNonRegression22760", null);
+        final MapWithAILayer mapWithAILayer = new MapWithAILayer(mwai, "testNonRegression22760", null);
+        MainApplication.getLayerManager().addLayer(osmLayer);
+        MainApplication.getLayerManager().addLayer(mapWithAILayer);
+        MainApplication.getLayerManager().setActiveLayer(mapWithAILayer);
+        originalAddrNode.setCoor(new LatLon(39.0331818, -95.7910286));
+        originalAddrNode.setOsmId(2081834687, 3);
+        mwaiAddrNode.setCoor(new LatLon(39.0331883, -95.7910057));
+        mwaiBuilding1.addNode(mwaiBuilding1.firstNode());
+        mwaiBuilding2.setNodes(mwaiBuilding1.getNodes());
+        mwaiBuilding2.putAll(mwaiBuilding1.getKeys());
+        osm.addPrimitive(originalAddrNode);
+        mwai.addPrimitiveRecursive(mwaiBuilding1);
+        mwai.addPrimitive(mwaiBuilding2);
+        mwai.addPrimitive(mwaiAddrNode);
+        UndoRedoHandler.getInstance()
+                .add(DeleteCommand.delete(Collections.singletonList(originalAddrNode), true, true));
+        while (mwai.getSelected().size() < mwai.allNonDeletedPrimitives().size()) {
+            GuiHelper.runInEDTAndWait(() -> mwai.setSelected(mwai.allPrimitives()));
+        }
+
+        final List<LogRecord> logs = new ArrayList<>();
+        final Handler testHandler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                logs.add(record);
+            }
+
+            @Override
+            public void flush() {
+                // Do nothing
+            }
+
+            @Override
+            public void close() {
+                // Do nothing
+            }
+        };
+        Logging.getLogger().addHandler(testHandler);
+        try {
+            this.moveAction.actionPerformed(null);
+            assertAll(logs.stream().map(logRecord -> () -> fail(logRecord.getThrown())));
+        } finally {
+            Logging.getLogger().removeHandler(testHandler);
+        }
+        assertEquals(2, osm.getWays().size(), "Both buildings should be added, even though one is a duplicate. "
+                + "If deduplicate buildings in the future, this test should be updated.");
+        final Way actualWay = osm.getWays().stream().filter(way -> way.getNumKeys() > 3).findFirst()
+                .orElseThrow(() -> new AssertionError("Could not find way"));
+        // Just spot check the tags.
+        assertEquals("Unincorporated", actualWay.get("addr:city"));
+        assertEquals("yes", actualWay.get("building"));
+        assertEquals(10, osm.getNodes().stream().filter(node -> !node.isDeleted()).count());
+        assertAll(osm.getNodes().stream().filter(node -> !node.isDeleted())
+                .map(node -> () -> assertTrue(node.getParentWays().contains(actualWay))));
     }
 }

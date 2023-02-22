@@ -59,13 +59,14 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
     public Command getRealCommand() {
         List<Command> commands = new ArrayList<>();
         if (MapWithAIPreferenceHelper.isMergeBuildingAddress()) {
+            final List<Node> mergedNodes = new ArrayList<>();
             possiblyAffectedPrimitives.stream().filter(Way.class::isInstance).map(Way.class::cast)
                     .filter(way -> way.hasKey(KEY)).filter(Way::isClosed)
-                    .forEach(way -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), way)));
+                    .forEach(way -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), way, mergedNodes)));
 
             possiblyAffectedPrimitives.stream().filter(Relation.class::isInstance).map(Relation.class::cast)
                     .filter(rel -> rel.hasKey(KEY)).filter(Relation::isMultipolygon)
-                    .forEach(rel -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), rel)));
+                    .forEach(rel -> commands.addAll(mergeAddressBuilding(getAffectedDataSet(), rel, mergedNodes)));
         }
 
         Command returnCommand = null;
@@ -77,19 +78,30 @@ public class MergeAddressBuildings extends AbstractConflationCommand {
         return returnCommand;
     }
 
-    private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, OsmPrimitive object) {
+    /**
+     * Merge a building with an address node
+     *
+     * @param affectedDataSet The dataset to use
+     * @param object          The object to merge with an address node
+     * @param mergedNodes     The nodes already merged. <i>This will be modified in
+     *                        this method!</i>
+     * @return The command to merge an address onto a building
+     */
+    private static Collection<? extends Command> mergeAddressBuilding(DataSet affectedDataSet, OsmPrimitive object,
+            Collection<Node> mergedNodes) {
         final List<IPrimitive> toCheck = new ArrayList<>(affectedDataSet.searchNodes(object.getBBox()));
         toCheck.removeIf(IPrimitive::isDeleted);
         final Collection<IPrimitive> nodesInside = Geometry.filterInsideAnyPolygon(toCheck, object);
 
         final List<Node> nodesWithAddresses = nodesInside.stream().filter(Node.class::isInstance).map(Node.class::cast)
                 .filter(node -> node.keySet().stream().anyMatch(str -> str.startsWith("addr:")))
-                .collect(Collectors.toList());
+                .filter(node -> !mergedNodes.contains(node)).collect(Collectors.toList());
 
         final List<Command> commandList = new ArrayList<>();
         if (nodesWithAddresses.size() == 1 && nodesWithAddresses.stream().allMatch(n -> n.getParentWays().isEmpty())) {
             String currentKey = null;
             Node node = nodesWithAddresses.get(0);
+            mergedNodes.add(node);
             List<String> sources = new ArrayList<>();
             try {
                 // Remove the key to avoid the popup from utilsplugin2
