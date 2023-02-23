@@ -82,7 +82,7 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
             toCheck.addAll(affectedDataSet.searchRelations(bbox));
             toCheck.addAll(affectedDataSet.searchNodes(bbox));
         });
-        List<OsmPrimitive> possibleDuplicates = toCheck.stream().filter(prim -> prim.hasTag(KEY))
+        List<OsmPrimitive> possibleDuplicates = toCheck.stream().filter(prim -> !prim.isDeleted() && prim.hasTag(KEY))
                 .filter(prim -> prim.get(KEY).equals(node.get(KEY)))
                 .filter(prim -> !prim.equals(node) && !this.possiblyAffectedPrimitives.contains(prim))
                 .collect(Collectors.toList());

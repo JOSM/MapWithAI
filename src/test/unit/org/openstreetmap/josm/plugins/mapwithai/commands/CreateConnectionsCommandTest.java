@@ -220,6 +220,9 @@ class CreateConnectionsCommandTest {
         DeleteCommand.delete(Collections.singletonList(addr)).executeCommand();
         Command actualCommand = new CreateConnectionsCommand(ds, Collections.singleton(building1.save()));
         actualCommand.executeCommand();
+        final Way building = ds.getWays().iterator().next();
+        assertNull(building.get("addr:street"));
+        assertNull(building.get("addr:housenumber"));
     }
 
     /**

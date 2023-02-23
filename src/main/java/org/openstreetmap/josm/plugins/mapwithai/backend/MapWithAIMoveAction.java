@@ -83,9 +83,9 @@ public class MapWithAIMoveAction extends JosmAction {
             nodes.stream().map(Node::getReferrers).forEach(ds::addSelected);
             final Collection<OsmPrimitive> selected = limitCollection(ds, maxAddition);
             final OsmDataLayer editLayer = getOsmDataLayer();
-            if ((editLayer != null && !selected.isEmpty()
-                    && (MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER))
-                    || (maxAddition == 0 && ExpertToggleAction.isExpert())) {
+            if (editLayer != null && !selected.isEmpty()
+                    && (MapWithAIDataUtils.getAddedObjects() < maxAddition * MAX_ADD_MULTIPLIER
+                            || (maxAddition == 0 && ExpertToggleAction.isExpert()))) {
                 final MapWithAIAddCommand command = new MapWithAIAddCommand(mapWithAI, editLayer, selected);
                 GuiHelper.runInEDTAndWait(() -> UndoRedoHandler.getInstance().add(command));
                 if (MapWithAIPreferenceHelper.isSwitchLayers()) {

@@ -8,14 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -28,6 +23,8 @@ import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.INode;
+import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -39,6 +36,7 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
@@ -289,6 +287,7 @@ class MapWithAIMoveActionTest {
      * features
      */
     @Test
+    @LoggingHandler
     void testNonRegression22760() {
         final Node originalAddrNode = TestUtils.newNode("addr:city=Topeka\naddr:housenumber=1824\naddr:postcode=66615\n"
                 + "addr:street=Southwest Stutley Road\nbuilding=residential\nlbcs:activity:code=1100\n"
@@ -305,13 +304,10 @@ class MapWithAIMoveActionTest {
         final Node mwaiAddrNode = TestUtils.newNode(
                 "addr:city=Unincorporated\n" + "addr:housenumber=1824\n" + "addr:postcode=66615\n" + "addr:state=KS\n"
                         + "addr:street=Southwest Stutley Road\n" + "building=yes\n" + "source=esri_USDOT_Kansas");
-        final DataSet osm = new DataSet();
-        final DataSet mwai = new DataSet();
-        final OsmDataLayer osmLayer = new OsmDataLayer(osm, "testNonRegression22760", null);
-        final MapWithAILayer mapWithAILayer = new MapWithAILayer(mwai, "testNonRegression22760", null);
-        MainApplication.getLayerManager().addLayer(osmLayer);
-        MainApplication.getLayerManager().addLayer(mapWithAILayer);
-        MainApplication.getLayerManager().setActiveLayer(mapWithAILayer);
+        final DataSet osm = this.osmLayer.getDataSet();
+        final DataSet mwai = this.mapWithAIData;
+        osm.clear();
+        mwai.clear();
         originalAddrNode.setCoor(new LatLon(39.0331818, -95.7910286));
         originalAddrNode.setOsmId(2081834687, 3);
         mwaiAddrNode.setCoor(new LatLon(39.0331883, -95.7910057));
@@ -328,30 +324,8 @@ class MapWithAIMoveActionTest {
             GuiHelper.runInEDTAndWait(() -> mwai.setSelected(mwai.allPrimitives()));
         }
 
-        final List<LogRecord> logs = new ArrayList<>();
-        final Handler testHandler = new Handler() {
-            @Override
-            public void publish(LogRecord record) {
-                logs.add(record);
-            }
+        this.moveAction.actionPerformed(null);
 
-            @Override
-            public void flush() {
-                // Do nothing
-            }
-
-            @Override
-            public void close() {
-                // Do nothing
-            }
-        };
-        Logging.getLogger().addHandler(testHandler);
-        try {
-            this.moveAction.actionPerformed(null);
-            assertAll(logs.stream().map(logRecord -> () -> fail(logRecord.getThrown())));
-        } finally {
-            Logging.getLogger().removeHandler(testHandler);
-        }
         assertEquals(2, osm.getWays().size(), "Both buildings should be added, even though one is a duplicate. "
                 + "If deduplicate buildings in the future, this test should be updated.");
         final Way actualWay = osm.getWays().stream().filter(way -> way.getNumKeys() > 3).findFirst()
@@ -362,5 +336,26 @@ class MapWithAIMoveActionTest {
         assertEquals(10, osm.getNodes().stream().filter(node -> !node.isDeleted()).count());
         assertAll(osm.getNodes().stream().filter(node -> !node.isDeleted())
                 .map(node -> () -> assertTrue(node.getParentWays().contains(actualWay))));
+    }
+
+    @Test
+    @LoggingHandler
+    void testDeletedAddressAddingAddress() {
+        this.mapWithAIData.clear();
+        this.osmLayer.getDataSet().clear();
+        final DataSet osm = this.osmLayer.getDataSet();
+        final Node osmAddr = TestUtils.newNode("addr:street=Test addr:housenumber=1");
+        final Node mwaiAddr = TestUtils.newNode("addr:street=Test addr:housenumber=1 addr:city=Unknown");
+        osm.addPrimitive(osmAddr);
+        this.mapWithAIData.addPrimitive(mwaiAddr);
+        UndoRedoHandler.getInstance().add(DeleteCommand.delete(Collections.singletonList(osmAddr), true, true));
+        this.mapWithAIData.setSelected(mwaiAddr);
+        this.moveAction.actionPerformed(null);
+        assertEquals(1, osm.allNonDeletedPrimitives().size());
+        final IPrimitive addr = osm.allNonDeletedPrimitives().iterator().next();
+        assertTrue(addr instanceof INode);
+        assertEquals("Unknown", addr.get("addr:city"));
+        assertEquals("1", addr.get("addr:housenumber"));
+        assertEquals("Test", addr.get("addr:street"));
     }
 }
