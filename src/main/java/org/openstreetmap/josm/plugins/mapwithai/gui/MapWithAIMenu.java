@@ -67,7 +67,7 @@ public class MapWithAIMenu extends JMenu {
     public MapWithAIMenu() {
         /* I18N: mnemonic: I */
         super(trc("menu", "MapWithAI"));
-        ImageProvider mapwithai = new ImageProvider("MapWithAI").setOptional(true)
+        ImageProvider mapwithai = new ImageProvider("mapwithai").setOptional(true)
                 .setMaxSize(ImageProvider.ImageSizes.MENU);
         ImageResource resource = mapwithai.getResource();
         if (resource != null) {
