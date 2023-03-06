@@ -1,9 +1,11 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.commands;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -165,5 +167,50 @@ class MergeBuildingAddressTest {
         DeleteCommand.delete(Collections.singletonList(building1)).executeCommand();
         Command command = conflation.getCommand(Collections.singletonList(addr));
         assertNull(command);
+    }
+
+    @Test
+    void testNonRegression22789() {
+        final Node addr = TestUtils.newNode("addr:city=Unincorporated\n" + "addr:housenumber=5144\n"
+                + "addr:postcode=66617\n" + "addr:state=KS\n" + "addr:street=Northwest Rochester Road\n"
+                + "current_id=-138648\n" + "source=esri_USDOT_Kansas\n" + "building=yes");
+        addr.setCoor(new LatLon(39.1399708, -95.6723393));
+        final Node oldAddr = TestUtils.newNode("addr:city=Topeka\n" + "addr:housenumber=5144\n"
+                + "addr:postcode=66617\n" + "addr:street=Northwest Rochester Road\n" + "building=residential\n"
+                + "lbcs:activity:code=1100\n" + "lbcs:activity:name=Household activities\n"
+                + "lbcs:function:code=1101\n" + "lbcs:function:name=Single family residence (detached)\n"
+                + "source=bing;http://gis.snco.us");
+        oldAddr.setCoor(new LatLon(39.1399958, -95.6723318));
+        oldAddr.setOsmId(2077593766, 6);
+        final Way building = TestUtils.newWay("building=yes", new Node(new LatLon(39.1400507, -95.672136)),
+                new Node(new LatLon(39.1398258, -95.6723906)), new Node(new LatLon(39.1399037, -95.6725051)),
+                new Node(new LatLon(39.1401287, -95.6722505)));
+        building.addNode(building.firstNode());
+        building.setOsmId(198058477, 1);
+        building.getNode(0).setOsmId(2082491004, 1);
+        building.getNode(1).setOsmId(2082491000, 1);
+        building.getNode(2).setOsmId(2082491002, 1);
+        building.getNode(3).setOsmId(2082491005, 1);
+        final DataSet ds = new DataSet();
+        ds.addPrimitiveRecursive(building);
+        ds.addPrimitive(oldAddr);
+        ds.addPrimitive(addr);
+        MergeBuildingAddress conflation = new MergeBuildingAddress(ds);
+        assertNotNull(conflation.getCommand(Collections.singletonList(addr)));
+        DeleteCommand.delete(Collections.singletonList(oldAddr), true, true).executeCommand();
+        final Command mergeCommand = conflation.getCommand(Collections.singletonList(addr));
+        assertNotNull(mergeCommand);
+        mergeCommand.executeCommand();
+        assertAll(() -> assertTrue(addr.isDeleted()), () -> assertTrue(oldAddr.isDeleted()),
+                () -> assertEquals(5, building.getNodesCount()), () -> assertTrue(building.isClosed()),
+                () -> assertEquals(2082491004, building.getNode(0).getOsmId()),
+                () -> assertEquals(2082491000, building.getNode(1).getOsmId()),
+                () -> assertEquals(2082491002, building.getNode(2).getOsmId()),
+                () -> assertEquals(2082491005, building.getNode(3).getOsmId()),
+                () -> assertEquals("5144", building.get("addr:housenumber")),
+                () -> assertEquals("66617", building.get("addr:postcode")),
+                () -> assertEquals("KS", building.get("addr:state")),
+                () -> assertEquals("Northwest Rochester Road", building.get("addr:street")),
+                () -> assertEquals("yes", building.get("building")));
     }
 }

@@ -133,8 +133,9 @@ public class MergeBuildingAddress extends AbstractConflationCommand {
         searchCollection.addAll(prim.getDataSet().searchNodes(bbox));
         searchCollection.addAll(prim.getDataSet().searchWays(bbox));
         searchCollection.addAll(prim.getDataSet().searchRelations(bbox));
-        return Geometry.filterInsideAnyPolygon(searchCollection, prim).stream().filter(Node.class::isInstance)
-                .map(Node.class::cast).filter(n -> n.hasTag(KEY)).collect(Collectors.toList());
+        return Geometry.filterInsideAnyPolygon(searchCollection, prim).stream().filter(p -> !p.isDeleted())
+                .filter(Node.class::isInstance).map(Node.class::cast).filter(n -> n.hasTag(KEY))
+                .collect(Collectors.toList());
     }
 
     /**
