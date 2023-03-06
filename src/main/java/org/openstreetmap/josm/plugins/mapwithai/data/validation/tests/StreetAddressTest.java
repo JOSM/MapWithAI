@@ -87,10 +87,10 @@ public class StreetAddressTest extends Test {
             Collection<String> names = getSurroundingHighwayNames(entry.getKey());
             for (OsmPrimitive primitive : entry.getValue()) {
                 if (!primitive.isOutsideDownloadArea()) {
-                    if (this.isBeforeUpload && !names.contains(primitive.get(ADDR_STREET))
+                    if ((this.partialSelection || this.isBeforeUpload) && !names.contains(primitive.get(ADDR_STREET))
                             && primitive.getDataSet() != null) {
                         BBox bbox = new BBox(primitive.getBBox());
-                        bbox.addPrimitive(primitive, 0.001);
+                        bbox.addPrimitive(primitive, 0.01);
                         for (Way way : primitive.getDataSet().searchWays(bbox)) {
                             if (isHighway(way)) {
                                 this.visit(way);
@@ -177,7 +177,7 @@ public class StreetAddressTest extends Test {
             return Collections.emptySet();
         }
         Set<String> surroundingWays = new HashSet<>();
-        int surrounding = 1;
+        int surrounding = 2;
         while (surroundingWays.isEmpty()) {
             for (int x = -surrounding; x <= surrounding; x++) {
                 for (int y = -surrounding; y <= surrounding; y++) {
