@@ -244,9 +244,11 @@ public final class MapWithAIDataUtils {
      */
     public static ForkJoinPool getForkJoinPool() {
         if (Utils.isRunningWebStart() || System.getSecurityManager() != null) {
-            if (Objects.isNull(forkJoinPool) || forkJoinPool.isShutdown()) {
-                forkJoinPool = Utils.newForkJoinPool(MapWithAIPlugin.NAME.concat(".forkjoinpoolthreads"),
-                        MapWithAIPlugin.NAME, Thread.NORM_PRIORITY);
+            synchronized (MapWithAIDataUtils.class) {
+                if (Objects.isNull(forkJoinPool) || forkJoinPool.isShutdown()) {
+                    forkJoinPool = Utils.newForkJoinPool(MapWithAIPlugin.NAME.concat(".forkjoinpoolthreads"),
+                            MapWithAIPlugin.NAME, Thread.NORM_PRIORITY);
+                }
             }
             return forkJoinPool;
         }
