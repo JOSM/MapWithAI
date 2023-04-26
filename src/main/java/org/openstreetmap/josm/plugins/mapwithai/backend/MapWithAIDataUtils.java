@@ -31,6 +31,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ConditionalOptionPaneUtil;
+import org.openstreetmap.josm.gui.ExceptionDialogUtil;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -43,6 +44,7 @@ import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.tools.ExceptionUtil;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -191,15 +193,18 @@ public final class MapWithAIDataUtils {
                 original.mergeFrom(ds.join());
             } catch (RuntimeException e) {
                 final String notificationMessage;
-                if (e.getCause() instanceof IllegalDataException) {
-                    notificationMessage = tr("MapWithAI servers may be down.");
+                final Throwable cause = e.getCause();
+                if (cause instanceof IllegalDataException) {
+                    notificationMessage = ExceptionUtil.explainException((Exception) cause);
                     Logging.trace(e);
+                    Notification notification = new Notification();
+                    GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
+                    GuiHelper.runInEDT(notification::show);
+                } else if (cause instanceof OsmTransferException) {
+                    ExceptionDialogUtil.explainException((OsmTransferException) cause);
                 } else {
                     throw e;
                 }
-                Notification notification = new Notification();
-                GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
-                GuiHelper.runInEDT(notification::show);
             }
         }
     }
