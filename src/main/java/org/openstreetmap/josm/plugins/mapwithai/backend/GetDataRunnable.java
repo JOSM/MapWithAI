@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -269,7 +268,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         mergeNodes(dataSet);
         cleanupDataSet(dataSet);
         mergeWays(dataSet);
-        removeDuplicateWays(dataSet);
         PreConflatedDataUtils.removeConflatedData(dataSet, info);
         removeAlreadyAddedData(dataSet);
         List<Way> ways = dataSet.searchWays(boundsToUse.toBBox()).stream().filter(w -> w.hasKey("highway"))
@@ -280,27 +278,6 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         (boundsToUse.isCollapsed() || boundsToUse.isOutOfTheWorld() ? dataSet.getWays()
                 : dataSet.searchWays(boundsToUse.toBBox())).stream().filter(way -> !way.isDeleted())
                         .forEach(GetDataRunnable::cleanupArtifacts);
-    }
-
-    /**
-     * Remove duplicate ways (mostly from MS buildings)
-     *
-     * @param dataSet The dataset to filter
-     * @see <a href="https://github.com/facebook/Rapid/issues/873">Rapid #873</a>
-     */
-    private static void removeDuplicateWays(DataSet dataSet) {
-        final Collection<Way> toDelete = new ArrayList<>();
-        final Map<Integer, long[]> visited = new HashMap<>();
-        for (Way way : dataSet.getWays()) {
-            long[] nodeIds = way.getNodes().stream().mapToLong(AbstractPrimitive::getUniqueId).sorted().toArray();
-            int hash = Arrays.hashCode(nodeIds);
-            if (visited.containsKey(hash) && Arrays.equals(visited.get(hash), nodeIds)) {
-                toDelete.add(way);
-            } else {
-                visited.put(hash, nodeIds);
-            }
-        }
-        Optional.ofNullable(DeleteCommand.delete(toDelete, true, true)).ifPresent(Command::executeCommand);
     }
 
     /**
