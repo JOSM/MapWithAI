@@ -30,8 +30,7 @@ repositories {
 def versions = [
   awaitility: "4.2.0",
   equalsverifier: "3.15",
-  // Errorprone 2.11 requires Java 11+
-  errorprone: (JavaVersion.toVersion(getJavaVersion()) >= JavaVersion.VERSION_11) ? "2.20.0" : "2.10.0",
+  errorprone: "2.20.0",
   findsecbugs: "1.12.0",
   jacoco: "0.8.7",
   jmockit: "1.49.a",
@@ -77,7 +76,7 @@ int getJavaVersion() {
   if (ci) {
     return Integer.valueOf(JavaVersion.current().getMajorVersion())
   }
-  return 8
+  return 17
 }
 
 logger.lifecycle("Using Java " + getJavaVersion())
@@ -212,6 +211,7 @@ spotless {
 josm {
   debugPort = 7055
   manifest {
+    setMinJavaVersion 17
     oldVersionDownloadLink 18218, "v1.9.20", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.9.20/mapwithai.jar")
     oldVersionDownloadLink 17903, "v1.8.7", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.8.7/mapwithai.jar")
     oldVersionDownloadLink 17084, "v1.7.1.6", new URL("https://github.com/JOSM/MapWithAI/releases/download/v1.7.1.6/mapwithai.jar")
