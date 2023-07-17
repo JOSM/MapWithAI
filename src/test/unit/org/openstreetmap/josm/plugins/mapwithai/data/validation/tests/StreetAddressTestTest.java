@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -10,7 +11,6 @@ import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.AbstractPrimitive;
@@ -19,19 +19,15 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.OsmValidator;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.Pair;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@BasicPreferences // Needed due to OsmValidator static initialization initializing tests which in
-                  // turn need preferences
+// Needed due to OsmValidator static initialization initializing tests which in turn need preferences
+@BasicPreferences
+@Projection
 class StreetAddressTestTest {
     private final static String ADDR_STREET = "addr:street";
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new JOSMTestRules().projection();
 
     @BeforeAll
     static void setup() {
@@ -130,4 +126,16 @@ class StreetAddressTestTest {
         assertTrue(BBox.bboxesAreFunctionallyEqual(bbox, new BBox(-0.01, -0.01, 0.01, 0.01), 0.0));
     }
 
+    /**
+     * Non-regression test for
+     * <a href="https://josm.openstreetmap.de/ticket/23062">#23062</a>
+     */
+    @Test
+    void testNonRegression23062() {
+        final StreetAddressTest test = new StreetAddressTest();
+        final Node node = new Node();
+        node.put(ADDR_STREET, "Test Road 1");
+        assertDoesNotThrow(() -> test.visit(node));
+        assertTrue(test.getErrors().isEmpty());
+    }
 }

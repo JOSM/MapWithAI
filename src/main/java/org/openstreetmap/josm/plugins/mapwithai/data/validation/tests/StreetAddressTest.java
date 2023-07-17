@@ -78,7 +78,9 @@ public class StreetAddressTest extends Test {
 
     @Override
     public void visit(Node node) {
-        realVisit(node);
+        if (node.isLatLonKnown()) {
+            realVisit(node);
+        }
     }
 
     @Override
@@ -164,7 +166,7 @@ public class StreetAddressTest extends Test {
         }
     }
 
-    private static Collection<String> getWayNames(Way way) {
+    private static Collection<String> getWayNames(IPrimitive way) {
         return way.getInterestingTags().entrySet().stream()
                 .filter(e -> (e.getKey().contains("name") || e.getKey().contains("ref"))
                         && !e.getKey().contains("tiger"))
@@ -204,24 +206,25 @@ public class StreetAddressTest extends Test {
      *         way.
      */
     static Pair<Way, Double> distanceToWay(Way way, OsmPrimitive prim) {
-        final Node[] nodes;
+        final ILatLon[] nodes;
         if (prim instanceof Node) {
-            nodes = new Node[] { (Node) prim };
+            nodes = new ILatLon[] { (Node) prim };
         } else if (prim instanceof Way) {
-            nodes = ((Way) prim).getNodes().toArray(new Node[0]);
+            nodes = ((Way) prim).getNodes().toArray(new ILatLon[0]);
         } else if (prim instanceof Relation) {
-            nodes = ((Relation) prim).getMemberPrimitives().stream().filter(p -> p instanceof Node || p instanceof Way)
-                    .flatMap(p -> p instanceof Node ? Stream.of((Node) p) : ((Way) p).getNodes().stream())
-                    .toArray(Node[]::new);
+            nodes = ((Relation) prim).getMemberPrimitives().stream()
+                    .filter(p -> p instanceof ILatLon || p instanceof Way)
+                    .flatMap(p -> p instanceof ILatLon ? Stream.of((ILatLon) p) : ((Way) p).getNodes().stream())
+                    .toArray(ILatLon[]::new);
         } else {
             throw new IllegalArgumentException("Unknown primitive type: " + prim.getClass());
         }
         double dist = Double.NaN;
-        List<Node> wayNodes = way.getNodes();
+        List<? extends INode> wayNodes = way.getNodes();
         for (int i = 0; i < wayNodes.size() - 1; i++) {
-            final Node a = wayNodes.get(i);
-            final Node b = wayNodes.get(i + 1);
-            for (Node node : nodes) {
+            final ILatLon a = wayNodes.get(i);
+            final ILatLon b = wayNodes.get(i + 1);
+            for (ILatLon node : nodes) {
                 double tDist = getSegmentNodeDistSq(a, b, node);
                 if (Double.isNaN(dist) || (!Double.isNaN(tDist) && tDist < dist)) {
                     dist = tDist;
