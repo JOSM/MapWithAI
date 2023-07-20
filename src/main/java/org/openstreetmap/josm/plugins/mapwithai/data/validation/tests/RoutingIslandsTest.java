@@ -42,6 +42,11 @@ import org.openstreetmap.josm.tools.Pair;
 public class RoutingIslandsTest extends Test {
 
     private static final Map<Integer, Severity> SEVERITY_MAP = new HashMap<>();
+    /**
+     * A map of &lt;direction, &lt;mode, direction:mode&gt;&gt; to reduce concat
+     * costs
+     */
+    private static final Map<String, Map<String, String>> DIRECTION_MAP = new HashMap<>(3);
     /** The code for the routing island validation test */
     public static final int ROUTING_ISLAND = 55000;
     /** The code for ways that are not connected to other ways, and are routable */
@@ -174,11 +179,9 @@ public class RoutingIslandsTest extends Test {
                 .filter(way -> !incomingWays.contains(way) || !outgoingWays.contains(way))
                 .filter(way -> Access.getPositiveAccessValues().contains(
                         getDefaultAccessTags(way).getOrDefault(currentTransportMode, Access.AccessTags.NO.getKey())))
-                .collect(Collectors.toSet()))
-                        .stream()
-                        .map(way -> new Pair<>(
-                                (incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
-                        .collect(Collectors.toList());
+                .collect(Collectors.toSet())).stream()
+                .map(way -> new Pair<>((incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
+                .collect(Collectors.toList());
         createErrors(problematic, currentTransportMode);
     }
 
@@ -441,10 +444,21 @@ public class RoutingIslandsTest extends Test {
         tags.putAll(Access.expandAccessValues(tags));
 
         for (String direction : Arrays.asList("", "forward:", "backward:")) {
-            Access.getTransportModes().stream().map(direction::concat).filter(tags::containsKey)
-                    .forEach(mode -> access.put(mode, tags.get(direction.concat(mode))));
+            access.putAll(Access.getTransportModes().stream().map(mode -> getCachedDirectionMode(direction, mode))
+                    .filter(tags::containsKey).collect(Collectors.toMap(mode -> mode, tags::get)));
         }
         return access;
+    }
+
+    private static String getCachedDirectionMode(String direction, String mode) {
+        if (!DIRECTION_MAP.containsKey(direction)) {
+            DIRECTION_MAP.put(direction, new HashMap<>(Access.getTransportModes().size()));
+        }
+        final var directionMap = DIRECTION_MAP.get(direction);
+        if (!directionMap.containsKey(mode)) {
+            directionMap.put(mode, direction.concat(mode));
+        }
+        return directionMap.get(mode);
     }
 
     private static TagMap getDefaultWaterwayAccessTags(TagMap tags) {

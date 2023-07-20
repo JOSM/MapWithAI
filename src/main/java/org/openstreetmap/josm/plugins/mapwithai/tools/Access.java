@@ -329,6 +329,9 @@ public final class Access {
          */
         TRAIN("train", RAIL_TRANSPORT_TYPE);
 
+        /** Used to avoid array instantiations */
+        private static AccessTags[] allValues = values();
+
         private final String key;
         private final AccessTags type;
 
@@ -382,7 +385,7 @@ public final class Access {
          * @return The AccessTags enum that matches the childrenMode, or null
          */
         public static AccessTags get(String childrenMode) {
-            for (AccessTags value : values()) {
+            for (AccessTags value : allValues) {
                 if (value.getKey().equalsIgnoreCase(childrenMode)) {
                     return value;
                 }
@@ -400,7 +403,7 @@ public final class Access {
          * @return A collection of access tags that match the given transport type
          */
         public static Collection<AccessTags> getByTransportType(AccessTags type) {
-            return Arrays.stream(values()).filter(type::parentOf).collect(Collectors.toList());
+            return Arrays.stream(allValues).filter(type::parentOf).collect(Collectors.toList());
         }
     }
 
