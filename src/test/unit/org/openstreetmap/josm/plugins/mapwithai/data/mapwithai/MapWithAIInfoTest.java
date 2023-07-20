@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import javax.json.Json;
 import javax.json.JsonArray;
 
+import java.awt.Polygon;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
@@ -125,6 +126,8 @@ class MapWithAIInfoTest {
     @Test
     void testEquals() {
         EqualsVerifier.forClass(MapWithAIInfo.class).suppress(Warning.NONFINAL_FIELDS)
+                .withPrefabValues(Polygon.class, new Polygon(),
+                        new Polygon(new int[] { 0, 0, 1, 1 }, new int[] { 0, 1, 0, 1 }, 4))
                 .withOnlyTheseFields("url", "sourceType").usingGetClass().verify();
     }
 
