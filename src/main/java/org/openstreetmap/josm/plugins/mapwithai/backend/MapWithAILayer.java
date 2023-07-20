@@ -16,6 +16,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -55,6 +56,8 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.tools.BlacklistUtils;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.spi.preferences.PreferenceChangeEvent;
+import org.openstreetmap.josm.spi.preferences.PreferenceChangedListener;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Utils;
@@ -66,8 +69,8 @@ import org.openstreetmap.josm.tools.Utils;
  * @author Taylor Smock
  *
  */
-public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener {
-    private static final Collection<String> COMPACT = Arrays.asList("esri");
+public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeListener, PreferenceChangedListener {
+    private static final Collection<String> COMPACT = Collections.singleton("esri");
     private Integer maximumAddition;
     private MapWithAIInfo url;
     private Boolean switchLayers;
@@ -89,15 +92,15 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         lock = new MapLock();
         MainApplication.getLayerManager().addActiveLayerChangeListener(this);
         new ContinuousDownloadAction(this); // Initialize data source listeners
+        Config.getPref().addKeyPreferenceChangeListener("download.mapwithai.data", this);
     }
 
     @Override
     public String getChangesetSourceTag() {
         if (MapWithAIDataUtils.getAddedObjects() > 0) {
-            TreeSet<String> sources = new TreeSet<>(
-                    MapWithAIDataUtils.getAddedObjectsSource().stream().filter(Objects::nonNull)
-                            .map(string -> COMPACT.stream().filter(string::contains).findAny().orElse(string))
-                            .collect(Collectors.toSet()));
+            TreeSet<String> sources = MapWithAIDataUtils.getAddedObjectsSource().stream().filter(Objects::nonNull)
+                    .map(string -> COMPACT.stream().filter(string::contains).findAny().orElse(string))
+                    .collect(Collectors.toCollection(TreeSet::new));
             sources.add("MapWithAI");
             return String.join("; ", sources);
         }
@@ -131,18 +134,17 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     @Override
     public Object getInfoComponent() {
         final Object p = super.getInfoComponent();
-        if (p instanceof JPanel) {
-            final JPanel panel = (JPanel) p;
+        if (p instanceof JPanel panel) {
             if (maximumAddition != null) {
-                panel.add(new JLabel(tr("Maximum Additions: {0}", maximumAddition), SwingConstants.HORIZONTAL),
+                panel.add(new JLabel(tr("Maximum Additions: {0}", maximumAddition), SwingConstants.CENTER),
                         GBC.eop().insets(15, 0, 0, 0));
             }
             if (url != null) {
-                panel.add(new JLabel(tr("URL: {0}", url.getUrlExpanded()), SwingConstants.HORIZONTAL),
+                panel.add(new JLabel(tr("URL: {0}", url.getUrlExpanded()), SwingConstants.CENTER),
                         GBC.eop().insets(15, 0, 0, 0));
             }
             if (switchLayers != null) {
-                panel.add(new JLabel(tr("Switch Layers: {0}", switchLayers), SwingConstants.HORIZONTAL),
+                panel.add(new JLabel(tr("Switch Layers: {0}", switchLayers), SwingConstants.CENTER),
                         GBC.eop().insets(15, 0, 0, 0));
             }
         }
@@ -154,7 +156,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         Collection<Class<? extends Action>> forbiddenActions = Arrays.asList(LayerSaveAction.class,
                 LayerSaveAsAction.class, DuplicateAction.class, LayerGpxExportAction.class,
                 ConvertToGpxLayerAction.class);
-        final List<Action> actions = Arrays.asList(super.getMenuEntries()).stream()
+        final List<Action> actions = Arrays.stream(super.getMenuEntries())
                 .filter(action -> forbiddenActions.stream().noneMatch(clazz -> clazz.isInstance(action)))
                 .collect(Collectors.toCollection(ArrayList::new));
         if (actions.isEmpty()) {
@@ -169,7 +171,22 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
         return lock;
     }
 
+    @Override
+    public void preferenceChanged(PreferenceChangeEvent e) {
+        if ("download.mapwithai.data".equals(e.getKey())) {
+            final Object value = e.getNewValue().getValue();
+            if (value instanceof Boolean bool) {
+                this.continuousDownload = bool;
+            } else if (value instanceof String str) {
+                this.continuousDownload = Boolean.parseBoolean(str);
+            } else {
+                this.continuousDownload = false;
+            }
+        }
+    }
+
     private class MapLock extends ReentrantLock {
+        @Serial
         private static final long serialVersionUID = 5441350396443132682L;
         private boolean dataSetLocked;
 
@@ -209,7 +226,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     private static boolean checkIfToggleLayer() {
         final List<String> keys = Config.getPref().getKeySet().parallelStream()
                 .filter(string -> string.contains(MapWithAIPlugin.NAME) && string.contains("boolean:toggle_with_layer"))
-                .collect(Collectors.toList());
+                .toList();
         boolean toggle = false;
         if (keys.size() == 1) {
             toggle = Config.getPref().getBoolean(keys.get(0), false);
@@ -219,6 +236,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
 
     @Override
     public synchronized void destroy() {
+        Config.getPref().removeKeyPreferenceChangeListener("download.mapwithai.data", this);
         super.destroy();
         MainApplication.getLayerManager().removeActiveLayerChangeListener(this);
     }
@@ -295,13 +313,8 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     /**
      * Compare OsmPrimitives in a custom manner
      */
-    private static class OsmComparator implements Comparator<OsmPrimitive>, Serializable {
-        private static final long serialVersionUID = 594813918562412160L;
-        final Collection<OsmPrimitive> previousSelection;
-
-        public OsmComparator(Collection<OsmPrimitive> previousSelection) {
-            this.previousSelection = previousSelection;
-        }
+    private record OsmComparator(
+            Collection<OsmPrimitive> previousSelection) implements Comparator<OsmPrimitive>, Serializable {
 
         @Override
         public int compare(OsmPrimitive o1, OsmPrimitive o2) {
@@ -338,6 +351,7 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
      * @author Taylor Smock
      */
     public static class ContinuousDownloadAction extends AbstractAction implements LayerAction {
+        @Serial
         private static final long serialVersionUID = -3528632887550700527L;
         private final transient MapWithAILayer layer;
 
