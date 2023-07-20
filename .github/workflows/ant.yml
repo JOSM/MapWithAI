@@ -21,6 +21,7 @@ jobs:
         josm-revision: ["", "r18589"]
     uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v1
     with:
+      java-version: 17
       josm-revision: ${{ matrix.josm-revision }}
       plugin-jar-name: 'mapwithai'
       perform-revision-tagging: ${{ github.repository == 'JOSM/MapWithAI' && github.ref_type == 'branch' && github.ref_name == 'master' && github.event_name != 'schedule' && github.event_name != 'pull_request' && matrix.josm-revision == 'r18589' }}
