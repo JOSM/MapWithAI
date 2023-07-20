@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -27,16 +26,12 @@ import org.openstreetmap.josm.data.osm.PrimitiveData;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.Geometry;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
+@Projection
 class StreetAddressOrderTest {
     private static final String ADDR_STREET = "addr:street";
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().projection();
 
     @Test
     void testVisitWay() {

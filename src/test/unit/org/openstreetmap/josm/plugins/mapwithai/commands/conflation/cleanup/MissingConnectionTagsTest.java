@@ -14,7 +14,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -28,24 +27,22 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.cleanup.MissingConnecti
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.WoundedTest;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link MissingConnectionTags}
  *
  * @author Taylor Smock
  */
-@NoExceptions
 @BasicPreferences
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
+@Main
+@NoExceptions
+@Projection
 class MissingConnectionTagsTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules josmTestRules = new JOSMTestRules().projection().main();
     private DataSet ds;
     private MissingConnectionTags missing;
 

@@ -10,7 +10,6 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -21,12 +20,11 @@ import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.commands.AlreadyConflatedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.PreConflatedDataUtils;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
+@Projection
 class AlreadyConflatedCommandTest {
-    @RegisterExtension
-    JOSMTestRules rule = new JOSMTestRules().projection();
     private AlreadyConflatedCommand alreadyConflatedCommand;
 
     @BeforeEach

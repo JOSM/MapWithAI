@@ -13,7 +13,6 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.actions.CopyAction;
 import org.openstreetmap.josm.actions.PasteAction;
@@ -25,8 +24,9 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.MainLayerManager;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -39,6 +39,8 @@ import mockit.MockUp;
  * @author Taylor Smock
  */
 @BasicPreferences
+@Main
+@Projection
 class MapWithAICopyProhibitTest {
     private static class BlacklistUtilsMock extends MockUp<BlacklistUtils> {
         @Mock
@@ -46,10 +48,6 @@ class MapWithAICopyProhibitTest {
             return false;
         }
     }
-
-    // preferences for nodes, main for actions, projection for mapview
-    @RegisterExtension
-    JOSMTestRules josmTestRules = new JOSMTestRules().main().projection();
 
     @Test
     void testDestroyable() {

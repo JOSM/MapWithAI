@@ -48,12 +48,14 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-import org.openstreetmap.josm.tools.Territories;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -63,12 +65,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  */
 @BasicPreferences
+@Main
 @MapWithAISources
+@Projection
+@Territories(Territories.Initialize.ALL)
 @Wiremock
 class MapWithAILayerTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().main().projection().fakeAPI().territories();
+    static JOSMTestRules test = new MapWithAITestRules().main().fakeAPI();
 
     MapWithAILayer layer;
 
@@ -76,7 +81,6 @@ class MapWithAILayerTest {
     static void beforeAll() {
         TestUtils.assumeWorkingJMockit();
         new MapWithAIPluginMock();
-        Territories.initialize(); // Required to avoid an NPE (see JOSM-19132)
     }
 
     @BeforeEach
@@ -234,6 +238,9 @@ class MapWithAILayerTest {
     void testGetMenuEntries() {
         Layer layer = MapWithAIDataUtils.getLayer(true);
         await().atMost(Durations.ONE_SECOND).until(() -> MapWithAIDataUtils.getLayer(false) != null);
+        if (!MainApplication.getLayerManager().containsLayer(layer)) {
+            MainApplication.getLayerManager().addLayer(layer);
+        }
         Action[] actions = layer.getMenuEntries();
         assertTrue(actions.length > 0);
         assertEquals(ContinuousDownloadAction.class, layer.getMenuEntries()[actions.length - 3].getClass());

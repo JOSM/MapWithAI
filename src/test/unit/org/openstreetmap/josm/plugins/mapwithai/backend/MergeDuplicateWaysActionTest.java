@@ -11,7 +11,6 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -20,20 +19,17 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * @author Taylor Smock
  */
 @BasicPreferences
+@Main
+@Projection
 class MergeDuplicateWaysActionTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rules = new JOSMTestRules().projection().main();
-
     MergeDuplicateWaysAction action;
 
     @BeforeEach

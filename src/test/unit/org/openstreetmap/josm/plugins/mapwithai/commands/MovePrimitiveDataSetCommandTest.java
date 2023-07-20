@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.MoveCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
@@ -24,16 +23,11 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 @Command
+@Projection
 class MovePrimitiveDataSetCommandTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().projection();
-
     @Test
     void testMovePrimitives() {
         final Collection<OsmPrimitive> added = new ArrayList<>();

@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -39,11 +38,10 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -63,10 +61,8 @@ import com.github.tomakehurst.wiremock.matching.UrlPathPattern;
 @NoExceptions
 @BasicPreferences
 @MapWithAISources
+@Projection
 class AddMapWithAILayerActionTest {
-    @RegisterExtension
-    static JOSMTestRules rule = new MapWithAITestRules().projection();
-
     @Test
     void testAddMapWithAILayerActionTest() {
         MapWithAIInfo info = MapWithAILayerInfo.getInstance().getLayers().stream()

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -14,8 +13,8 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test case for {@link PreConflatedDataUtils}
@@ -24,9 +23,8 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
  *
  */
 @BasicPreferences
+@Projection
 class PreConflatedDataUtilsTest {
-    @RegisterExtension
-    JOSMTestRules rules = new JOSMTestRules().projection();
     private DataSet ds;
 
     @BeforeEach

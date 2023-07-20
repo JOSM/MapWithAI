@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -18,22 +17,14 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test class for {@link ConnectedCommand}
  */
 @NoExceptions
+@Projection
 class ConnectedCommandTest {
-    /**
-     * Setup test.
-     */
-    @RegisterExtension
-    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules rule = new JOSMTestRules().projection();
-
     @Test
     void testVariousConditions() {
         DataSet ds = new DataSet();

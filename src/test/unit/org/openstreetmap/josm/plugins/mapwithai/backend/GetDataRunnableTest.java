@@ -33,6 +33,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAIS
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.Geometry;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -44,11 +45,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @NoExceptions
 @MapWithAISources
+@Projection
 @Territories
 class GetDataRunnableTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules rule = new MapWithAITestRules().projection().fakeAPI();
+    static JOSMTestRules rule = new MapWithAITestRules().fakeAPI();
 
     @Test
     void testAddMissingElement() {

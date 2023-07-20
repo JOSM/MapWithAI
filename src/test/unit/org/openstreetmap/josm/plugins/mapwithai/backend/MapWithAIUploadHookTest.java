@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -32,26 +31,26 @@ import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test class for {@link MapWithAIUploadHook}
  *
  * @author Taylor Smock
  */
-@MapWithAISources
 @BasicPreferences
+@Main
+@MapWithAISources
+@Projection
+@Territories
 @Wiremock
 class MapWithAIUploadHookTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().main().projection().territories();
+
     private PluginInformation info;
     private MapWithAILayer aiLayer;
     private Way way1;

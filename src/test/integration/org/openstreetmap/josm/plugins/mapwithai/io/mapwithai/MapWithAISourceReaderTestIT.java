@@ -11,16 +11,14 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Integration test for {@link MapWithAISourceReader}
@@ -29,12 +27,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @NoExceptions
 @BasicPreferences
+@Projection
+@Territories
 @Wiremock
 class MapWithAISourceReaderTestIT {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    public JOSMTestRules rule = new JOSMTestRules().territories().projection();
-
     @Test
     @Wiremock(false)
     void testDefaultSourceIT() throws IOException {

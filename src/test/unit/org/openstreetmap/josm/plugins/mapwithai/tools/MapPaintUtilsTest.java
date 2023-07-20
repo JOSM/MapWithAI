@@ -11,7 +11,6 @@ import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
@@ -19,17 +18,14 @@ import org.openstreetmap.josm.gui.mappaint.StyleSetting;
 import org.openstreetmap.josm.gui.mappaint.StyleSource;
 import org.openstreetmap.josm.gui.mappaint.mapcss.MapCSSStyleSource;
 import org.openstreetmap.josm.io.CachedFile;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 @BasicPreferences
+@Projection
 @Wiremock
 class MapPaintUtilsTest {
-    @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().projection();
-
     @Test
     void testAddPaintStyle() {
         MapPaintUtils.removeMapWithAIPaintStyles();

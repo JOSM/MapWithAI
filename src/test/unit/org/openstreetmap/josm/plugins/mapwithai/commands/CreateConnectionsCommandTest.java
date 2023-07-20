@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
@@ -26,27 +25,21 @@ import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Tests for {@link CreateConnectionsCommand}
  *
  * @author Taylor Smock
  */
-@MapWithAISources
-@Wiremock
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
+@MapWithAISources
+@Projection
+@Wiremock
 class CreateConnectionsCommandTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().projection();
-
     /**
      * Test method for
      * {@link CreateConnectionsCommand#createConnections(DataSet, Collection)}.

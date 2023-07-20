@@ -12,25 +12,21 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test class for {@link MapWithAIDefaultLayerTableModel}
  *
  * @author Taylor Smock
  */
-@Wiremock
 @MapWithAISources
+@Projection
+@Wiremock
 class MapWithAIDefaultLayerTableModelTest {
-    @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().projection();
-
     @Test
     void testGetRow() {
         List<MapWithAIInfo> infos = MapWithAILayerInfo.getInstance().getAllDefaultLayers();

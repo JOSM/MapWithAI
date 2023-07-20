@@ -17,7 +17,6 @@ import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
@@ -34,24 +33,26 @@ import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.mapwithai.commands.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.AssertionsInEDT;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
 import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
-import org.openstreetmap.josm.tools.Territories;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 import mockit.MockUp;
 
+@AssertionsInEDT
 @BasicPreferences
+@Main
 @Projection
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories(Territories.Initialize.ALL)
 @Wiremock
 class MapWithAIMoveActionTest {
     private MapWithAIMoveAction moveAction;
@@ -62,15 +63,9 @@ class MapWithAIMoveActionTest {
     private Node way1LastNode;
     private Node way2LastNode;
 
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new MapWithAITestRules().main().territories().assertionsInEDT();
-
     @BeforeAll
     static void beforeAll() {
         new MapWithAIPluginMock();
-        // TODO remove with @Territories annotation
-        Territories.initialize();
     }
 
     @BeforeEach

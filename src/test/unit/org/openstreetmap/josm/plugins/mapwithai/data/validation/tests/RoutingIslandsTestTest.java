@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openstreetmap.josm.TestUtils;
@@ -35,10 +35,8 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAIS
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.plugins.mapwithai.tools.Access;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test class for {@link RoutingIslandsTest}
@@ -46,17 +44,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  * @since xxx
  */
-@NoExceptions
 @BasicPreferences
+@NoExceptions
 @MapWithAISources
+@Projection
+@Timeout(30)
 class RoutingIslandsTestTest {
-    /**
-     * Setup test.
-     */
-    @RegisterExtension
-    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules rule = new JOSMTestRules().projection().timeout(30000);
-
     /**
      * Test method for {@link RoutingIslandsTest#RoutingIslandsTest()} and the
      * testing apparatus

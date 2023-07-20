@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
@@ -16,22 +15,19 @@ import org.openstreetmap.josm.data.gpx.WayPoint;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * @author Taylor Smock
  *
  */
 @BasicPreferences
+@Main
+@Projection
 class DetectTaskingManagerUtilsTest {
     private static final String LAYER_NAME = "Task Boundaries";
-
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().main().projection();
 
     @Test
     void testHasTaskingManagerLayer() {

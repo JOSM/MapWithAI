@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -30,20 +29,15 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.backend.GetDataRunnable;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.Pair;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Taylor Smock
  */
 @org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
+@Projection
 class MergeDuplicateWaysTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().projection();
-
     /**
      * Test method for {@link MergeDuplicateWays#removeCommonTags}.
      */

@@ -11,7 +11,6 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
@@ -25,18 +24,15 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MergeAddressBuildings;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
 @BasicPreferences
+@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command
+@Main
+@Projection
 class MergeAddressBuildingsTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new JOSMTestRules().projection().main();
-
     private MergeAddressBuildings command;
     private DataSet ds;
 

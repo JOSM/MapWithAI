@@ -9,10 +9,9 @@ import javax.swing.JOptionPane;
 import java.awt.GraphicsEnvironment;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.AssumeRevision;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.mockers.OpenBrowserMocker;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
@@ -22,11 +21,9 @@ import org.openstreetmap.josm.testutils.mockers.WindowMocker;
  *
  * @author Taylor Smock
  */
+@AssumeRevision("Revision: 15000\n")
 @BasicPreferences
 class UpdateProdTest {
-    @RegisterExtension
-    JOSMTestRules rules = new JOSMTestRules().assumeRevision("Revision: 15000\n");
-
     @Test
     void testDoProd() {
         TestUtils.assumeWorkingJMockit();

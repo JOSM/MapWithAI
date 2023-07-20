@@ -10,7 +10,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -18,18 +17,14 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 @Command
+@Projection
 class AddNodeToWayCommandTest {
     private Node toAdd;
     private Way way;
     private AddNodeToWayCommand command;
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().projection();
 
     @BeforeEach
     void setupArea() {

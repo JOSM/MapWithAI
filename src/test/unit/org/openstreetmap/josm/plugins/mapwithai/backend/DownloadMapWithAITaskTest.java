@@ -18,9 +18,11 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -28,10 +30,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @MapWithAISources
 @NoExceptions
 @Wiremock
+@Territories
+@Projection
 class DownloadMapWithAITaskTest {
     @RegisterExtension
     @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().fakeAPI().projection().territories();
+    JOSMTestRules rule = new MapWithAITestRules().fakeAPI();
 
     @Test
     void testDownloadOsmServerReaderDownloadParamsBoundsProgressMonitor()

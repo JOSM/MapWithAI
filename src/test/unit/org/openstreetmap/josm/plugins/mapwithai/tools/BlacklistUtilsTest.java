@@ -14,11 +14,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
@@ -29,10 +27,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
  *
  */
 class BlacklistUtilsTest {
-
-    @RegisterExtension
-    static JOSMTestRules rules = new JOSMTestRules();
-
     private static WireMockServer wireMock;
 
     @BeforeAll

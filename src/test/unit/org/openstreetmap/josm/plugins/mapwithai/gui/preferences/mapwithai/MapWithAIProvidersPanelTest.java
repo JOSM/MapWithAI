@@ -15,15 +15,13 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai.MapWithAIProvidersPanel.AreaListener;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.ListenerList;
 
 /**
@@ -31,12 +29,10 @@ import org.openstreetmap.josm.tools.ListenerList;
  *
  * @author Taylor Smock
  */
-@Wiremock
 @MapWithAISources
+@Projection
+@Wiremock
 class MapWithAIProvidersPanelTest {
-    @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().projection();
-
     private MapWithAIProvidersPanel mapwithaiProvidersPanel;
 
     @BeforeEach

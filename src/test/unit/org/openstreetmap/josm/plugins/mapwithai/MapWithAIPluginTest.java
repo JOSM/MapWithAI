@@ -18,37 +18,32 @@ import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.mappaint.MapPaintStyles;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.gui.preferences.MapWithAIPreferences;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link MapWithAIPlugin}
  *
  * @author Taylor Smock
  */
-@NoExceptions
 @BasicPreferences
-@Wiremock
+@Main
 @MapWithAISources
+@NoExceptions
+@Projection
+@Wiremock
 class MapWithAIPluginTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().main().projection();
-
     PluginInformation info;
     MapWithAIPlugin plugin;
 

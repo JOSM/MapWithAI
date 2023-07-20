@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
@@ -21,21 +20,13 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test class for {@link MergeBuildingAddress}
  */
+@Projection
 class MergeBuildingAddressTest {
-    /**
-     * Setup test.
-     */
-    @RegisterExtension
-    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules rule = new JOSMTestRules().projection();
-
     @Test
     void testSingleAddress() {
         DataSet ds = new DataSet();

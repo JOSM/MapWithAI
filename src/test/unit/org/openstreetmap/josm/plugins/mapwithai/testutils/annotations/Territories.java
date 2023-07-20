@@ -60,6 +60,8 @@ public @interface Territories {
      *
      */
     class TerritoriesExtension implements BeforeAllCallback, AfterAllCallback {
+        private static Initialize last = Initialize.NONE;
+
         @Override
         public void afterAll(ExtensionContext context) throws Exception {
             synchronized (TerritoriesExtension.class) {
@@ -74,6 +76,10 @@ public @interface Territories {
                     Territories.class);
             if (annotation.isPresent()) {
                 Initialize current = annotation.get().value();
+                if (current.ordinal() <= last.ordinal()) {
+                    return;
+                }
+                last = current;
                 // Avoid potential race conditions if tests are parallelized
                 synchronized (TerritoriesExtension.class) {
                     if (current == Initialize.INTERNAL) {

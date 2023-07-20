@@ -13,21 +13,17 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 import com.google.common.collect.ImmutableMap;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 @BasicPreferences
+@Territories
+@Projection
 class MapWithAISourceReaderTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().territories().projection();
-
     @Test
     void testParseSimple() {
         JsonObjectBuilder builder = Json.createObjectBuilder();

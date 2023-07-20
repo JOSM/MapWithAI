@@ -20,7 +20,6 @@ import org.awaitility.Durations;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.actions.SaveActionBase;
 import org.openstreetmap.josm.command.MoveCommand;
@@ -35,7 +34,6 @@ import org.openstreetmap.josm.data.validation.tests.SharpAngles;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.PleaseWaitDialogMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.SwingUtilitiesMocker;
@@ -43,12 +41,13 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.BleedTest;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Command;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.AssertionsInEDT;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mockit.Mock;
 
 /**
@@ -56,16 +55,15 @@ import mockit.Mock;
  *
  * @author Taylor Smock
  */
+@AssertionsInEDT
 @BasicPreferences
 @Command
+@Main
 @MapWithAISources
+@Projection
 @Wiremock
 class MapWithAIAddComandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
-
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().projection().assertionsInEDT().main();
 
     @BeforeEach
     void setUp() {

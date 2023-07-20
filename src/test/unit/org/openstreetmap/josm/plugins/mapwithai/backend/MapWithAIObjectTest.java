@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.JOSMFixture;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -25,21 +24,18 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MapStatus;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * @author Taylor Smock
  *
  */
 @BasicPreferences
+@Main
+@Projection
 class MapWithAIObjectTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().main().projection();
-
     private MapWithAIObject mapWithAIObject;
     private MapStatus statusLine;
     private OsmDataLayer osmData;

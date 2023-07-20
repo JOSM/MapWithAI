@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -15,18 +14,10 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.commands.ConnectedCommand;
 import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
+@Projection
 class ConnectingNodeInformationTestTest {
-    /**
-     * Setup test.
-     */
-    @RegisterExtension
-    @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new JOSMTestRules().projection();
-
     @Test
     void testGetBadData() {
         DataSet ds = new DataSet();

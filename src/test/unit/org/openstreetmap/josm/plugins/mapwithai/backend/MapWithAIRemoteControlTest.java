@@ -12,40 +12,36 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
+import org.openstreetmap.josm.testutils.annotations.ThreadSync;
 import org.openstreetmap.josm.tools.Utils;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link MapWithAIRemoteControl}
  *
  * @author Taylor Smock
  */
-@NoExceptions
 @BasicPreferences
+@Main
 @MapWithAISources
+@NoExceptions
+@Projection
+@Territories
+@ThreadSync
 @Wiremock
 class MapWithAIRemoteControlTest {
-    /**
-     * Setup test.
-     */
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    static JOSMTestRules test = new MapWithAITestRules().main().projection().territories();
-
     private static MapWithAIRemoteControl newHandler(String url) throws RequestHandlerBadRequestException {
         final MapWithAIRemoteControl req = new MapWithAIRemoteControl();
         if (url != null) {

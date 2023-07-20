@@ -12,20 +12,17 @@ import java.lang.reflect.Field;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 
 /**
  * Test class for {@link DownloadListener}
@@ -36,11 +33,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @NoExceptions
 @Wiremock
 @MapWithAISources
+@Projection
+@Territories
 class DownloadListenerTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().projection().territories();
-
     @Test
     void testDataSourceChange() {
         DataSet ds = new DataSet();

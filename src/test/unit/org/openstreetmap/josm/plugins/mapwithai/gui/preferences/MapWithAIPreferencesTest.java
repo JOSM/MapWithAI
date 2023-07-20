@@ -13,15 +13,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.ImageProviderMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.openstreetmap.josm.testutils.annotations.Main;
 
 /**
  * Test class for {@link MapWithAIPreferences}
@@ -29,12 +26,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Taylor Smock
  */
 @BasicPreferences
+@Main
 @MapWithAISources
 class MapWithAIPreferencesTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules test = new JOSMTestRules().main();
-
     private MapWithAIPreferences preferences;
 
     /**

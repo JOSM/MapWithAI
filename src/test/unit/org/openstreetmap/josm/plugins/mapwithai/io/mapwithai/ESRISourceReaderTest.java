@@ -17,26 +17,22 @@ import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
+@Projection
 @Wiremock
 class ESRISourceReaderTest {
 
     @BasicWiremock
     public WireMockServer wireMockServer;
-
-    @RegisterExtension
-    JOSMTestRules rule = new MapWithAITestRules().projection();
 
     @BeforeEach
     void setUp() {

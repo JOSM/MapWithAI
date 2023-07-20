@@ -10,30 +10,27 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.gui.widgets.JosmTextArea;
 import org.openstreetmap.josm.gui.widgets.JosmTextField;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAITestRules;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
+import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
+import org.openstreetmap.josm.testutils.annotations.AssertionsInEDT;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Test class for {@link AddMapWithAIPanel}
  *
  * @author Taylor Smock
  */
+@AssertionsInEDT
 @MapWithAISources
+@Projection
+@Territories
 @Wiremock
 class AddMapWithAIPanelTest {
-    @RegisterExtension
-    @SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
-    JOSMTestRules rule = new MapWithAITestRules().territories().projection().assertionsInEDT();
-
     @Test
     void testAddMapWithAIPanel() throws ReflectiveOperationException {
         new WindowMocker();

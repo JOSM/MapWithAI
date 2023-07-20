@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -24,9 +23,9 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
+import org.openstreetmap.josm.testutils.annotations.HTTP;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
@@ -43,13 +42,10 @@ import mockit.MockUp;
  * @author Taylor Smock
  */
 @BasicPreferences
+@HTTP
 @Wiremock
 @MapWithAISources
 class DataConflationSenderTest {
-    // Needed for HTTP factory
-    @RegisterExtension
-    JOSMTestRules josmTestRules = new JOSMTestRules();
-
     @BasicWiremock
     WireMockServer wireMockServer;
 
