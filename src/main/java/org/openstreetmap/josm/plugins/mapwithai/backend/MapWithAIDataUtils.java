@@ -201,7 +201,7 @@ public final class MapWithAIDataUtils {
                     GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
                     GuiHelper.runInEDT(notification::show);
                 } else if (cause instanceof OsmTransferException) {
-                    ExceptionDialogUtil.explainException((OsmTransferException) cause);
+                    GuiHelper.runInEDT(() -> ExceptionDialogUtil.explainException((OsmTransferException) cause));
                 } else {
                     throw e;
                 }
