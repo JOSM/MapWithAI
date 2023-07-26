@@ -12,6 +12,7 @@ import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.commons.support.AnnotationSupport;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
@@ -108,13 +109,14 @@ public @interface Wiremock {
             try {
                 super.afterAll(context);
             } finally {
-                resetMapWithAILayerInfo();
+                resetMapWithAILayerInfo(context);
             }
         }
 
         @Override
         public void beforeAll(ExtensionContext context) throws Exception {
             super.beforeAll(context);
+
             MapWithAILayerInfo.setImageryLayersSites(null);
             AtomicBoolean finished = new AtomicBoolean();
             MapWithAILayerInfo.getInstance().clear();
@@ -122,14 +124,15 @@ public @interface Wiremock {
             Awaitility.await().atMost(Durations.TEN_SECONDS).until(finished::get);
         }
 
-        private static void resetMapWithAILayerInfo() {
-            // This should probably only be run if territories is initialized
-            // TODO update if @Territories becomes an annotation
+        private static void resetMapWithAILayerInfo(ExtensionContext context) {
             synchronized (MapWithAILayerInfo.class) {
-                MapWithAILayerInfo.getInstance().clear();
-                MapWithAILayerInfo.getInstance().getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry)
-                        .forEach(MapWithAILayerInfo.getInstance()::add);
-                MapWithAILayerInfo.getInstance().save();
+                final var info = MapWithAILayerInfo.getInstance();
+                info.clear();
+                if (false && AnnotationSupport.isAnnotated(context.getTestClass(), Territories.class)) {
+                    // This should probably only be run if territories is initialized
+                    info.getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry).forEach(info::add);
+                }
+                info.save();
             }
         }
 
