@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.download;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.event.ChangeListener;
 
@@ -19,6 +20,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo.LayerChangeListener;
+import org.openstreetmap.josm.tools.ImageProvider;
 
 /**
  * Adds the MapWithAI download checkbox to the JOSM download UI
@@ -26,6 +28,11 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInf
 public class MapWithAIDownloadSourceType implements IDownloadSourceType, LayerChangeListener {
     static final BooleanProperty IS_ENABLED = new BooleanProperty("download.mapwithai.data", false);
     JCheckBox cbDownloadMapWithAIData;
+
+    @Override
+    public Icon getIcon() {
+        return ImageProvider.get("mapwithai", ImageProvider.ImageSizes.SMALLICON);
+    }
 
     @Override
     public JCheckBox getCheckBox(ChangeListener checkboxChangeListener) {
