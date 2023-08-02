@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 
 import java.io.IOException;
+import java.io.Serial;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -80,7 +81,7 @@ public class MapWithAILayerInfo {
         if (instance != null) {
             return instance;
         }
-        final AtomicBoolean finished = new AtomicBoolean();
+        final var finished = new AtomicBoolean();
         synchronized (MapWithAILayerInfo.class) {
             if (instance == null) {
                 instance = new MapWithAILayerInfo(() -> {
@@ -161,26 +162,16 @@ public class MapWithAILayerInfo {
      *
      * @param fastFail whether opening HTTP connections should fail fast, see
      *                 {@link ImageryReader#setFastFail(boolean)}
-     */
-    public void load(boolean fastFail) {
-        load(fastFail, null);
-    }
-
-    /**
-     * Loads the custom as well as default imagery entries.
-     *
-     * @param fastFail whether opening HTTP connections should fail fast, see
-     *                 {@link ImageryReader#setFastFail(boolean)}
      * @param listener A listener to call when loading default entries is finished
      */
     public void load(boolean fastFail, FinishListener listener) {
         clear();
-        List<MapWithAIPreferenceEntry> entries = StructUtils.getListOfStructs(Config.getPref(),
-                CONFIG_PREFIX + "entries", null, MapWithAIPreferenceEntry.class);
+        final var entries = StructUtils.getListOfStructs(Config.getPref(), CONFIG_PREFIX + "entries", null,
+                MapWithAIPreferenceEntry.class);
         if (entries != null) {
             for (MapWithAIPreferenceEntry prefEntry : entries) {
                 try {
-                    MapWithAIInfo i = new MapWithAIInfo(prefEntry);
+                    final var i = new MapWithAIInfo(prefEntry);
                     add(i);
                 } catch (IllegalArgumentException e) {
                     Logging.warn("Unable to load imagery preference entry:" + e);
@@ -200,7 +191,7 @@ public class MapWithAILayerInfo {
 
     /**
      * Loads the available imagery entries.
-     *
+     * <p>
      * The data is downloaded from the JOSM website (or loaded from cache). Entries
      * marked as "default" are added to the user selection, if not already present.
      *
@@ -214,7 +205,7 @@ public class MapWithAILayerInfo {
      * @since 12634
      */
     public void loadDefaults(boolean clearCache, ForkJoinPool worker, boolean fastFail, FinishListener listener) {
-        final DefaultEntryLoader loader = new DefaultEntryLoader(clearCache, fastFail);
+        final var loader = new DefaultEntryLoader(clearCache, fastFail);
         if (this.finishListenerListenerList == null) {
             this.finishListenerListenerList = ListenerList.create();
         }
@@ -222,7 +213,7 @@ public class MapWithAILayerInfo {
             this.finishListenerListenerList.addListener(listener);
         }
         if (worker == null) {
-            PleaseWaitRunnable pleaseWaitRunnable = new PleaseWaitRunnable(tr("Update default entries")) {
+            final var pleaseWaitRunnable = new PleaseWaitRunnable(tr("Update default entries")) {
                 @Override
                 protected void cancel() {
                     loader.canceled = true;
@@ -262,6 +253,7 @@ public class MapWithAILayerInfo {
      */
     class DefaultEntryLoader extends RecursiveTask<List<MapWithAIInfo>> {
 
+        @Serial
         private static final long serialVersionUID = 12550342142551680L;
         private final boolean clearCache;
         private final boolean fastFail;
@@ -329,7 +321,7 @@ public class MapWithAILayerInfo {
                 reader = new MapWithAISourceReader(source);
                 this.reader.setClearCache(this.clearCache);
                 reader.setFastFail(fastFail);
-                Collection<MapWithAIInfo> result = reader.parse().orElse(Collections.emptyList());
+                final var result = reader.parse().orElse(Collections.emptyList());
                 // This is called here to "pre-cache" the layer information, to avoid blocking
                 // the EDT
                 this.updateEsriLayers(result);
@@ -346,9 +338,9 @@ public class MapWithAILayerInfo {
          * @param layers The layers to update
          */
         private void updateEsriLayers(@Nonnull final Collection<MapWithAIInfo> layers) {
-            for (MapWithAIInfo layer : layers) {
+            for (var layer : layers) {
                 if (MapWithAIType.ESRI == layer.getSourceType()) {
-                    for (ForkJoinTask<MapWithAIInfo> future : parseEsri(layer)) {
+                    for (var future : parseEsri(layer)) {
                         try {
                             allDefaultLayers.add(future.get());
                         } catch (InterruptedException e) {
@@ -385,8 +377,9 @@ public class MapWithAILayerInfo {
             if (!loadError && !defaultLayerIds.isEmpty()) {
                 dropOldEntries();
             }
-            final ListenerList<FinishListener> listenerList = MapWithAILayerInfo.this.finishListenerListenerList;
+            final var listenerList = MapWithAILayerInfo.this.finishListenerListenerList;
             MapWithAILayerInfo.this.finishListenerListenerList = null;
+            Config.getPref().putLong("mapwithai.layerinfo.lastupdated", Instant.now().getEpochSecond());
             if (listenerList != null) {
                 listenerList.fireEvent(FinishListener::onFinish);
             }
@@ -415,8 +408,8 @@ public class MapWithAILayerInfo {
          */
         private void buildIdMap(List<MapWithAIInfo> lst, Map<String, MapWithAIInfo> idMap) {
             idMap.clear();
-            Set<String> notUnique = new HashSet<>();
-            for (MapWithAIInfo i : lst) {
+            final var notUnique = new HashSet<String>();
+            for (var i : lst) {
                 if (i.getId() != null) {
                     if (idMap.containsKey(i.getId())) {
                         notUnique.add(i.getId());
@@ -427,7 +420,7 @@ public class MapWithAILayerInfo {
                     idMap.put(i.getId(), i);
                 }
             }
-            for (String i : notUnique) {
+            for (var i : notUnique) {
                 idMap.remove(i);
             }
         }
@@ -441,14 +434,14 @@ public class MapWithAILayerInfo {
      */
     public void updateEntriesFromDefaults(boolean dropold) {
         // add new default entries to the user selection
-        boolean changed = false;
-        Collection<String> knownDefaults = new TreeSet<>(Config.getPref().getList(CONFIG_PREFIX + "layers.default"));
-        Collection<String> newKnownDefaults = new TreeSet<>();
+        var changed = false;
+        final var knownDefaults = new TreeSet<>(Config.getPref().getList(CONFIG_PREFIX + "layers.default"));
+        final var newKnownDefaults = new TreeSet<String>();
         synchronized (defaultLayers) {
-            for (MapWithAIInfo def : defaultLayers) {
+            for (var def : defaultLayers) {
                 if (def.isDefaultEntry()) {
-                    boolean isKnownDefault = false;
-                    for (String entry : knownDefaults) {
+                    var isKnownDefault = false;
+                    for (var entry : knownDefaults) {
                         if (entry.equals(def.getId())) {
                             isKnownDefault = true;
                             newKnownDefaults.add(entry);
@@ -463,11 +456,11 @@ public class MapWithAILayerInfo {
                             break;
                         }
                     }
-                    boolean isInUserList = false;
+                    var isInUserList = false;
                     if (!isKnownDefault) {
                         if (def.getId() != null) {
                             newKnownDefaults.add(def.getId());
-                            for (MapWithAIInfo i : layers) {
+                            for (var i : layers) {
                                 if (isSimilar(def, i)) {
                                     isInUserList = true;
                                     break;
@@ -490,12 +483,12 @@ public class MapWithAILayerInfo {
         Config.getPref().putList(CONFIG_PREFIX + "layers.default", new ArrayList<>(newKnownDefaults));
 
         // automatically update user entries with same id as a default entry
-        for (int i = 0; i < layers.size(); i++) {
-            MapWithAIInfo info = layers.get(i);
+        for (var i = 0; i < layers.size(); i++) {
+            final var info = layers.get(i);
             if (info.getId() == null) {
                 continue;
             }
-            MapWithAIInfo matchingDefault = defaultLayerIds.get(info.getId());
+            final var matchingDefault = defaultLayerIds.get(info.getId());
             if (matchingDefault != null && !matchingDefault.equalsPref(info)) {
                 layers.set(i, matchingDefault);
                 Logging.info(tr("Update imagery ''{0}''", info.getName()));
@@ -514,9 +507,9 @@ public class MapWithAILayerInfo {
      * @since 11527
      */
     public void dropOldEntries() {
-        List<String> drop = new ArrayList<>();
+        final var drop = new ArrayList<String>();
 
-        for (Map.Entry<String, MapWithAIInfo> info : layerIds.entrySet()) {
+        for (var info : layerIds.entrySet()) {
             if (!defaultLayerIds.containsKey(info.getKey())) {
                 remove(info.getValue());
                 drop.add(info.getKey());
@@ -525,7 +518,7 @@ public class MapWithAILayerInfo {
         }
 
         if (!drop.isEmpty()) {
-            for (String id : drop) {
+            for (var id : drop) {
                 layerIds.remove(id);
             }
             save();
@@ -573,9 +566,9 @@ public class MapWithAILayerInfo {
      * Save the list of imagery entries to preferences.
      */
     public synchronized void save() {
-        List<MapWithAIPreferenceEntry> entries = new ArrayList<>();
+        final var entries = new ArrayList<MapWithAIPreferenceEntry>();
         synchronized (layers) {
-            for (MapWithAIInfo info : layers) {
+            for (var info : layers) {
                 entries.add(new MapWithAIPreferenceEntry(info));
             }
         }
@@ -625,8 +618,7 @@ public class MapWithAILayerInfo {
         return layers.stream()
                 .filter(i -> i.getCategory() != MapWithAICategory.PREVIEW
                         && !i.getAdditionalCategories().contains(MapWithAICategory.PREVIEW))
-                .filter(info -> !Utils.isBlank(info.getUrlExpanded()) && !Utils.isBlank(info.getUrl()))
-                .collect(Collectors.toList());
+                .filter(MapWithAIInfo::hasValidUrl).collect(Collectors.toList());
     }
 
     /**
@@ -652,7 +644,7 @@ public class MapWithAILayerInfo {
 
     /**
      * Get unique id for ImageryInfo.
-     *
+     * <p>
      * This takes care, that no id is used twice (due to a user error)
      *
      * @param info the ImageryInfo to look up

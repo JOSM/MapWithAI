@@ -3,7 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import java.lang.reflect.InvocationTargetException;
@@ -12,7 +11,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.actions.PreferencesAction;
@@ -70,8 +68,6 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     private final List<Destroyable> destroyables;
 
-    private final PreferencesAction preferenceAction;
-
     private final MapWithAIMenu mapwithaiMenu;
 
     private static final Map<Class<? extends JosmAction>, Boolean> MENU_ENTRIES = new LinkedHashMap<>();
@@ -92,7 +88,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         preferenceSetting = new MapWithAIPreferences();
 
         // Add MapWithAI specific menu
-        JMenu dataMenu = MainApplication.getMenu().dataMenu;
+        final var dataMenu = MainApplication.getMenu().dataMenu;
         mapwithaiMenu = new MapWithAIMenu();
 
         dataMenu.add(mapwithaiMenu);
@@ -111,8 +107,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         }
 
         // Add the preferences last to data
-        preferenceAction = PreferencesAction.forPreferenceTab(tr("MapWithAI Preferences"), tr("MapWithAI Preferences"),
-                MapWithAIPreferences.class);
+        final var preferenceAction = PreferencesAction.forPreferenceTab(tr("MapWithAI Preferences"),
+                tr("MapWithAI Preferences"), MapWithAIPreferences.class);
         MainMenu.add(mapwithaiMenu, preferenceAction);
 
         VALIDATORS.forEach(clazz -> {
@@ -137,6 +133,9 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         mapFrameInitialized(null, MainApplication.getMap());
         OSMDownloadSource.addDownloadType(new MapWithAIDownloadSourceType());
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));
+        // Preload the MapWithAILayerInfo for the JOSM download window
+        // This reduces the amount of time taken for first button click by 100ms.
+        MainApplication.worker.execute(MapWithAILayerInfo::getInstance);
 
         destroyables.add(new MapWithAICopyProhibit());
     }
@@ -146,7 +145,7 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         // Run in EDT to avoid blocking (has to be run before MapWithAIDownloadOptions
         // so its already initialized)
         GuiHelper.runInEDT(MapWithAILayerInfo::getInstance);
-        MapWithAIDownloadOptions mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
+        final var mapWithAIDownloadOptions = new MapWithAIDownloadOptions();
         MainApplication.worker
                 .execute(() -> GuiHelper.runInEDT(() -> mapWithAIDownloadOptions.addGui(DownloadDialog.getInstance())));
         destroyables.add(mapWithAIDownloadOptions);
@@ -154,9 +153,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
 
     @Override
     public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
-        final Optional<MapWithAIObject> possibleMapWithAIObject = destroyables.stream()
-                .filter(MapWithAIObject.class::isInstance).map(MapWithAIObject.class::cast).findFirst();
-        final MapWithAIObject mapWithAIObject = possibleMapWithAIObject.orElse(new MapWithAIObject());
+        final var mapWithAIObject = destroyables.stream().filter(MapWithAIObject.class::isInstance)
+                .map(MapWithAIObject.class::cast).findFirst().orElseGet(MapWithAIObject::new);
         if ((oldFrame != null) && (oldFrame.statusLine != null)) {
             mapWithAIObject.removeMapStatus(oldFrame.statusLine);
         }

@@ -7,10 +7,9 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import javax.json.JsonString;
-import javax.json.JsonStructure;
 import javax.json.JsonValue;
+import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +30,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.jcs3.access.CacheAccess;
-import org.apache.commons.jcs3.engine.behavior.IElementAttributes;
 import org.openstreetmap.josm.data.cache.JCSCacheManager;
 import org.openstreetmap.josm.data.imagery.ImageryInfo.ImageryBounds;
 import org.openstreetmap.josm.data.preferences.LongProperty;
@@ -58,6 +56,8 @@ public class ESRISourceReader {
     private final List<MapWithAICategory> ignoreConflationCategories;
     private static final String JSON_QUERY_PARAM = "?f=json";
     private static final LongProperty MIRROR_MAXTIME = new LongProperty("mirror.maxtime", TimeUnit.DAYS.toSeconds(7));
+
+    private final JsonProvider jsonProvider = JsonProvider.provider();
 
     /**
      * Constructs a {@code ImageryReader} from a given filename, URL or internal
@@ -88,36 +88,36 @@ public class ESRISourceReader {
      * @throws IOException if any I/O error occurs
      */
     public List<ForkJoinTask<MapWithAIInfo>> parse() throws IOException {
-        Pattern startReplace = Pattern.compile("\\{start}");
-        String search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=" + INITIAL_SEARCH
+        final var startReplace = Pattern.compile("\\{start}");
+        final var search = "/search" + JSON_QUERY_PARAM + "&sortField=added&sortOrder=desc&num=" + INITIAL_SEARCH
                 + "&start={start}";
-        String url = source.getUrl();
-        String group = source.getId();
+        final var group = source.getId();
+        var url = source.getUrl();
         if (!url.endsWith("/")) {
             url = url.concat("/");
         }
 
-        final List<ForkJoinTask<MapWithAIInfo>> information = new ArrayList<>();
+        final var information = new ArrayList<ForkJoinTask<MapWithAIInfo>>();
 
-        int next = 1;
-        String searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
+        var next = 1;
+        var searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
 
         while (next != -1) {
-            final String finalUrl = url + "content/groups/" + group + searchUrl;
-            final String jsonString = getJsonString(finalUrl, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()) / 7,
+            final var finalUrl = url + "content/groups/" + group + searchUrl;
+            final var jsonString = getJsonString(finalUrl, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()) / 7,
                     this.fastFail);
             if (jsonString == null) {
                 continue;
             }
-            try (JsonReader reader = Json
+            try (var reader = jsonProvider
                     .createReader(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
-                JsonStructure parser = reader.read();
+                final var parser = reader.read();
                 if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
-                    JsonObject obj = parser.asJsonObject();
+                    final var obj = parser.asJsonObject();
                     next = obj.getInt("nextStart", -1);
                     searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
-                    JsonArray features = obj.getJsonArray("results");
-                    for (JsonObject feature : features.getValuesAs(JsonObject.class)) {
+                    final var features = obj.getJsonArray("results");
+                    for (var feature : features.getValuesAs(JsonObject.class)) {
                         information.add(parse(feature));
                     }
                 }
@@ -126,7 +126,7 @@ public class ESRISourceReader {
                 next = -1;
             }
         }
-        for (ForkJoinTask<MapWithAIInfo> future : information) {
+        for (var future : information) {
             try {
                 future.join();
                 future.get(1, TimeUnit.MINUTES);
@@ -142,7 +142,7 @@ public class ESRISourceReader {
 
     private ForkJoinTask<MapWithAIInfo> parse(JsonObject feature) {
         // Use the initial esri server information to keep conflation info
-        MapWithAIInfo newInfo = new MapWithAIInfo(source);
+        final var newInfo = new MapWithAIInfo(source);
         newInfo.setId(feature.getString("id"));
         ForkJoinTask<MapWithAIInfo> future;
         if ("Feature Service".equals(feature.getString("type", ""))) {
@@ -154,11 +154,10 @@ public class ESRISourceReader {
         }
         MapWithAIDataUtils.getForkJoinPool().execute(future);
         newInfo.setName(feature.getString("title", feature.getString("name")));
-        String[] extent = feature.getJsonArray("extent").getValuesAs(JsonArray.class).stream()
+        final var extent = feature.getJsonArray("extent").getValuesAs(JsonArray.class).stream()
                 .flatMap(array -> array.getValuesAs(JsonNumber.class).stream()).map(JsonNumber::doubleValue)
                 .map(Object::toString).toArray(String[]::new);
-        ImageryBounds imageryBounds = new ImageryBounds(String.join(",", extent[1], extent[0], extent[3], extent[2]),
-                ",");
+        final var imageryBounds = new ImageryBounds(String.join(",", extent[1], extent[0], extent[3], extent[2]), ",");
         newInfo.setBounds(imageryBounds);
         newInfo.setSourceType(MapWithAIType.ESRI_FEATURE_SERVER);
         newInfo.setTermsOfUseText(feature.getString("licenseInfo", null));
@@ -167,11 +166,10 @@ public class ESRISourceReader {
                     source.getUrl() + "content/items/" + newInfo.getId() + "/info/" + feature.getString("thumbnail"));
         }
         if (feature.containsKey("groupCategories")) {
-            List<MapWithAICategory> categories = feature.getJsonArray("groupCategories").getValuesAs(JsonString.class)
-                    .stream().map(JsonString::getString).map(s -> s.replace("/Categories/", ""))
-                    .map(MapWithAICategory::fromString).filter(Objects::nonNull)
-                    .collect(Collectors.toCollection(ArrayList::new));
-            MapWithAICategory category = categories.stream().filter(c -> MapWithAICategory.FEATURED != c).findFirst()
+            final var categories = feature.getJsonArray("groupCategories").getValuesAs(JsonString.class).stream()
+                    .map(JsonString::getString).map(s -> s.replace("/Categories/", ""))
+                    .map(MapWithAICategory::fromString).collect(Collectors.toCollection(ArrayList::new));
+            final var category = categories.stream().filter(c -> MapWithAICategory.FEATURED != c).findFirst()
                     .orElse(MapWithAICategory.OTHER);
             newInfo.setCategory(category);
             categories.remove(category);
@@ -187,7 +185,7 @@ public class ESRISourceReader {
         }
         newInfo.setDescription(feature.getString("snippet"));
         if (newInfo.getSource() != null) {
-            StringBuilder sourceTag = new StringBuilder(newInfo.getSource());
+            final var sourceTag = new StringBuilder(newInfo.getSource());
             if (!sourceTag.toString().endsWith("/")) {
                 sourceTag.append('/');
             }
@@ -208,7 +206,7 @@ public class ESRISourceReader {
      */
     @Nullable
     private static String getJsonString(@Nonnull final String url, final long defaultMaxAge, final boolean fastFail) {
-        String jsonString = SOURCE_CACHE.get(url);
+        var jsonString = SOURCE_CACHE.get(url);
         if (jsonString == null) {
             HttpClient client = null;
             try {
@@ -216,12 +214,12 @@ public class ESRISourceReader {
                 if (fastFail) {
                     client.setReadTimeout(1000);
                 }
-                final HttpClient.Response response = client.connect();
+                final var response = client.connect();
                 jsonString = response.fetchContent();
                 if (jsonString != null && response.getResponseCode() < 400 && response.getResponseCode() >= 200) {
                     // getExpiration returns milliseconds
                     final long expirationTime = response.getExpiration();
-                    final IElementAttributes elementAttributes = SOURCE_CACHE.getDefaultElementAttributes();
+                    final var elementAttributes = SOURCE_CACHE.getDefaultElementAttributes();
                     if (expirationTime > 0) {
                         elementAttributes.setMaxLife(response.getExpiration());
                     } else {
@@ -249,22 +247,21 @@ public class ESRISourceReader {
      */
     @Nullable
     private String featureService(@Nonnull MapWithAIInfo mapwithaiInfo, @Nonnull String url) {
-        final String toGet = url.endsWith(JSON_QUERY_PARAM) ? url : url.concat(JSON_QUERY_PARAM);
-        final String jsonString = getJsonString(toGet, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()), this.fastFail);
+        final var toGet = url.endsWith(JSON_QUERY_PARAM) ? url : url + JSON_QUERY_PARAM;
+        final var jsonString = getJsonString(toGet, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()), this.fastFail);
         if (jsonString == null) {
             return null;
         }
 
-        try (JsonReader reader = Json
-                .createReader(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
-            JsonObject info = reader.readObject();
-            JsonArray layers = info.getJsonArray("layers");
+        try (var reader = Json.createReader(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
+            final var info = reader.readObject();
+            final var layers = info.getJsonArray("layers");
             // This fixes #20551
             if (layers == null || layers.stream().noneMatch(Objects::nonNull)) {
                 return null;
             }
             // TODO use all the layers?
-            JsonObject layer = layers.stream().filter(Objects::nonNull).findFirst().orElse(JsonValue.EMPTY_JSON_OBJECT)
+            final var layer = layers.stream().filter(Objects::nonNull).findFirst().orElse(JsonValue.EMPTY_JSON_OBJECT)
                     .asJsonObject();
             if (layer.containsKey("id")) {
                 String partialUrl = (url.endsWith("/") ? url : url + "/") + layer.getInt("id");
@@ -286,10 +283,10 @@ public class ESRISourceReader {
      */
     @Nonnull
     private Map<String, String> getReplacementTags(@Nonnull String layerUrl) {
-        String toGet = layerUrl.endsWith(JSON_QUERY_PARAM) ? layerUrl : layerUrl.concat(JSON_QUERY_PARAM);
-        final String jsonString = getJsonString(toGet, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()), this.fastFail);
+        final var toGet = layerUrl.endsWith(JSON_QUERY_PARAM) ? layerUrl : layerUrl.concat(JSON_QUERY_PARAM);
+        final var jsonString = getJsonString(toGet, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()), this.fastFail);
         if (jsonString != null) {
-            try (JsonReader reader = Json
+            try (var reader = Json
                     .createReader(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
                 return reader.readObject().getJsonArray("fields").getValuesAs(JsonObject.class).stream()
                         .collect(Collectors.toMap(o -> o.getString("name"), ESRISourceReader::getReplacementTag));

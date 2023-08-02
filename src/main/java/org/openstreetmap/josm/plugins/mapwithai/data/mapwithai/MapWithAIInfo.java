@@ -9,6 +9,7 @@ import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -140,7 +141,7 @@ public class MapWithAIInfo extends
 
         @Override
         public String toString() {
-            StringBuilder s = new StringBuilder("MapWithAIPreferenceEntry [name=").append(name);
+            final var s = new StringBuilder("MapWithAIPreferenceEntry [name=").append(name);
             if (id != null) {
                 s.append(" id=").append(id);
             }
@@ -154,6 +155,7 @@ public class MapWithAIInfo extends
      */
     public static class MapWithAIInfoCategoryComparator implements Comparator<MapWithAIInfo>, Serializable {
 
+        @Serial
         private static final long serialVersionUID = -7992892476979310835L;
 
         @Override
@@ -219,15 +221,8 @@ public class MapWithAIInfo extends
      */
     public MapWithAIInfo(String name, String url, String type, String eulaAcceptanceRequired, String id) {
         this(name, url, id);
-        MapWithAIType t = MapWithAIType.fromString(type);
         this.setEulaAcceptanceRequired(eulaAcceptanceRequired);
-        if (t != null) {
-            super.setSourceType(t);
-        } else if (type != null && !type.isEmpty()) {
-            throw new IllegalArgumentException("unknown type: " + type);
-        } else {
-            super.setSourceType(MapWithAIType.THIRD_PARTY.getDefault());
-        }
+        super.setSourceType(MapWithAIType.fromString(type));
     }
 
     /**
@@ -243,7 +238,7 @@ public class MapWithAIInfo extends
         setCookies(e.cookies);
         setEulaAcceptanceRequired(e.eula);
         if (e.parameters != null) {
-            try (JsonParser parser = Json.createParser(new StringReader(e.parameters))) {
+            try (var parser = Json.createParser(new StringReader(e.parameters))) {
                 if (parser.hasNext() && JsonParser.Event.START_ARRAY == parser.next()) {
                     setParameters(parser.getArray());
                 }
@@ -379,7 +374,7 @@ public class MapWithAIInfo extends
             return true;
         }
         if (first != null && second != null && first.size() == second.size()) {
-            for (JsonObject value : Utils.filteredCollection(first, JsonObject.class)) {
+            for (var value : Utils.filteredCollection(first, JsonObject.class)) {
                 if (value.containsKey(PARAMETER_STRING)
                         && value.get(PARAMETER_STRING).getValueType() == JsonValue.ValueType.STRING
                         && Utils.filteredCollection(second, JsonObject.class).stream()
@@ -483,35 +478,42 @@ public class MapWithAIInfo extends
         return getParametersString(this.conflationParameters);
     }
 
+    /**
+     * Check if this source will have a valid URL when {@link #getUrlExpanded()} is
+     * called
+     *
+     * @return {@code true} if this source will have a valid url
+     */
+    public boolean hasValidUrl() {
+        return this.url != null || (this.isConflated() && this.conflationUrl != null);
+    }
+
     public String getUrlExpanded() {
-        StringBuilder sb;
         if (this.isConflated()) {
-            sb = getConflationUrl();
+            return getConflationUrl().toString();
         } else {
-            sb = getNonConflatedUrl();
+            return getNonConflatedUrl().toString();
         }
-        return sb.toString();
     }
 
     private StringBuilder getConflationUrl() {
         if (conflationUrl == null) {
             return getNonConflatedUrl();
         }
-        StringBuilder sb = new StringBuilder();
+        final var sb = new StringBuilder();
         if (this.conflationUrl.contains("{id}") && this.id != null) {
             sb.append(conflationUrl.replace("{id}", this.id));
         } else if (this.conflationUrl.contains("{id}")) {
             // We need to trigger synchronization. This means that the current download
             // may won't be conflated.
             // But this should automatically correct the behavior for the next attempt.
-            final MapWithAILayerInfo mwli = MapWithAILayerInfo.getInstance();
+            final var mwli = MapWithAILayerInfo.getInstance();
             mwli.load(false, () -> {
-                Optional<MapWithAIInfo> defaultLayer = mwli.getAllDefaultLayers().stream().filter(this::equals)
-                        .findFirst();
+                final var defaultLayer = mwli.getAllDefaultLayers().stream().filter(this::equals).findFirst();
                 if (defaultLayer.isPresent()) {
                     this.id = defaultLayer.get().id;
                 } else {
-                    MapWithAIInfo newInfo = mwli.getAllDefaultLayers().stream()
+                    final var newInfo = mwli.getAllDefaultLayers().stream()
                             .filter(layer -> Objects.equals(this.url, layer.url) && Objects.nonNull(layer.id))
                             .findFirst().orElse(this);
                     this.id = newInfo.id;
@@ -530,7 +532,7 @@ public class MapWithAIInfo extends
     }
 
     private StringBuilder getNonConflatedUrl() {
-        StringBuilder sb = new StringBuilder();
+        final var sb = new StringBuilder();
         if (url != null && !url.trim().isEmpty()) {
             sb.append(url);
             if (MapWithAIType.ESRI_FEATURE_SERVER == sourceType) {
@@ -624,7 +626,7 @@ public class MapWithAIInfo extends
      * @param parameters Set the conflation parameters
      */
     public void setConflationParameters(JsonArray parameters) {
-        this.conflationParameters = parameters != null ? Json.createArrayBuilder(parameters).build() : null;
+        this.conflationParameters = parameters;
     }
 
     /**

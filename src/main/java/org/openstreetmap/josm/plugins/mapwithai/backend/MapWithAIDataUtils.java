@@ -59,6 +59,11 @@ public final class MapWithAIDataUtils {
     public static final int MAXIMUM_SIDE_DIMENSIONS = 10_000; // RapiD is about 1 km, max is 10 km, but 10 km causes
     // timeouts
     private static final int TOO_MANY_BBOXES = 4;
+    /**
+     * {@code true} if we need a fork join pool that is not the
+     * {@link ForkJoinPool#commonPool()}
+     */
+    private static Boolean requiresForkJoinPool;
     private static ForkJoinPool forkJoinPool;
     static final Object LAYER_LOCK = new Object();
 
@@ -248,7 +253,10 @@ public final class MapWithAIDataUtils {
      * @return The {@link ForkJoinPool} for MapWithAI use.
      */
     public static ForkJoinPool getForkJoinPool() {
-        if (Utils.isRunningWebStart() || System.getSecurityManager() != null) {
+        if (requiresForkJoinPool == null) {
+            requiresForkJoinPool = Utils.isRunningWebStart() || System.getSecurityManager() != null;
+        }
+        if (requiresForkJoinPool) {
             synchronized (MapWithAIDataUtils.class) {
                 if (Objects.isNull(forkJoinPool) || forkJoinPool.isShutdown()) {
                     forkJoinPool = Utils.newForkJoinPool(MapWithAIPlugin.NAME.concat(".forkjoinpoolthreads"),

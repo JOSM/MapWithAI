@@ -37,7 +37,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
      */
     public MapWithAIDownloadOptions() {
         optionPanel = new JPanel(new GridBagLayout());
-        JPanel infoHeader = new JPanel();
+        final var infoHeader = new JPanel();
         infoHeader.add(new JLabel("Browse and activate extra data sets to facilitate your mapping needs."));
         optionPanel.add(infoHeader, GBC.eol().fill(GridBagConstraints.HORIZONTAL).anchor(GridBagConstraints.NORTH));
         mapwithaiProvidersPanel = new MapWithAIProvidersPanel(this);
@@ -63,7 +63,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     @Override
     public void destroy() {
         if (this.iGui != null) {
-            for (JComponent component : getJComponents(this.iGui.getComponents())) {
+            for (var component : getJComponents(this.iGui.getComponents())) {
                 removeFromComponent(component);
             }
             this.iGui.removeDownloadAreaListener(this);
@@ -77,7 +77,7 @@ public class MapWithAIDownloadOptions extends JPanel implements DownloadSelectio
     }
 
     private boolean removeFromComponent(JComponent component) {
-        for (JComponent newComponent : getJComponents(component.getComponents())) {
+        for (var newComponent : getJComponents(component.getComponents())) {
             if (optionPanel.equals(newComponent)) {
                 component.remove(optionPanel);
                 return true;
