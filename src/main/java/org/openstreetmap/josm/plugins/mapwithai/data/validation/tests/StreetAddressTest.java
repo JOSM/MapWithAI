@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.osm.BBox;
-import org.openstreetmap.josm.data.osm.INode;
 import org.openstreetmap.josm.data.osm.IPrimitive;
 import org.openstreetmap.josm.data.osm.IWay;
 import org.openstreetmap.josm.data.osm.Node;
@@ -50,7 +49,7 @@ public class StreetAddressTest extends Test {
     /**
      * Classified highways. This uses a {@link Set} instead of a {@link List} since
      * the MapWithAI code doesn't care about order.
-     *
+     * <p>
      * Copied from {@link org.openstreetmap.josm.data.validation.tests.Highways}
      */
     public static final Set<String> CLASSIFIED_HIGHWAYS = Collections
@@ -85,13 +84,13 @@ public class StreetAddressTest extends Test {
 
     @Override
     public void endTest() {
-        for (Map.Entry<Point2D, List<OsmPrimitive>> entry : this.primitiveCellMap.entrySet()) {
-            Collection<String> names = getSurroundingHighwayNames(entry.getKey());
-            for (OsmPrimitive primitive : entry.getValue()) {
+        for (var entry : this.primitiveCellMap.entrySet()) {
+            var names = getSurroundingHighwayNames(entry.getKey());
+            for (var primitive : entry.getValue()) {
                 if (!primitive.isOutsideDownloadArea()) {
                     if ((this.partialSelection || this.isBeforeUpload) && !names.contains(primitive.get(ADDR_STREET))
                             && primitive.getDataSet() != null) {
-                        BBox bbox = new BBox(primitive.getBBox());
+                        final var bbox = new BBox(primitive.getBBox());
                         bbox.addPrimitive(primitive, 0.01);
                         for (Way way : primitive.getDataSet().searchWays(bbox)) {
                             if (isHighway(way)) {
@@ -113,8 +112,7 @@ public class StreetAddressTest extends Test {
             }
         }
 
-        Map<String, List<OsmPrimitive>> values = namePrimitiveMap.stream()
-                .collect(Collectors.groupingBy(p -> p.get(ADDR_STREET)));
+        final var values = namePrimitiveMap.stream().collect(Collectors.groupingBy(p -> p.get(ADDR_STREET)));
         values.forEach(this::createError);
         namePrimitiveMap.clear();
         this.nameMap.clear();
@@ -138,29 +136,29 @@ public class StreetAddressTest extends Test {
         if (primitive.isUsable()) {
             final double gridDetail = OsmValidator.getGridDetail() / 100;
             if (isHighway(primitive)) {
-                Collection<String> names = getWayNames((Way) primitive);
+                Collection<String> names = getWayNames(primitive);
                 if (names.isEmpty()) {
                     return;
                 }
                 List<Node> nodes = ((Way) primitive).getNodes();
-                for (int i = 0; i < nodes.size() - 1; i++) {
+                for (var i = 0; i < nodes.size() - 1; i++) {
                     // Populate the name map
-                    INode n1 = nodes.get(i);
-                    INode n2 = nodes.get(i + 1);
+                    final var n1 = nodes.get(i);
+                    final var n2 = nodes.get(i + 1);
                     for (Point2D cell : ValUtil.getSegmentCells(n1, n2, gridDetail)) {
                         this.nameMap.computeIfAbsent(cell, k -> new HashSet<>()).addAll(names);
                     }
                 }
             } else if (hasStreetAddressTags(primitive) && !primitive.isOutsideDownloadArea()) {
                 final EastNorth en;
-                if (primitive instanceof Node) {
-                    en = ((Node) primitive).getEastNorth();
+                if (primitive instanceof Node node) {
+                    en = node.getEastNorth();
                 } else {
                     en = primitive.getBBox().getCenter().getEastNorth(ProjectionRegistry.getProjection());
                 }
                 long x = (long) Math.floor(en.getX() * gridDetail);
                 long y = (long) Math.floor(en.getY() * gridDetail);
-                Point2D point = new Point2D.Double(x, y);
+                final var point = new Point2D.Double(x, y);
                 primitiveCellMap.computeIfAbsent(point, p -> new ArrayList<>()).add(primitive);
             }
         }
@@ -178,12 +176,12 @@ public class StreetAddressTest extends Test {
         if (this.nameMap.isEmpty()) {
             return Collections.emptySet();
         }
-        Set<String> surroundingWays = new HashSet<>();
-        int surrounding = 2;
+        final var surroundingWays = new HashSet<String>();
+        var surrounding = 2;
         while (surroundingWays.isEmpty()) {
             for (int x = -surrounding; x <= surrounding; x++) {
                 for (int y = -surrounding; y <= surrounding; y++) {
-                    Point2D key = new Point2D.Double((long) Math.floor(point2D.getX() + x),
+                    final var key = new Point2D.Double((long) Math.floor(point2D.getX() + x),
                             (long) Math.floor(point2D.getY() + y));
                     if (this.nameMap.containsKey(key)) {
                         surroundingWays.addAll(this.nameMap.get(key));
@@ -207,24 +205,23 @@ public class StreetAddressTest extends Test {
      */
     static Pair<Way, Double> distanceToWay(Way way, OsmPrimitive prim) {
         final ILatLon[] nodes;
-        if (prim instanceof Node) {
-            nodes = new ILatLon[] { (Node) prim };
-        } else if (prim instanceof Way) {
-            nodes = ((Way) prim).getNodes().toArray(new ILatLon[0]);
-        } else if (prim instanceof Relation) {
-            nodes = ((Relation) prim).getMemberPrimitives().stream()
-                    .filter(p -> p instanceof ILatLon || p instanceof Way)
+        if (prim instanceof Node node) {
+            nodes = new ILatLon[] { node };
+        } else if (prim instanceof Way way2) {
+            nodes = way2.getNodes().toArray(new ILatLon[0]);
+        } else if (prim instanceof Relation relation) {
+            nodes = relation.getMemberPrimitives().stream().filter(p -> p instanceof ILatLon || p instanceof Way)
                     .flatMap(p -> p instanceof ILatLon ? Stream.of((ILatLon) p) : ((Way) p).getNodes().stream())
                     .toArray(ILatLon[]::new);
         } else {
             throw new IllegalArgumentException("Unknown primitive type: " + prim.getClass());
         }
         double dist = Double.NaN;
-        List<? extends INode> wayNodes = way.getNodes();
-        for (int i = 0; i < wayNodes.size() - 1; i++) {
-            final ILatLon a = wayNodes.get(i);
-            final ILatLon b = wayNodes.get(i + 1);
-            for (ILatLon node : nodes) {
+        final var wayNodes = way.getNodes();
+        for (var i = 0; i < wayNodes.size() - 1; i++) {
+            final var a = wayNodes.get(i);
+            final var b = wayNodes.get(i + 1);
+            for (var node : nodes) {
                 double tDist = getSegmentNodeDistSq(a, b, node);
                 if (Double.isNaN(dist) || (!Double.isNaN(tDist) && tDist < dist)) {
                     dist = tDist;

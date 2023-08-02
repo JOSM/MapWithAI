@@ -9,10 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.command.AddPrimitivesCommand;
@@ -81,7 +79,7 @@ public class MovePrimitiveDataSetCommand extends Command {
             if (command instanceof DeleteCommand) {
                 command.undoCommand();
             } else {
-                command.executeCommand();
+                command.getAffectedDataSet().update(command::executeCommand);
             }
         }
         return true;
@@ -111,16 +109,15 @@ public class MovePrimitiveDataSetCommand extends Command {
      */
     public static Command moveCollection(DataSet from, DataSet to, Collection<OsmPrimitive> selection,
             Collection<PrimitiveData> primitiveData) {
-        final List<Command> commands = new ArrayList<>();
+        final var commands = new ArrayList<Command>();
 
-        final Collection<OsmPrimitive> selected = from.getAllSelected();
+        final var selected = from.getAllSelected();
         GuiHelper.runInEDTAndWait(() -> from.setSelected(selection));
-        final MergeSourceBuildingVisitor builder = new MergeSourceBuildingVisitor(from);
-        final DataSet hull = builder.build();
+        final var builder = new MergeSourceBuildingVisitor(from);
+        final var hull = builder.build();
         GuiHelper.runInEDTAndWait(() -> from.setSelected(selected));
 
-        final List<PrimitiveData> primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save)
-                .collect(Collectors.toList());
+        final var primitiveAddData = hull.allPrimitives().stream().map(OsmPrimitive::save).toList();
         primitiveAddData.stream().map(data -> {
             if (data.getUniqueId() > 0) {
                 // Don't do this with conn data?
@@ -132,8 +129,8 @@ public class MovePrimitiveDataSetCommand extends Command {
 
         commands.add(new AddPrimitivesCommand(primitiveAddData,
                 selection.stream().map(OsmPrimitive::save).collect(Collectors.toList()), to));
-        List<Command> removeKeyCommand = new ArrayList<>();
-        Set<OsmPrimitive> fullSelection = new HashSet<>();
+        final var removeKeyCommand = new ArrayList<Command>();
+        final var fullSelection = new HashSet<OsmPrimitive>();
         MapWithAIDataUtils.addPrimitivesToCollection(fullSelection, selection);
         if (!fullSelection.isEmpty()) {
             CreateConnectionsCommand.getConflationCommands().forEach(clazz -> {
@@ -148,7 +145,7 @@ public class MovePrimitiveDataSetCommand extends Command {
         }
         Command delete;
         if (!removeKeyCommand.isEmpty()) {
-            SequenceCommand sequence = new SequenceCommand("Temporary Command", removeKeyCommand);
+            final var sequence = new SequenceCommand("Temporary Command", removeKeyCommand);
             sequence.executeCommand(); // This *must* be executed for the delete command to get everything.
             delete = DeleteCommand.delete(selection, true, true);
             sequence.undoCommand();
