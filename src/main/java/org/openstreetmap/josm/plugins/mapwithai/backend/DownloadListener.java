@@ -4,7 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -42,13 +41,13 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
     @Override
     public void dataSourceChange(DataSourceChangeEvent event) {
         if (event instanceof DataSourceAddedEvent) {
-            MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
+            final var layer = MapWithAIDataUtils.getLayer(false);
             if (layer == null) {
                 destroy();
                 return;
             }
             if (layer.downloadContinuous()) {
-                List<Bounds> bounds = DataSource.getDataSourceBounds(event.getSource().getDataSources());
+                final var bounds = DataSource.getDataSourceBounds(event.getSource().getDataSources());
                 bounds.removeIf(a -> layer.getDataSet().getDataSourceBounds().stream().map(Bounds::toBBox)
                         .anyMatch(b -> b.bboxIsFunctionallyEqual(a.toBBox(), BBOX_SIMILARITY_DEGREES)));
                 MapWithAIDataUtils.getMapWithAIData(layer, bounds);
@@ -59,7 +58,7 @@ public final class DownloadListener implements DataSourceListener, Destroyable {
 
     @Override
     public void destroy() {
-        DataSet realDs = ds.get();
+        final var realDs = ds.get();
         if (realDs != null) {
             // Should be added, so no exception should be thrown
             realDs.removeDataSourceListener(this);

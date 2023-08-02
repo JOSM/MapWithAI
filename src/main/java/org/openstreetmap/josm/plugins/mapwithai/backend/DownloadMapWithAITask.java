@@ -6,12 +6,10 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -57,7 +55,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         }
 
         private static void realShowEmptyNotification() {
-            Notification n = new Notification();
+            final var n = new Notification();
             n.setIcon(ImageProvider.get("mapwithai"));
             n.setContent(tr("No enabled data sources have potential data in this area"));
             n.show();
@@ -71,7 +69,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         }
 
         private static void realShowNoLayerNotification() {
-            Notification n = new Notification();
+            final var n = new Notification();
             n.setIcon(ImageProvider.get("mapwithai"));
             n.setContent(tr("No MapWithAI layers were selected. Please select at least one."));
             GuiHelper.runInEDT(n::show);
@@ -90,7 +88,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
     public Future<?> download(OsmServerReader reader, DownloadParams settings, Bounds downloadArea,
             ProgressMonitor progressMonitor) {
         if (!urls.isEmpty()) {
-            DownloadTask task = new DownloadTask(settings, tr("MapWithAI Download"), progressMonitor, false, false,
+            final var task = new DownloadTask(settings, tr("MapWithAI Download"), progressMonitor, false, false,
                     downloadArea);
             return MainApplication.worker.submit(task);
         }
@@ -101,11 +99,11 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
     @Override
     public String getConfirmationMessage(URL url) {
         if (url != null) {
-            Collection<String> items = new ArrayList<>();
+            final var items = new ArrayList<>();
             items.add(tr("OSM Server URL:") + ' ' + url.getHost());
             items.add(tr("Command") + ": " + url.getPath());
             if (url.getQuery() != null) {
-                items.add(tr("Request details: {0}", url.getQuery().replaceAll(",\\p{IsWhite_Space}*", ", ")));
+                items.add(tr("Request details: {0}", url.getQuery().replaceAll(",\\s*", ", ")));
             }
             return Utils.joinAsHtmlUnorderedList(items);
         }
@@ -135,7 +133,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
         protected void realRun() throws SAXException, IOException, OsmTransferException {
             relevantUrls = urls.stream().filter(i -> i.getBounds() == null || i.getBounds().intersects(bounds))
                     .collect(Collectors.toList());
-            ProgressMonitor monitor = getProgressMonitor();
+            final var monitor = getProgressMonitor();
             if (relevantUrls.isEmpty()) {
                 Notifications.showEmptyNotification();
                 return;
@@ -146,7 +144,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                 monitor.setTicksCount(relevantUrls.size());
             }
             downloadedData = new DataSet();
-            final ForkJoinPool pool = MapWithAIDataUtils.getForkJoinPool();
+            final var pool = MapWithAIDataUtils.getForkJoinPool();
             this.downloader = new ArrayList<>(relevantUrls.size());
             for (MapWithAIInfo info : relevantUrls) {
                 if (isCanceled()) {
@@ -155,7 +153,7 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                 this.downloader.add(pool.submit(MapWithAIDataUtils.download(this.progressMonitor, bounds, info,
                         MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS)));
             }
-            for (ForkJoinTask<DataSet> task : this.downloader) {
+            for (var task : this.downloader) {
                 try {
                     DownloadMapWithAITask.this.downloadedData.mergeFrom(task.get(),
                             monitor.createSubTaskMonitor(1, false));
@@ -172,9 +170,8 @@ public class DownloadMapWithAITask extends DownloadOsmTask {
                     while (current.getCause() != null && !current.equals(current.getCause())) {
                         current = current.getCause();
                     }
-                    if (current instanceof OsmApiException) {
-                        OsmApiException ex = (OsmApiException) current;
-                        OsmApiException here = new OsmApiException(ex.getResponseCode(), ex.getErrorHeader(),
+                    if (current instanceof OsmApiException ex) {
+                        final var here = new OsmApiException(ex.getResponseCode(), ex.getErrorHeader(),
                                 ex.getErrorBody(), ex.getAccessedUrl(), ex.getLogin(), ex.getContentType());
                         here.initCause(e);
                         here.setUrl(here.getAccessedUrl());

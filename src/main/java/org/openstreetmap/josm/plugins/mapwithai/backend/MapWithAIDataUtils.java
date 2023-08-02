@@ -1,12 +1,12 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static java.util.function.Predicate.not;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import javax.swing.JOptionPane;
 
-import java.awt.geom.Area;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -26,7 +25,6 @@ import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
@@ -79,12 +77,12 @@ public final class MapWithAIDataUtils {
      */
     public static void addPrimitivesToCollection(Collection<OsmPrimitive> collection,
             Collection<OsmPrimitive> primitives) {
-        final Collection<OsmPrimitive> temporaryCollection = new TreeSet<>();
-        for (final OsmPrimitive primitive : primitives) {
-            if (primitive instanceof Way) {
-                temporaryCollection.addAll(((Way) primitive).getNodes());
-            } else if (primitive instanceof Relation) {
-                addPrimitivesToCollection(temporaryCollection, ((Relation) primitive).getMemberPrimitives());
+        final var temporaryCollection = new TreeSet<OsmPrimitive>();
+        for (final var primitive : primitives) {
+            if (primitive instanceof Way way) {
+                temporaryCollection.addAll(way.getNodes());
+            } else if (primitive instanceof Relation relation) {
+                addPrimitivesToCollection(temporaryCollection, relation.getMemberPrimitives());
             }
             temporaryCollection.add(primitive);
         }
@@ -115,21 +113,22 @@ public final class MapWithAIDataUtils {
      * @return A DataSet with data inside the bounds
      */
     public static DataSet getData(Collection<Bounds> bounds, int maximumDimensions) {
-        final DataSet dataSet = new DataSet();
-        final List<Bounds> realBounds = bounds.stream().filter(b -> !b.isOutOfTheWorld()).distinct()
+        final var dataSet = new DataSet();
+        final var realBounds = bounds.stream().filter(b -> !b.isOutOfTheWorld()).distinct()
                 .flatMap(bound -> MapWithAIDataUtils.reduceBoundSize(bound, maximumDimensions).stream())
                 .collect(Collectors.toList());
         if (!MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty()) {
             if ((bounds.size() < TOO_MANY_BBOXES) || confirmBigDownload(realBounds)) {
-                final PleaseWaitProgressMonitor monitor = new PleaseWaitProgressMonitor();
+                final var monitor = new PleaseWaitProgressMonitor();
                 monitor.beginTask(tr("Downloading {0} Data", MapWithAIPlugin.NAME), realBounds.size());
                 try {
-                    List<MapWithAIInfo> urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl());
-                    final List<ForkJoinTask<DataSet>> downloadedDataSets = new ArrayList<>();
-                    for (final Bounds bound : realBounds) {
-                        for (MapWithAIInfo url : urls) {
+                    final var urls = new ArrayList<>(MapWithAIPreferenceHelper.getMapWithAIUrl());
+                    final var downloadedDataSets = new ArrayList<ForkJoinTask<DataSet>>(
+                            realBounds.size() * urls.size());
+                    for (var bound : realBounds) {
+                        for (var url : urls) {
                             if (url.getUrl() != null && !Utils.isBlank(url.getUrl())) {
-                                ForkJoinTask<DataSet> ds = download(monitor, bound, url, maximumDimensions);
+                                final var ds = download(monitor, bound, url, maximumDimensions);
                                 downloadedDataSets.add(ds);
                                 MapWithAIDataUtils.getForkJoinPool().execute(ds);
                             }
@@ -142,7 +141,7 @@ public final class MapWithAIDataUtils {
                 }
             }
         } else {
-            final Notification noUrls = GuiHelper.runInEDTAndWaitAndReturn(
+            final var noUrls = GuiHelper.runInEDTAndWaitAndReturn(
                     () -> MapWithAIPreferenceHelper.getMapWithAIUrl().isEmpty() ? new Notification(tr(
                             "There are no defined URLs. Attempting to add the appropriate servers.\nPlease try again."))
                             : new Notification(tr("No URLS are enabled")));
@@ -172,7 +171,7 @@ public final class MapWithAIDataUtils {
     public static ForkJoinTask<DataSet> download(ProgressMonitor monitor, Bounds bound, MapWithAIInfo mapWithAIInfo,
             int maximumDimensions) {
         return ForkJoinTask.adapt(() -> {
-            BoundingBoxMapWithAIDownloader downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
+            final var downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
                     DetectTaskingManagerUtils.hasTaskingManagerLayer());
             try {
                 return downloader.parseOsm(monitor.createSubTaskMonitor(1, false));
@@ -193,20 +192,20 @@ public final class MapWithAIDataUtils {
      * @param dataSetsToMerge The datasets to merge (futures)
      */
     private static void mergeDataSets(final DataSet original, final List<ForkJoinTask<DataSet>> dataSetsToMerge) {
-        for (ForkJoinTask<DataSet> ds : dataSetsToMerge) {
+        for (var ds : dataSetsToMerge) {
             try {
                 original.mergeFrom(ds.join());
             } catch (RuntimeException e) {
                 final String notificationMessage;
-                final Throwable cause = e.getCause();
-                if (cause instanceof IllegalDataException) {
-                    notificationMessage = ExceptionUtil.explainException((Exception) cause);
+                final var cause = e.getCause();
+                if (cause instanceof IllegalDataException illegalDataException) {
+                    notificationMessage = ExceptionUtil.explainException(illegalDataException);
                     Logging.trace(e);
-                    Notification notification = new Notification();
+                    final var notification = new Notification();
                     GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
                     GuiHelper.runInEDT(notification::show);
-                } else if (cause instanceof OsmTransferException) {
-                    GuiHelper.runInEDT(() -> ExceptionDialogUtil.explainException((OsmTransferException) cause));
+                } else if (cause instanceof OsmTransferException osmTransferException) {
+                    GuiHelper.runInEDT(() -> ExceptionDialogUtil.explainException(osmTransferException));
                 } else {
                     throw e;
                 }
@@ -215,7 +214,7 @@ public final class MapWithAIDataUtils {
     }
 
     private static boolean confirmBigDownload(List<Bounds> realBounds) {
-        ConfirmBigDownload confirmation = new ConfirmBigDownload(realBounds);
+        final var confirmation = new ConfirmBigDownload(realBounds);
         GuiHelper.runInEDTAndWait(confirmation);
         return confirmation.confirmed();
     }
@@ -275,11 +274,11 @@ public final class MapWithAIDataUtils {
      * @return The height in meters (see {@link LatLon#greatCircleDistance})
      */
     public static double getHeight(Bounds bounds) {
-        final LatLon topRight = bounds.getMax();
-        final LatLon bottomLeft = bounds.getMin();
+        final var topRight = bounds.getMax();
+        final var bottomLeft = bounds.getMin();
         final double minx = bottomLeft.getX();
         final double maxY = topRight.getY();
-        final LatLon topLeft = new LatLon(maxY, minx);
+        final var topLeft = new LatLon(maxY, minx);
         return bottomLeft.greatCircleDistance((ILatLon) topLeft);
     }
 
@@ -291,8 +290,7 @@ public final class MapWithAIDataUtils {
      *         {@code null} if {@code create} is {@code false}.
      */
     public static MapWithAILayer getLayer(boolean create) {
-        final List<MapWithAILayer> mapWithAILayers = MainApplication.getLayerManager()
-                .getLayersOfType(MapWithAILayer.class);
+        final var mapWithAILayers = MainApplication.getLayerManager().getLayersOfType(MapWithAILayer.class);
         MapWithAILayer layer = null;
         synchronized (LAYER_LOCK) {
             if (mapWithAILayers.isEmpty() && create) {
@@ -302,7 +300,7 @@ public final class MapWithAIDataUtils {
             }
         }
 
-        final MapWithAILayer tLayer = layer;
+        final var tLayer = layer;
         if (!MainApplication.getLayerManager().getLayers().contains(tLayer) && create) {
             GuiHelper.runInEDTAndWait(() -> MainApplication.getLayerManager().addLayer(tLayer));
         }
@@ -317,10 +315,10 @@ public final class MapWithAIDataUtils {
      * @return true if data was downloaded
      */
     public static boolean getMapWithAIData(MapWithAILayer layer) {
-        final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
-                .stream().filter(obj -> !(obj instanceof MapWithAILayer)).collect(Collectors.toList());
-        boolean gotData = false;
-        for (final OsmDataLayer osmLayer : osmLayers) {
+        final var osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                .filter(not(MapWithAILayer.class::isInstance)).toList();
+        var gotData = false;
+        for (final var osmLayer : osmLayers) {
             if (!osmLayer.isLocked() && getMapWithAIData(layer, osmLayer)) {
                 gotData = true;
             }
@@ -358,15 +356,14 @@ public final class MapWithAIDataUtils {
      * @return true if data was downloaded
      */
     public static boolean getMapWithAIData(MapWithAILayer layer, Collection<Bounds> bounds) {
-        final DataSet mapWithAISet = layer.getDataSet();
-        Area area = mapWithAISet.getDataSourceArea();
-        final List<Bounds> toDownload = area == null ? new ArrayList<>(bounds)
-                : bounds.stream().filter(Objects::nonNull).filter(tBounds -> !area.contains(tBounds.asRect()))
-                        .collect(Collectors.toList());
+        final var mapWithAISet = layer.getDataSet();
+        final var area = mapWithAISet.getDataSourceArea();
+        final var toDownload = area == null ? new ArrayList<>(bounds)
+                : bounds.stream().filter(Objects::nonNull).filter(tBounds -> !area.contains(tBounds.asRect())).toList();
         if (!toDownload.isEmpty()) {
             getForkJoinPool().execute(() -> {
-                final DataSet newData = getData(toDownload, MAXIMUM_SIDE_DIMENSIONS);
-                final Lock lock = layer.getLock();
+                final var newData = getData(toDownload, MAXIMUM_SIDE_DIMENSIONS);
+                final var lock = layer.getLock();
                 lock.lock();
                 try {
                     mapWithAISet.update(() -> mapWithAISet.mergeFrom(newData));
@@ -388,14 +385,14 @@ public final class MapWithAIDataUtils {
      */
     public static double getWidth(Bounds bounds) {
         // Lat is y, Lon is x
-        final LatLon bottomLeft = bounds.getMin();
-        final LatLon topRight = bounds.getMax();
+        final var bottomLeft = bounds.getMin();
+        final var topRight = bounds.getMax();
         final double minX = bottomLeft.getX();
         final double maxX = topRight.getX();
         final double minY = bottomLeft.getY();
         final double maxY = topRight.getY();
-        final LatLon bottomRight = new LatLon(minY, maxX);
-        final LatLon topLeft = new LatLon(maxY, minX);
+        final var bottomRight = new LatLon(minY, maxX);
+        final var topLeft = new LatLon(maxY, minX);
         return Math.max(bottomLeft.greatCircleDistance((ILatLon) bottomRight),
                 topLeft.greatCircleDistance((ILatLon) topRight));
     }
@@ -409,7 +406,7 @@ public final class MapWithAIDataUtils {
      *         {@code maximumDimensions}
      */
     public static List<Bounds> reduceBoundSize(Bounds bound, int maximumDimensions) {
-        final List<Bounds> returnBounds = new ArrayList<>();
+        final var returnBounds = new ArrayList<Bounds>();
         final double width = getWidth(bound);
         final double height = getHeight(bound);
         final double widthDivisions = width / maximumDimensions;
@@ -422,10 +419,10 @@ public final class MapWithAIDataUtils {
 
         final double minx = bound.getMinLon();
         final double miny = bound.getMinLat();
-        for (int x = 1; x <= widthSplits; x++) {
-            for (int y = 1; y <= heightSplits; y++) {
-                final LatLon lowerLeft = new LatLon(miny + (newMinHeights * (y - 1)), minx + (newMinWidths * (x - 1)));
-                final LatLon upperRight = new LatLon(miny + (newMinHeights * y), minx + (newMinWidths * x));
+        for (var x = 1; x <= widthSplits; x++) {
+            for (var y = 1; y <= heightSplits; y++) {
+                final var lowerLeft = new LatLon(miny + (newMinHeights * (y - 1)), minx + (newMinWidths * (x - 1)));
+                final var upperRight = new LatLon(miny + (newMinHeights * y), minx + (newMinWidths * x));
                 returnBounds.add(new Bounds(lowerLeft, upperRight));
             }
         }
@@ -452,9 +449,9 @@ public final class MapWithAIDataUtils {
      *         {@code maximumDimensions}
      */
     public static List<Bounds> reduceBoundSize(List<Bounds> bounds, int maximumDimensions) {
-        final List<Bounds> returnBounds = new ArrayList<>();
+        final var returnBounds = new ArrayList<Bounds>(bounds.size());
         bounds.forEach(bound -> returnBounds.addAll(reduceBoundSize(bound, maximumDimensions)));
-        return returnBounds.stream().distinct().collect(Collectors.toList());
+        return returnBounds.stream().distinct().toList();
     }
 
     /**
@@ -463,18 +460,18 @@ public final class MapWithAIDataUtils {
      * @param primitives The primitives to remove
      */
     public static void removePrimitivesFromDataSet(Collection<OsmPrimitive> primitives) {
-        for (final OsmPrimitive primitive : primitives) {
-            if (primitive instanceof Relation) {
-                removePrimitivesFromDataSet(((Relation) primitive).getMemberPrimitives());
-            } else if (primitive instanceof Way) {
-                for (final Node node : ((Way) primitive).getNodes()) {
-                    final DataSet ds = node.getDataSet();
+        for (final var primitive : primitives) {
+            if (primitive instanceof Relation relation) {
+                removePrimitivesFromDataSet(relation.getMemberPrimitives());
+            } else if (primitive instanceof Way way) {
+                for (final var node : way.getNodes()) {
+                    final var ds = node.getDataSet();
                     if (ds != null) {
                         ds.removePrimitive(node);
                     }
                 }
             }
-            final DataSet ds = primitive.getDataSet();
+            final var ds = primitive.getDataSet();
             if (ds != null) {
                 ds.removePrimitive(primitive);
             }

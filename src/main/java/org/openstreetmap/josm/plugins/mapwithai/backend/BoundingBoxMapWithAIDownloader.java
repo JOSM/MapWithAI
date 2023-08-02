@@ -4,8 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import javax.json.Json;
-import javax.json.JsonReader;
-import javax.json.JsonStructure;
 import javax.json.JsonValue;
 import javax.json.stream.JsonParser;
 import javax.swing.JOptionPane;
@@ -116,7 +114,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     public DataSet parseOsm(ProgressMonitor progressMonitor) throws OsmTransferException {
         long startTime = System.nanoTime();
         try {
-            DataSet externalData = super.parseOsm(progressMonitor);
+            var externalData = super.parseOsm(progressMonitor);
             // Don't call conflate code unnecessarily
             if ((this.info.getSourceType() != MapWithAIType.ESRI_FEATURE_SERVER || this.start == 0)
                     && Boolean.TRUE.equals(MapWithAIInfo.THIRD_PARTY_CONFLATE.get()) && !this.info.isConflated()
@@ -124,11 +122,11 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 if (externalData.getDataSourceBounds().isEmpty()) {
                     externalData.addDataSource(new DataSource(this.downloadArea, "External Data"));
                 }
-                DataSet toConflate = getConflationData(this.downloadArea);
+                final var toConflate = getConflationData(this.downloadArea);
                 dcs = new DataConflationSender(this.info.getCategory(), toConflate, externalData);
                 dcs.run();
                 try {
-                    DataSet conflatedData = dcs.get(30, TimeUnit.SECONDS);
+                    final var conflatedData = dcs.get(30, TimeUnit.SECONDS);
                     if (conflatedData != null) {
                         externalData = conflatedData;
                     }
@@ -225,8 +223,8 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 || (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated())) {
             // Rather unfortunately, we need to read the entire json in order to figure out
             // if we need to make additional calls
-            try (JsonReader reader = Json.createReader(source)) {
-                JsonStructure structure = reader.read();
+            try (var reader = Json.createReader(source)) {
+                final var structure = reader.read();
                 try (var bais = new ByteArrayInputStream(structure.toString().getBytes(StandardCharsets.UTF_8))) {
                     ds = GeoJSONReader.parseDataSet(bais, progressMonitor);
                 } catch (IOException e) {
@@ -272,7 +270,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         try {
             final var client = HttpClient.create(new URL(baseUrl + "&returnCountOnly=true"));
             int objects = Integer.MIN_VALUE;
-            try (InputStream is = client.connect().getContent(); JsonParser parser = Json.createParser(is)) {
+            try (var is = client.connect().getContent(); var parser = Json.createParser(is)) {
                 while (parser.hasNext()) {
                     final var event = parser.next();
                     if (event == JsonParser.Event.START_OBJECT) {

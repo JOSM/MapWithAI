@@ -12,7 +12,6 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
 import org.openstreetmap.josm.data.gpx.GpxRoute;
 import org.openstreetmap.josm.data.gpx.WayPoint;
-import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -61,14 +60,13 @@ final class DetectTaskingManagerUtils {
      *         not valid.
      */
     public static Bounds getTaskingManagerBounds() {
-        final Layer layer = getTaskingManagerLayer();
-        if (layer instanceof GpxLayer) {
-            final GpxLayer gpxLayer = (GpxLayer) layer;
-            final Bounds realBounds = gpxLayer.data.recalculateBounds();
+        final var layer = getTaskingManagerLayer();
+        if (layer instanceof GpxLayer gpxLayer) {
+            final var realBounds = gpxLayer.data.recalculateBounds();
             return new Bounds(realBounds);
-        } else if (layer instanceof OsmDataLayer && ((OsmDataLayer) layer).getDataSet().getWays().size() == 1) {
-            final BBox bbox = ((OsmDataLayer) layer).getDataSet().getWays().iterator().next().getBBox();
-            Bounds returnBounds = new Bounds(bbox.getTopLeft());
+        } else if (layer instanceof OsmDataLayer osmDataLayer && osmDataLayer.getDataSet().getWays().size() == 1) {
+            final var bbox = osmDataLayer.getDataSet().getWays().iterator().next().getBBox();
+            final var returnBounds = new Bounds(bbox.getTopLeft());
             returnBounds.extend(bbox.getBottomRight());
             return returnBounds;
         }
@@ -82,8 +80,8 @@ final class DetectTaskingManagerUtils {
      * @return A gpx layer that can be used to crop data from MapWithAI
      */
     public static GpxData createTaskingManagerGpxData(Bounds bounds) {
-        final GpxData data = new GpxData();
-        final GpxRoute route = new GpxRoute();
+        final var data = new GpxData();
+        final var route = new GpxRoute();
         route.routePoints.add(new WayPoint(bounds.getMin()));
         route.routePoints.add(new WayPoint(new LatLon(bounds.getMaxLat(), bounds.getMinLon())));
         route.routePoints.add(new WayPoint(bounds.getMax()));

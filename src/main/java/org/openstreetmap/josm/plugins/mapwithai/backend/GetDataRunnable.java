@@ -1,8 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static java.util.function.Predicate.not;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,9 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.function.BiPredicate;
@@ -109,7 +109,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         public boolean equals(Object k, Object t) {
             ILatLon coorK = getLatLon(k);
             ILatLon coorT = getLatLon(t);
-            return coorK == coorT || (coorK != null && coorT != null && coorK.equals(coorT));
+            return Objects.equals(coorK, coorT);
         }
 
         @Override
@@ -143,6 +143,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
     }
 
+    @Serial
     private static final long serialVersionUID = 258423685658089715L;
     private final transient List<Bounds> runnableBounds;
     private final transient DataSet dataSet;
@@ -211,20 +212,20 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
 
     @Override
     public DataSet compute() {
-        final List<Bounds> bounds = maximumDimensions == null ? MapWithAIDataUtils.reduceBoundSize(runnableBounds)
+        final var bounds = maximumDimensions == null ? MapWithAIDataUtils.reduceBoundSize(runnableBounds)
                 : MapWithAIDataUtils.reduceBoundSize(runnableBounds, maximumDimensions);
         monitor.beginTask(tr("Downloading {0} data ({1} total downloads)", MapWithAIPlugin.NAME, bounds.size()),
                 bounds.size() - 1);
         if (!monitor.isCanceled()) {
             if (bounds.size() == MAX_NUMBER_OF_BBOXES_TO_PROCESS) {
-                final DataSet temporaryDataSet = getDataReal(bounds.get(0), monitor);
+                final var temporaryDataSet = getDataReal(bounds.get(0), monitor);
                 synchronized (this.dataSet) {
                     dataSet.mergeFrom(temporaryDataSet);
                 }
             } else {
                 final Collection<GetDataRunnable> tasks = bounds.stream()
                         .map(bound -> new GetDataRunnable(bound, dataSet, monitor.createSubTaskMonitor(0, true)))
-                        .collect(Collectors.toList());
+                        .toList();
                 tasks.forEach(GetDataRunnable::fork);
                 tasks.forEach(runnable -> {
                     runnable.join();
@@ -270,14 +271,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         mergeWays(dataSet);
         PreConflatedDataUtils.removeConflatedData(dataSet, info);
         removeAlreadyAddedData(dataSet);
-        List<Way> ways = dataSet.searchWays(boundsToUse.toBBox()).stream().filter(w -> w.hasKey("highway"))
-                .collect(Collectors.toList());
+        final var ways = dataSet.searchWays(boundsToUse.toBBox()).stream().filter(w -> w.hasKey("highway")).toList();
         if (!ways.isEmpty()) {
             new MergeDuplicateWays(dataSet, ways).executeCommand();
         }
         (boundsToUse.isCollapsed() || boundsToUse.isOutOfTheWorld() ? dataSet.getWays()
                 : dataSet.searchWays(boundsToUse.toBBox())).stream().filter(way -> !way.isDeleted())
-                        .forEach(GetDataRunnable::cleanupArtifacts);
+                .forEach(GetDataRunnable::cleanupArtifacts);
     }
 
     /**
@@ -306,8 +306,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param prim The primitive to remove empty tags from.
      */
     private static void realRemoveEmptyTags(IPrimitive prim) {
-        Map<String, String> keys = prim.getKeys();
-        for (Map.Entry<String, String> entry : keys.entrySet()) {
+        final var keys = prim.getKeys();
+        for (var entry : keys.entrySet()) {
             if (entry.getValue() == null || entry.getValue().trim().isEmpty()) {
                 // The OsmPrimitives all return a new map, so this is safe.
                 prim.remove(entry.getKey());
@@ -321,16 +321,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset with potential duplicate ways (it is modified)
      */
     public static void removeAlreadyAddedData(DataSet dataSet) {
-        final List<DataSet> osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                .map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet)).collect(Collectors.toList());
-        for (Way way : dataSet.getWays()) {
+        final var osmData = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                .map(OsmDataLayer::getDataSet).filter(ds -> !ds.equals(dataSet)).toList();
+        for (var way : dataSet.getWays()) {
             if (!way.isDeleted() && way.getOsmId() <= 0) {
-                for (DataSet ds : osmData) {
+                for (var ds : osmData) {
                     if (checkIfPrimitiveDuplicatesPrimitiveInDataSet(way, ds)) {
-                        final List<Node> nodes = way.getNodes();
+                        final var nodes = way.getNodes();
                         Optional.ofNullable(DeleteCommand.delete(Collections.singleton(way), true, true))
                                 .ifPresent(Command::executeCommand);
-                        for (Node node : nodes) {
+                        for (var node : nodes) {
                             if (!node.isDeleted()
                                     && node.referrers(OsmPrimitive.class).allMatch(OsmPrimitive::isDeleted)) {
                                 node.setDeleted(true);
@@ -344,8 +344,8 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean checkIfPrimitiveDuplicatesPrimitiveInDataSet(OsmPrimitive primitive, DataSet ds) {
-        final List<OsmPrimitive> possibleDuplicates = searchDataSet(ds, primitive);
-        for (OsmPrimitive dupe : possibleDuplicates) {
+        final var possibleDuplicates = searchDataSet(ds, primitive);
+        for (var dupe : possibleDuplicates) {
             if (checkIfProbableDuplicate(dupe, primitive)) {
                 return true;
             }
@@ -354,24 +354,23 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean checkIfProbableDuplicate(OsmPrimitive one, OsmPrimitive two) {
-        boolean equivalent = false;
+        var equivalent = false;
         final TagMap oneMap = one.getKeys();
         final TagMap twoMap = two.getKeys();
         oneMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
         twoMap.remove(MAPWITHAI_SOURCE_TAG_KEY);
         if (one.getClass().equals(two.getClass()) && oneMap.equals(twoMap)) {
-            if (one instanceof Node) {
-                final ILatLon coor1 = ((Node) one);
+            if (one instanceof Node coor1) {
                 final ILatLon coor2 = ((Node) two);
                 if (one.hasSameInterestingTags(two) && coor1.isLatLonKnown() && coor2.isLatLonKnown()
                         && coor1.equalsEpsilon(coor2)) {
                     equivalent = true;
                 }
-            } else if (one instanceof Way) {
-                equivalent = ((Way) one).getNodes().stream().filter(Objects::nonNull)
+            } else if (one instanceof Way wayOne) {
+                equivalent = wayOne.getNodes().stream().filter(Objects::nonNull)
                         .allMatch(node1 -> ((Way) two).getNodes().stream().anyMatch(node1::equalsEpsilon));
-            } else if (one instanceof Relation) {
-                equivalent = ((Relation) one).getMembers().stream()
+            } else if (one instanceof Relation oneRelation) {
+                equivalent = oneRelation.getMembers().stream()
                         .allMatch(member1 -> ((Relation) two).getMembers().stream()
                                 .anyMatch(member2 -> member1.getRole().equals(member2.getRole())
                                         && checkIfProbableDuplicate(member1.getMember(), member2.getMember())));
@@ -381,9 +380,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static <T extends AbstractPrimitive> List<OsmPrimitive> searchDataSet(DataSet ds, T primitive) {
-        if (primitive instanceof OsmPrimitive) {
-            final BBox tBBox = new BBox();
-            tBBox.addPrimitive((OsmPrimitive) primitive, DEGREE_BUFFER);
+        if (primitive instanceof OsmPrimitive osmPrimitive) {
+            final var tBBox = new BBox();
+            tBBox.addPrimitive(osmPrimitive, DEGREE_BUFFER);
             if (primitive instanceof Node) {
                 return Collections.unmodifiableList(ds.searchNodes(tBBox));
             } else if (primitive instanceof Way) {
@@ -401,7 +400,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset with primitives to change
      */
     public static void replaceTags(DataSet dataSet) {
-        final Map<Tag, Tag> replaceTags = MapWithAIPreferenceHelper.getReplacementTags().entrySet().stream()
+        final var replaceTags = MapWithAIPreferenceHelper.getReplacementTags().entrySet().stream()
                 .filter(entry -> entry.getKey().contains(EQUALS) && entry.getValue().contains(EQUALS))
                 .map(entry -> new Pair<>(Tag.ofString(entry.getKey()), Tag.ofString(entry.getValue())))
                 .collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
@@ -439,16 +438,13 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static void cleanupDataSet(DataSet dataSet) {
-        Map<OsmPrimitive, String> origIds = dataSet.allPrimitives().stream()
-                .filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID)).distinct()
-                .collect(Collectors.toMap(prim -> prim, prim -> prim.get(MergeDuplicateWays.ORIG_ID)));
-        final Map<OsmPrimitive, String> serverIds = dataSet.allPrimitives().stream()
-                .filter(prim -> prim.hasKey(SERVER_ID_KEY)).distinct()
+        var origIds = dataSet.allPrimitives().stream().filter(prim -> prim.hasKey(MergeDuplicateWays.ORIG_ID))
+                .distinct().collect(Collectors.toMap(prim -> prim, prim -> prim.get(MergeDuplicateWays.ORIG_ID)));
+        final var serverIds = dataSet.allPrimitives().stream().filter(prim -> prim.hasKey(SERVER_ID_KEY)).distinct()
                 .collect(Collectors.toMap(prim -> prim, prim -> prim.get(SERVER_ID_KEY)));
 
-        final List<OsmPrimitive> toDelete = origIds.entrySet().stream()
-                .filter(entry -> serverIds.containsValue(entry.getValue())).map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        final var toDelete = origIds.entrySet().stream().filter(entry -> serverIds.containsValue(entry.getValue()))
+                .map(Map.Entry::getKey).collect(Collectors.toList());
         if (!toDelete.isEmpty()) {
             new DeleteCommand(toDelete).executeCommand();
         }
@@ -464,17 +460,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset to remove tags from
      */
     public static void removeCommonTags(DataSet dataSet) {
-        final Set<Node> emptyNodes = new HashSet<>();
-        for (OsmPrimitive tagged : dataSet.allPrimitives()) {
+        final var emptyNodes = new HashSet<Node>();
+        for (var tagged : dataSet.allPrimitives()) {
             if (!tagged.hasKeys()) {
                 continue;
             }
             if (tagged.hasKey(MergeDuplicateWays.ORIG_ID)) {
                 tagged.remove(MergeDuplicateWays.ORIG_ID);
             }
-            if (tagged instanceof Node) {
+            if (tagged instanceof Node node) {
                 tagged.remove(SERVER_ID_KEY);
-                final Node node = (Node) tagged;
                 if (!node.isDeleted() && !node.hasKeys() && node.getReferrers().isEmpty()) {
                     emptyNodes.add(node);
                 }
@@ -499,9 +494,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 final Object old = nodes.get(node);
                 if (old == null) {
                     nodes.put(node);
-                } else if (old instanceof Node) {
+                } else if (old instanceof Node oldNode) {
                     List<Node> list = new ArrayList<>(2);
-                    list.add((Node) old);
+                    list.add(oldNode);
                     list.add(node);
                     nodes.put(list);
                 } else {
@@ -520,16 +515,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param dataSet The dataset to merge nodes in
      */
     private static void mergeNodes(DataSet dataSet) {
-        final Storage<Object> nodes = generateEfficientNodeSearchStorage(dataSet);
-        for (Object obj : nodes) {
+        final var nodes = generateEfficientNodeSearchStorage(dataSet);
+        for (var obj : nodes) {
             // We only care if there are multiple nodes at the location
             if (obj instanceof List<?>) {
                 @SuppressWarnings("unchecked")
-                final List<Node> iNodes = (List<Node>) obj;
-                for (Node nearNode : iNodes) {
-                    final List<Node> nearbyNodes = new ArrayList<>(iNodes);
+                final var iNodes = (List<Node>) obj;
+                for (var nearNode : iNodes) {
+                    final var nearbyNodes = new ArrayList<>(iNodes);
                     nearbyNodes.removeIf(node -> !nearNode.hasSameInterestingTags(node) || !usableNode(nearNode, node));
-                    final Command mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, nearNode);
+                    final var mergeCommand = MergeNodesAction.mergeNodes(nearbyNodes, nearNode);
                     if (mergeCommand != null) {
                         mergeCommand.executeCommand();
                     }
@@ -555,7 +550,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static boolean onlyHasHighwayParents(Node node) {
-        HighwayVisitor highwayVisitor = new HighwayVisitor();
+        final var highwayVisitor = new HighwayVisitor();
         node.visitReferrers(highwayVisitor);
         return highwayVisitor.onlyHighways;
     }
@@ -566,16 +561,15 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     private static void mergeWays(DataSet dataSet) {
-        for (final Way way1 : dataSet.getWays()) {
+        for (final var way1 : dataSet.getWays()) {
             if (way1.isDeleted()) {
                 continue;
             }
-            final BBox bbox = new BBox();
+            final var bbox = new BBox();
             bbox.addPrimitive(way1, DEGREE_BUFFER);
-            for (Way nearbyWay : dataSet.searchWays(bbox)) {
+            for (var nearbyWay : dataSet.searchWays(bbox)) {
                 if (nearbyWay.getNodes().stream().filter(way1::containsNode).count() > 1) {
-                    for (Map.Entry<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> entry : checkWayDuplications(
-                            way1, nearbyWay).entrySet()) {
+                    for (var entry : checkWayDuplications(way1, nearbyWay).entrySet()) {
                         GetDataRunnable.addMissingElement(entry);
                     }
                 }
@@ -584,24 +578,24 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     protected static void addMissingElement(Map.Entry<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> entry) {
-        final Way way = entry.getKey().getWay();
+        final var way = entry.getKey().getWay();
         final Way waySegmentWay;
         try {
             waySegmentWay = entry.getKey().toWay();
         } catch (ReflectiveOperationException e) {
             throw new JosmRuntimeException(e);
         }
-        final Node toAdd = entry.getValue().stream().flatMap(seg -> Stream.of(seg.getFirstNode(), seg.getSecondNode()))
+        final var toAdd = entry.getValue().stream().flatMap(seg -> Stream.of(seg.getFirstNode(), seg.getSecondNode()))
                 .filter(node -> !waySegmentWay.containsNode(node)).findAny().orElse(null);
         if ((toAdd != null) && (convertToMeters(
                 Geometry.getDistance(waySegmentWay, toAdd)) < (MapWithAIPreferenceHelper.getMaxNodeDistance() * 10))) {
             way.addNode(entry.getKey().getUpperIndex(), toAdd);
         }
-        for (int i = 0; i < (way.getNodesCount() - 2); i++) {
-            final Node node0 = way.getNode(i);
-            final Node node3 = way.getNode(i + 2);
+        for (var i = 0; i < (way.getNodesCount() - 2); i++) {
+            final var node0 = way.getNode(i);
+            final var node3 = way.getNode(i + 2);
             if (node0.equals(node3)) {
-                final List<Node> nodes = way.getNodes();
+                final var nodes = way.getNodes();
                 nodes.remove(i + 2); // NOSONAR SonarLint doesn't like this (if it was i instead of i + 2, it would
                 // be an issue)
                 way.setNodes(nodes);
@@ -614,10 +608,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     }
 
     protected static void cleanupArtifacts(Way way) {
-        for (int i = 0; i < (way.getNodesCount() - 2); i++) {
-            final Node node0 = way.getNode(i);
-            final Node node1 = way.getNode(i + 1);
-            final Node node2 = way.getNode(i + 2);
+        for (var i = 0; i < (way.getNodesCount() - 2); i++) {
+            final var node0 = way.getNode(i);
+            final var node1 = way.getNode(i + 1);
+            final var node2 = way.getNode(i + 2);
             final double angle = Geometry.getCornerAngle(node0.getEastNorth(), node1.getEastNorth(),
                     node2.getEastNorth());
             if (angle < ARTIFACT_ANGLE) {
@@ -627,9 +621,9 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
             }
         }
         if ((way.getNodesCount() == 2) && (way.getDataSet() != null)) {
-            final BBox tBBox = new BBox();
+            final var tBBox = new BBox();
             tBBox.addPrimitive(way, DEGREE_BUFFER);
-            if (way.getDataSet().searchWays(tBBox).stream().filter(tWay -> !way.equals(tWay) && !tWay.isDeleted())
+            if (way.getDataSet().searchWays(tBBox).stream().filter(not(IPrimitive::isDeleted)).filter(not(way::equals))
                     .anyMatch(tWay -> way.getNodes().stream().filter(
                             tNode -> Geometry.getDistance(tNode, tWay) < MapWithAIPreferenceHelper.getMaxNodeDistance())
                             .count() == way.getNodesCount())) {
@@ -648,24 +642,24 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      */
     protected static Map<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> checkWayDuplications(Way way1,
             Way way2) {
-        final List<IWaySegment<Node, Way>> waySegments1 = way1.getNodePairs(false).stream()
-                .map(pair -> IWaySegment.forNodePair(way1, pair.a, pair.b)).collect(Collectors.toList());
-        final List<IWaySegment<Node, Way>> waySegments2 = way2.getNodePairs(false).stream()
-                .map(pair -> IWaySegment.forNodePair(way2, pair.a, pair.b)).collect(Collectors.toList());
-        final Map<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>> partials = new TreeMap<>();
+        final var waySegments1 = way1.getNodePairs(false).stream()
+                .map(pair -> IWaySegment.forNodePair(way1, pair.a, pair.b)).toList();
+        final var waySegments2 = way2.getNodePairs(false).stream()
+                .map(pair -> IWaySegment.forNodePair(way2, pair.a, pair.b)).toList();
+        final var partials = new TreeMap<IWaySegment<Node, Way>, List<IWaySegment<Node, Way>>>();
         final BiPredicate<IWaySegment<Node, Way>, IWaySegment<Node, Way>> connected = (segment1,
                 segment2) -> segment1.getFirstNode().equals(segment2.getFirstNode())
                         || segment1.getSecondNode().equals(segment2.getFirstNode())
                         || segment1.getFirstNode().equals(segment2.getSecondNode())
                         || segment1.getSecondNode().equals(segment2.getSecondNode());
-        for (final IWaySegment<Node, Way> segment1 : waySegments1) {
-            final List<IWaySegment<Node, Way>> replacements = waySegments2.stream()
-                    .filter(seg2 -> connected.test(segment1, seg2)).filter(seg -> {
-                        final Node node2 = segment1.getFirstNode().equals(seg.getFirstNode())
+        for (final var segment1 : waySegments1) {
+            final var replacements = waySegments2.stream().filter(seg2 -> connected.test(segment1, seg2))
+                    .filter(seg -> {
+                        final var node2 = segment1.getFirstNode().equals(seg.getFirstNode())
                                 || segment1.getSecondNode().equals(seg.getFirstNode()) ? seg.getFirstNode()
                                         : seg.getSecondNode();
-                        final Node node1 = node2.equals(seg.getFirstNode()) ? seg.getSecondNode() : seg.getFirstNode();
-                        final Node node3 = segment1.getFirstNode().equals(node2) ? segment1.getSecondNode()
+                        final var node1 = node2.equals(seg.getFirstNode()) ? seg.getSecondNode() : seg.getFirstNode();
+                        final var node3 = segment1.getFirstNode().equals(node2) ? segment1.getSecondNode()
                                 : segment1.getFirstNode();
                         return Math.abs(Geometry.getCornerAngle(node1.getEastNorth(), node2.getEastNorth(),
                                 node3.getEastNorth())) < (Math.PI / 4);
@@ -688,16 +682,16 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @return A dataset with the data from the bounds
      */
     private static DataSet getDataReal(Bounds bounds, ProgressMonitor monitor) {
-        final DataSet dataSet = new DataSet();
+        final var dataSet = new DataSet();
         dataSet.setUploadPolicy(UploadPolicy.DISCOURAGED);
 
-        final List<ForkJoinTask<DataSet>> tasks = new ArrayList<>();
-        final ForkJoinPool pool = MapWithAIDataUtils.getForkJoinPool();
-        for (MapWithAIInfo map : new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())) {
+        final var tasks = new ArrayList<ForkJoinTask<DataSet>>();
+        final var pool = MapWithAIDataUtils.getForkJoinPool();
+        for (var map : new ArrayList<>(MapWithAILayerInfo.getInstance().getLayers())) {
             tasks.add(pool.submit(
                     MapWithAIDataUtils.download(monitor, bounds, map, MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS)));
         }
-        for (ForkJoinTask<DataSet> task : tasks) {
+        for (var task : tasks) {
             dataSet.mergeFrom(task.join());
         }
         dataSet.setUploadPolicy(UploadPolicy.BLOCKED);

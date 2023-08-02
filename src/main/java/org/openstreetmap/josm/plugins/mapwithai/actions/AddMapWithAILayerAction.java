@@ -1,20 +1,18 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.actions;
 
+import static java.util.function.Predicate.not;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.actions.AdaptableAction;
 import org.openstreetmap.josm.actions.AddImageryLayerAction;
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmData;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -36,6 +34,7 @@ import org.openstreetmap.josm.tools.Logging;
  * Largely copied from {@link AddImageryLayerAction}.
  */
 public class AddMapWithAILayerAction extends JosmAction implements AdaptableAction {
+    @Serial
     private static final long serialVersionUID = 1403912860658467920L;
     private final transient MapWithAIInfo info;
 
@@ -54,9 +53,9 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
         installAdapters();
 
         // change toolbar icon from if specified
-        String icon = info.getIcon();
+        final var icon = info.getIcon();
         if (icon != null) {
-            Future<?> future = new ImageProvider(icon).setOptional(true).getResourceAsync(result -> {
+            final var future = new ImageProvider(icon).setOptional(true).getResourceAsync(result -> {
                 if (result != null) {
                     GuiHelper.runInEDT(() -> result.attachImageIcon(this));
                 }
@@ -71,7 +70,7 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
             }
         } else {
             try {
-                ImageResource resource = new ImageResource(
+                final var resource = new ImageResource(
                         this.info.getSourceCategory().getIcon(ImageSizes.MENU).getImage());
                 resource.attachImageIcon(this);
             } catch (JosmRuntimeException e) {
@@ -92,7 +91,7 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         final DataSet ds;
         final OsmData<?, ?, ?, ?> boundsSource;
-        final OsmDataLayer dataLayer = getDataLayer();
+        final var dataLayer = getDataLayer();
         if (layer != null && !layer.getData().getDataSourceBounds().isEmpty()) {
             ds = layer.getDataSet();
             boundsSource = ds;
@@ -105,15 +104,15 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
             ds = null;
         }
         if (boundsSource != null && ds != null) {
-            ForkJoinPool pool = MapWithAIDataUtils.getForkJoinPool();
-            List<ForkJoinTask<DataSet>> forkJoinTasks = new ArrayList<>(boundsSource.getDataSourceBounds().size());
-            for (Bounds b : boundsSource.getDataSourceBounds()) {
-                ForkJoinTask<DataSet> task = MapWithAIDataUtils.download(NullProgressMonitor.INSTANCE, b, info,
+            final var pool = MapWithAIDataUtils.getForkJoinPool();
+            final var forkJoinTasks = new ArrayList<ForkJoinTask<DataSet>>(boundsSource.getDataSourceBounds().size());
+            for (var b : boundsSource.getDataSourceBounds()) {
+                final var task = MapWithAIDataUtils.download(NullProgressMonitor.INSTANCE, b, info,
                         MapWithAIDataUtils.MAXIMUM_SIDE_DIMENSIONS);
                 forkJoinTasks.add(task);
                 pool.execute(task);
             }
-            for (ForkJoinTask<DataSet> task : forkJoinTasks) {
+            for (var task : forkJoinTasks) {
                 ds.mergeFrom(task.join());
             }
         }
@@ -124,7 +123,7 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
 
     private static OsmDataLayer getDataLayer() {
         return MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
-                .filter(i -> !(i instanceof MapWithAILayer)).findFirst().orElse(null);
+                .filter(not(MapWithAILayer.class::isInstance)).findFirst().orElse(null);
     }
 
     @Override

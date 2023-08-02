@@ -1,6 +1,7 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
+import static java.util.function.Predicate.not;
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
@@ -10,16 +11,15 @@ import javax.swing.JOptionPane;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.AbstractMergeAction;
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
@@ -33,6 +33,7 @@ import org.openstreetmap.josm.tools.Shortcut;
  */
 public class MapWithAIAction extends JosmAction {
     /** UID */
+    @Serial
     private static final long serialVersionUID = 8886705479253246588L;
     private static final String DOWNLOAD_DATA = marktr("{0}: Download Data");
     private static final String SWITCH_LAYERS = marktr("{0}: Switch Layers");
@@ -52,12 +53,12 @@ public class MapWithAIAction extends JosmAction {
     public void actionPerformed(ActionEvent event) {
         if (isEnabled()) {
             final boolean hasLayer = MapWithAIDataUtils.getLayer(false) != null;
-            final List<OsmDataLayer> osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class)
-                    .stream().filter(layer -> !(layer instanceof MapWithAILayer)).filter(Layer::isVisible)
+            final var osmLayers = MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
+                    .filter(not(MapWithAILayer.class::isInstance)).filter(Layer::isVisible)
                     .collect(Collectors.toList());
-            final OsmDataLayer layer = getOsmLayer(osmLayers);
+            final var layer = getOsmLayer(osmLayers);
             if ((layer != null) && MapWithAIDataUtils.getMapWithAIData(MapWithAIDataUtils.getLayer(true), layer)) {
-                final Notification notification = createMessageDialog();
+                final var notification = createMessageDialog();
                 if (notification != null) {
                     notification.show();
                 }
@@ -76,7 +77,7 @@ public class MapWithAIAction extends JosmAction {
      */
     protected static OsmDataLayer getOsmLayer(List<OsmDataLayer> osmLayers) {
         OsmDataLayer returnLayer = null;
-        List<OsmDataLayer> tLayers = new ArrayList<>(osmLayers);
+        final var tLayers = new ArrayList<>(osmLayers);
         if (DetectTaskingManagerUtils.hasTaskingManagerLayer()) {
             tLayers.removeIf(DetectTaskingManagerUtils.getTaskingManagerLayer()::equals);
         }
@@ -98,8 +99,8 @@ public class MapWithAIAction extends JosmAction {
      * @param toLayer The {@link Layer} to switch to
      */
     protected static void toggleLayer(Layer toLayer) {
-        final OsmDataLayer mapwithai = MapWithAIDataUtils.getLayer(false);
-        final Layer currentLayer = MainApplication.getLayerManager().getActiveLayer();
+        final var mapwithai = MapWithAIDataUtils.getLayer(false);
+        final var currentLayer = MainApplication.getLayerManager().getActiveLayer();
         if (currentLayer != null) {
             if (currentLayer.equals(mapwithai) && (toLayer != null)) {
                 MainApplication.getLayerManager().setActiveLayer(toLayer);
@@ -128,20 +129,20 @@ public class MapWithAIAction extends JosmAction {
      * @return A Notification to show ({@link Notification#show})
      */
     public static Notification createMessageDialog() {
-        final MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
-        final Notification notification = layer == null ? null : new Notification();
+        final var layer = MapWithAIDataUtils.getLayer(false);
+        final var notification = layer == null ? null : new Notification();
         if (notification != null) {
-            final List<Bounds> bounds = new ArrayList<>(layer.getDataSet().getDataSourceBounds());
+            final var bounds = new ArrayList<>(layer.getDataSet().getDataSourceBounds());
             if (bounds.isEmpty()) {
                 MainApplication.getLayerManager().getLayersOfType(OsmDataLayer.class).stream()
                         .map(OsmDataLayer::getDataSet).filter(Objects::nonNull).map(DataSet::getDataSourceBounds)
                         .forEach(bounds::addAll);
             }
-            final StringBuilder message = new StringBuilder();
+            final var message = new StringBuilder();
             message.append(MapWithAIPlugin.NAME).append(": ");
             DataAvailability.getInstance(); // force initialization, if it hasn't already occured
-            final Map<String, Boolean> availableTypes = new TreeMap<>();
-            for (final Bounds bound : bounds) {
+            final var availableTypes = new TreeMap<String, Boolean>();
+            for (final var bound : bounds) {
                 DataAvailability.getDataTypes(bound.getCenter())
                         .forEach((type, available) -> availableTypes.merge(type, available, Boolean::logicalOr));
             }
