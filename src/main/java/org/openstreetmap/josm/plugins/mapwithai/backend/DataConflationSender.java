@@ -6,28 +6,28 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpStatus;
-import org.apache.hc.core5.http.ProtocolVersion;
-import org.apache.hc.core5.http.message.StatusLine;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.io.IllegalDataException;
+import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.io.OsmReader;
-import org.openstreetmap.josm.io.OsmWriter;
 import org.openstreetmap.josm.io.OsmWriterFactory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
@@ -46,7 +46,7 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
     private final DataSet osm;
     private final MapWithAICategory category;
     private DataSet conflatedData;
-    private CloseableHttpClient client;
+    private HttpClient client;
     private boolean done;
     private boolean cancelled;
 
@@ -68,42 +68,51 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
     @Override
     public void run() {
         String url = MapWithAIConflationCategory.conflationUrlFor(category);
-        if (!Utils.isBlank(url)) {
-            this.client = HttpClients.createDefault();
-            try (CloseableHttpClient currentClient = this.client) {
-                MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+        if (!Utils.isBlank(url) && !NetworkManager.isOffline(url)) {
+            this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+            try {
+                final var form = new TreeMap<String, String>();
                 if (osm != null) {
-                    StringWriter output = new StringWriter();
-                    try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
+                    final var output = new StringWriter();
+                    try (var writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
                         writer.write(osm);
-                        multipartEntityBuilder.addTextBody("openstreetmap", output.toString(),
-                                ContentType.APPLICATION_XML);
+                        form.put("openstreetmap", output.toString()); // APPLICATION_XML
                     }
                 }
                 // We need to reset the writers to avoid writing previous streams
-                StringWriter output = new StringWriter();
-                try (OsmWriter writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
+                final var output = new StringWriter();
+                try (var writer = OsmWriterFactory.createOsmWriter(new PrintWriter(output), true, "0.6")) {
                     writer.write(external);
-                    multipartEntityBuilder.addTextBody("external", output.toString(), ContentType.APPLICATION_XML);
+                    form.put("external", output.toString());
                 }
-                HttpEntity postData = multipartEntityBuilder.build();
-                HttpUriRequest request = new HttpPost(url);
-                request.setEntity(postData);
 
-                CloseableHttpResponse response = currentClient.execute(request);
-                StatusLine statusLine = new StatusLine(response);
-                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-                    conflatedData = OsmReader.parseDataSet(response.getEntity().getContent(),
-                            NullProgressMonitor.INSTANCE, OsmReader.Options.SAVE_ORIGINAL_ID);
+                final var boundary = UUID.randomUUID().toString();
+                final var request = HttpRequest.newBuilder(URI.create(url))
+                        .POST(HttpRequest.BodyPublishers.ofString(formEncodeMap(boundary, form)))
+                        .timeout(Duration.ofSeconds(10))
+                        .header("Content-Type", "multipart/form-data;boundary=" + boundary).build();
+                final var response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                if (response.statusCode() == 200) {
+                    conflatedData = OsmReader.parseDataSet(response.body(), NullProgressMonitor.INSTANCE,
+                            OsmReader.Options.SAVE_ORIGINAL_ID);
                 } else {
                     conflatedData = null;
                 }
-                ProtocolVersion protocolVersion = statusLine.getProtocolVersion();
-                Logging.info(request.getMethod() + ' ' + url + " -> " + protocolVersion.getProtocol() + '/'
-                        + protocolVersion.getMajor() + '.' + protocolVersion.getMinor() + ' '
-                        + statusLine.getStatusCode());
+                Logging.info(request.method() + ' ' + url + " -> " + request.uri().getScheme() + '/'
+                        + response.version() + ' ' + response.statusCode());
+            } catch (HttpTimeoutException httpTimeoutException) {
+                final var oldThrowable = NetworkManager.addNetworkError(url, httpTimeoutException);
+                if (oldThrowable != null) {
+                    Logging.trace(oldThrowable);
+                }
             } catch (IOException | UnsupportedOperationException | IllegalDataException e) {
                 Logging.error(e);
+            } catch (InterruptedException e) {
+                Logging.trace(e);
+                if (!this.isCancelled()) {
+                    this.cancel(false);
+                }
+                Thread.currentThread().interrupt();
             }
         }
         this.done = true;
@@ -114,14 +123,12 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        try {
-            client.close();
-        } catch (IOException e) {
-            Logging.error(e);
-            return false;
-        }
         this.done = true;
         this.cancelled = true;
+        if (this.client != null) {
+            this.client.executor().ifPresent(Object::notifyAll);
+        }
+        this.client = null;
         synchronized (this) {
             this.notifyAll();
         }
@@ -163,5 +170,17 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
             throw new TimeoutException();
         }
         return this.conflatedData;
+    }
+
+    private static String formEncodeMap(String boundary, Map<String, String> form) {
+        final var separator = "--" + boundary + "\r\nContent-Disposition: form-data; name=";
+        final var builder = new StringBuilder();
+        for (var entry : form.entrySet()) {
+            builder.append(separator).append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
+                    .append(";\r\nContent-Type: application/xml\r\n\r\n")
+                    .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8)).append("\r\n");
+        }
+        builder.append("--").append(boundary).append("--");
+        return builder.toString();
     }
 }

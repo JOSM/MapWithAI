@@ -28,7 +28,6 @@
 
   <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
     <include name="utilsplugin2.jar"/>
-    <include name="apache-http.jar"/>
   </fileset>
 
   <target name="additional-manifest">
