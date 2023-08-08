@@ -4,6 +4,13 @@ package org.openstreetmap.josm.plugins.mapwithai.gui;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trc;
 
+import javax.swing.Action;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+
 import java.awt.Component;
 import java.awt.GraphicsEnvironment;
 import java.awt.MenuComponent;
@@ -16,14 +23,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.swing.Action;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -31,7 +30,6 @@ import org.openstreetmap.josm.data.imagery.Shape;
 import org.openstreetmap.josm.data.sources.SourceInfo;
 import org.openstreetmap.josm.gui.ImageryMenu;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.gui.MenuScroller;
 import org.openstreetmap.josm.gui.preferences.imagery.ImageryPreference;
 import org.openstreetmap.josm.plugins.mapwithai.actions.AddMapWithAILayerAction;
@@ -138,12 +136,12 @@ public class MapWithAIMenu extends JMenu {
         // list all imagery entries where the current map location is within the imagery
         // bounds
         if (MainApplication.isDisplayingMapView()) {
-            MapView mv = MainApplication.getMap().mapView;
-            LatLon pos = mv.getProjection().eastNorth2latlon(mv.getCenter());
-            final List<MapWithAIInfo> inViewLayers = MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
+            final var mv = MainApplication.getMap().mapView;
+            final var pos = mv.getProjection().eastNorth2latlon(mv.getCenter());
+            final var inViewLayers = MapWithAILayerInfo.getInstance().getAllDefaultLayers().stream()
                     .filter(i -> i.getBounds() != null && i.getBounds().contains(pos) && !alreadyInUse.contains(i)
                             && !savedLayers.contains(i) && isPosInOneShapeIfAny(i, pos))
-                    .sorted(alphabeticSourceComparator).collect(Collectors.toList());
+                    .sorted(alphabeticSourceComparator).toList();
             if (!inViewLayers.isEmpty()) {
                 if (inViewLayers.stream().anyMatch(i -> i.getCategory() == i.getCategory().getDefault())) {
                     addDynamicSeparator();

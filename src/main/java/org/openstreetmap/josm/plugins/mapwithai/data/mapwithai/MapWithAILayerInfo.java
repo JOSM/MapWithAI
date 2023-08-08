@@ -24,7 +24,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
@@ -32,6 +31,7 @@ import org.openstreetmap.josm.data.Preferences;
 import org.openstreetmap.josm.data.StructUtils;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
 import org.openstreetmap.josm.data.preferences.BooleanProperty;
+import org.openstreetmap.josm.data.preferences.CachingProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.gui.util.GuiHelper;
@@ -55,7 +55,8 @@ public class MapWithAILayerInfo {
     /**
      * A boolean preference used to determine if preview datasets should be shown
      */
-    public static final BooleanProperty SHOW_PREVIEW = new BooleanProperty("mapwithai.sources.preview", false);
+    public static final CachingProperty<Boolean> SHOW_PREVIEW = new BooleanProperty("mapwithai.sources.preview", false)
+            .cached();
 
     /** Finish listeners */
     private ListenerList<FinishListener> finishListenerListenerList = ListenerList.create();
@@ -612,13 +613,25 @@ public class MapWithAILayerInfo {
      *         not {@code true}.
      */
     private static List<MapWithAIInfo> filterPreview(List<MapWithAIInfo> layers) {
-        if (Boolean.TRUE.equals(SHOW_PREVIEW.get()) && ExpertToggleAction.isExpert()) {
-            return layers;
+        final var newList = new ArrayList<>(layers);
+        newList.removeIf(MapWithAILayerInfo::isFiltered);
+        return newList;
+    }
+
+    /**
+     * Check if the layer should be filtered out
+     *
+     * @param info The layer to check
+     * @return {@code true} if the layer should be filtered
+     */
+    public static boolean isFiltered(MapWithAIInfo info) {
+        if (info == null || !info.hasValidUrl()) {
+            return true;
         }
-        return layers.stream()
-                .filter(i -> i.getCategory() != MapWithAICategory.PREVIEW
-                        && !i.getAdditionalCategories().contains(MapWithAICategory.PREVIEW))
-                .filter(MapWithAIInfo::hasValidUrl).collect(Collectors.toList());
+        if (ExpertToggleAction.isExpert() && Boolean.TRUE.equals(SHOW_PREVIEW.get())) {
+            return false;
+        }
+        return info.hasCategory(MapWithAICategory.PREVIEW);
     }
 
     /**

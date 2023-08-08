@@ -649,6 +649,16 @@ public class MapWithAIInfo extends
     }
 
     /**
+     * Check if this layer has a specified category
+     *
+     * @param category The category to look for
+     * @return {@code true} if this layer has the specified category
+     */
+    public boolean hasCategory(MapWithAICategory category) {
+        return this.category == category || (this.categories != null && this.categories.contains(category));
+    }
+
+    /**
      * Set the key that indicates an object is already conflated, and if so, to what
      *
      * @param key The key returned by the server indicating the conflation object
