@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
+import org.openstreetmap.josm.testutils.annotations.Territories;
 
 /**
  * An annotation to use {@link MapWithAILayerInfo}

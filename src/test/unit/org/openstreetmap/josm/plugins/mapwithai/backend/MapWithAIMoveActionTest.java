@@ -35,13 +35,13 @@ import org.openstreetmap.josm.plugins.mapwithai.commands.DuplicateCommand;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MapWithAIPluginMock;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.MissingConnectionTagsMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.LoggingHandler;
-import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.testutils.annotations.AssertionsInEDT;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.Main;
 import org.openstreetmap.josm.testutils.annotations.Projection;
+import org.openstreetmap.josm.testutils.annotations.Territories;
 import org.openstreetmap.josm.testutils.mockers.WindowMocker;
 import org.openstreetmap.josm.tools.Logging;
 
@@ -52,7 +52,7 @@ import mockit.MockUp;
 @BasicPreferences
 @Main
 @Projection
-@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories(Territories.Initialize.ALL)
+@Territories(Territories.Initialize.ALL)
 @Wiremock
 class MapWithAIMoveActionTest {
     private MapWithAIMoveAction moveAction;

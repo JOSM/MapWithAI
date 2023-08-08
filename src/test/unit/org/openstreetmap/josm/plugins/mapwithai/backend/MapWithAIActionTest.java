@@ -39,7 +39,7 @@ import org.openstreetmap.josm.tools.Territories;
 @MapWithAISources
 @NoExceptions
 @Projection
-@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories
+@org.openstreetmap.josm.testutils.annotations.Territories
 @Timeout(10)
 class MapWithAIActionTest {
     private MapWithAIAction action;

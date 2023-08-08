@@ -27,7 +27,7 @@ import org.openstreetmap.josm.tools.Territories;
  */
 @MapWithAISources
 @Projection
-@org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Territories
+@org.openstreetmap.josm.testutils.annotations.Territories
 @Wiremock
 class MapWithAIAvailabilityTest {
     private DataAvailability instance;
