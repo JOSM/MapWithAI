@@ -1,12 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.backend;
 
-import javax.json.Json;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParser;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -28,6 +22,11 @@ import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Territories;
 import org.openstreetmap.josm.tools.Utils;
+
+import jakarta.json.Json;
+import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 
 /**
  * Check for data availability in an area
@@ -69,16 +68,16 @@ public class DataAvailability {
      * Initialize the class
      */
     private static void initialize() {
-        try (CachedFile jsonFile = new CachedFile(MapWithAIConfig.getUrls().getMapWithAISourcesJson());
-                JsonParser jsonParser = Json.createParser(jsonFile.getContentReader())) {
+        try (var jsonFile = new CachedFile(MapWithAIConfig.getUrls().getMapWithAISourcesJson());
+                var jsonParser = Json.createParser(jsonFile.getContentReader())) {
             jsonFile.setMaxAge(SEVEN_DAYS_IN_SECONDS);
             jsonParser.next();
-            JsonObject jsonObject = jsonParser.getObject();
-            for (Map.Entry<String, JsonValue> entry : jsonObject.entrySet()) {
+            final var jsonObject = jsonParser.getObject();
+            for (var entry : jsonObject.entrySet()) {
                 Logging.debug("{0}: {1}", entry.getKey(), entry.getValue());
                 if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()
                         && entry.getValue().asJsonObject().containsKey("countries")) {
-                    JsonValue countries = entry.getValue().asJsonObject().get("countries");
+                    final var countries = entry.getValue().asJsonObject().get("countries");
                     parseCountries(COUNTRIES, countries, entry.getValue());
                 }
             }
@@ -127,7 +126,7 @@ public class DataAvailability {
             if (JsonValue.ValueType.ARRAY == entry.getValue().getValueType()) {
                 for (String provide : entry.getValue().asJsonArray().stream()
                         .filter(c -> JsonValue.ValueType.STRING == c.getValueType()).map(JsonValue::toString)
-                        .map(DataAvailability::stripQuotes).collect(Collectors.toList())) {
+                        .map(DataAvailability::stripQuotes).toList()) {
                     providesMap.put(provide, true);
                 }
             }
@@ -136,7 +135,7 @@ public class DataAvailability {
                     && JsonValue.ValueType.ARRAY == information.asJsonObject().get(PROVIDES).getValueType()) {
                 for (String provide : information.asJsonObject().getJsonArray(PROVIDES).stream()
                         .filter(val -> JsonValue.ValueType.STRING == val.getValueType()).map(JsonValue::toString)
-                        .map(DataAvailability::stripQuotes).collect(Collectors.toList())) {
+                        .map(DataAvailability::stripQuotes).toList()) {
                     providesMap.put(provide, Boolean.TRUE);
                 }
             }
@@ -190,15 +189,13 @@ public class DataAvailability {
      * @return true if it is in an ares with data from MapWithAI
      */
     public boolean hasData(LatLon latLon) {
-        boolean returnBoolean = false;
         for (final Map.Entry<String, Map<String, Boolean>> entry : COUNTRIES.entrySet()) {
             Logging.debug(entry.getKey());
             if (Territories.isIso3166Code(entry.getKey(), latLon)) {
-                returnBoolean = entry.getValue().entrySet().stream().anyMatch(Map.Entry::getValue);
-                break;
+                return entry.getValue().entrySet().stream().anyMatch(Map.Entry::getValue);
             }
         }
-        return returnBoolean;
+        return false;
     }
 
     /**

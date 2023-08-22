@@ -1,16 +1,10 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,6 +16,10 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.Territories;
+
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 /**
  * Reader to parse the list of available MapWithAI servers from an JSON
@@ -65,22 +63,22 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
     }
 
     private static MapWithAIInfo parse(Map.Entry<String, JsonValue> entry) {
-        String name = entry.getKey();
+        final var name = entry.getKey();
         if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()) {
-            JsonObject values = entry.getValue().asJsonObject();
-            String url = values.getString("url", "");
-            String type = values.getString("type", MapWithAIType.values()[0].getDefault().getTypeString());
-            String[] categories = values
+            final var values = entry.getValue().asJsonObject();
+            final var url = values.getString("url", "");
+            final var type = values.getString("type", MapWithAIType.values()[0].getDefault().getTypeString());
+            final var categories = values
                     .getString("category", MapWithAICategory.values()[0].getDefault().getCategoryString())
                     .split(";", -1);
-            String eula = values.getString("eula", "");
-            boolean conflation = values.getBoolean("conflate", false);
-            String conflationUrl = values.getString("conflationUrl", null);
-            String id = values.getString("id", name.replace(" ", "_"));
-            String alreadyConflatedKey = values.getString("conflated_key", null);
-            JsonValue countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
-            List<ImageryBounds> bounds = getBounds(countries);
-            MapWithAIInfo info = new MapWithAIInfo(name, url, type, eula, id);
+            final var eula = values.getString("eula", "");
+            final var conflation = values.getBoolean("conflate", false);
+            final var conflationUrl = values.getString("conflationUrl", null);
+            final var id = values.getString("id", name.replace(" ", "_"));
+            final var alreadyConflatedKey = values.getString("conflated_key", null);
+            final var countries = values.getOrDefault("countries", JsonValue.EMPTY_JSON_OBJECT);
+            final var bounds = getBounds(countries);
+            final var info = new MapWithAIInfo(name, url, type, eula, id);
             info.setDefaultEntry(values.getBoolean("default", false));
             info.setParameters(values.getJsonArray("parameters"));
             info.setConflationParameters(values.getJsonArray("conflationParameters"));
@@ -97,9 +95,9 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
                 }
             }
             if (values.containsKey("conflation_ignore_categories")) {
-                JsonArray ignore = values.getJsonArray("conflation_ignore_categories");
+                final var ignore = values.getJsonArray("conflation_ignore_categories");
                 for (MapWithAICategory cat : ignore.getValuesAs(JsonString.class).stream().map(JsonString::getString)
-                        .map(MapWithAICategory::fromString).filter(Objects::nonNull).collect(Collectors.toList())) {
+                        .map(MapWithAICategory::fromString).toList()) {
                     info.addConflationIgnoreCategory(cat);
                 }
             }

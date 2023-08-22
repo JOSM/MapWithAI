@@ -3,12 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParser;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.io.StringReader;
@@ -35,6 +29,12 @@ import org.openstreetmap.josm.data.sources.SourcePreferenceEntry;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 
 /**
  * The information needed to download external data

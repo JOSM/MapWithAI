@@ -1,18 +1,18 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-
 import java.io.IOException;
 import java.util.Optional;
 
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Utils;
+
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonStructure;
+import jakarta.json.JsonValue;
 
 /**
  * Read sources for MapWithAI
@@ -46,7 +46,7 @@ public abstract class CommonSourceReader<T> implements AutoCloseable {
                 .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
             JsonStructure struct = reader.read();
             if (JsonValue.ValueType.OBJECT == struct.getValueType()) {
-                JsonObject jsonObject = struct.asJsonObject();
+                final var jsonObject = struct.asJsonObject();
                 return Optional.ofNullable(this.parseJson(jsonObject));
             }
             return Optional.empty();

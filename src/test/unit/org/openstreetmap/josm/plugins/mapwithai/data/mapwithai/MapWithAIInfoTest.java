@@ -7,9 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-
 import java.awt.Polygon;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -33,6 +30,8 @@ import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.tools.Logging;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
 import mockit.Mock;
 import mockit.MockUp;
 import nl.jqno.equalsverifier.EqualsVerifier;

@@ -3,10 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -22,6 +18,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,10 +39,16 @@ import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
+
 /**
- * An panel used to add MapWithAI sources.
+ * A panel used to add MapWithAI sources.
  */
 class AddMapWithAIPanel extends JPanel {
+    @Serial
     private static final long serialVersionUID = -2838267045934203122L;
     private final transient JPanel layerPanel = new JPanel(new GridBagLayout());
 
@@ -77,9 +80,9 @@ class AddMapWithAIPanel extends JPanel {
         this(new GridBagLayout());
         headersTable = new HeadersTable();
         parametersTable = new MapWithAIParametersPanel();
-        minimumCacheExpiry = new JSpinner(new SpinnerNumberModel(
-                (Number) TimeUnit.MILLISECONDS.toSeconds(TMSCachedTileLoaderJob.MINIMUM_EXPIRES.get()), 0L,
-                Long.valueOf(Integer.MAX_VALUE), 1));
+        minimumCacheExpiry = new JSpinner(
+                new SpinnerNumberModel(TimeUnit.MILLISECONDS.toSeconds(TMSCachedTileLoaderJob.MINIMUM_EXPIRES.get()),
+                        0L, Integer.MAX_VALUE, 1));
         List<String> units = Arrays.asList(tr("seconds"), tr("minutes"), tr("hours"), tr("days"));
         minimumCacheExpiryUnit = new JComboBox<>(units.toArray(new String[] {}));
         currentUnit = TimeUnit.SECONDS;
@@ -87,24 +90,23 @@ class AddMapWithAIPanel extends JPanel {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 long newValue = 0;
                 switch (units.indexOf(e.getItem())) {
-                case 0:
+                case 0 -> {
                     newValue = currentUnit.toSeconds((long) minimumCacheExpiry.getValue());
                     currentUnit = TimeUnit.SECONDS;
-                    break;
-                case 1:
+                }
+                case 1 -> {
                     newValue = currentUnit.toMinutes((long) minimumCacheExpiry.getValue());
                     currentUnit = TimeUnit.MINUTES;
-                    break;
-                case 2:
+                }
+                case 2 -> {
                     newValue = currentUnit.toHours((long) minimumCacheExpiry.getValue());
                     currentUnit = TimeUnit.HOURS;
-                    break;
-                case 3:
+                }
+                case 3 -> {
                     newValue = currentUnit.toDays((long) minimumCacheExpiry.getValue());
                     currentUnit = TimeUnit.DAYS;
-                    break;
-                default:
-                    Logging.warn("Unknown unit: " + units.indexOf(e.getItem()));
+                }
+                default -> Logging.warn("Unknown unit: " + units.indexOf(e.getItem()));
                 }
                 minimumCacheExpiry.setValue(newValue);
             }

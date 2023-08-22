@@ -32,6 +32,7 @@
 
   <target name="additional-manifest">
     <manifest file="MANIFEST" mode="update">
+      <attribute name="18590_Plugin-Url" value="810;https://github.com/JOSM/MapWithAI/releases/download/v810/mapwithai.jar" />
       <attribute name="18218_Plugin-Url" value="v1.9.20;https://github.com/JOSM/MapWithAI/releases/download/v1.9.20/mapwithai.jar" />
       <attribute name="17903_Plugin-Url" value="v1.8.7;https://github.com/JOSM/MapWithAI/releases/download/v1.8.7/mapwithai.jar" />
       <attribute name="17084_Plugin-Url" value="v1.7.1.6;https://github.com/JOSM/MapWithAI/releases/download/v1.7.1.6/mapwithai.jar" />

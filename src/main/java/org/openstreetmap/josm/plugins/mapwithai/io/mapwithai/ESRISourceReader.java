@@ -3,14 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
-import javax.json.stream.JsonParsingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -26,6 +18,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -41,6 +35,16 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
+import jakarta.json.spi.JsonProvider;
+import jakarta.json.stream.JsonParser;
+import jakarta.json.stream.JsonParsingException;
 
 /**
  * Take a {@link MapWithAIType#ESRI} layer and convert it to a list of "true"
@@ -99,31 +103,35 @@ public class ESRISourceReader {
 
         final var information = new ArrayList<ForkJoinTask<MapWithAIInfo>>();
 
-        var next = 1;
-        var searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
+        final var next = new AtomicInteger(1);
+        final var searchUrl = new AtomicReference<>(
+                startReplace.matcher(search).replaceAll(Integer.toString(next.get())));
 
-        while (next != -1) {
-            final var finalUrl = url + "content/groups/" + group + searchUrl;
+        while (next.get() != -1) {
+            final var finalUrl = url + "content/groups/" + group + searchUrl.get();
             final var jsonString = getJsonString(finalUrl, TimeUnit.SECONDS.toMillis(MIRROR_MAXTIME.get()) / 7,
                     this.fastFail);
             if (jsonString == null) {
                 continue;
             }
-            try (var reader = jsonProvider
-                    .createReader(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
-                final var parser = reader.read();
-                if (parser.getValueType() == JsonValue.ValueType.OBJECT) {
-                    final var obj = parser.asJsonObject();
-                    next = obj.getInt("nextStart", -1);
-                    searchUrl = startReplace.matcher(search).replaceAll(Integer.toString(next));
-                    final var features = obj.getJsonArray("results");
-                    for (var feature : features.getValuesAs(JsonObject.class)) {
-                        information.add(parse(feature));
-                    }
+            try (var parser = jsonProvider
+                    .createParser(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)))) {
+                /* Do nothing */
+                if (parser.hasNext() && parser.next() == JsonParser.Event.START_OBJECT) {
+                    parser.getObjectStream().forEach(entry -> {
+                        if ("nextStart".equals(entry.getKey()) && entry.getValue() instanceof JsonNumber number) {
+                            next.set(number.intValue());
+                            searchUrl.set(startReplace.matcher(search).replaceAll(Integer.toString(next.get())));
+                        } else if ("results".equals(entry.getKey()) && entry.getValue() instanceof JsonArray features) {
+                            for (var feature : features.getValuesAs(JsonObject.class)) {
+                                information.add(parse(feature));
+                            }
+                        }
+                    });
                 }
             } catch (ClassCastException e) {
                 Logging.error(e);
-                next = -1;
+                next.set(-1);
             }
         }
         for (var future : information) {

@@ -1,10 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-
 import java.io.Closeable;
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +9,10 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.tools.Pair;
+
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 /**
  * Read conflation entries from JSON
@@ -55,10 +55,10 @@ public class ConflationSourceReader extends CommonSourceReader<Map<MapWithAICate
 
     private static List<Pair<MapWithAICategory, String>> parse(Map.Entry<String, JsonValue> entry) {
         if (JsonValue.ValueType.OBJECT == entry.getValue().getValueType()) {
-            JsonObject object = entry.getValue().asJsonObject();
-            String url = object.getString("url", null);
+            final var object = entry.getValue().asJsonObject();
+            final var url = object.getString("url", null);
             List<MapWithAICategory> categories = object.getJsonArray("categories").getValuesAs(JsonString.class)
-                    .stream().map(JsonString::toString).map(MapWithAICategory::fromString).collect(Collectors.toList());
+                    .stream().map(JsonString::toString).map(MapWithAICategory::fromString).toList();
             return categories.stream().map(c -> new Pair<>(c, url)).collect(Collectors.toList());
         }
         return Collections.emptyList();

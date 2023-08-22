@@ -4,11 +4,7 @@ package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
-
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,21 +16,28 @@ import org.openstreetmap.josm.testutils.annotations.Territories;
 
 import com.google.common.collect.ImmutableMap;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonValue;
+
 @BasicPreferences
 @Territories
 @Projection
 class MapWithAISourceReaderTest {
     @Test
-    void testParseSimple() {
+    void testParseSimple() throws IOException {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("nowhere", JsonValue.NULL);
-        List<MapWithAIInfo> infoList = new MapWithAISourceReader("").parseJson(builder.build());
-        assertEquals(1, infoList.size());
-        assertEquals("nowhere", infoList.get(0).getName());
+        try (var reader = new MapWithAISourceReader("")) {
+            List<MapWithAIInfo> infoList = reader.parseJson(builder.build());
+            assertEquals(1, infoList.size());
+            assertEquals("nowhere", infoList.get(0).getName());
+        }
     }
 
     @Test
-    void testParseComplex() {
+    void testParseComplex() throws IOException {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         JsonObjectBuilder co = Json.createObjectBuilder(
                 ImmutableMap.of("url", "test", "license", "pd", "permission_url", "https://permission.url"));
@@ -43,11 +46,13 @@ class MapWithAISourceReaderTest {
         coCountries.add("US-CO", coCountriesArray.build());
         co.add("countries", coCountries.build());
         builder.add("Colorado", co);
-        List<MapWithAIInfo> infoList = new MapWithAISourceReader("").parseJson(builder.build());
-        assertEquals(1, infoList.size());
-        MapWithAIInfo info = infoList.stream().filter(i -> "Colorado".equals(i.getName())).findFirst().orElse(null);
-        assertNotNull(info);
-        assertEquals("Colorado", info.getName());
-        assertEquals("test", info.getUrl());
+        try (var reader = new MapWithAISourceReader("")) {
+            List<MapWithAIInfo> infoList = reader.parseJson(builder.build());
+            assertEquals(1, infoList.size());
+            MapWithAIInfo info = infoList.stream().filter(i -> "Colorado".equals(i.getName())).findFirst().orElse(null);
+            assertNotNull(info);
+            assertEquals("Colorado", info.getName());
+            assertEquals("test", info.getUrl());
+        }
     }
 }

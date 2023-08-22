@@ -3,9 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.stream.JsonParser;
 import javax.swing.JOptionPane;
 
 import java.io.ByteArrayInputStream;
@@ -51,6 +48,10 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
+
+import jakarta.json.Json;
+import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 
 /**
  * A bounding box downloader for MapWithAI

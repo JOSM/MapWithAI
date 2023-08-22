@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.TestUtils;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
 import org.openstreetmap.josm.data.gpx.WayPoint;
@@ -232,8 +233,8 @@ public class MapWithAIDataUtilsTest {
 
     private static boolean bboxCheckConnections(BBox bbox1, BBox bbox2) {
         int shared = 0;
-        for (final LatLon bbox1Corner : getBBoxCorners(bbox1)) {
-            for (final LatLon bbox2Corner : getBBoxCorners(bbox2)) {
+        for (final ILatLon bbox1Corner : getBBoxCorners(bbox1)) {
+            for (final ILatLon bbox2Corner : getBBoxCorners(bbox2)) {
                 if (bbox1Corner.equalsEpsilon(bbox2Corner)) {
                     shared++;
                 }

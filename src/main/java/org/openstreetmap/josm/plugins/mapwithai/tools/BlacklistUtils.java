@@ -1,22 +1,19 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.tools;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-
-import java.io.BufferedReader;
 import java.io.IOException;
 
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.io.NetworkManager;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.tools.Logging;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 /**
  * Check if this version has been blacklisted (i.e., bad data is uploaded)
@@ -39,18 +36,15 @@ public final class BlacklistUtils {
      *         {@code true}.
      */
     public static boolean isBlacklisted() {
-        String version = MapWithAIPlugin.getVersionInfo();
-        CachedFile blacklist = new CachedFile(blacklistUrl);
-        try (BufferedReader bufferedReader = blacklist.getContentReader();
-                JsonReader reader = Json.createReader(bufferedReader)) {
-            JsonStructure structure = reader.read();
-            if (structure.getValueType() == JsonValue.ValueType.ARRAY) {
-                JsonArray array = (JsonArray) structure;
+        final var version = MapWithAIPlugin.getVersionInfo();
+        final var blacklist = new CachedFile(blacklistUrl);
+        try (var bufferedReader = blacklist.getContentReader(); var reader = Json.createReader(bufferedReader)) {
+            final var structure = reader.read();
+            if (structure instanceof JsonArray array) {
                 return array.stream().filter(v -> v.getValueType() == JsonValue.ValueType.STRING)
                         .map(v -> ((JsonString) v).getString()).anyMatch(version::equals);
-            } else if (structure.getValueType() == JsonValue.ValueType.OBJECT) {
-                JsonObject object = (JsonObject) structure;
-                return object.keySet().contains(version);
+            } else if (structure instanceof JsonObject object) {
+                return object.containsKey(version);
             }
         } catch (IOException | JsonException e) {
             try {

@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.gpx.GpxData;
 import org.openstreetmap.josm.data.gpx.WayPoint;
@@ -61,8 +62,9 @@ class DetectTaskingManagerUtilsTest {
         layer.data.addWaypoint(new WayPoint(new LatLon(1, 1)));
         final BBox bbox = DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox();
         assertTrue(bbox.isInWorld(), "A TM layer exists");
-        assertTrue(bbox.getBottomRight().equalsEpsilon(new LatLon(0, 1)), "The bottom right should be at (0, 1)");
-        assertTrue(bbox.getTopLeft().equalsEpsilon(new LatLon(1, 0)), "The top left should be at (1, 0)");
+        assertTrue(bbox.getBottomRight().equalsEpsilon((ILatLon) new LatLon(0, 1)),
+                "The bottom right should be at (0, 1)");
+        assertTrue(bbox.getTopLeft().equalsEpsilon((ILatLon) new LatLon(1, 0)), "The top left should be at (1, 0)");
     }
 
     @Test

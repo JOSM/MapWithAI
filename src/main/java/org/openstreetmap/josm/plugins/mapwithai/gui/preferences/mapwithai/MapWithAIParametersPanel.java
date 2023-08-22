@@ -3,16 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.awt.GridBagLayout;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import javax.json.JsonArray;
-import javax.json.JsonObject;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -21,8 +11,19 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import java.awt.GridBagLayout;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.Pair;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
 
 /**
  * Parameters panel for adding MapWithAI URLs
@@ -37,26 +38,20 @@ class MapWithAIParametersPanel extends JPanel {
 
         @Override
         public String getColumnName(int column) {
-            switch (column) {
-            case 0:
-                return tr("Parameter name");
-            case 1:
-                return tr("Parameter value");
-            case 2:
-                return tr("Enabled");
-            default:
-                return "";
-            }
+            return switch (column) {
+            case 0 -> tr("Parameter name");
+            case 1 -> tr("Parameter value");
+            case 2 -> tr("Enabled");
+            default -> "";
+            };
         }
 
         @Override
         public Class<?> getColumnClass(int column) {
-            switch (column) {
-            case 2:
+            if (column == 2) {
                 return Boolean.class;
-            default:
-                return String.class;
             }
+            return String.class;
         }
 
         @Override
@@ -134,7 +129,7 @@ class MapWithAIParametersPanel extends JPanel {
         super(new GridBagLayout());
         this.headers = getHeadersAsVector(headers);
         this.model = new ParametersTableModel();
-        JTable table = new JTable(model);
+        final var table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setAutoCreateRowSorter(true);
         table.setRowSelectionAllowed(false);
@@ -143,7 +138,7 @@ class MapWithAIParametersPanel extends JPanel {
     }
 
     private static List<Object[]> getHeadersAsVector(Map<String, Pair<String, Boolean>> headers) {
-        return headers.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
+        return headers.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Object[] { e.getKey(), e.getValue().a, e.getValue().b }).collect(Collectors.toList());
     }
 
@@ -163,13 +158,13 @@ class MapWithAIParametersPanel extends JPanel {
      * @param parameters The initial parameters to show in the dialog
      */
     public void setParameters(JsonArray parameters) {
-        int i = 0;
+        var i = 0;
         for (JsonObject obj : parameters.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
-                .collect(Collectors.toList())) {
+                .toList()) {
             model.setValueAt(obj.getString("parameter"), i, 1);
             model.setValueAt(obj.getString("description", ""), i, 0);
             model.setValueAt(obj.getBoolean("enabled", false), i, 2);
-            boolean permanent = obj.getBoolean("permanent", false);
+            final var permanent = obj.getBoolean("permanent", false);
             if (permanent) {
                 model.disableRowEdits(i);
             }
