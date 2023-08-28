@@ -193,8 +193,7 @@ class AddMapWithAILayerActionTest {
             MainApplication.worker.submit(() -> {
                 /* Sync thread */ }).get();
             final List<LogRecord> ides = logs.stream()
-                    .filter(record -> record.getThrown() instanceof IllegalArgumentException)
-                    .collect(Collectors.toList());
+                    .filter(record -> record.getThrown() instanceof IllegalArgumentException).toList();
             assertTrue(ides.isEmpty(), ides.stream().map(LogRecord::getMessage).collect(Collectors.joining("\n")));
         } finally {
             server.stop();

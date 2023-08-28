@@ -224,7 +224,7 @@ public class MissingConnectionTags extends AbstractConflationCommand {
         final var commands = new ArrayList<Command>();
         if (intersectionNodes.stream().anyMatch(way::containsNode)) {
             final var searchWays = way.getDataSet().searchWays(way.getBBox()).stream()
-                    .filter(w -> w != way && w.hasKey(HIGHWAY)).toList();
+                    .filter(w -> !Objects.equals(w, way) && w.hasKey(HIGHWAY)).toList();
             for (var potential : searchWays) {
                 for (var node : way.getNodes()) {
                     final var command = createAddNodeCommand(potential, node, precision);
