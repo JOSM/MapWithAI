@@ -59,6 +59,81 @@ import jakarta.json.stream.JsonParser;
  * @author Taylor Smock
  */
 public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
+    private record TileXYZ(long x, long y, long z) {
+        /**
+         * Checks to see if the given bounds are functionally equal to this tile
+         *
+         * @param left   left
+         * @param bottom bottom
+         * @param right  right
+         * @param top    top
+         */
+        boolean checkBounds(double left, double bottom, double right, double top) {
+            final var thisLeft = xToLongitude(this.x, this.z);
+            final var thisRight = xToLongitude(this.x + 1, this.z);
+            final var thisBottom = yToLatitude(this.y + 1, this.z);
+            final var thisTop = yToLatitude(this.y, this.z);
+            return equalsEpsilon(thisLeft, left, this.z) && equalsEpsilon(thisRight, right, this.z)
+                    && equalsEpsilon(thisBottom, bottom, this.z) && equalsEpsilon(thisTop, top, this.z);
+        }
+
+        private static boolean equalsEpsilon(double first, double second, long z) {
+            // 0.1% of tile size is considered to be "equal"
+            final var maxDiff = (360 / Math.pow(2, z)) / 1000;
+            final var diff = Math.abs(first - second);
+            return diff <= maxDiff;
+        }
+
+        private static double xToLongitude(long x, long z) {
+            return (x / Math.pow(2, z)) * 360 - 180;
+        }
+
+        private static double yToLatitude(long y, long z) {
+            var t = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
+            return 180 / Math.PI * Math.atan((Math.exp(t) - Math.exp(-t)) / 2);
+        }
+
+        /**
+         * Checks to see if the given bounds are functionally equal to this tile
+         *
+         * @param left   left
+         * @param bottom bottom
+         * @param right  right
+         * @param top    top
+         */
+        private static TileXYZ tileFromBBox(double left, double bottom, double right, double top) {
+            var zoom = 18;
+            while (zoom > 0) {
+                final var tile1 = tileFromLatLonZoom(left, bottom, zoom);
+                final var tile2 = tileFromLatLonZoom(right, top, zoom);
+                if (tile1.equals(tile2)) {
+                    return tile1;
+                } else if (tile1.checkBounds(left, bottom, right, top)) {
+                    return tile1;
+                } else if (tile2.checkBounds(left, bottom, right, top)) {
+                    return tile2;
+                    // Just in case the coordinates are _barely_ in other tiles and not the "common"
+                    // tile
+                } else if (Math.abs(tile1.x() - tile2.x()) <= 2 && Math.abs(tile1.y() - tile2.y()) <= 2) {
+                    final var tileT = new TileXYZ((tile1.x() + tile2.x()) / 2, (tile1.y() + tile2.y()) / 2, zoom);
+                    if (tileT.checkBounds(left, bottom, right, top)) {
+                        return tileT;
+                    }
+                }
+                zoom--;
+            }
+            return new TileXYZ(0, 0, 0);
+        }
+
+        private static TileXYZ tileFromLatLonZoom(double lon, double lat, int zoom) {
+            var xCoordinate = Math.round(Math.floor(Math.pow(2, zoom) * (180 + lon) / 360));
+            var yCoordinate = Math.round(Math.floor(Math.pow(2, zoom)
+                    * (1 - (Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI))
+                    / 2));
+            return new TileXYZ(xCoordinate, yCoordinate, zoom);
+        }
+    }
+
     private final String url;
     private final boolean crop;
     private final int start;
@@ -101,6 +176,11 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
 
     @Override
     protected String getRequestForBbox(double lon1, double lat1, double lon2, double lat2) {
+        if (url.contains("{x}") && url.contains("{y}") && url.contains("{z}")) {
+            final var tile = TileXYZ.tileFromBBox(lon1, lat1, lon2, lat2);
+            return url.replace("{x}", Long.toString(tile.x())).replace("{y}", Long.toString(tile.y())).replace("{z}",
+                    Long.toString(tile.z()));
+        }
         return url.replace("{bbox}", Double.toString(lon1) + ',' + lat1 + ',' + lon2 + ',' + lat2)
                 .replace("{xmin}", Double.toString(lon1)).replace("{ymin}", Double.toString(lat1))
                 .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2))
