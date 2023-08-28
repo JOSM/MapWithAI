@@ -11,21 +11,38 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
+import org.openstreetmap.josm.data.imagery.ImageryInfo;
+import org.openstreetmap.josm.data.imagery.vectortile.mapbox.MVTTile;
+import org.openstreetmap.josm.data.imagery.vectortile.mapbox.MapboxVectorTileSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.IPrimitive;
+import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.PrimitiveId;
+import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.RelationMember;
+import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.vector.VectorNode;
+import org.openstreetmap.josm.data.vector.VectorPrimitive;
+import org.openstreetmap.josm.data.vector.VectorRelation;
+import org.openstreetmap.josm.data.vector.VectorRelationMember;
+import org.openstreetmap.josm.data.vector.VectorWay;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -44,6 +61,10 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAILayerInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
+import org.openstreetmap.josm.plugins.pmtiles.data.imagery.PMTilesImageryInfo;
+import org.openstreetmap.josm.plugins.pmtiles.gui.layers.PMTilesImageSource;
+import org.openstreetmap.josm.plugins.pmtiles.lib.DirectoryCache;
+import org.openstreetmap.josm.plugins.pmtiles.lib.PMTiles;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
@@ -59,7 +80,7 @@ import jakarta.json.stream.JsonParser;
  * @author Taylor Smock
  */
 public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
-    private record TileXYZ(long x, long y, long z) {
+    private record TileXYZ(int x, int y, int z) {
         /**
          * Checks to see if the given bounds are functionally equal to this tile
          *
@@ -77,29 +98,39 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                     && equalsEpsilon(thisBottom, bottom, this.z) && equalsEpsilon(thisTop, top, this.z);
         }
 
-        private static boolean equalsEpsilon(double first, double second, long z) {
+        private static boolean equalsEpsilon(double first, double second, int z) {
             // 0.1% of tile size is considered to be "equal"
             final var maxDiff = (360 / Math.pow(2, z)) / 1000;
             final var diff = Math.abs(first - second);
             return diff <= maxDiff;
         }
 
-        private static double xToLongitude(long x, long z) {
+        private static double xToLongitude(int x, int z) {
             return (x / Math.pow(2, z)) * 360 - 180;
         }
 
-        private static double yToLatitude(long y, long z) {
+        private static double yToLatitude(int y, int z) {
             var t = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
             return 180 / Math.PI * Math.atan((Math.exp(t) - Math.exp(-t)) / 2);
         }
 
         /**
+         * Convert a bbox to a tile
+         *
+         * @param bounds The bounds to convert
+         * @return The tile
+         */
+        private static TileXYZ tileFromBBox(Bounds bounds) {
+            return tileFromBBox(bounds.getMinLon(), bounds.getMinLat(), bounds.getMaxLon(), bounds.getMaxLat());
+        }
+
+        /**
          * Checks to see if the given bounds are functionally equal to this tile
          *
-         * @param left   left
-         * @param bottom bottom
-         * @param right  right
-         * @param top    top
+         * @param left   left lon
+         * @param bottom bottom lat
+         * @param right  right lon
+         * @param top    top lat
          */
         private static TileXYZ tileFromBBox(double left, double bottom, double right, double top) {
             var zoom = 18;
@@ -126,10 +157,10 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
 
         private static TileXYZ tileFromLatLonZoom(double lon, double lat, int zoom) {
-            var xCoordinate = Math.round(Math.floor(Math.pow(2, zoom) * (180 + lon) / 360));
-            var yCoordinate = Math.round(Math.floor(Math.pow(2, zoom)
+            var xCoordinate = Math.toIntExact(Math.round(Math.floor(Math.pow(2, zoom) * (180 + lon) / 360)));
+            var yCoordinate = Math.toIntExact(Math.round(Math.floor(Math.pow(2, zoom)
                     * (1 - (Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI))
-                    / 2));
+                    / 2)));
             return new TileXYZ(xCoordinate, yCoordinate, zoom);
         }
     }
@@ -298,38 +329,14 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     protected DataSet parseDataSet(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         DataSet ds;
         final var contentType = this.activeConnection.getResponse().getContentType();
-        if (Arrays.asList("text/json", "application/json", "application/geo+json").contains(contentType)
+        if (this.info.getSourceType() == MapWithAIType.PMTILES
+                || this.info.getSourceType() == MapWithAIType.MAPBOX_VECTOR_TILE) {
+            ds = readMvt(source, progressMonitor);
+        } else if (Arrays.asList("text/json", "application/json", "application/geo+json").contains(contentType)
                 // Fall back to Esri Feature Server check. They don't always indicate a json
                 // return type. :(
                 || (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated())) {
-            // Rather unfortunately, we need to read the entire json in order to figure out
-            // if we need to make additional calls
-            try (var reader = Json.createReader(source)) {
-                final var structure = reader.read();
-                try (var bais = new ByteArrayInputStream(structure.toString().getBytes(StandardCharsets.UTF_8))) {
-                    ds = GeoJSONReader.parseDataSet(bais, progressMonitor);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-                /* We should only call this from the "root" call */
-                if (this.start == 0 && structure.getValueType() == JsonValue.ValueType.OBJECT) {
-                    final var serverObj = structure.asJsonObject();
-                    final boolean exceededTransferLimit = serverObj.entrySet().stream()
-                            .filter(entry -> "properties".equals(entry.getKey())
-                                    && entry.getValue().getValueType() == JsonValue.ValueType.OBJECT)
-                            .map(Map.Entry::getValue).map(JsonValue::asJsonObject)
-                            .map(obj -> obj.getBoolean("exceededTransferLimit", false)).findFirst().orElse(false);
-                    if (exceededTransferLimit && this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {
-                        final int size = serverObj.getJsonArray("features").size();
-                        final var other = this.getAdditionalEsriData(progressMonitor,
-                                this.getRequestForBbox(this.lon1, this.lat1, this.lon2, this.lat2), size);
-                        ds.mergeFrom(other, progressMonitor.createSubTaskMonitor(0, false));
-                    }
-                }
-            }
-            if (info.getReplacementTags() != null) {
-                GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
-            }
+            ds = readJson(source, progressMonitor);
         } else {
             // Fall back to XML parsing
             ds = OsmReader.parseDataSet(source, progressMonitor, OsmReader.Options.CONVERT_UNKNOWN_TO_TAGS,
@@ -343,6 +350,98 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             }
         }
         GetDataRunnable.cleanup(ds, downloadArea, info);
+        return ds;
+    }
+
+    private DataSet readMvt(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
+        final DataSet ds;
+        final var tileXYZ = TileXYZ.tileFromBBox(this.downloadArea);
+        final TileSource tileSource;
+        final InputStream actualSource;
+        if (this.info.getSourceType() == MapWithAIType.PMTILES) {
+            final var hilbert = PMTiles.convertToHilbert(tileXYZ.z(), tileXYZ.x(), tileXYZ.y());
+            try {
+                final var header = PMTiles.readHeader(URI.create(this.url));
+                final var root = PMTiles.readRootDirectory(header);
+                final var cachedDirectories = new DirectoryCache(root);
+                final var data = PMTiles.readData(header, hilbert, cachedDirectories);
+                tileSource = new PMTilesImageSource(new PMTilesImageryInfo(header));
+                actualSource = new ByteArrayInputStream(data);
+            } catch (IOException e) {
+                throw new IllegalDataException(e);
+            }
+        } else {
+            actualSource = source;
+            tileSource = new MapboxVectorTileSource(new ImageryInfo(this.url, this.url));
+        }
+
+        final var tile = new MVTTile(tileSource, tileXYZ.x(), tileXYZ.y(), tileXYZ.z());
+        try {
+            tile.loadImage(actualSource);
+        } catch (IOException e) {
+            throw new IllegalDataException(e);
+        }
+        ds = new DataSet();
+        ds.addDataSource(new DataSource(this.downloadArea, this.url));
+        final var primitiveMap = new HashMap<PrimitiveId, OsmPrimitive>(tile.getData().getAllPrimitives().size());
+        for (VectorPrimitive p : tile.getData().getAllPrimitives()) {
+            final OsmPrimitive osmPrimitive;
+            if (p instanceof VectorNode node) {
+                osmPrimitive = new Node(node.getCoor());
+                osmPrimitive.putAll(node.getKeys());
+            } else if (p instanceof VectorWay way) {
+                final var tWay = new Way();
+                for (VectorNode node : way.getNodes()) {
+                    tWay.addNode((Node) primitiveMap.get(node));
+                }
+                tWay.putAll(way.getKeys());
+                osmPrimitive = tWay;
+            } else if (p instanceof VectorRelation vectorRelation) {
+                final var tRelation = new Relation();
+                for (VectorRelationMember member : vectorRelation.getMembers()) {
+                    tRelation.addMember(new RelationMember(member.getRole(), primitiveMap.get(member.getMember())));
+                }
+                tRelation.putAll(vectorRelation.getKeys());
+                osmPrimitive = tRelation;
+            } else {
+                throw new IllegalDataException("Unknown vector data type: " + p);
+            }
+            ds.addPrimitive(osmPrimitive);
+            primitiveMap.put(p, osmPrimitive);
+        }
+        return ds;
+    }
+
+    private DataSet readJson(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
+        final DataSet ds;
+        // Rather unfortunately, we need to read the entire json in order to figure out
+        // if we need to make additional calls
+        try (var reader = Json.createReader(source)) {
+            final var structure = reader.read();
+            try (var bais = new ByteArrayInputStream(structure.toString().getBytes(StandardCharsets.UTF_8))) {
+                ds = GeoJSONReader.parseDataSet(bais, progressMonitor);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            /* We should only call this from the "root" call */
+            if (this.start == 0 && structure.getValueType() == JsonValue.ValueType.OBJECT) {
+                final var serverObj = structure.asJsonObject();
+                final boolean exceededTransferLimit = serverObj.entrySet().stream()
+                        .filter(entry -> "properties".equals(entry.getKey())
+                                && entry.getValue().getValueType() == JsonValue.ValueType.OBJECT)
+                        .map(Map.Entry::getValue).map(JsonValue::asJsonObject)
+                        .map(obj -> obj.getBoolean("exceededTransferLimit", false)).findFirst().orElse(false);
+                if (exceededTransferLimit && this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER) {
+                    final int size = serverObj.getJsonArray("features").size();
+                    final var other = this.getAdditionalEsriData(progressMonitor,
+                            this.getRequestForBbox(this.lon1, this.lat1, this.lon2, this.lat2), size);
+                    ds.mergeFrom(other, progressMonitor.createSubTaskMonitor(0, false));
+                }
+            }
+        }
+        if (info.getReplacementTags() != null) {
+            GetDataRunnable.replaceKeys(ds, info.getReplacementTags());
+        }
         return ds;
     }
 

@@ -27,6 +27,7 @@
   </target>
 
   <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
+    <include name="pmtiles.jar"/>
     <include name="utilsplugin2.jar"/>
   </fileset>
 

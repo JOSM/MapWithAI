@@ -34,7 +34,10 @@ public @interface LoggingHandler {
 
             @Override
             public void publish(LogRecord record) {
-                errorList.computeIfAbsent(record.getLevel(), level -> new ArrayList<>()).add(record);
+                // Tests may have issues locating resources
+                if (!record.getMessage().endsWith("Failed to locate image 'mapwithai'")) {
+                    errorList.computeIfAbsent(record.getLevel(), level -> new ArrayList<>()).add(record);
+                }
             }
 
             @Override

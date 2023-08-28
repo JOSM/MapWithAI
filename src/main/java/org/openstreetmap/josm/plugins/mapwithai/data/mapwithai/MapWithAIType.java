@@ -11,7 +11,8 @@ import org.openstreetmap.josm.data.sources.ISourceType;
  * @author Taylor Smock
  */
 public enum MapWithAIType implements ISourceType<MapWithAIType> {
-    FACEBOOK("facebook"), THIRD_PARTY("thirdParty"), ESRI("esri"), ESRI_FEATURE_SERVER("esriFeatureServer");
+    FACEBOOK("facebook"), THIRD_PARTY("thirdParty"), ESRI("esri"), ESRI_FEATURE_SERVER("esriFeatureServer"),
+    MAPBOX_VECTOR_TILE("mvt"), PMTILES("pmtiles");
 
     private final String typeString;
 
