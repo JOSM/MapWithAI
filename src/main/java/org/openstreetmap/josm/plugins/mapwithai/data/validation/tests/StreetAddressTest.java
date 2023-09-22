@@ -156,10 +156,12 @@ public class StreetAddressTest extends Test {
                 } else {
                     en = primitive.getBBox().getCenter().getEastNorth(ProjectionRegistry.getProjection());
                 }
-                long x = (long) Math.floor(en.getX() * gridDetail);
-                long y = (long) Math.floor(en.getY() * gridDetail);
-                final var point = new Point2D.Double(x, y);
-                primitiveCellMap.computeIfAbsent(point, p -> new ArrayList<>()).add(primitive);
+                if (en != null) {
+                    long x = (long) Math.floor(en.getX() * gridDetail);
+                    long y = (long) Math.floor(en.getY() * gridDetail);
+                    final var point = new Point2D.Double(x, y);
+                    primitiveCellMap.computeIfAbsent(point, p -> new ArrayList<>()).add(primitive);
+                }
             }
         }
     }

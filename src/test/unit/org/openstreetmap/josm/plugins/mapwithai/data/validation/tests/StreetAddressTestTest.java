@@ -17,8 +17,11 @@ import org.openstreetmap.josm.data.osm.AbstractPrimitive;
 import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.validation.OsmValidator;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.Pair;
@@ -137,5 +140,19 @@ class StreetAddressTestTest {
         node.put(ADDR_STREET, "Test Road 1");
         assertDoesNotThrow(() -> test.visit(node));
         assertTrue(test.getErrors().isEmpty());
+    }
+
+    @Test
+    void testNonRegression23186() {
+        final StreetAddressTest test = new StreetAddressTest();
+        final Relation relation = TestUtils.newRelation(
+                "addr:city=Alpine " + "addr:housenumber=501 " + "addr:postcode=83128 " + "addr:state=WY "
+                        + "addr:street=Palisades Reservoir County Road 101 " + "landuse=quarry "
+                        + "name=Alota Sand & Gravel Inc " + "phone=+1-307-654-7558 " + "resource=gravel "
+                        + "type=multipolygon",
+                new RelationMember("outer", new Way(968962006L)), new RelationMember("outer", new Way(968961999L)));
+        test.startTest(NullProgressMonitor.INSTANCE);
+        assertDoesNotThrow(() -> test.visit(relation));
+        test.endTest();
     }
 }
