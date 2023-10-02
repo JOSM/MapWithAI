@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.actions.ExpertToggleAction;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.DownloadPolicy;
 import org.openstreetmap.josm.data.osm.Node;
@@ -255,6 +256,9 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     public void onPostDownloadFromServer(Bounds bounds) {
         super.onPostDownloadFromServer();
         GetDataRunnable.cleanup(getDataSet(), bounds, null);
+        if (!this.data.getDataSourceBounds().contains(bounds)) {
+            this.data.addDataSource(new DataSource(bounds, null));
+        }
     }
 
     @Override

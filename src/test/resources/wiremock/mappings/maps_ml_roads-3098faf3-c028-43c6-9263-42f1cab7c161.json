@@ -17,7 +17,7 @@
   },
   "response" : {
     "status" : 200,
-    "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm generator=\"NS_ROADS_SERVICE\" version=\"0.6\"><bounds maxlat=\"0.00099\" maxlon=\"0.00098999999999962\" minlat=\"1.0E-5\" minlon=\"1.0000000000381E-5\"/></osm>\n",
+    "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osm generator=\"NS_ROADS_SERVICE\" version=\"0.6\"><bounds maxlat=\"0.001\" maxlon=\"0.001\" minlat=\"0.0\" minlon=\"0.0\"/></osm>\n",
     "headers" : {
       "Content-Type" : "text/xml; charset=UTF-8",
       "X-XSS-Protection" : "0",
