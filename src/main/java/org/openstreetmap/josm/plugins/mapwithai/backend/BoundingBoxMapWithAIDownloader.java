@@ -13,16 +13,21 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import org.openstreetmap.josm.data.Bounds;
@@ -64,6 +69,7 @@ import org.openstreetmap.josm.plugins.mapwithai.tools.MapPaintUtils;
 import org.openstreetmap.josm.plugins.pmtiles.data.imagery.PMTilesImageryInfo;
 import org.openstreetmap.josm.plugins.pmtiles.gui.layers.PMTilesImageSource;
 import org.openstreetmap.josm.plugins.pmtiles.lib.DirectoryCache;
+import org.openstreetmap.josm.plugins.pmtiles.lib.Header;
 import org.openstreetmap.josm.plugins.pmtiles.lib.PMTiles;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
@@ -115,13 +121,22 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
 
         /**
-         * Convert a bbox to a tile
+         * Convert bounds to tiles
          *
-         * @param bounds The bounds to convert
-         * @return The tile
+         * @param zoom   The zoom level to use
+         * @param bounds The bounds to convert to tiles
+         * @return A stream of tiles for the bounds at the given zoom level
          */
-        private static TileXYZ tileFromBBox(Bounds bounds) {
-            return tileFromBBox(bounds.getMinLon(), bounds.getMinLat(), bounds.getMaxLon(), bounds.getMaxLat());
+        private static Stream<TileXYZ> tilesFromBBox(int zoom, Bounds bounds) {
+            final var left = bounds.getMinLon();
+            final var bottom = bounds.getMinLat();
+            final var right = bounds.getMaxLon();
+            final var top = bounds.getMaxLat();
+            final var tile1 = tileFromLatLonZoom(left, bottom, zoom);
+            final var tile2 = tileFromLatLonZoom(right, top, zoom);
+            return IntStream.rangeClosed(tile1.x, tile2.x)
+                    .mapToObj(x -> IntStream.rangeClosed(tile1.y, tile2.y).mapToObj(y -> new TileXYZ(x, y, zoom)))
+                    .flatMap(stream -> stream);
         }
 
         /**
@@ -162,6 +177,20 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                     * (1 - (Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI))
                     / 2)));
             return new TileXYZ(xCoordinate, yCoordinate, zoom);
+        }
+
+        /**
+         * Extends a bounds object to contain this tile
+         *
+         * @param currentBounds The bounds to extend
+         */
+        private void expandBounds(Bounds currentBounds) {
+            final var thisLeft = xToLongitude(this.x, this.z);
+            final var thisRight = xToLongitude(this.x + 1, this.z);
+            final var thisBottom = yToLatitude(this.y + 1, this.z);
+            final var thisTop = yToLatitude(this.y, this.z);
+            currentBounds.extend(thisBottom, thisLeft);
+            currentBounds.extend(thisTop, thisRight);
         }
     }
 
@@ -209,8 +238,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     protected String getRequestForBbox(double lon1, double lat1, double lon2, double lat2) {
         if (url.contains("{x}") && url.contains("{y}") && url.contains("{z}")) {
             final var tile = TileXYZ.tileFromBBox(lon1, lat1, lon2, lat2);
-            return url.replace("{x}", Long.toString(tile.x())).replace("{y}", Long.toString(tile.y())).replace("{z}",
-                    Long.toString(tile.z()));
+            return getRequestForTile(tile);
         }
         return url.replace("{bbox}", Double.toString(lon1) + ',' + lat1 + ',' + lon2 + ',' + lat2)
                 .replace("{xmin}", Double.toString(lon1)).replace("{ymin}", Double.toString(lat1))
@@ -220,6 +248,11 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 + (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated()
                         ? "&resultOffset=" + this.start
                         : "");
+    }
+
+    private String getRequestForTile(TileXYZ tile) {
+        return url.replace("{x}", Long.toString(tile.x())).replace("{y}", Long.toString(tile.y())).replace("{z}",
+                Long.toString(tile.z()));
     }
 
     @Override
@@ -355,25 +388,77 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
 
     private DataSet readMvt(InputStream source, ProgressMonitor progressMonitor) throws IllegalDataException {
         final DataSet ds;
-        final var tileXYZ = TileXYZ.tileFromBBox(this.downloadArea);
         final TileSource tileSource;
-        final InputStream actualSource;
+        final List<TileXYZ> tiles;
+        final Header header;
+        final DirectoryCache cachedDirectories;
         if (this.info.getSourceType() == MapWithAIType.PMTILES) {
-            final var hilbert = PMTiles.convertToHilbert(tileXYZ.z(), tileXYZ.x(), tileXYZ.y());
             try {
-                final var header = PMTiles.readHeader(URI.create(this.url));
+                header = PMTiles.readHeader(URI.create(this.url));
                 final var root = PMTiles.readRootDirectory(header);
-                final var cachedDirectories = new DirectoryCache(root);
-                final var data = PMTiles.readData(header, hilbert, cachedDirectories);
+                tiles = TileXYZ.tilesFromBBox(header.maxZoom(), this.downloadArea).toList();
+                cachedDirectories = new DirectoryCache(root);
                 tileSource = new PMTilesImageSource(new PMTilesImageryInfo(header));
-                actualSource = new ByteArrayInputStream(data);
             } catch (IOException e) {
                 throw new IllegalDataException(e);
             }
         } else {
-            actualSource = source;
+            header = null;
+            cachedDirectories = null;
+            // Assume the source is added by the user
+            final int zoom;
+            if (this.info.getMaxZoom() == 0) {
+                var z = 18;
+                for (; z > 0; z--) {
+                    final var tileOptional = TileXYZ.tilesFromBBox(z, this.downloadArea).findFirst();
+                    if (tileOptional.isPresent()) {
+                        final var tile = tileOptional.get();
+                        try {
+                            final var responseHeader = java.net.http.HttpClient.newBuilder()
+                                    .followRedirects(java.net.http.HttpClient.Redirect.NORMAL).build()
+                                    .send(HttpRequest.newBuilder().uri(URI.create(this.getRequestForTile(tile)))
+                                            .method("HEAD", HttpRequest.BodyPublishers.noBody()).build(),
+                                            HttpResponse.BodyHandlers.discarding());
+                            if (responseHeader.statusCode() >= 200 && responseHeader.statusCode() < 300) {
+                                break;
+                            }
+                        } catch (IOException e) {
+                            Logging.trace(e);
+                        } catch (InterruptedException e) {
+                            Logging.trace(e);
+                            Thread.currentThread().interrupt();
+                            return null;
+                        }
+                    }
+                }
+                zoom = z;
+            } else {
+                zoom = this.info.getMaxZoom();
+            }
+            tiles = TileXYZ.tilesFromBBox(zoom, this.downloadArea).toList();
             tileSource = new MapboxVectorTileSource(new ImageryInfo(this.url, this.url));
         }
+        ds = new DataSet();
+        final var currentBounds = new Bounds(this.downloadArea);
+        for (TileXYZ tileXYZ : tiles) {
+            try {
+                final var hilbert = PMTiles.convertToHilbert(tileXYZ.z(), tileXYZ.x(), tileXYZ.y());
+                final var data = this.info.getSourceType() == MapWithAIType.PMTILES
+                        ? new ByteArrayInputStream(PMTiles.readData(header, hilbert, cachedDirectories))
+                        : getInputStream(getRequestForTile(tileXYZ), progressMonitor);
+                final var dataSet = loadTile(tileSource, tileXYZ, data);
+                ds.mergeFrom(dataSet, progressMonitor);
+                tileXYZ.expandBounds(currentBounds);
+            } catch (OsmTransferException | IOException e) {
+                throw new IllegalDataException(e);
+            }
+        }
+        ds.addDataSource(new DataSource(currentBounds, this.url));
+        return ds;
+    }
+
+    private static DataSet loadTile(TileSource tileSource, TileXYZ tileXYZ, InputStream actualSource)
+            throws IllegalDataException {
 
         final var tile = new MVTTile(tileSource, tileXYZ.x(), tileXYZ.y(), tileXYZ.z());
         try {
@@ -381,8 +466,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         } catch (IOException e) {
             throw new IllegalDataException(e);
         }
-        ds = new DataSet();
-        ds.addDataSource(new DataSource(this.downloadArea, this.url));
+        final var ds = new DataSet();
         final var primitiveMap = new HashMap<PrimitiveId, OsmPrimitive>(tile.getData().getAllPrimitives().size());
         for (VectorPrimitive p : tile.getData().getAllPrimitives()) {
             final OsmPrimitive osmPrimitive;
