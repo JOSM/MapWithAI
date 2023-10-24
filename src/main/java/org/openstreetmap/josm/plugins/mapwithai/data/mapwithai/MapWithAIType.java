@@ -1,9 +1,9 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
-import javax.annotation.Nonnull;
-
 import org.openstreetmap.josm.data.sources.ISourceType;
+
+import jakarta.annotation.Nonnull;
 
 /**
  * Type of MapWithAI entry

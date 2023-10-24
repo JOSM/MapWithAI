@@ -62,7 +62,7 @@ import mockit.Mock;
 @MapWithAISources
 @Projection
 @Wiremock
-class MapWithAIAddComandTest {
+class MapWithAIAddCommandTest {
     private final static String HIGHWAY_RESIDENTIAL = "highway=residential";
 
     @BeforeEach
@@ -70,7 +70,7 @@ class MapWithAIAddComandTest {
         // Required to avoid an NPE with AutoZoomHandler
         new WindowMocker() {
             @Mock
-            void pack() {
+            public void pack() {
                 // Do nothing
             }
         };

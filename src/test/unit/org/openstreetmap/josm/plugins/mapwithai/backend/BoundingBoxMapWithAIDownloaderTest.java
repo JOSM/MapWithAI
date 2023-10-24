@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
@@ -17,10 +16,10 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAIConfig;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.HTTP;
+import org.openstreetmap.josm.testutils.annotations.OsmApi;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.admin.model.GetServeEventsResult;
@@ -41,12 +40,11 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
  */
 @BasicPreferences
 @HTTP
-@Wiremock
 @MapWithAIConfig
+@OsmApi(OsmApi.APIType.FAKE)
+@Wiremock
 class BoundingBoxMapWithAIDownloaderTest {
     private static final String TEST_DATA = "<osm version=\"0.6\"><node id=\"1\" lat=\"0\" lon=\"0\" version=\"1\"/><node id=\"2\" lat=\"1\" lon=\"1\" version=\"1\"/></osm>";
-    @RegisterExtension
-    JOSMTestRules josmTestRules = new JOSMTestRules().fakeAPI();
 
     @BasicWiremock
     public WireMockServer wireMockServer;

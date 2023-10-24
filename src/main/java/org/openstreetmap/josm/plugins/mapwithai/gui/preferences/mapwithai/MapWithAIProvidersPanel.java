@@ -4,22 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.gui.preferences.mapwithai;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.annotation.Nonnull;
-import javax.swing.AbstractAction;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JToolBar;
-import javax.swing.UIManager;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -43,6 +27,22 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
+
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
 import org.openstreetmap.gui.jmapviewer.MapRectangleImpl;
@@ -52,6 +52,7 @@ import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.preferences.NamedColorProperty;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.bbox.JosmMapViewer;
 import org.openstreetmap.josm.gui.bbox.SlippyMapBBoxChooser;
 import org.openstreetmap.josm.gui.preferences.imagery.ImageryProvidersPanel;
 import org.openstreetmap.josm.gui.util.GuiHelper;
@@ -71,6 +72,8 @@ import org.openstreetmap.josm.tools.ImageResource;
 import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.OpenBrowser;
+
+import jakarta.annotation.Nonnull;
 
 /**
  * A panel displaying imagery providers. Largely duplicates
@@ -376,7 +379,7 @@ public class MapWithAIProvidersPanel extends JPanel {
 
         // Add default item map
         defaultMap = new SlippyMapBBoxChooser();
-        defaultMap.setTileSource(SlippyMapBBoxChooser.DefaultOsmTileSourceProvider.get()); // for attribution
+        defaultMap.setTileSource(JosmMapViewer.DefaultOsmTileSourceProvider.get()); // for attribution
         defaultMap.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -408,36 +411,36 @@ public class MapWithAIProvidersPanel extends JPanel {
         defaultTableListener = new DefListSelectionListener();
         defaultTable.getSelectionModel().addListSelectionListener(defaultTableListener);
 
-        defaultToolbar = new JToolBar(JToolBar.VERTICAL);
+        defaultToolbar = new JToolBar(SwingConstants.VERTICAL);
         defaultToolbar.setFloatable(false);
         defaultToolbar.setBorderPainted(false);
         defaultToolbar.setOpaque(false);
         defaultToolbar.add(new ReloadAction());
-        add(defaultToolbar, GBC.eol().anchor(GBC.SOUTH).insets(0, 0, 5, 0));
+        add(defaultToolbar, GBC.eol().anchor(GridBagConstraints.SOUTH).insets(0, 0, 5, 0));
 
         final var help = new HtmlPanel(
                 tr("New default entries can be added in the <a href=\"{0}\">GitHub Repository</a>.",
                         "https://github.com/JOSM/MapWithAI/blob/pages/json/sources.json"));
         help.enableClickableHyperlinks();
-        add(help, GBC.eol().insets(10, 0, 0, 0).fill(GBC.HORIZONTAL));
+        add(help, GBC.eol().insets(10, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
         final var activate = new ActivateAction();
         defaultTable.getSelectionModel().addListSelectionListener(activate);
         final var btnActivate = new JButton(activate);
 
-        middleToolbar = new JToolBar(JToolBar.HORIZONTAL);
+        middleToolbar = new JToolBar(SwingConstants.HORIZONTAL);
         middleToolbar.setFloatable(false);
         middleToolbar.setBorderPainted(false);
         middleToolbar.setOpaque(false);
         middleToolbar.add(btnActivate);
-        add(middleToolbar, GBC.eol().anchor(GBC.CENTER).insets(5, 5, 5, 0));
+        add(middleToolbar, GBC.eol().anchor(GridBagConstraints.CENTER).insets(5, 5, 5, 0));
 
         add(Box.createHorizontalGlue(), GBC.eol().fill(GridBagConstraints.HORIZONTAL));
 
         final var scroll = new JScrollPane(activeTable);
         scroll.setPreferredSize(new Dimension(200, 200));
 
-        activeToolbar = new JToolBar(JToolBar.VERTICAL);
+        activeToolbar = new JToolBar(SwingConstants.VERTICAL);
         activeToolbar.setFloatable(false);
         activeToolbar.setBorderPainted(false);
         activeToolbar.setOpaque(false);
@@ -448,7 +451,7 @@ public class MapWithAIProvidersPanel extends JPanel {
             add(new JLabel(tr("Selected entries:")), GBC.eol().insets(5, 0, 0, 0));
             add(scroll, GBC.std().fill(GridBagConstraints.BOTH).span(GridBagConstraints.RELATIVE).weight(1.0, 0.4)
                     .insets(5, 0, 0, 5));
-            add(activeToolbar, GBC.eol().anchor(GBC.NORTH).insets(0, 0, 5, 5));
+            add(activeToolbar, GBC.eol().anchor(GridBagConstraints.NORTH).insets(0, 0, 5, 5));
         }
     }
 

@@ -36,7 +36,6 @@ public class DataAvailability {
     static final Map<String, String> POSSIBLE_DATA_POINTS = new TreeMap<>();
 
     private static final String PROVIDES = "provides";
-    private static final String EMPTY_STRING = "";
     private static final int SEVEN_DAYS_IN_SECONDS = 604_800;
 
     /**
@@ -150,7 +149,7 @@ public class DataAvailability {
      * @return A string that doesn't have quotes at the beginning or end
      */
     public static String stripQuotes(String string) {
-        return string.replaceAll("((^\")|(\"$))", EMPTY_STRING);
+        return string.replaceAll("((^\")|(\"$))", "");
     }
 
     /**
@@ -224,7 +223,7 @@ public class DataAvailability {
      * @return The url or ""
      */
     public String getTermsOfUseUrl() {
-        return EMPTY_STRING;
+        return "";
     }
 
     /**
@@ -247,11 +246,10 @@ public class DataAvailability {
                 DATA_SOURCES.stream().map(clazz -> {
                     try {
                         return clazz.getConstructor().newInstance().getTermsOfUseUrl();
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                    } catch (ReflectiveOperationException e) {
                         Logging.debug(e);
                     }
-                    return EMPTY_STRING;
+                    return "";
                 })).filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty())
                 .collect(Collectors.toList());
     }
@@ -267,11 +265,10 @@ public class DataAvailability {
                         DATA_SOURCES.stream().map(clazz -> {
                             try {
                                 return clazz.getConstructor().newInstance().getPrivacyPolicyUrl();
-                            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                            } catch (ReflectiveOperationException e) {
                                 Logging.debug(e);
                             }
-                            return EMPTY_STRING;
+                            return "";
                         }))
                 .filter(Objects::nonNull).filter(str -> !Utils.removeWhiteSpaces(str).isEmpty()).distinct()
                 .collect(Collectors.toList());

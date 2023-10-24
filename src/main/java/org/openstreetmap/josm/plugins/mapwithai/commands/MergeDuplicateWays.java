@@ -3,15 +3,11 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,6 +29,9 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIPreferenceHelper;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 /**
  * Merge duplicate ways
@@ -83,7 +82,7 @@ public class MergeDuplicateWays extends Command {
      * @param way2 The second way
      */
     public MergeDuplicateWays(DataSet data, Way way1, Way way2) {
-        this(data, Stream.of(way1, way2).filter(Objects::nonNull).collect(Collectors.toList()));
+        this(data, Stream.of(way1, way2).filter(Objects::nonNull).toList());
     }
 
     /**
@@ -94,7 +93,7 @@ public class MergeDuplicateWays extends Command {
      */
     public MergeDuplicateWays(DataSet data, List<Way> ways) {
         super(data);
-        this.ways = ways.stream().filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
+        this.ways = ways.stream().filter(MergeDuplicateWays::nonDeletedWay).toList();
         this.commands = new ArrayList<>();
     }
 
@@ -110,11 +109,11 @@ public class MergeDuplicateWays extends Command {
             } else if (ways.size() == 1) {
                 checkForDuplicateWays(ways.get(0), commands);
             } else {
-                Iterator<Way> it = ways.iterator();
-                Way way1 = it.next();
+                final var it = ways.iterator();
+                var way1 = it.next();
                 while (it.hasNext()) {
-                    Way way2 = it.next();
-                    final Command tCommand = checkForDuplicateWays(way1, way2);
+                    final var way2 = it.next();
+                    final var tCommand = checkForDuplicateWays(way1, way2);
                     if (tCommand != null) {
                         commands.add(tCommand);
                         tCommand.executeCommand();
@@ -122,8 +121,7 @@ public class MergeDuplicateWays extends Command {
                     way1 = way2;
                 }
             }
-            final List<Command> realCommands = commands.stream().filter(Objects::nonNull).distinct()
-                    .collect(Collectors.toList());
+            final List<Command> realCommands = commands.stream().filter(Objects::nonNull).distinct().toList();
             commands.clear();
             commands.addAll(realCommands);
             if (!commands.isEmpty() && (commands.size() != 1)) {
@@ -165,14 +163,13 @@ public class MergeDuplicateWays extends Command {
         final List<Way> ways = (bound == null ? dataSet.getWays() : dataSet.searchWays(bound.toBBox())).stream()
                 .filter(prim -> !prim.isIncomplete() && !prim.isDeleted())
                 .collect(Collectors.toCollection(ArrayList::new));
-        for (int i = 0; i < ways.size(); i++) {
-            final Way way1 = ways.get(i);
-            final Collection<Way> nearbyWays = dataSet.searchWays(way1.getBBox()).stream()
-                    .filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
-            nearbyWays.remove(way1);
+        for (var i = 0; i < ways.size(); i++) {
+            final var way1 = ways.get(i);
+            final var nearbyWays = dataSet.searchWays(way1.getBBox()).stream()
+                    .filter(MergeDuplicateWays::nonDeletedWay).filter(w -> !Objects.equals(w, way1)).toList();
             for (final Way way2 : nearbyWays) {
-                final Command command = checkForDuplicateWays(way1, way2);
-                final Collection<OsmPrimitive> deletedWays = new ArrayList<>();
+                final var command = checkForDuplicateWays(way1, way2);
+                final var deletedWays = new ArrayList<OsmPrimitive>();
                 if (command != null) {
                     commands.add(command);
                     command.executeCommand();
@@ -194,11 +191,10 @@ public class MergeDuplicateWays extends Command {
      */
     public static void checkForDuplicateWays(Way way, List<Command> commands) {
         final Collection<Way> nearbyWays = way.getDataSet().searchWays(way.getBBox()).stream()
-                .filter(MergeDuplicateWays::nonDeletedWay).collect(Collectors.toList());
-        nearbyWays.remove(way);
+                .filter(MergeDuplicateWays::nonDeletedWay).filter(w -> !Objects.equals(w, way)).toList();
         for (final Way way2 : nearbyWays) {
             if (!way2.isDeleted()) {
-                final Command tCommand = checkForDuplicateWays(way, way2);
+                final var tCommand = checkForDuplicateWays(way, way2);
                 if (tCommand != null) {
                     commands.add(tCommand);
                     tCommand.executeCommand();
@@ -230,10 +226,8 @@ public class MergeDuplicateWays extends Command {
             Logging.error("{0}", way2);
         }
         if ((compressed.size() > 1) && duplicateEntrySet.stream().noneMatch(entry -> entry.getValue().size() > 1)) {
-            final List<Integer> initial = compressed.stream().map(entry -> entry.a.a).sorted()
-                    .collect(Collectors.toList());
-            final List<Integer> after = compressed.stream().map(entry -> entry.b.a).sorted()
-                    .collect(Collectors.toList());
+            final var initial = compressed.stream().map(entry -> entry.a.a).sorted().toList();
+            final var after = compressed.stream().map(entry -> entry.b.a).sorted().toList();
             if (sorted(initial) && sorted(after)) {
                 returnCommand = mergeWays(way1, way2, compressed);
             }
@@ -278,12 +272,12 @@ public class MergeDuplicateWays extends Command {
                 }
             }
             Collections.reverse(before);
-            final Way newWay = new Way(way1);
+            final var newWay = new Way(way1);
             List<Command> commands = new ArrayList<>();
             before.forEach(node -> newWay.addNode(0, node));
             after.forEach(newWay::addNode);
             if (newWay.getNodesCount() > 0) {
-                final ChangeCommand changeCommand = new ChangeCommand(way1, newWay);
+                final var changeCommand = new ChangeCommand(way1, newWay);
                 commands.add(changeCommand);
                 /*
                  * This must be executed, otherwise the delete command will believe that way2
@@ -315,8 +309,8 @@ public class MergeDuplicateWays extends Command {
      * @return The node that the param {@code node} duplicates
      */
     public static Node nodeInCompressed(Node node, Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> compressed) {
-        Node returnNode = node;
-        for (final Pair<Pair<Integer, Node>, Pair<Integer, Node>> pair : compressed) {
+        var returnNode = node;
+        for (final var pair : compressed) {
             if (node.equals(pair.a.b)) {
                 returnNode = pair.b.b;
             } else if (node.equals(pair.b.b)) {
@@ -326,26 +320,26 @@ public class MergeDuplicateWays extends Command {
                 break;
             }
         }
-        final Node tReturnNode = returnNode;
+        final var tReturnNode = returnNode;
         node.getKeys().forEach(tReturnNode::put);
         return returnNode;
     }
 
     /**
      * Check if the node pairs increment in the same direction (only checks first
-     * two pairs), ensure that they are sorted with {@link sorted}
+     * two pairs), ensure that they are sorted with {@link #sorted}
      *
      * @param compressed The set of duplicate node/placement pairs
      * @return true if the node pairs increment in the same direction
      */
     public static boolean checkDirection(Set<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> compressed) {
-        final Iterator<Pair<Pair<Integer, Node>, Pair<Integer, Node>>> iterator = compressed.iterator();
-        boolean returnValue = false;
+        final var iterator = compressed.iterator();
+        var returnValue = false;
         if (compressed.size() > 1) {
-            final Pair<Pair<Integer, Node>, Pair<Integer, Node>> first = iterator.next();
-            final Pair<Pair<Integer, Node>, Pair<Integer, Node>> second = iterator.next();
-            final boolean way1Forward = first.a.a < second.a.a;
-            final boolean way2Forward = first.b.a < second.b.a;
+            final var first = iterator.next();
+            final var second = iterator.next();
+            final var way1Forward = first.a.a < second.a.a;
+            final var way2Forward = first.b.a < second.b.a;
             returnValue = way1Forward == way2Forward;
         }
         return returnValue;
@@ -358,10 +352,10 @@ public class MergeDuplicateWays extends Command {
      * @return true if there are no gaps and it increases
      */
     public static boolean sorted(List<Integer> collection) {
-        boolean returnValue = true;
+        var returnValue = true;
         if (collection.size() > 1) {
             Integer last = collection.get(0);
-            for (int i = 1; i < collection.size(); i++) {
+            for (var i = 1; i < collection.size(); i++) {
                 final Integer next = collection.get(i);
                 if ((next - last) != 1) {
                     returnValue = false;
@@ -381,17 +375,16 @@ public class MergeDuplicateWays extends Command {
      * @return A map of node -&gt; node(s) duplicates
      */
     public static Map<Pair<Integer, Node>, Map<Integer, Node>> getDuplicateNodes(Way way1, Way way2) {
-        final Map<Pair<Integer, Node>, Map<Integer, Node>> duplicateNodes = new LinkedHashMap<>();
-        for (int j = 0; j < way1.getNodesCount(); j++) {
-            final Node origNode = way1.getNode(j);
-            for (int k = 0; k < way2.getNodesCount(); k++) {
-                final Node possDupeNode = way2.getNode(k);
+        final var duplicateNodes = new LinkedHashMap<Pair<Integer, Node>, Map<Integer, Node>>();
+        for (var j = 0; j < way1.getNodesCount(); j++) {
+            final var origNode = way1.getNode(j);
+            for (var k = 0; k < way2.getNodesCount(); k++) {
+                final var possDupeNode = way2.getNode(k);
                 if (origNode.equals(possDupeNode) || (origNode
                         .greatCircleDistance(possDupeNode) < MapWithAIPreferenceHelper.getMaxNodeDistance())) {
-                    final Pair<Integer, Node> origNodePair = new Pair<>(j, origNode);
-                    final Map<Integer, Node> dupeNodeMap = duplicateNodes.getOrDefault(origNodePair, new HashMap<>());
+                    final var origNodePair = new Pair<>(j, origNode);
+                    final var dupeNodeMap = duplicateNodes.computeIfAbsent(origNodePair, ignored -> new HashMap<>());
                     dupeNodeMap.put(k, possDupeNode);
-                    duplicateNodes.put(origNodePair, dupeNodeMap);
                 }
             }
         }

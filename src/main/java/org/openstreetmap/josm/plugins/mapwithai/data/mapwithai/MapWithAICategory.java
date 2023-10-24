@@ -3,9 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.marktr;
 
-import javax.annotation.Nonnull;
-import javax.swing.ImageIcon;
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,10 +11,14 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
+
 import org.openstreetmap.josm.data.sources.ISourceCategory;
 import org.openstreetmap.josm.gui.tagging.presets.TaggingPresets;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.ImageProvider.ImageSizes;
+
+import jakarta.annotation.Nonnull;
 
 /**
  * The category for a MapWithAI source (i.e., buildings/highways/addresses/etc.)
@@ -98,6 +100,7 @@ public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
      */
     public static class DescriptionComparator implements Comparator<MapWithAICategory>, Serializable {
 
+        @Serial
         private static final long serialVersionUID = 9131636715279880580L;
 
         @Override

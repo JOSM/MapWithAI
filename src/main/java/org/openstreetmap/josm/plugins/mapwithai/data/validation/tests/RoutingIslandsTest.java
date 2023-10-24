@@ -4,9 +4,6 @@ package org.openstreetmap.josm.plugins.mapwithai.data.validation.tests;
 import static org.openstreetmap.josm.tools.I18n.marktr;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,6 +29,9 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.plugins.mapwithai.tools.Access;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Pair;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 /**
  * A test for routing islands
@@ -181,7 +181,7 @@ public class RoutingIslandsTest extends Test {
                         getDefaultAccessTags(way).getOrDefault(currentTransportMode, Access.AccessTags.NO.getKey())))
                 .collect(Collectors.toSet())).stream()
                 .map(way -> new Pair<>((incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
-                .collect(Collectors.toList());
+                .toList();
         createErrors(problematic, currentTransportMode);
     }
 
@@ -198,9 +198,9 @@ public class RoutingIslandsTest extends Test {
     private static void findConnectedWays(String currentTransportMode, Collection<Way> potentialWays,
             Collection<Way> incomingWays, Collection<Way> outgoingWays) {
         potentialWays.stream().filter(Way::isUsable).filter(Way::isOutsideDownloadArea).forEach(way -> {
-            Node firstNode = firstNode(way, currentTransportMode);
-            Node lastNode = lastNode(way, currentTransportMode);
-            Integer isOneway = isOneway(way, currentTransportMode);
+            final var firstNode = firstNode(way, currentTransportMode);
+            final var lastNode = lastNode(way, currentTransportMode);
+            final var isOneway = isOneway(way, currentTransportMode);
             if (firstNode != null && firstNode.isOutsideDownloadArea()) {
                 incomingWays.add(way);
             }
@@ -223,14 +223,14 @@ public class RoutingIslandsTest extends Test {
      * @return a list of sets of ways that are connected
      */
     private static List<Set<Way>> collectConnected(Collection<Way> ways) {
-        ArrayList<Set<Way>> collected = new ArrayList<>();
-        ArrayList<Way> listOfWays = new ArrayList<>(ways);
-        final int maxLoop = Config.getPref().getInt("validator.routingislands.maxrecursion", MAX_LOOPS);
-        for (int i = 0; i < listOfWays.size(); i++) {
-            Way initial = listOfWays.get(i);
+        final var collected = new ArrayList<Set<Way>>();
+        final var listOfWays = new ArrayList<>(ways);
+        final var maxLoop = Config.getPref().getInt("validator.routingislands.maxrecursion", MAX_LOOPS);
+        for (var i = 0; i < listOfWays.size(); i++) {
+            final var initial = listOfWays.get(i);
             Set<Way> connected = new HashSet<>();
             connected.add(initial);
-            int loopCounter = 0;
+            var loopCounter = 0;
             while (!getConnected(connected) && loopCounter < maxLoop) {
                 loopCounter++;
             }
@@ -281,8 +281,8 @@ public class RoutingIslandsTest extends Test {
      */
     public static void checkForUnconnectedWays(Collection<Way> incoming, Collection<Way> outgoing,
             String currentTransportMode) {
-        int loopCount = 0;
-        int maxLoops = Config.getPref().getInt("validator.routingislands.maxrecursion", MAX_LOOPS);
+        var loopCount = 0;
+        var maxLoops = Config.getPref().getInt("validator.routingislands.maxrecursion", MAX_LOOPS);
         do {
             loopCount++;
         } while (loopCount <= maxLoops && getWaysFor(incoming, currentTransportMode,
@@ -325,11 +325,11 @@ public class RoutingIslandsTest extends Test {
      *         clean up and work with via ways
      */
     public static boolean checkAccessibility(Way from, Way to, String currentTransportMode) {
-        boolean isAccessible = true;
+        var isAccessible = true;
 
         List<Relation> relations = from.getReferrers().stream().distinct().filter(Relation.class::isInstance)
                 .map(Relation.class::cast).filter(relation -> "restriction".equals(relation.get("type")))
-                .collect(Collectors.toList());
+                .toList();
         for (Relation relation : relations) {
             if (((relation.hasKey("except") && relation.get("except").contains(currentTransportMode))
                     || (currentTransportMode == null || currentTransportMode.trim().isEmpty()))
@@ -432,7 +432,7 @@ public class RoutingIslandsTest extends Test {
      * @return The map of access tags to access
      */
     public static TagMap getDefaultAccessTags(OsmPrimitive primitive) {
-        TagMap access = new TagMap();
+        final var access = new TagMap();
         final TagMap tags;
         if (primitive.hasKey(HIGHWAY)) {
             tags = getDefaultHighwayAccessTags(primitive.getKeys());
@@ -451,13 +451,9 @@ public class RoutingIslandsTest extends Test {
     }
 
     private static String getCachedDirectionMode(String direction, String mode) {
-        if (!DIRECTION_MAP.containsKey(direction)) {
-            DIRECTION_MAP.put(direction, new HashMap<>(Access.getTransportModes().size()));
-        }
+        DIRECTION_MAP.computeIfAbsent(direction, d -> new HashMap<>(Access.getTransportModes().size()));
         final var directionMap = DIRECTION_MAP.get(direction);
-        if (!directionMap.containsKey(mode)) {
-            directionMap.put(mode, direction.concat(mode));
-        }
+        directionMap.computeIfAbsent(mode, direction::concat);
         return directionMap.get(mode);
     }
 

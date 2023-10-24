@@ -3,12 +3,9 @@ package org.openstreetmap.josm.plugins.mapwithai.commands;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.annotation.Nullable;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.openstreetmap.josm.command.Command;
@@ -16,6 +13,8 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
+
+import jakarta.annotation.Nullable;
 
 /**
  * This is similar to the ReplaceGeometryUtils.buildUpgradeNodeCommand method
@@ -46,19 +45,19 @@ public final class MergeBuildingNodeCommand {
 
     private static Node getNewOrNoTagNode(OsmPrimitive referenceObject) {
         List<Node> nodes;
-        if (referenceObject instanceof Way) {
-            nodes = ((Way) referenceObject).getNodes();
-        } else if (referenceObject instanceof Relation) {
-            nodes = ((Relation) referenceObject).getMemberPrimitives().stream().flatMap(o -> {
-                if (o instanceof Way) {
-                    return ((Way) o).getNodes().stream();
-                } else if (o instanceof Node) {
-                    return Stream.of((Node) o);
+        if (referenceObject instanceof Way way) {
+            nodes = way.getNodes();
+        } else if (referenceObject instanceof Relation relation) {
+            nodes = relation.getMemberPrimitives().stream().flatMap(o -> {
+                if (o instanceof Way way) {
+                    return way.getNodes().stream();
+                } else if (o instanceof Node node) {
+                    return Stream.of(node);
                 }
                 return null;
-            }).filter(Objects::nonNull).collect(Collectors.toList());
-        } else if (referenceObject instanceof Node) {
-            nodes = Collections.singletonList((Node) referenceObject);
+            }).filter(Objects::nonNull).toList();
+        } else if (referenceObject instanceof Node node) {
+            nodes = Collections.singletonList(node);
         } else {
             throw new IllegalArgumentException(tr("Unknown OsmPrimitive type"));
         }

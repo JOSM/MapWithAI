@@ -3,9 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.annotation.Nonnull;
-import javax.swing.SwingUtilities;
-
 import java.io.IOException;
 import java.io.Serial;
 import java.time.Instant;
@@ -24,6 +21,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
@@ -47,6 +46,8 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.ListenerList;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
+
+import jakarta.annotation.Nonnull;
 
 /**
  * Manages the list of imagery entries that are shown in the imagery menu.
@@ -280,8 +281,8 @@ public class MapWithAILayerInfo {
             }
             // This is literally to avoid allocations on startup
             final Preferences preferences;
-            if (Config.getPref() instanceof Preferences) {
-                preferences = (Preferences) Config.getPref();
+            if (Config.getPref() instanceof Preferences pref) {
+                preferences = pref;
             } else {
                 preferences = null;
             }

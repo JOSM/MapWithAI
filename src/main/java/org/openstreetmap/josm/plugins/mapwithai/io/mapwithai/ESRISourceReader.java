@@ -1,9 +1,6 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.io.mapwithai;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +33,8 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.Logging;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonNumber;
@@ -55,6 +54,7 @@ public class ESRISourceReader {
     /** The cache storing ESRI source information (json) */
     public static final CacheAccess<String, String> SOURCE_CACHE = JCSCacheManager.getCache("mapwithai:esrisources", 5,
             50_000, new File(Config.getDirs().getCacheDirectory(true), "mapwithai").getPath());
+    private static final String ACCESS_INFORMATION = "accessInformation";
     private final MapWithAIInfo source;
     private boolean fastFail;
     private final List<MapWithAICategory> ignoreConflationCategories;
@@ -187,9 +187,9 @@ public class ESRISourceReader {
         if (this.ignoreConflationCategories.contains(newInfo.getCategory())) {
             newInfo.setConflation(false);
         }
-        if (feature.containsKey("accessInformation")
-                && feature.get("accessInformation").getValueType() != JsonValue.ValueType.NULL) {
-            newInfo.setAttributionText(feature.getString("accessInformation"));
+        if (feature.containsKey(ACCESS_INFORMATION)
+                && feature.get(ACCESS_INFORMATION).getValueType() != JsonValue.ValueType.NULL) {
+            newInfo.setAttributionText(feature.getString(ACCESS_INFORMATION));
         }
         newInfo.setDescription(feature.getString("snippet"));
         if (newInfo.getSource() != null) {
