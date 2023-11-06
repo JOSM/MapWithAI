@@ -98,8 +98,10 @@ public class MapWithAILayerInfo {
         }
         // Avoid a deadlock in the EDT.
         if (!finished.get() && !SwingUtilities.isEventDispatchThread()) {
+            var count = 0;
             synchronized (MapWithAILayerInfo.class) {
-                while (!finished.get()) {
+                while (!finished.get() && count < 120) {
+                    count++;
                     try {
                         MapWithAILayerInfo.class.wait(1000);
                     } catch (InterruptedException e) {

@@ -49,8 +49,8 @@ class MovePrimitiveDataSetCommandTest {
         move.fillModifiedData(modified, deleted, added);
         final Collection<? extends OsmPrimitive> participatingPrimitives = move.getParticipatingPrimitives();
         assertAll(() -> assertEquals(0, deleted.size()), () -> assertEquals(0, added.size()), // the JOSM Add command
-                                                                                              // doesn't add to this
-                                                                                              // list
+                // doesn't add to this
+                // list
                 () -> assertEquals(0, modified.size()), () -> assertEquals(1, from.allNonDeletedPrimitives().size()),
                 () -> assertEquals(3, to.allNonDeletedPrimitives().size()),
                 () -> assertNotNull(to.getPrimitiveById(way1)), () -> assertTrue(way1.isDeleted()),
@@ -86,8 +86,8 @@ class MovePrimitiveDataSetCommandTest {
         move.fillModifiedData(modified, deleted, added);
         final List<OsmPrimitive> participatingPrimitives = new ArrayList<>(move.getParticipatingPrimitives());
         assertAll(() -> assertEquals(0, deleted.size()), () -> assertEquals(0, added.size()), // the JOSM Add command
-                                                                                              // doesn't add to this
-                                                                                              // list
+                // doesn't add to this
+                // list
                 () -> assertEquals(0, modified.size()), () -> assertEquals(1, from.allNonDeletedPrimitives().size()),
                 () -> assertEquals(3, to.allNonDeletedPrimitives().size()),
                 () -> assertNotNull(to.getPrimitiveById(way1)),

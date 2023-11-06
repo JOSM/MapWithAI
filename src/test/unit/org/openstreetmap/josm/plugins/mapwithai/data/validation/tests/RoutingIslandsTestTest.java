@@ -157,6 +157,7 @@ class RoutingIslandsTestTest {
     /**
      * Test method for {@link RoutingIslandsTest#checkForUnconnectedWays}.
      */
+    @BasicPreferences
     @Test
     void testCheckForUnconnectedWaysIncoming() {
         RoutingIslandsTest.checkForUnconnectedWays(Collections.emptySet(), Collections.emptySet(), null);

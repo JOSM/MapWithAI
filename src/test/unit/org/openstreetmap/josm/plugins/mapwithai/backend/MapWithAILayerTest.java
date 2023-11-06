@@ -4,16 +4,12 @@ package org.openstreetmap.josm.plugins.mapwithai.backend;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openstreetmap.josm.tools.I18n.tr;
-
-import javax.swing.Action;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +18,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+
+import javax.swing.Action;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,6 +54,7 @@ import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.Main;
 import org.openstreetmap.josm.testutils.annotations.OsmApi;
 import org.openstreetmap.josm.testutils.annotations.Projection;
+import org.openstreetmap.josm.testutils.annotations.ResetUniquePrimitiveIdCounters;
 import org.openstreetmap.josm.testutils.annotations.Territories;
 
 /**
@@ -124,9 +126,9 @@ class MapWithAILayerTest {
     @Test
     void testGetInfoComponent() {
         final Object tObject = layer.getInfoComponent();
-        assertTrue(tObject instanceof JPanel, "The info component should be a JPanel instead of a string");
+        JPanel jPanel = assertInstanceOf(JPanel.class, tObject,
+                "The info component should be a JPanel instead of a string");
 
-        JPanel jPanel = (JPanel) tObject;
         final Component[] startComponents = jPanel.getComponents();
         for (final Component comp : startComponents) {
             final JLabel label = (JLabel) comp;
@@ -173,6 +175,7 @@ class MapWithAILayerTest {
         }
     }
 
+    @ResetUniquePrimitiveIdCounters
     @Test
     void testSelection() throws InvocationTargetException, InterruptedException {
         MapWithAILayer mapWithAILayer = MapWithAIDataUtils.getLayer(true);
@@ -186,10 +189,10 @@ class MapWithAILayerTest {
         SwingUtilities.invokeAndWait(() -> ds.setSelected(ds.allNonDeletedCompletePrimitives()));
         assertEquals(1, ds.getSelected().size());
         OsmPrimitive prim = ds.getSelected().iterator().next();
-        assertTrue(prim instanceof Way);
-        SwingUtilities.invokeAndWait(() -> ds.setSelected(((Way) prim).getNodes()));
-        assertEquals(((Way) prim).getNodes().size(), ds.getSelected().size());
-        assertTrue(((Way) prim).getNodes().stream().allMatch(ds::isSelected));
+        final Way way = assertInstanceOf(Way.class, prim);
+        SwingUtilities.invokeAndWait(() -> ds.setSelected(way.getNodes()));
+        assertEquals(way.getNodes().size(), ds.getSelected().size());
+        assertTrue(way.getNodes().stream().allMatch(ds::isSelected));
     }
 
     @Test

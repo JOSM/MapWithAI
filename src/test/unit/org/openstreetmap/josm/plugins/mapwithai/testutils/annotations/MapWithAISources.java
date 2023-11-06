@@ -20,5 +20,4 @@ import org.openstreetmap.josm.testutils.annotations.Territories;
 @Wiremock
 @Territories
 @ExtendWith(Wiremock.MapWithAILayerInfoExtension.class)
-public @interface MapWithAISources {
-}
+public @interface MapWithAISources {}

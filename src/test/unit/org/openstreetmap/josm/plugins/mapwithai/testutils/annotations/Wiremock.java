@@ -105,6 +105,8 @@ public @interface Wiremock {
      * Extension for {@link MapWithAILayerInfo}
      */
     class MapWithAILayerInfoExtension extends WiremockExtension {
+        private static int hashCode;
+
         @Override
         public void afterAll(ExtensionContext context) throws Exception {
             try {
@@ -129,7 +131,7 @@ public @interface Wiremock {
             synchronized (MapWithAILayerInfo.class) {
                 final var info = MapWithAILayerInfo.getInstance();
                 info.clear();
-                if (false && AnnotationSupport.isAnnotated(context.getTestClass(), Territories.class)) {
+                if (AnnotationSupport.isAnnotated(context.getTestClass(), Territories.class)) {
                     // This should probably only be run if territories is initialized
                     info.getDefaultLayers().stream().filter(MapWithAIInfo::isDefaultEntry).forEach(info::add);
                 }

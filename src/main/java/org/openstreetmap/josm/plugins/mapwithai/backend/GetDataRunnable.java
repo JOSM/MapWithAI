@@ -219,9 +219,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         if (!monitor.isCanceled()) {
             if (bounds.size() == MAX_NUMBER_OF_BBOXES_TO_PROCESS) {
                 final var temporaryDataSet = getDataReal(bounds.get(0), monitor);
-                synchronized (this.dataSet) {
-                    dataSet.mergeFrom(temporaryDataSet);
-                }
+                this.dataSet.update(() -> dataSet.mergeFrom(temporaryDataSet));
             } else {
                 final Collection<GetDataRunnable> tasks = bounds.stream()
                         .map(bound -> new GetDataRunnable(bound, dataSet, monitor.createSubTaskMonitor(0, true)))
@@ -250,10 +248,10 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
      * @param info    The information used to download the data
      */
     public static void cleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
-        realCleanup(dataSet, bounds, info);
+        dataSet.update(() -> realCleanup(dataSet, bounds, info));
     }
 
-    private static synchronized void realCleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
+    private static void realCleanup(DataSet dataSet, Bounds bounds, MapWithAIInfo info) {
         final Bounds boundsToUse;
         if (bounds == null && !dataSet.getDataSourceBounds().isEmpty()) {
             boundsToUse = new Bounds(dataSet.getDataSourceBounds().get(0));
