@@ -6,7 +6,7 @@
         "source": "esri",
         "conflate": true,
         "conflation_ignore_categories": ["addresses"],
-        "conflationUrl": "https://www.mapwith.ai/maps/ml_roads?bbox={bbox}&building_source=esri&esri_id={id}",
+        "conflationUrl": "https://rapideditor.org/maps/ml_roads?bbox={bbox}&building_source=esri&esri_id={id}",
         "conflationParameters": [{
             "description": "buildings",
             "enabled": true,
@@ -294,8 +294,8 @@
             "parameter": "hash=ASawRla3rBcwEjY4HIY"
         }],
         "permission_url": "https://github.com/facebookmicrosites/Open-Mapping-At-Facebook/wiki/FAQ",
-        "terms_of_use_url": "https://mapwith.ai/doc/license/MapWithAILicense.pdf",
-        "privacy_policy_url": "https://mapwith.ai/doc/license/MapWithAIPrivacyPolicy.pdf#page=3",
-        "url": "https://mapwith.ai/maps/ml_roads?bbox={bbox}"
+        "terms_of_use_url": "https://rapideditor.org/doc/license/MapWithAILicense.pdf",
+        "privacy_policy_url": "https://rapideditor.org/doc/license/MapWithAIPrivacyPolicy.pdf#page=3",
+        "url": "https://rapideditor.org/maps/ml_roads?bbox={bbox}"
     }
 }
