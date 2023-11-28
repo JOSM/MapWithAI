@@ -165,8 +165,8 @@ public class MergeDuplicateWays extends Command {
                 .collect(Collectors.toCollection(ArrayList::new));
         for (var i = 0; i < ways.size(); i++) {
             final var way1 = ways.get(i);
-            final var nearbyWays = dataSet.searchWays(way1.getBBox()).stream()
-                    .filter(MergeDuplicateWays::nonDeletedWay).filter(w -> !Objects.equals(w, way1)).toList();
+            final var nearbyWays = dataSet.searchWays(way1.getBBox()).stream().filter(MergeDuplicateWays::nonDeletedWay)
+                    .filter(w -> !Objects.equals(w, way1)).toList();
             for (final Way way2 : nearbyWays) {
                 final var command = checkForDuplicateWays(way1, way2);
                 final var deletedWays = new ArrayList<OsmPrimitive>();

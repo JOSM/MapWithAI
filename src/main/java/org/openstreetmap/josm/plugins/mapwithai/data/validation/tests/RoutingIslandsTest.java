@@ -179,9 +179,11 @@ public class RoutingIslandsTest extends Test {
                 .filter(way -> !incomingWays.contains(way) || !outgoingWays.contains(way))
                 .filter(way -> Access.getPositiveAccessValues().contains(
                         getDefaultAccessTags(way).getOrDefault(currentTransportMode, Access.AccessTags.NO.getKey())))
-                .collect(Collectors.toSet())).stream()
-                .map(way -> new Pair<>((incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
-                .toList();
+                .collect(Collectors.toSet()))
+                        .stream()
+                        .map(way -> new Pair<>(
+                                (incomingWays.containsAll(way) ? marktr("outgoing") : marktr("incoming")), way))
+                        .toList();
         createErrors(problematic, currentTransportMode);
     }
 
@@ -328,8 +330,7 @@ public class RoutingIslandsTest extends Test {
         var isAccessible = true;
 
         List<Relation> relations = from.getReferrers().stream().distinct().filter(Relation.class::isInstance)
-                .map(Relation.class::cast).filter(relation -> "restriction".equals(relation.get("type")))
-                .toList();
+                .map(Relation.class::cast).filter(relation -> "restriction".equals(relation.get("type"))).toList();
         for (Relation relation : relations) {
             if (((relation.hasKey("except") && relation.get("except").contains(currentTransportMode))
                     || (currentTransportMode == null || currentTransportMode.trim().isEmpty()))

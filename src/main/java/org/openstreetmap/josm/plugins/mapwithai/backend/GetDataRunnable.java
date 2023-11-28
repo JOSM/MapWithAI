@@ -275,7 +275,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
         }
         (boundsToUse.isCollapsed() || boundsToUse.isOutOfTheWorld() ? dataSet.getWays()
                 : dataSet.searchWays(boundsToUse.toBBox())).stream().filter(way -> !way.isDeleted())
-                .forEach(GetDataRunnable::cleanupArtifacts);
+                        .forEach(GetDataRunnable::cleanupArtifacts);
     }
 
     /**

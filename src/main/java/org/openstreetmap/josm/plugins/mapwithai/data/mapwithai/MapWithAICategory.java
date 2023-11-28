@@ -28,12 +28,12 @@ import jakarta.annotation.Nonnull;
  */
 public enum MapWithAICategory implements ISourceCategory<MapWithAICategory> {
 
-    BUILDING("data/closedway", "buildings", marktr("Buildings")),
-    HIGHWAY("presets/transport/way/way_road", "highways", marktr("Roads")),
-    ADDRESS("presets/misc/housenumber_small", "addresses", marktr("Addresses")),
-    POWER("presets/power/pole", "pole", marktr("Power")), PRESET("dialogs/search", "presets", marktr("Presets")),
-    FEATURED("presets/service/network-wireless", "featured", marktr("Featured")),
-    PREVIEW("presets/misc/fixme", "preview", marktr("Preview")), OTHER(null, "other", marktr("Other"));
+    BUILDING("data/closedway", "buildings", marktr("Buildings")), HIGHWAY("presets/transport/way/way_road", "highways",
+            marktr("Roads")), ADDRESS("presets/misc/housenumber_small", "addresses",
+                    marktr("Addresses")), POWER("presets/power/pole", "pole", marktr("Power")), PRESET("dialogs/search",
+                            "presets", marktr("Presets")), FEATURED("presets/service/network-wireless", "featured",
+                                    marktr("Featured")), PREVIEW("presets/misc/fixme", "preview",
+                                            marktr("Preview")), OTHER(null, "other", marktr("Other"));
 
     private static final Map<ImageSizes, Map<MapWithAICategory, ImageIcon>> iconCache = Collections
             .synchronizedMap(new EnumMap<>(ImageSizes.class));

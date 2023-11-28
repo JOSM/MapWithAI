@@ -503,7 +503,7 @@ public class MapWithAIProvidersPanel extends JPanel {
      * @param e The MouseEvent (used to get the appropriate JTable)
      */
     private static void clickListener(MouseEvent e) {
-        if (e.getSource() instanceof JTable table && table.getSelectedRow() >= 0 && table.getSelectedColumn() >= 0) {
+        if (e.getSource()instanceof JTable table && table.getSelectedRow() >= 0 && table.getSelectedColumn() >= 0) {
             final int realCol = table.convertColumnIndexToModel(table.getSelectedColumn());
             final int realRow = table.convertRowIndexToModel(table.getSelectedRow());
             final var tableName = table.getModel().getColumnName(realCol);

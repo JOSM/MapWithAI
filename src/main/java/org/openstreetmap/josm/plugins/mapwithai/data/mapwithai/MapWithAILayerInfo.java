@@ -283,7 +283,7 @@ public class MapWithAILayerInfo {
             }
             // This is literally to avoid allocations on startup
             final Preferences preferences;
-            if (Config.getPref() instanceof Preferences pref) {
+            if (Config.getPref()instanceof Preferences pref) {
                 preferences = pref;
             } else {
                 preferences = null;

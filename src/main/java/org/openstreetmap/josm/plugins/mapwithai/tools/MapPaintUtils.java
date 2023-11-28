@@ -60,12 +60,13 @@ public final class MapPaintUtils {
      * Safe colors
      */
     public enum SafeColors {
-        RED(Color.RED), ORANGE(Color.ORANGE), GOLD(Objects.requireNonNull(ColorHelper.html2color("#ffd700"))),
-        LIME(Objects.requireNonNull(ColorHelper.html2color("#00ff00"))), CYAN(Color.CYAN),
-        DODGER_BLUE(Objects.requireNonNull(ColorHelper.html2color("#1e90ff"))),
-        AI_MAGENTA(Objects.requireNonNull(ColorHelper.html2color("#ff26d4"))), PINK(Color.PINK),
-        LIGHT_GREY(Objects.requireNonNull(ColorHelper.html2color("#d3d3d3"))),
-        LINEN(Objects.requireNonNull(ColorHelper.html2color("#faf0e6")));
+        RED(Color.RED), ORANGE(Color.ORANGE), GOLD(Objects.requireNonNull(ColorHelper.html2color("#ffd700"))), LIME(
+                Objects.requireNonNull(ColorHelper.html2color("#00ff00"))), CYAN(Color.CYAN), DODGER_BLUE(
+                        Objects.requireNonNull(ColorHelper.html2color("#1e90ff"))), AI_MAGENTA(
+                                Objects.requireNonNull(ColorHelper.html2color("#ff26d4"))), PINK(
+                                        Color.PINK), LIGHT_GREY(
+                                                Objects.requireNonNull(ColorHelper.html2color("#d3d3d3"))), LINEN(
+                                                        Objects.requireNonNull(ColorHelper.html2color("#faf0e6")));
 
         private final Color color;
 

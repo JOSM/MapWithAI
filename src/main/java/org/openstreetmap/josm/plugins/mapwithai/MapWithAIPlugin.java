@@ -3,14 +3,14 @@ package org.openstreetmap.josm.plugins.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.swing.JMenuItem;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.JMenuItem;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.actions.PreferencesAction;
@@ -29,6 +29,7 @@ import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DownloadListener;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIAction;
+import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAILayer;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIMoveAction;
 import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIObject;
@@ -135,7 +136,8 @@ public final class MapWithAIPlugin extends Plugin implements Destroyable {
         MainApplication.worker.execute(() -> UpdateProd.doProd(info.mainversion));
         // Preload the MapWithAILayerInfo for the JOSM download window
         // This reduces the amount of time taken for first button click by 100ms.
-        MainApplication.worker.execute(MapWithAILayerInfo::getInstance);
+        // Don't use the worker thread to avoid blocking user downloads
+        MapWithAIDataUtils.getForkJoinPool().execute(MapWithAILayerInfo::getInstance);
 
         destroyables.add(new MapWithAICopyProhibit());
     }

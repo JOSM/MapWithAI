@@ -320,21 +320,21 @@ public class MapWithAILayer extends OsmDataLayer implements ActiveLayerChangeLis
     private record OsmComparator(
             Collection<OsmPrimitive> previousSelection) implements Comparator<OsmPrimitive>, Serializable {
 
-        @Override
-        public int compare(OsmPrimitive o1, OsmPrimitive o2) {
-            if (previousSelection.contains(o1) == previousSelection.contains(o2)) {
-                if (o1.isTagged() == o2.isTagged()) {
-                    return o1.compareTo(o2);
-                } else if (o1.isTagged()) {
-                    return -1;
-                }
-                return 1;
-            }
-            if (previousSelection.contains(o1)) {
+    @Override
+    public int compare(OsmPrimitive o1, OsmPrimitive o2) {
+        if (previousSelection.contains(o1) == previousSelection.contains(o2)) {
+            if (o1.isTagged() == o2.isTagged()) {
+                return o1.compareTo(o2);
+            } else if (o1.isTagged()) {
                 return -1;
             }
             return 1;
         }
+        if (previousSelection.contains(o1)) {
+            return -1;
+        }
+        return 1;
+    }
 
     }
 

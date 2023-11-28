@@ -119,10 +119,10 @@ public class ESRISourceReader {
                 /* Do nothing */
                 if (parser.hasNext() && parser.next() == JsonParser.Event.START_OBJECT) {
                     parser.getObjectStream().forEach(entry -> {
-                        if ("nextStart".equals(entry.getKey()) && entry.getValue() instanceof JsonNumber number) {
+                        if ("nextStart".equals(entry.getKey()) && entry.getValue()instanceof JsonNumber number) {
                             next.set(number.intValue());
                             searchUrl.set(startReplace.matcher(search).replaceAll(Integer.toString(next.get())));
-                        } else if ("results".equals(entry.getKey()) && entry.getValue() instanceof JsonArray features) {
+                        } else if ("results".equals(entry.getKey()) && entry.getValue()instanceof JsonArray features) {
                             for (var feature : features.getValuesAs(JsonObject.class)) {
                                 information.add(parse(feature));
                             }
