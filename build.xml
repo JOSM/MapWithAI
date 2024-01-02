@@ -7,6 +7,7 @@
   <!-- edit the properties of this plugin in the file `gradle.properties` -->
   <property file="${basedir}/gradle.properties"/>
   <property name="java.lang.version" value="17"/>
+  <property name="plugin.minimum.java.version" value="17"/>
 
   <!-- ** include targets that all plugins have in common ** -->
   <import file="../build-common.xml"/>
