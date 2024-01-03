@@ -135,7 +135,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             final var tile1 = tileFromLatLonZoom(left, bottom, zoom);
             final var tile2 = tileFromLatLonZoom(right, top, zoom);
             return IntStream.rangeClosed(tile1.x, tile2.x)
-                    .mapToObj(x -> IntStream.rangeClosed(tile1.y, tile2.y).mapToObj(y -> new TileXYZ(x, y, zoom)))
+                    .mapToObj(x -> IntStream.rangeClosed(tile2.y, tile1.y).mapToObj(y -> new TileXYZ(x, y, zoom)))
                     .flatMap(stream -> stream);
         }
 
