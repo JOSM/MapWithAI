@@ -3,6 +3,8 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import javax.swing.SwingUtilities;
+
 import java.io.IOException;
 import java.io.Serial;
 import java.time.Instant;
@@ -21,8 +23,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.swing.SwingUtilities;
 
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
@@ -215,6 +215,7 @@ public class MapWithAILayerInfo {
         }
         if (listener != null) {
             this.finishListenerListenerList.addListener(listener);
+            return;
         }
         if (worker == null) {
             final var pleaseWaitRunnable = new PleaseWaitRunnable(tr("Update default entries")) {
@@ -283,7 +284,7 @@ public class MapWithAILayerInfo {
             }
             // This is literally to avoid allocations on startup
             final Preferences preferences;
-            if (Config.getPref()instanceof Preferences pref) {
+            if (Config.getPref() instanceof Preferences pref) {
                 preferences = pref;
             } else {
                 preferences = null;
