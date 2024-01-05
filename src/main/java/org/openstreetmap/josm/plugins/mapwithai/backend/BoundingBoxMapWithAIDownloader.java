@@ -330,19 +330,22 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
         ds = new DataSet();
         final var currentBounds = new Bounds(this.downloadArea);
+        progressMonitor.beginTask(tr("Downloading data"), 2 * tiles.size());
         for (TileXYZ tileXYZ : tiles) {
             try {
                 final var hilbert = PMTiles.convertToHilbert(tileXYZ.z(), tileXYZ.x(), tileXYZ.y());
                 final var data = this.info.getSourceType() == MapWithAIType.PMTILES
                         ? new ByteArrayInputStream(PMTiles.readData(header, hilbert, cachedDirectories))
-                        : getInputStream(getRequestForTile(tileXYZ), progressMonitor);
+                        : getInputStream(getRequestForTile(tileXYZ), progressMonitor.createSubTaskMonitor(1, true));
                 final var dataSet = loadTile(tileSource, tileXYZ, data);
-                ds.mergeFrom(dataSet, progressMonitor);
+                ds.mergeFrom(dataSet, progressMonitor.createSubTaskMonitor(1, true));
                 tileXYZ.expandBounds(currentBounds);
             } catch (OsmTransferException | IOException e) {
+                progressMonitor.finishTask();
                 throw new IllegalDataException(e);
             }
         }
+        progressMonitor.finishTask();
         ds.addDataSource(new DataSource(currentBounds, this.url));
         return ds;
     }
