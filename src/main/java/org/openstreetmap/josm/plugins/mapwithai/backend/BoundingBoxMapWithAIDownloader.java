@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -130,14 +131,20 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
             final var tile = TileXYZ.tileFromBBox(lon1, lat1, lon2, lat2);
             return getRequestForTile(tile);
         }
-        return url.replace("{bbox}", Double.toString(lon1) + ',' + lat1 + ',' + lon2 + ',' + lat2)
+        var current = url.replace("{bbox}", Double.toString(lon1) + ',' + lat1 + ',' + lon2 + ',' + lat2)
                 .replace("{xmin}", Double.toString(lon1)).replace("{ymin}", Double.toString(lat1))
-                .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2))
-                + (crop ? "&crop_bbox=" + DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox().toStringCSV(",")
-                        : "")
-                + (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated()
-                        ? "&resultOffset=" + this.start
-                        : "");
+                .replace("{xmax}", Double.toString(lon2)).replace("{ymax}", Double.toString(lat2));
+        boolean hasQuery = !Optional.ofNullable(URI.create(current).getRawQuery()).map(String::isEmpty).orElse(true);
+
+        if (crop) {
+            current += (hasQuery ? '&' : '?') + "crop_bbox="
+                    + DetectTaskingManagerUtils.getTaskingManagerBounds().toBBox().toStringCSV(",");
+            hasQuery = true;
+        }
+        if (this.info.getSourceType() == MapWithAIType.ESRI_FEATURE_SERVER && !this.info.isConflated()) {
+            current += (hasQuery ? '&' : '?') + "resultOffset=" + this.start;
+        }
+        return current;
     }
 
     private String getRequestForTile(TileXYZ tile) {
