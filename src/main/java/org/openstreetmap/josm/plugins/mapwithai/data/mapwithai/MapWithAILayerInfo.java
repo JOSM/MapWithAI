@@ -213,8 +213,11 @@ public class MapWithAILayerInfo {
         if (this.finishListenerListenerList == null) {
             this.finishListenerListenerList = ListenerList.create();
         }
+        boolean running = this.finishListenerListenerList.hasListeners();
         if (listener != null) {
             this.finishListenerListenerList.addListener(listener);
+        }
+        if (running) {
             return;
         }
         if (worker == null) {
