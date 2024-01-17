@@ -10,8 +10,6 @@ on:
     branches:
       - master
       - $default-branch
-  schedule:
-  - cron: "1 5 * * 6"
   workflow_dispatch:
 
 jobs:
@@ -19,7 +17,7 @@ jobs:
     strategy:
       matrix:
         josm-revision: ["", "r18877"]
-    uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v1
+    uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v2
     with:
       java-version: 17
       josm-revision: ${{ matrix.josm-revision }}
