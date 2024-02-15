@@ -6,7 +6,7 @@
         "source": "esri",
         "conflate": true,
         "conflation_ignore_categories": ["addresses"],
-        "conflationUrl": "https://www.mapwith.ai/maps/ml_roads?bbox={bbox}&building_source=esri&esri_id={id}",
+        "conflationUrl": "https://rapideditor.org/maps/ml_roads?bbox={bbox}&building_source=esri&esri_id={id}",
         "conflationParameters": [{
             "description": "buildings",
             "enabled": true,
