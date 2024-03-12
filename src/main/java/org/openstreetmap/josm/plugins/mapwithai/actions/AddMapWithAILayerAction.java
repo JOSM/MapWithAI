@@ -84,10 +84,17 @@ public class AddMapWithAILayerAction extends JosmAction implements AdaptableActi
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!isEnabled()) {
-            return;
+        if (isEnabled()) {
+            MainApplication.worker.execute(() -> realRun(this.info));
         }
+    }
 
+    /**
+     * Run the download tasks. This should be run off of the EDT, see #23529.
+     *
+     * @param info The external data to download
+     */
+    private static void realRun(MapWithAIInfo info) {
         MapWithAILayer layer = MapWithAIDataUtils.getLayer(false);
         final DataSet ds;
         final OsmData<?, ?, ?, ?> boundsSource;

@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -213,37 +214,26 @@ public final class MapWithAIDataUtils {
         }
     }
 
-    private static boolean confirmBigDownload(List<Bounds> realBounds) {
-        final var confirmation = new ConfirmBigDownload(realBounds);
-        GuiHelper.runInEDTAndWait(confirmation);
-        return confirmation.confirmed();
-    }
-
-    private static class ConfirmBigDownload implements Runnable {
-        Boolean bool;
-        final List<?> realBounds;
-
-        public ConfirmBigDownload(List<?> realBounds) {
-            this.realBounds = realBounds;
-        }
-
-        @Override
-        public void run() {
-            bool = ConditionalOptionPaneUtil.showConfirmationDialog(MapWithAIPlugin.NAME.concat(".alwaysdownload"),
-                    null,
+    /**
+     * Confirm a large download
+     *
+     * @param realBounds The list of bounds that will be downloaded
+     * @return {@code true} if the user still wants to download data
+     */
+    private static synchronized boolean confirmBigDownload(List<Bounds> realBounds) {
+        final var confirmation = new AtomicBoolean(false);
+        // This is not a separate class since we don't want to show multiple
+        // confirmation dialogs
+        // which is why this method is synchronized.
+        GuiHelper.runInEDTAndWait(() -> {
+            final var confirmed = ConditionalOptionPaneUtil.showConfirmationDialog(
+                    MapWithAIPlugin.NAME.concat(".alwaysdownload"), null,
                     tr("You are going to make {0} requests to the MapWithAI server. This may take some time. <br /> Continue?",
                             realBounds.size()),
                     null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_OPTION);
-        }
-
-        /**
-         * Check if the user confirmed the download
-         *
-         * @return {@code true} if the user wants to continue
-         */
-        public boolean confirmed() {
-            return bool;
-        }
+            confirmation.set(confirmed);
+        });
+        return confirmation.get();
     }
 
     /**
