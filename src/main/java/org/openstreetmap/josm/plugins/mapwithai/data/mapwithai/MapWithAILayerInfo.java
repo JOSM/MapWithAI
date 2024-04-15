@@ -3,8 +3,6 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import javax.swing.SwingUtilities;
-
 import java.io.IOException;
 import java.io.Serial;
 import java.time.Instant;
@@ -23,6 +21,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.swing.SwingUtilities;
 
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import org.openstreetmap.josm.actions.ExpertToggleAction;
@@ -287,7 +287,7 @@ public class MapWithAILayerInfo {
             }
             // This is literally to avoid allocations on startup
             final Preferences preferences;
-            if (Config.getPref() instanceof Preferences pref) {
+            if (Config.getPref()instanceof Preferences pref) {
                 preferences = pref;
             } else {
                 preferences = null;
@@ -346,11 +346,12 @@ public class MapWithAILayerInfo {
          * @param layers The layers to update
          */
         private void updateEsriLayers(@Nonnull final Collection<MapWithAIInfo> layers) {
+            final var esriInfo = new ArrayList<MapWithAIInfo>(300);
             for (var layer : layers) {
                 if (MapWithAIType.ESRI == layer.getSourceType()) {
                     for (var future : parseEsri(layer)) {
                         try {
-                            allDefaultLayers.add(future.get());
+                            esriInfo.add(future.get());
                         } catch (InterruptedException e) {
                             Logging.error(e);
                             Thread.currentThread().interrupt();
@@ -359,9 +360,10 @@ public class MapWithAILayerInfo {
                         }
                     }
                 } else {
-                    allDefaultLayers.add(layer);
+                    esriInfo.add(layer);
                 }
             }
+            layers.addAll(esriInfo);
         }
 
         protected void finish() {
@@ -369,7 +371,7 @@ public class MapWithAILayerInfo {
             synchronized (allDefaultLayers) {
                 allDefaultLayers.clear();
                 defaultLayers.addAll(newLayers);
-                this.updateEsriLayers(newLayers);
+                allDefaultLayers.addAll(newLayers);
                 allDefaultLayers.sort(new MapWithAIInfo.MapWithAIInfoCategoryComparator());
                 allDefaultLayers.sort(Comparator.comparing(TileSourceInfo::getName));
                 allDefaultLayers.sort(Comparator.comparing(info -> info.getCategory().getDescription()));
@@ -505,7 +507,7 @@ public class MapWithAILayerInfo {
         }
 
         if (changed) {
-            save();
+            MainApplication.worker.execute(this::save);
         }
     }
 
