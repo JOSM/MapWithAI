@@ -44,8 +44,8 @@ public class StreetAddressTest extends Test {
     public static final double BBOX_EXPANSION = 0.002;
     private static final String ADDR_STREET = "addr:street";
     private final Set<OsmPrimitive> namePrimitiveMap = new HashSet<>();
-    private final Map<Point2D, Set<String>> nameMap = new HashMap<>();
-    private final Map<Point2D, List<OsmPrimitive>> primitiveCellMap = new HashMap<>();
+    private final Map<Point, Set<String>> nameMap = new HashMap<>();
+    private final Map<Point, List<OsmPrimitive>> primitiveCellMap = new HashMap<>();
     /**
      * Classified highways. This uses a {@link Set} instead of a {@link List} since
      * the MapWithAI code doesn't care about order.
@@ -146,7 +146,8 @@ public class StreetAddressTest extends Test {
                     final var n1 = nodes.get(i);
                     final var n2 = nodes.get(i + 1);
                     for (Point2D cell : ValUtil.getSegmentCells(n1, n2, gridDetail)) {
-                        this.nameMap.computeIfAbsent(cell, k -> new HashSet<>()).addAll(names);
+                        this.nameMap.computeIfAbsent(new Point(cell.getX(), cell.getY()), k -> new HashSet<>())
+                                .addAll(names);
                     }
                 }
             } else if (hasStreetAddressTags(primitive) && !primitive.isOutsideDownloadArea()) {
@@ -159,7 +160,7 @@ public class StreetAddressTest extends Test {
                 if (en != null) {
                     long x = (long) Math.floor(en.getX() * gridDetail);
                     long y = (long) Math.floor(en.getY() * gridDetail);
-                    final var point = new Point2D.Double(x, y);
+                    final var point = new Point(x, y);
                     primitiveCellMap.computeIfAbsent(point, p -> new ArrayList<>()).add(primitive);
                 }
             }
@@ -174,7 +175,7 @@ public class StreetAddressTest extends Test {
                 .filter(s -> !s.isEmpty()).collect(Collectors.toSet());
     }
 
-    private Collection<String> getSurroundingHighwayNames(Point2D point2D) {
+    private Collection<String> getSurroundingHighwayNames(Point point2D) {
         if (this.nameMap.isEmpty()) {
             return Collections.emptySet();
         }
@@ -183,8 +184,9 @@ public class StreetAddressTest extends Test {
         while (surroundingWays.isEmpty()) {
             for (int x = -surrounding; x <= surrounding; x++) {
                 for (int y = -surrounding; y <= surrounding; y++) {
-                    final var key = new Point2D.Double((long) Math.floor(point2D.getX() + x),
-                            (long) Math.floor(point2D.getY() + y));
+                    final var xPoint = (long) Math.floor(point2D.x() + x);
+                    final var yPoint = (long) Math.floor(point2D.y() + y);
+                    final var key = new Point(xPoint, yPoint);
                     if (this.nameMap.containsKey(key)) {
                         surroundingWays.addAll(this.nameMap.get(key));
                     }
@@ -303,4 +305,20 @@ public class StreetAddressTest extends Test {
         bbox.add(bbox.getTopLeftLon() - degree, bbox.getTopLeftLat() + degree);
         return bbox;
     }
-}
+
+    private record Point(double x, double y) implements Comparable<Point> {
+
+    @Override
+    public int compareTo(Point other) {
+        if (other.x == this.x && other.y == this.y) {
+            return 0;
+        }
+        if (other.x < this.x) {
+            return -1;
+        }
+        if (other.x > this.x) {
+            return 1;
+        }
+        return Double.compare(other.y, this.y);
+    }
+}}
