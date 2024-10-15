@@ -16,12 +16,12 @@ jobs:
   call-workflow:
     strategy:
       matrix:
-        josm-revision: ["", "r18877"]
-    uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v2
+        josm-revision: ["", "r19067"]
+    uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v3
     with:
       java-version: 17
       josm-revision: ${{ matrix.josm-revision }}
       plugin-jar-name: 'mapwithai'
-      perform-revision-tagging: ${{ matrix.josm-revision == 'r18877' && github.repository == 'JOSM/MapWithAI' && github.ref_type == 'branch' && github.ref_name == 'master' && github.event_name != 'schedule' && github.event_name != 'pull_request' }}
+      perform-revision-tagging: ${{ matrix.josm-revision == 'r19067' && github.repository == 'JOSM/MapWithAI' && github.ref_type == 'branch' && github.ref_name == 'master' && github.event_name != 'schedule' && github.event_name != 'pull_request' }}
     secrets: inherit
 

@@ -8,13 +8,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.stream.Stream;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.IMapWithAIUrls;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 /**
  * Set the MapWithAI config for the test
@@ -29,7 +28,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 public @interface MapWithAIConfig {
     class MapWithAIConfigExtension extends Wiremock.WiremockExtension implements BeforeEachCallback, AfterEachCallback {
         @Override
-        public void beforeEach(ExtensionContext context) throws Exception {
+        public void beforeEach(ExtensionContext context) {
             org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig
                     .setUrlsProvider(new WireMockMapWithAIUrls(getWiremock(context)));
         }
@@ -42,25 +41,25 @@ public @interface MapWithAIConfig {
         }
 
         private static final class WireMockMapWithAIUrls implements IMapWithAIUrls {
-            private final WireMockServer wireMockServer;
+            private final WireMockRuntimeInfo wireMockServer;
 
-            public WireMockMapWithAIUrls(final WireMockServer wireMockServer) {
+            public WireMockMapWithAIUrls(final WireMockRuntimeInfo wireMockServer) {
                 this.wireMockServer = wireMockServer;
             }
 
             @Override
             public String getConflationServerJson() {
-                return this.wireMockServer.baseUrl() + "/MapWithAI/json/conflation_servers.json";
+                return this.wireMockServer.getHttpBaseUrl() + "/MapWithAI/json/conflation_servers.json";
             }
 
             @Override
             public String getMapWithAISourcesJson() {
-                return this.wireMockServer.baseUrl() + "/MapWithAI/json/sources.json";
+                return this.wireMockServer.getHttpBaseUrl() + "/MapWithAI/json/sources.json";
             }
 
             @Override
             public String getMapWithAIPaintStyle() {
-                return this.wireMockServer.baseUrl() + "/josmfile?page=Styles/MapWithAI&zip=1";
+                return this.wireMockServer.getHttpBaseUrl() + "/josmfile?page=Styles/MapWithAI&zip=1";
             }
         }
 

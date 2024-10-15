@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.ThrowingSupplier;
@@ -46,9 +48,6 @@ import mockit.MockUp;
 @Wiremock
 @MapWithAISources
 class DataConflationSenderTest {
-    @BasicWiremock
-    WireMockServer wireMockServer;
-
     static class MapWithAIConflationCategoryMock extends MockUp<MapWithAIConflationCategory> {
         static String url;
 
@@ -81,10 +80,10 @@ class DataConflationSenderTest {
     }
 
     @Test
-    void testWorkingUrl() {
-        MapWithAIConflationCategoryMock.url = wireMockServer.baseUrl() + "/conflate";
-        final StubMapping stubMapping = wireMockServer
-                .stubFor(WireMock.post("/conflate").willReturn(WireMock.aResponse().withBody(
+    void testWorkingUrl(WireMockRuntimeInfo wireMockRuntimeInfo) {
+        MapWithAIConflationCategoryMock.url = wireMockRuntimeInfo.getHttpBaseUrl() + "/conflate";
+        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.post("/conflate").willReturn(WireMock.aResponse().withBody(
                         "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='DataConflationSenderTest#testWorkingUrl'><node id='1' version='1' visible='true' lat='89.0' lon='0.1' /></osm>")));
         new MapWithAIConflationCategoryMock();
 
@@ -99,14 +98,13 @@ class DataConflationSenderTest {
         assertEquals(1, conflated.getNodes().size());
         final Node conflatedNode = conflated.getNodes().iterator().next();
         assertEquals(new LatLon(89, 0.1), conflatedNode.getCoor());
-        assertEquals(1, wireMockServer.getAllServeEvents().stream()
-                .filter(serveEvent -> stubMapping.equals(serveEvent.getStubMapping())).count());
+        wireMockRuntimeInfo.getWireMock().verifyThat(1, RequestPatternBuilder.like(stubMapping.getRequest()));
     }
 
     @Test
-    void testWorkingUrlTimeout() {
-        MapWithAIConflationCategoryMock.url = wireMockServer.baseUrl() + "/conflate";
-        final StubMapping stubMapping = wireMockServer.stubFor(WireMock.post("/conflate")
+    void testWorkingUrlTimeout(WireMockRuntimeInfo wireMockRuntimeInfo) {
+        MapWithAIConflationCategoryMock.url = wireMockRuntimeInfo.getHttpBaseUrl() + "/conflate";
+        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock().register(WireMock.post("/conflate")
                 .willReturn(WireMock.aResponse().withBody(
                         "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='DataConflationSenderTest#testWorkingUrl'><node id='1' version='1' visible='true' lat='89.0' lon='0.1' /></osm>")
                         .withFixedDelay(500)));
@@ -123,8 +121,7 @@ class DataConflationSenderTest {
         assertEquals(1, conflated.getNodes().size());
         final Node conflatedNode = conflated.getNodes().iterator().next();
         assertEquals(new LatLon(89, 0.1), conflatedNode.getCoor());
-        assertEquals(1, wireMockServer.getAllServeEvents().stream()
-                .filter(serveEvent -> stubMapping.equals(serveEvent.getStubMapping())).count());
+        wireMockRuntimeInfo.getWireMock().verifyThat(1, RequestPatternBuilder.like(stubMapping.getRequest()));
     }
 
     static Stream<Arguments> testNonWorkingUrl() {
@@ -135,9 +132,9 @@ class DataConflationSenderTest {
 
     @ParameterizedTest
     @MethodSource
-    void testNonWorkingUrl(final ResponseDefinitionBuilder response) {
-        MapWithAIConflationCategoryMock.url = wireMockServer.baseUrl() + "/conflate";
-        final StubMapping stubMapping = wireMockServer.stubFor(WireMock.post("/conflate").willReturn(response));
+    void testNonWorkingUrl(final ResponseDefinitionBuilder response, final WireMockRuntimeInfo wireMockRuntimeInfo) {
+        MapWithAIConflationCategoryMock.url = wireMockRuntimeInfo.getHttpBaseUrl() + "/conflate";
+        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock().register(WireMock.post("/conflate").willReturn(response));
         new MapWithAIConflationCategoryMock();
 
         final DataSet external = new DataSet(new Node(LatLon.NORTH_POLE));
@@ -147,7 +144,6 @@ class DataConflationSenderTest {
         dataConflationSender.run();
         final DataSet conflated = assertDoesNotThrow((ThrowingSupplier<DataSet>) dataConflationSender::get);
         assertNull(conflated);
-        assertEquals(1, wireMockServer.getAllServeEvents().stream()
-                .filter(serveEvent -> stubMapping.equals(serveEvent.getStubMapping())).count());
+        wireMockRuntimeInfo.getWireMock().verifyThat(1, RequestPatternBuilder.like(stubMapping.getRequest()));
     }
 }

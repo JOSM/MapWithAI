@@ -1,17 +1,29 @@
 // License: GPL. For details, see LICENSE file.
 package org.openstreetmap.josm.plugins.mapwithai.testutils.annotations;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
@@ -29,11 +41,8 @@ import org.openstreetmap.josm.testutils.annotations.Territories;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.FileSource;
-import com.github.tomakehurst.wiremock.extension.Parameters;
-import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
-import com.github.tomakehurst.wiremock.http.Request;
-import com.github.tomakehurst.wiremock.http.Response;
+import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.ReflectionUtils;
 
 /**
  * Test annotation to ensure that wiremock is used
@@ -44,8 +53,8 @@ import com.github.tomakehurst.wiremock.http.Response;
 @Target({ ElementType.PARAMETER, ElementType.TYPE, ElementType.METHOD })
 @BasicPreferences
 @HTTP
+@BasicWiremock(value = "src/test/resources/wiremock")
 @ExtendWith(Wiremock.TestMapWithAIUrls.class)
-@BasicWiremock(value = "src/test/resources/wiremock", responseTransformers = Wiremock.WireMockUrlTransformer.class)
 public @interface Wiremock {
     /**
      * Set to {@code false} to turn off wiremock (use only in integration tests)
@@ -55,71 +64,34 @@ public @interface Wiremock {
     boolean value() default true;
 
     /**
-     * Replace URL's with the wiremock URL
-     *
-     * @author Taylor Smock
-     */
-    class WireMockUrlTransformer extends ResponseTransformer {
-        private final ExtensionContext context;
-
-        public WireMockUrlTransformer(ExtensionContext context) {
-            this.context = context;
-        }
-
-        @Override
-        public String getName() {
-            return "Convert urls in responses to wiremock url";
-        }
-
-        @Override
-        public Response transform(Request request, Response response, FileSource files, Parameters parameters) {
-            if (!request.getUrl().endsWith("/capabilities")
-                    && response.getHeaders().getContentTypeHeader().mimeTypePart() != null
-                    && !response.getHeaders().getContentTypeHeader().mimeTypePart().contains("application/zip")) {
-                String origBody = response.getBodyAsString();
-                String newBody = origBody.replaceAll("https?://.*?/",
-                        WiremockExtension.getWiremock(context).baseUrl() + "/");
-                return Response.Builder.like(response).but().body(newBody).build();
-            }
-            return response;
-        }
-    }
-
-    /**
      * This is the base wiremock extension class
      */
-    class WiremockExtension extends BasicWiremock.WireMockExtension {
+    class WiremockExtension {
         /**
          * Get the default wiremock server
          *
          * @param context The context to search
          * @return The wiremock server
          */
-        public static WireMockServer getWiremock(ExtensionContext context) {
-            ExtensionContext.Namespace namespace = ExtensionContext.Namespace.create(BasicWiremock.class);
-            return context.getStore(namespace).get(WireMockServer.class, WireMockServer.class);
+        public static WireMockRuntimeInfo getWiremock(ExtensionContext context) {
+            return context.getStore(ExtensionContext.Namespace.create(BasicWiremock.WireMockExtension.class))
+                    .get(BasicWiremock.WireMockExtension.class, BasicWiremock.WireMockExtension.class)
+                    .getRuntimeInfo();
         }
     }
 
     /**
      * Extension for {@link MapWithAILayerInfo}
      */
-    class MapWithAILayerInfoExtension extends WiremockExtension {
-        private static int hashCode;
+    class MapWithAILayerInfoExtension extends WiremockExtension implements BeforeAllCallback, AfterAllCallback {
 
         @Override
-        public void afterAll(ExtensionContext context) throws Exception {
-            try {
-                super.afterAll(context);
-            } finally {
-                resetMapWithAILayerInfo(context);
-            }
+        public void afterAll(ExtensionContext context) {
+            resetMapWithAILayerInfo(context);
         }
 
         @Override
-        public void beforeAll(ExtensionContext context) throws Exception {
-            super.beforeAll(context);
-
+        public void beforeAll(ExtensionContext context) {
             MapWithAILayerInfo.setImageryLayersSites(null);
             AtomicBoolean finished = new AtomicBoolean();
             MapWithAILayerInfo.getInstance().clear();
@@ -141,29 +113,45 @@ public @interface Wiremock {
 
     }
 
-    class TestMapWithAIUrls extends WiremockExtension implements IMapWithAIUrls {
+    class TestMapWithAIUrls extends WiremockExtension implements IMapWithAIUrls, BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback {
         ExtensionContext context;
         private static boolean conflationServerInitialized;
+
+        /**
+         * Replace URL servers with wiremock
+         *
+         * @param baseUrl The wiremock to point to
+         * @param url            The URL to fix
+         * @return A url that points at the wiremock server
+         */
+        public static String replaceUrl(String baseUrl, String url) {
+            try {
+                URL temp = new URL(url);
+                return baseUrl + temp.getFile();
+            } catch (MalformedURLException error) {
+                Logging.error(error);
+            }
+            return null;
+        }
 
         @Override
         public String getConflationServerJson() {
             conflationServerInitialized = true;
-            return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getConflationServerJson());
+            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(), MapWithAIUrls.getInstance().getConflationServerJson());
         }
 
         @Override
         public String getMapWithAISourcesJson() {
-            return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getMapWithAISourcesJson());
+            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(), MapWithAIUrls.getInstance().getMapWithAISourcesJson());
         }
 
         @Override
         public String getMapWithAIPaintStyle() {
-            return replaceUrl(getWiremock(this.context), MapWithAIUrls.getInstance().getMapWithAIPaintStyle());
+            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(), MapWithAIUrls.getInstance().getMapWithAIPaintStyle());
         }
 
         @Override
-        public void beforeAll(ExtensionContext context) throws Exception {
-            super.beforeAll(context);
+        public void beforeAll(ExtensionContext context) {
             final Optional<Wiremock> annotation = AnnotationUtils.findFirstParentAnnotation(context, Wiremock.class);
             this.context = context;
             if (Boolean.FALSE.equals(annotation.map(Wiremock::value).orElse(Boolean.TRUE))) {
@@ -174,43 +162,47 @@ public @interface Wiremock {
             if (conflationServerInitialized) {
                 MapWithAIConflationCategory.initialize();
             }
-            AnnotationUtils.resetStaticClass(DataAvailability.class);
+            assertDoesNotThrow(() -> AnnotationUtils.resetStaticClass(DataAvailability.class));
         }
 
         @Override
-        public void beforeEach(ExtensionContext context) throws Exception {
+        public void beforeEach(ExtensionContext context) {
             final Optional<Wiremock> annotation = AnnotationUtils.findFirstParentAnnotation(context, Wiremock.class);
             this.context = context;
             if (annotation.isPresent()) {
                 this.beforeAll(context);
             }
-            final WireMockServer wireMockServer = getWiremock(context);
+            final WireMock wireMockServer = getWiremock(context).getWireMock();
 
-            super.beforeEach(context);
-
-            if (wireMockServer.getStubMappings().stream().filter(mapping -> mapping.getRequest().getUrl() != null)
+            if (wireMockServer.allStubMappings().getMappings().stream().filter(mapping -> mapping.getRequest().getUrl() != null)
                     .noneMatch(mapping -> mapping.getRequest().getUrl()
                             .equals("/MapWithAI/json/conflation_servers.json"))) {
-                wireMockServer.stubFor(WireMock.get("/MapWithAI/json/conflation_servers.json")
+                wireMockServer.register(WireMock.get("/MapWithAI/json/conflation_servers.json")
                         .willReturn(WireMock.aResponse().withBody("{}")).atPriority(-5));
             }
         }
 
         @Override
-        public void afterAll(ExtensionContext context) throws Exception {
+        public void afterEach(ExtensionContext extensionContext) {
+            this.context = extensionContext;
+        }
+
+        @Override
+        public void afterAll(ExtensionContext context) {
+            this.context = context;
             // @Wiremock stops the WireMockServer prior to this method being called
-            getWiremock(context).start();
-            MapPaintUtils.removeMapWithAIPaintStyles();
+            final WireMockServer wireMockServer = assertDoesNotThrow(() -> {
+                final Field serverField = WireMockRuntimeInfo.class.getDeclaredField("wireMockServer");
+                ReflectionUtils.setObjectsAccessible(serverField);
+                return (WireMockServer) serverField.get(getWiremock(context));
+            });
             try {
-                // This stops the WireMockServer again.
-                super.afterAll(context);
+                wireMockServer.start();
+                MapPaintUtils.removeMapWithAIPaintStyles();
+                wireMockServer.stop();
             } finally {
                 MapWithAIConfig.setUrlsProvider(new InvalidMapWithAIUrls());
             }
-        }
-
-        public WireMockServer getWireMockServer() {
-            return getWiremock(context);
         }
     }
 

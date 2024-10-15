@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -74,14 +75,11 @@ class AddMapWithAILayerActionTest {
     @RegisterExtension
     static ThreadSyncMWAI threadSync = new ThreadSyncMWAI();
 
-    @BasicWiremock
-    WireMockServer wireMockServer;
-
     private static MapWithAIInfo info;
     private static MapWithAIInfo backupInfo;
 
     @BeforeEach
-    void setup() {
+    void setup(WireMockRuntimeInfo wireMockRuntimeInfo) {
         final Map<String, StringValuePattern> parameterMap = new HashMap<>();
         final AnythingPattern anythingPattern = new AnythingPattern();
         parameterMap.put("geometryType", anythingPattern);
@@ -91,7 +89,7 @@ class AddMapWithAILayerActionTest {
         parameterMap.put("outfields", new EqualToPattern("*"));
         parameterMap.put("result_type", new EqualToPattern("road_building_vector_xml"));
         parameterMap.put("resultOffset", anythingPattern);
-        wireMockServer.stubFor(
+        wireMockRuntimeInfo.getWireMock().register(
                 WireMock.get(new UrlPathPattern(new EqualToPattern("/query"), false)).withQueryParams(parameterMap)
                         .willReturn(WireMock.aResponse()
                                 .withBody(Json.createObjectBuilder().add("type", "FeatureCollection")
@@ -142,7 +140,7 @@ class AddMapWithAILayerActionTest {
     }
 
     @Test
-    void testRemoteIcon() throws IOException {
+    void testRemoteIcon(WireMockRuntimeInfo wireMockRuntimeInfo) throws IOException {
         final ImageIcon blankImage = ImageProvider.createBlankIcon(ImageProvider.ImageSizes.LARGEICON);
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         // BufferedImage is what the current implementation uses. Otherwise, we will
@@ -150,10 +148,9 @@ class AddMapWithAILayerActionTest {
         final BufferedImage bi = assertInstanceOf(BufferedImage.class, blankImage.getImage());
         ImageIO.write(bi, "png", byteArrayOutputStream);
         byte[] originalImage = byteArrayOutputStream.toByteArray();
-        wireMockServer.addStubMapping(
-                wireMockServer.stubFor(WireMock.get("/icon").willReturn(WireMock.aResponse().withBody(originalImage))));
+        wireMockRuntimeInfo.getWireMock().register(WireMock.get("/icon").willReturn(WireMock.aResponse().withBody(originalImage)));
         final MapWithAIInfo remoteInfo = new MapWithAIInfo(info);
-        remoteInfo.setIcon(wireMockServer.baseUrl() + "/icon");
+        remoteInfo.setIcon(wireMockRuntimeInfo.getHttpBaseUrl() + "/icon");
         final AddMapWithAILayerAction action = new AddMapWithAILayerAction(remoteInfo);
         threadSync.threadSync();
         final Object image = action.getValue(Action.LARGE_ICON_KEY);
@@ -166,7 +163,7 @@ class AddMapWithAILayerActionTest {
     }
 
     @Test
-    void testNonRegression22683() {
+    void testNonRegression22683(WireMockRuntimeInfo wireMockRuntimeInfo) {
         final OsmDataLayer layer = new OsmDataLayer(new DataSet(), "testNonRegression22683", null);
         layer.getDataSet().addDataSource(new DataSource(new Bounds(0, 0, 0.001, 0.001), "Area 1"));
         layer.getDataSet().addDataSource(new DataSource(new Bounds(-0.001, -0.001, 0, 0), "Area 2"));
@@ -190,7 +187,7 @@ class AddMapWithAILayerActionTest {
         };
         Logging.getLogger().addHandler(testHandler);
         try {
-            info.setUrl(wireMockServer.baseUrl());
+            info.setUrl(wireMockRuntimeInfo.getHttpBaseUrl());
             info.setSourceType(MapWithAIType.ESRI_FEATURE_SERVER);
             final AddMapWithAILayerAction action = new AddMapWithAILayerAction(info);
             Logging.clearLastErrorAndWarnings();

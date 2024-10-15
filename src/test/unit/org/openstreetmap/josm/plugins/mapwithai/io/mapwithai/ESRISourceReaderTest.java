@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
@@ -31,9 +32,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 @Wiremock
 class ESRISourceReaderTest {
 
-    @BasicWiremock
-    public WireMockServer wireMockServer;
-
     @BeforeEach
     void setUp() {
         ESRISourceReader.SOURCE_CACHE.clear();
@@ -51,11 +49,11 @@ class ESRISourceReaderTest {
      *                     file/wiremocked file
      */
     @Test
-    void testAddEsriLayer() throws IOException {
+    void testAddEsriLayer(WireMockRuntimeInfo wireMockRuntimeInfo) throws IOException {
         // TODO wiremock
         MapWithAIInfo info = new MapWithAIInfo("TEST", "test_url", "bdf6c800b3ae453b9db239e03d7c1727");
         info.setSourceType(MapWithAIType.ESRI);
-        String tUrl = wireMockServer.url("/sharing/rest");
+        String tUrl = wireMockRuntimeInfo.getHttpBaseUrl() + "/sharing/rest";
         for (String url : Arrays.asList(tUrl, tUrl + "/")) {
             info.setUrl(url);
             final ESRISourceReader reader = new ESRISourceReader(info);
@@ -65,7 +63,7 @@ class ESRISourceReaderTest {
                 } catch (ExecutionException | InterruptedException e) {
                     throw new JosmRuntimeException(e);
                 }
-            }).collect(Collectors.toList());
+            }).toList();
             Future<?> workerQueue = MainApplication.worker.submit(() -> {
                 /* Sync threads */});
             Awaitility.await().atMost(Durations.FIVE_SECONDS).until(workerQueue::isDone);

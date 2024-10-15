@@ -359,8 +359,6 @@ public class MapWithAILayerInfo {
                             Logging.error(e);
                         }
                     }
-                } else {
-                    esriInfo.add(layer);
                 }
             }
             layers.addAll(esriInfo);
