@@ -38,6 +38,7 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.gui.progress.swing.PleaseWaitProgressMonitor;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.IllegalDataException;
+import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.mapwithai.MapWithAIPlugin;
 import org.openstreetmap.josm.plugins.mapwithai.commands.MapWithAIAddCommand;
@@ -198,9 +199,14 @@ public final class MapWithAIDataUtils {
                 original.mergeFrom(ds.join());
             } catch (RuntimeException e) {
                 final String notificationMessage;
-                final var cause = e.getCause();
-                if (cause instanceof IllegalDataException illegalDataException) {
-                    notificationMessage = ExceptionUtil.explainException(illegalDataException);
+                Throwable cause = e.getCause();
+                if (cause != null) {
+                    while (cause.getCause() != null && RuntimeException.class.equals(cause.getClass())) {
+                        cause = cause.getCause();
+                    }
+                }
+                if (cause instanceof IllegalDataException) {
+                    notificationMessage = ExceptionUtil.explainException((Exception) cause);
                     Logging.trace(e);
                     final var notification = new Notification();
                     GuiHelper.runInEDT(() -> notification.setContent(notificationMessage));
