@@ -42,6 +42,11 @@
             "parameter": "hash=ASawRla3rBcwEjY4HIY"
         }]
     },
+    "Overture": {
+        "type": "overture",
+        "url": "https://overturemaps-tiles-us-west-2-beta.s3.us-west-2.amazonaws.com/pmtiles_catalog.json",
+        "license": "https://docs.overturemaps.org/attribution/#places"
+    },
     "Statewide Aggregate Addresses in Colorado 2019 (Public)": {
         "id": "colorado_public_aggregate_addresses",
         "type": "thirdParty",
