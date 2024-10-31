@@ -17,9 +17,9 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.tools.Territories;
 
-import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 
 /**
  * Reader to parse the list of available MapWithAI servers from an JSON
@@ -54,12 +54,12 @@ public class MapWithAISourceReader extends CommonSourceReader<List<MapWithAIInfo
     /**
      * Parses MapWithAI entry sources
      *
-     * @param jsonObject The json of the data sources
+     * @param parser The json of the data sources
      * @return The parsed entries
      */
     @Override
-    public List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
-        return jsonObject.entrySet().stream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
+    public List<MapWithAIInfo> parseJson(JsonParser parser) {
+        return parser.getObjectStream().map(MapWithAISourceReader::parse).collect(Collectors.toList());
     }
 
     private static MapWithAIInfo parse(Map.Entry<String, JsonValue> entry) {

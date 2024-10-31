@@ -10,10 +10,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
-import jakarta.json.JsonStructure;
-import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParsingException;
 
 /**
@@ -44,12 +41,12 @@ public abstract class CommonSourceReader<T> implements AutoCloseable {
             this.cachedFile = new CachedFile(this.source);
         }
         this.cachedFile.setFastFail(this.fastFail);
-        try (JsonReader reader = Json.createReader(cachedFile.setMaxAge(CachedFile.DAYS)
+        try (JsonParser reader = Json.createParser(cachedFile.setMaxAge(CachedFile.DAYS)
                 .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince).getContentReader())) {
-            JsonStructure struct = reader.read();
-            if (JsonValue.ValueType.OBJECT == struct.getValueType()) {
-                final var jsonObject = struct.asJsonObject();
-                return Optional.ofNullable(this.parseJson(jsonObject));
+            while (reader.hasNext()) {
+                if (reader.hasNext() && reader.next() == JsonParser.Event.START_OBJECT) {
+                    return Optional.ofNullable(this.parseJson(reader));
+                }
             }
         } catch (JsonParsingException jsonParsingException) {
             Logging.error(jsonParsingException);
@@ -60,10 +57,10 @@ public abstract class CommonSourceReader<T> implements AutoCloseable {
     /**
      * Parses MapWithAI entry sources
      *
-     * @param jsonObject The json of the data sources
+     * @param parser The json of the data sources. This will be in the {@link JsonParser.Event#START_OBJECT} state.
      * @return The parsed entries
      */
-    public abstract T parseJson(JsonObject jsonObject);
+    public abstract T parseJson(JsonParser parser);
 
     /**
      * Sets whether opening HTTP connections should fail fast, i.e., whether a

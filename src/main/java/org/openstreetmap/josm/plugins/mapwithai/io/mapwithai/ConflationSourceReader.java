@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAICategory;
 import org.openstreetmap.josm.tools.Pair;
 
-import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 
 /**
  * Read conflation entries from JSON
@@ -44,12 +44,12 @@ public class ConflationSourceReader extends CommonSourceReader<Map<MapWithAICate
     /**
      * Parses MapWithAI entry sources
      *
-     * @param jsonObject The json of the data sources
+     * @param parser The json of the data sources
      * @return The parsed entries
      */
     @Override
-    public Map<MapWithAICategory, List<String>> parseJson(JsonObject jsonObject) {
-        return jsonObject.entrySet().stream().flatMap(i -> parse(i).stream())
+    public Map<MapWithAICategory, List<String>> parseJson(JsonParser parser) {
+        return parser.getObjectStream().flatMap(i -> parse(i).stream())
                 .collect(Collectors.groupingBy(p -> p.a, Collectors.mapping(p -> p.b, Collectors.toList())));
     }
 

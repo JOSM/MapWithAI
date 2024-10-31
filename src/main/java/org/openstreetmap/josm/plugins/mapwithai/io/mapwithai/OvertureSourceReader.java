@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.imagery.ImageryInfo;
@@ -23,6 +25,7 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 
 /**
  * Read data from overture sources
@@ -36,33 +39,36 @@ public class OvertureSourceReader extends CommonSourceReader<List<MapWithAIInfo>
     }
 
     @Override
-    public List<MapWithAIInfo> parseJson(JsonObject jsonObject) {
+    public List<MapWithAIInfo> parseJson(JsonParser jsonParser) {
+        final var jsonObject = jsonParser.getObject();
         if (jsonObject.containsKey("releases")) {
-            final var info = new ArrayList<MapWithAIInfo>(6 * 4);
-            final var releases = jsonObject.get("releases");
-            final var baseUri = URI.create(this.source.getUrl()).resolve("./"); // safe since we created an URI from the source to get to this point
-            if (releases instanceof JsonArray rArray) {
-                for (JsonValue value : rArray) {
-                    if (value instanceof JsonObject release && release.containsKey("release_id")
-                            && release.containsKey("files")) {
-                        final var id = release.get("release_id");
-                        final var files = release.get("files");
-                        if (id instanceof JsonString sId && files instanceof JsonArray fArray) {
-                            final String releaseId = sId.getString();
-                            for (JsonValue file : fArray) {
-                                final var newInfo = parseFile(baseUri, releaseId, file);
-                                if (newInfo != null) {
-                                    info.add(newInfo);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            info.trimToSize();
-            return info;
+            return parseRoot(jsonObject);
         }
         return Collections.emptyList();
+    }
+
+    private List<MapWithAIInfo> parseRoot(JsonObject jsonObject) {
+        final var info = new ArrayList<MapWithAIInfo>(6 * 4);
+        final var releases = jsonObject.get("releases");
+        final var baseUri = URI.create(this.source.getUrl()).resolve("./"); // safe since we created an URI from the source to get to this point
+        if (releases instanceof JsonArray rArray) {
+            rArray.parallelStream().flatMap(value -> parseReleases(baseUri, value)).filter(Objects::nonNull)
+                    .forEachOrdered(info::add);
+        }
+        info.trimToSize();
+        return info;
+    }
+
+    private Stream<MapWithAIInfo> parseReleases(URI baseUri, JsonValue value) {
+        if (value instanceof JsonObject release && release.containsKey("release_id") && release.containsKey("files")) {
+            final var id = release.get("release_id");
+            final var files = release.get("files");
+            if (id instanceof JsonString sId && files instanceof JsonArray fArray) {
+                final String releaseId = sId.getString();
+                return fArray.parallelStream().map(file -> parseFile(baseUri, releaseId, file));
+            }
+        }
+        return Stream.empty();
     }
 
     /**

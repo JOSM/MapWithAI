@@ -164,7 +164,7 @@ public class ESRISourceReader {
         newInfo.setName(feature.getString("title", feature.getString("name")));
         final var extent = feature.getJsonArray("extent").getValuesAs(JsonArray.class).stream()
                 .flatMap(array -> array.getValuesAs(JsonNumber.class).stream()).map(JsonNumber::doubleValue)
-                .map(Object::toString).toArray(String[]::new);
+                .map(d -> Double.toString(d)).toArray(String[]::new);
         final var imageryBounds = new ImageryBounds(String.join(",", extent[1], extent[0], extent[3], extent[2]), ",");
         newInfo.setBounds(imageryBounds);
         newInfo.setSourceType(MapWithAIType.ESRI_FEATURE_SERVER);
