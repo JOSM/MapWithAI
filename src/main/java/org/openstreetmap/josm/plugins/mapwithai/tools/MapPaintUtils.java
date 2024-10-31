@@ -160,6 +160,7 @@ public final class MapPaintUtils {
             return;
         }
         List<String> sources = ds.allPrimitives().stream().map(MapPaintUtils::getSourceValue).filter(Objects::nonNull)
+                .map(s -> s.replace('.', '_'))
                 .distinct().collect(Collectors.toList());
         if (!styleSource.isLoaded()) {
             styleSource.loadStyleSource();
