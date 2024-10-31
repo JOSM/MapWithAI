@@ -74,6 +74,7 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.HttpClient;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
 import org.openstreetmap.josm.tools.Logging;
+import org.openstreetmap.josm.tools.Utils;
 
 import jakarta.json.Json;
 import jakarta.json.JsonValue;
@@ -368,30 +369,33 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
         }
         final var ds = new DataSet();
         final var primitiveMap = new HashMap<PrimitiveId, OsmPrimitive>(tile.getData().getAllPrimitives().size());
-        for (VectorPrimitive p : tile.getData().getAllPrimitives()) {
-            final OsmPrimitive osmPrimitive;
-            if (p instanceof VectorNode node) {
-                osmPrimitive = new Node(node.getCoor());
-                osmPrimitive.putAll(node.getKeys());
-            } else if (p instanceof VectorWay way) {
-                final var tWay = new Way();
-                for (VectorNode node : way.getNodes()) {
-                    tWay.addNode((Node) primitiveMap.get(node));
+        for (Class<? extends VectorPrimitive> clazz : Arrays.asList(VectorNode.class, VectorWay.class,
+                VectorRelation.class)) {
+            for (VectorPrimitive p : Utils.filteredCollection(tile.getData().getAllPrimitives(), clazz)) {
+                final OsmPrimitive osmPrimitive;
+                if (p instanceof VectorNode node) {
+                    osmPrimitive = new Node(node.getCoor());
+                    osmPrimitive.putAll(node.getKeys());
+                } else if (p instanceof VectorWay way) {
+                    final var tWay = new Way();
+                    for (VectorNode node : way.getNodes()) {
+                        tWay.addNode((Node) primitiveMap.get(node));
+                    }
+                    tWay.putAll(way.getKeys());
+                    osmPrimitive = tWay;
+                } else if (p instanceof VectorRelation vectorRelation) {
+                    final var tRelation = new Relation();
+                    for (VectorRelationMember member : vectorRelation.getMembers()) {
+                        tRelation.addMember(new RelationMember(member.getRole(), primitiveMap.get(member.getMember())));
+                    }
+                    tRelation.putAll(vectorRelation.getKeys());
+                    osmPrimitive = tRelation;
+                } else {
+                    throw new IllegalDataException("Unknown vector data type: " + p);
                 }
-                tWay.putAll(way.getKeys());
-                osmPrimitive = tWay;
-            } else if (p instanceof VectorRelation vectorRelation) {
-                final var tRelation = new Relation();
-                for (VectorRelationMember member : vectorRelation.getMembers()) {
-                    tRelation.addMember(new RelationMember(member.getRole(), primitiveMap.get(member.getMember())));
-                }
-                tRelation.putAll(vectorRelation.getKeys());
-                osmPrimitive = tRelation;
-            } else {
-                throw new IllegalDataException("Unknown vector data type: " + p);
+                ds.addPrimitive(osmPrimitive);
+                primitiveMap.put(p, osmPrimitive);
             }
-            ds.addPrimitive(osmPrimitive);
-            primitiveMap.put(p, osmPrimitive);
         }
         return ds;
     }

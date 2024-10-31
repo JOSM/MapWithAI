@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import org.awaitility.Awaitility;
@@ -22,11 +21,8 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
-import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.JosmRuntimeException;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 @Projection
 @Wiremock

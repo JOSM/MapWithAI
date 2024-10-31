@@ -51,6 +51,7 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
         columnDataRetrieval.add(info -> Optional.ofNullable(info.getTermsOfUseURL()).orElse(""));
         columnDataRetrieval.add(i -> MapWithAILayerInfo.getInstance().getLayers().contains(i));
         MapWithAILayerInfo.getInstance().addFinishListener(() -> GuiHelper.runInEDT(this::fireTableDataChanged));
+        MapWithAILayerInfo.SHOW_PREVIEW.addWeakListener(l -> GuiHelper.runInEDT(this::fireTableDataChanged));
     }
 
     /**
@@ -60,10 +61,11 @@ class MapWithAIDefaultLayerTableModel extends DefaultTableModel {
      * @return The imagery info at the given row number
      */
     public static MapWithAIInfo getRow(int row) {
-        if (row == 0 && MapWithAILayerInfo.getInstance().getAllDefaultLayers().isEmpty()) {
+        final var layers = MapWithAILayerInfo.getInstance().getAllDefaultLayers();
+        if (row == 0 && layers.isEmpty()) {
             return new MapWithAIInfo(tr("Loading"), "");
         }
-        return MapWithAILayerInfo.getInstance().getAllDefaultLayers().get(row);
+        return layers.get(row);
     }
 
     @Override

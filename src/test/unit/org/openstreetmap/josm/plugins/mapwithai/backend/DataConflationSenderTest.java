@@ -26,10 +26,8 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflati
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.Wiremock;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.HTTP;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.stubbing.StubMapping;
@@ -104,8 +102,8 @@ class DataConflationSenderTest {
     @Test
     void testWorkingUrlTimeout(WireMockRuntimeInfo wireMockRuntimeInfo) {
         MapWithAIConflationCategoryMock.url = wireMockRuntimeInfo.getHttpBaseUrl() + "/conflate";
-        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock().register(WireMock.post("/conflate")
-                .willReturn(WireMock.aResponse().withBody(
+        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.post("/conflate").willReturn(WireMock.aResponse().withBody(
                         "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='DataConflationSenderTest#testWorkingUrl'><node id='1' version='1' visible='true' lat='89.0' lon='0.1' /></osm>")
                         .withFixedDelay(500)));
         new MapWithAIConflationCategoryMock();
@@ -134,7 +132,8 @@ class DataConflationSenderTest {
     @MethodSource
     void testNonWorkingUrl(final ResponseDefinitionBuilder response, final WireMockRuntimeInfo wireMockRuntimeInfo) {
         MapWithAIConflationCategoryMock.url = wireMockRuntimeInfo.getHttpBaseUrl() + "/conflate";
-        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock().register(WireMock.post("/conflate").willReturn(response));
+        final StubMapping stubMapping = wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.post("/conflate").willReturn(response));
         new MapWithAIConflationCategoryMock();
 
         final DataSet external = new DataSet(new Node(LatLon.NORTH_POLE));

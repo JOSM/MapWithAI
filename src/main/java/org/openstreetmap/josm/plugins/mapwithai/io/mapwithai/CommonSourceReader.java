@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.openstreetmap.josm.io.CachedFile;
 import org.openstreetmap.josm.tools.HttpClient;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 import jakarta.json.Json;
@@ -13,6 +14,7 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParsingException;
 
 /**
  * Read sources for MapWithAI
@@ -49,8 +51,10 @@ public abstract class CommonSourceReader<T> implements AutoCloseable {
                 final var jsonObject = struct.asJsonObject();
                 return Optional.ofNullable(this.parseJson(jsonObject));
             }
-            return Optional.empty();
+        } catch (JsonParsingException jsonParsingException) {
+            Logging.error(jsonParsingException);
         }
+        return Optional.empty();
     }
 
     /**

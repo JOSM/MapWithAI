@@ -41,6 +41,7 @@ import org.openstreetmap.josm.plugins.mapwithai.backend.MapWithAIDataUtils;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIInfo.MapWithAIPreferenceEntry;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.ESRISourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.MapWithAISourceReader;
+import org.openstreetmap.josm.plugins.mapwithai.io.mapwithai.OvertureSourceReader;
 import org.openstreetmap.josm.plugins.mapwithai.spi.preferences.MapWithAIConfig;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.ListenerList;
@@ -333,6 +334,7 @@ public class MapWithAILayerInfo {
                 // This is called here to "pre-cache" the layer information, to avoid blocking
                 // the EDT
                 this.updateEsriLayers(result);
+                this.updateOvertureLayers(result);
                 newLayers.addAll(result);
             } catch (IOException ex) {
                 loadError = true;
@@ -362,6 +364,24 @@ public class MapWithAILayerInfo {
                 }
             }
             layers.addAll(esriInfo);
+        }
+
+        /**
+         * Update the overture layers
+         * @param layers The layers to iterate through and modify
+         * @throws IOException If something happens while parsing overture layers
+         */
+        private void updateOvertureLayers(@Nonnull final Collection<MapWithAIInfo> layers) throws IOException {
+            final var overtureLayers = new ArrayList<MapWithAIInfo>(4);
+            for (var layer : layers) {
+                if (MapWithAIType.OVERTURE == layer.getSourceType()) {
+                    try (var reader = new OvertureSourceReader(layer)) {
+                        reader.parse().ifPresent(overtureLayers::addAll);
+                    }
+                }
+            }
+            layers.removeIf(layer -> MapWithAIType.OVERTURE == layer.getSourceType());
+            layers.addAll(overtureLayers);
         }
 
         protected void finish() {

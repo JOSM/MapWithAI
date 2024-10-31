@@ -41,13 +41,11 @@ import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIType;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.NoExceptions;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
-import org.openstreetmap.josm.testutils.annotations.BasicWiremock;
 import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.testutils.annotations.ThreadSync;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Logging;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
@@ -89,8 +87,9 @@ class AddMapWithAILayerActionTest {
         parameterMap.put("outfields", new EqualToPattern("*"));
         parameterMap.put("result_type", new EqualToPattern("road_building_vector_xml"));
         parameterMap.put("resultOffset", anythingPattern);
-        wireMockRuntimeInfo.getWireMock().register(
-                WireMock.get(new UrlPathPattern(new EqualToPattern("/query"), false)).withQueryParams(parameterMap)
+        wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.get(new UrlPathPattern(new EqualToPattern("/query"), false))
+                        .withQueryParams(parameterMap)
                         .willReturn(WireMock.aResponse()
                                 .withBody(Json.createObjectBuilder().add("type", "FeatureCollection")
                                         .add("features", Json.createArrayBuilder().build()).build().toString()))
@@ -148,7 +147,8 @@ class AddMapWithAILayerActionTest {
         final BufferedImage bi = assertInstanceOf(BufferedImage.class, blankImage.getImage());
         ImageIO.write(bi, "png", byteArrayOutputStream);
         byte[] originalImage = byteArrayOutputStream.toByteArray();
-        wireMockRuntimeInfo.getWireMock().register(WireMock.get("/icon").willReturn(WireMock.aResponse().withBody(originalImage)));
+        wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.get("/icon").willReturn(WireMock.aResponse().withBody(originalImage)));
         final MapWithAIInfo remoteInfo = new MapWithAIInfo(info);
         remoteInfo.setIcon(wireMockRuntimeInfo.getHttpBaseUrl() + "/icon");
         final AddMapWithAILayerAction action = new AddMapWithAILayerAction(remoteInfo);

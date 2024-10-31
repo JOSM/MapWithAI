@@ -95,16 +95,22 @@ class BoundingBoxMapWithAIDownloaderTest {
 
         StubMapping noConflation = wireMockRuntimeInfo.getWireMock()
                 .register(WireMock.get("/no-conflation").willReturn(WireMock.badRequest()));
-        StubMapping resultOffset = wireMockRuntimeInfo.getWireMock().register(
-                WireMock.get(WireMock.urlPathEqualTo("/conflation")).withQueryParam("bbox", new AnythingPattern())
+        StubMapping resultOffset = wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.get(WireMock.urlPathEqualTo("/conflation"))
+                        .withQueryParam("bbox", new AnythingPattern())
                         .withQueryParam("resultOffset", new EqualToPattern("0")).willReturn(WireMock.badRequest()));
-        StubMapping noResultOffset = wireMockRuntimeInfo.getWireMock().register(WireMock.get(WireMock.urlPathEqualTo("/conflation"))
-                .withQueryParam("bbox", new AnythingPattern()).withQueryParam("resultOffset", AbsentPattern.ABSENT)
-                .willReturn(WireMock.aResponse().withBody(TEST_DATA)));
+        StubMapping noResultOffset = wireMockRuntimeInfo.getWireMock()
+                .register(WireMock.get(WireMock.urlPathEqualTo("/conflation"))
+                        .withQueryParam("bbox", new AnythingPattern())
+                        .withQueryParam("resultOffset", AbsentPattern.ABSENT)
+                        .willReturn(WireMock.aResponse().withBody(TEST_DATA)));
 
         assertDoesNotThrow(() -> boundingBoxMapWithAIDownloader.parseOsm(NullProgressMonitor.INSTANCE));
-        wireMockRuntimeInfo.getWireMock().verifyThat(0, RequestPatternBuilder.forCustomMatcher(noConflation.getRequest()));
-        wireMockRuntimeInfo.getWireMock().verifyThat(0, RequestPatternBuilder.forCustomMatcher(resultOffset.getRequest()));
-        wireMockRuntimeInfo.getWireMock().verifyThat(1, RequestPatternBuilder.forCustomMatcher(noResultOffset.getRequest()));
+        wireMockRuntimeInfo.getWireMock().verifyThat(0,
+                RequestPatternBuilder.forCustomMatcher(noConflation.getRequest()));
+        wireMockRuntimeInfo.getWireMock().verifyThat(0,
+                RequestPatternBuilder.forCustomMatcher(resultOffset.getRequest()));
+        wireMockRuntimeInfo.getWireMock().verifyThat(1,
+                RequestPatternBuilder.forCustomMatcher(noResultOffset.getRequest()));
     }
 }

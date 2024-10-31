@@ -22,8 +22,6 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.openstreetmap.josm.plugins.mapwithai.backend.DataAvailability;
 import org.openstreetmap.josm.plugins.mapwithai.data.mapwithai.MapWithAIConflationCategory;
@@ -75,8 +73,7 @@ public @interface Wiremock {
          */
         public static WireMockRuntimeInfo getWiremock(ExtensionContext context) {
             return context.getStore(ExtensionContext.Namespace.create(BasicWiremock.WireMockExtension.class))
-                    .get(BasicWiremock.WireMockExtension.class, BasicWiremock.WireMockExtension.class)
-                    .getRuntimeInfo();
+                    .get(BasicWiremock.WireMockExtension.class, BasicWiremock.WireMockExtension.class).getRuntimeInfo();
         }
     }
 
@@ -113,7 +110,8 @@ public @interface Wiremock {
 
     }
 
-    class TestMapWithAIUrls extends WiremockExtension implements IMapWithAIUrls, BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback {
+    class TestMapWithAIUrls extends WiremockExtension
+            implements IMapWithAIUrls, BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback {
         ExtensionContext context;
         private static boolean conflationServerInitialized;
 
@@ -137,17 +135,20 @@ public @interface Wiremock {
         @Override
         public String getConflationServerJson() {
             conflationServerInitialized = true;
-            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(), MapWithAIUrls.getInstance().getConflationServerJson());
+            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(),
+                    MapWithAIUrls.getInstance().getConflationServerJson());
         }
 
         @Override
         public String getMapWithAISourcesJson() {
-            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(), MapWithAIUrls.getInstance().getMapWithAISourcesJson());
+            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(),
+                    MapWithAIUrls.getInstance().getMapWithAISourcesJson());
         }
 
         @Override
         public String getMapWithAIPaintStyle() {
-            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(), MapWithAIUrls.getInstance().getMapWithAIPaintStyle());
+            return replaceUrl(getWiremock(this.context).getHttpBaseUrl(),
+                    MapWithAIUrls.getInstance().getMapWithAIPaintStyle());
         }
 
         @Override
@@ -174,9 +175,9 @@ public @interface Wiremock {
             }
             final WireMock wireMockServer = getWiremock(context).getWireMock();
 
-            if (wireMockServer.allStubMappings().getMappings().stream().filter(mapping -> mapping.getRequest().getUrl() != null)
-                    .noneMatch(mapping -> mapping.getRequest().getUrl()
-                            .equals("/MapWithAI/json/conflation_servers.json"))) {
+            if (wireMockServer.allStubMappings().getMappings().stream()
+                    .filter(mapping -> mapping.getRequest().getUrl() != null).noneMatch(mapping -> mapping.getRequest()
+                            .getUrl().equals("/MapWithAI/json/conflation_servers.json"))) {
                 wireMockServer.register(WireMock.get("/MapWithAI/json/conflation_servers.json")
                         .willReturn(WireMock.aResponse().withBody("{}")).atPriority(-5));
             }
