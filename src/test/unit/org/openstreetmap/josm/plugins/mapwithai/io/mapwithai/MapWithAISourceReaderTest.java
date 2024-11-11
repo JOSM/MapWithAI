@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 
 @BasicPreferences
 @Territories
@@ -29,8 +31,12 @@ class MapWithAISourceReaderTest {
     void testParseSimple() throws IOException {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("nowhere", JsonValue.NULL);
-        try (var reader = new MapWithAISourceReader("")) {
-            List<MapWithAIInfo> infoList = reader.parseJson(builder.build());
+        final String json = builder.build().toString();
+        try (var reader = new MapWithAISourceReader("");
+                StringReader sr = new java.io.StringReader(json);
+                JsonParser parser = Json.createParser(sr)) {
+            parser.next();
+            List<MapWithAIInfo> infoList = reader.parseJson(parser);
             assertEquals(1, infoList.size());
             assertEquals("nowhere", infoList.get(0).getName());
         }
@@ -45,9 +51,12 @@ class MapWithAISourceReaderTest {
         JsonArrayBuilder coCountriesArray = Json.createArrayBuilder(Collections.singleton("addr:housenumber"));
         coCountries.add("US-CO", coCountriesArray.build());
         co.add("countries", coCountries.build());
-        builder.add("Colorado", co);
-        try (var reader = new MapWithAISourceReader("")) {
-            List<MapWithAIInfo> infoList = reader.parseJson(builder.build());
+        String json = builder.add("Colorado", co).build().toString();
+        try (var reader = new MapWithAISourceReader("");
+                StringReader sr = new StringReader(json);
+                JsonParser parser = Json.createParser(sr)) {
+            parser.next();
+            List<MapWithAIInfo> infoList = reader.parseJson(parser);
             assertEquals(1, infoList.size());
             MapWithAIInfo info = infoList.stream().filter(i -> "Colorado".equals(i.getName())).findFirst().orElse(null);
             assertNotNull(info);
