@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.openstreetmap.josm.plugins</groupId>
     <artifactId>MapWithAI</artifactId>
-    <version>SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <properties>
       <jmockit.version>1.49.a</jmockit.version>
       <pmd.version>7.5.0</pmd.version>
@@ -13,11 +13,11 @@
     <repositories>
         <repository>
             <id>JOSM-releases</id>
-            <url>https://josm.openstreetmap.de/nexus/content/repositories/releases/</url>
+            <url>https://josm.openstreetmap.de/repository/releases/</url>
         </repository>
         <repository>
             <id>JOSM-snapshots</id>
-            <url>https://josm.openstreetmap.de/nexus/content/repositories/snapshots/</url>
+            <url>https://josm.openstreetmap.de/repository/snapshots/</url>
         </repository>
     </repositories>
     <dependencyManagement>
@@ -35,25 +35,25 @@
         <dependency>
             <groupId>org.openstreetmap.josm</groupId>
             <artifactId>josm</artifactId>
-            <version>SNAPSHOT</version>
+            <version>1.5-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.openstreetmap.josm.plugins</groupId>
             <artifactId>pmtiles</artifactId>
-            <version>SNAPSHOT</version>
+            <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.openstreetmap.josm.plugins</groupId>
             <artifactId>utilsplugin2</artifactId>
-            <version>SNAPSHOT</version>
+            <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.openstreetmap.josm</groupId>
             <artifactId>josm-unittest</artifactId>
-            <version>SNAPSHOT</version>
+            <version>1.5-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
