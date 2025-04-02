@@ -128,7 +128,7 @@ public final class MapWithAIDataUtils {
                             realBounds.size() * urls.size());
                     for (var bound : realBounds) {
                         for (var url : urls) {
-                            if (url.getUrl() != null && !Utils.isBlank(url.getUrl())) {
+                            if (url.getUrl() != null && !Utils.isStripEmpty(url.getUrl())) {
                                 final var ds = download(monitor, bound, url, maximumDimensions);
                                 downloadedDataSets.add(ds);
                                 MapWithAIDataUtils.getForkJoinPool().execute(ds);

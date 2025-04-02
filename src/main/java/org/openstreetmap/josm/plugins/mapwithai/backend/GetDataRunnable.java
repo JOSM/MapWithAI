@@ -403,7 +403,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
                 .map(entry -> new Pair<>(Tag.ofString(entry.getKey()), Tag.ofString(entry.getValue())))
                 .collect(Collectors.toMap(pair -> pair.a, pair -> pair.b));
         MapWithAIPreferenceHelper.getReplacementTags().entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(EQUALS) && Utils.isBlank(entry.getValue()))
+                .filter(entry -> !entry.getKey().equals(EQUALS) && Utils.isStripEmpty(entry.getValue()))
                 .map(entry -> new Tag(entry.getKey(), null)).forEach(tag -> replaceTags.put(tag, tag));
         replaceTags(dataSet, replaceTags);
     }
@@ -417,7 +417,7 @@ public class GetDataRunnable extends RecursiveTask<DataSet> {
     public static void replaceTags(DataSet dataSet, Map<Tag, Tag> replaceTags) {
         replaceTags.forEach((orig, replace) -> dataSet.allNonDeletedPrimitives().stream()
                 .filter(prim -> prim.hasTag(orig.getKey(), orig.getValue())
-                        || (prim.hasKey(orig.getKey()) && Utils.isBlank(orig.getValue())))
+                        || (prim.hasKey(orig.getKey()) && Utils.isStripEmpty(orig.getValue())))
                 .forEach(prim -> prim.put(replace)));
     }
 

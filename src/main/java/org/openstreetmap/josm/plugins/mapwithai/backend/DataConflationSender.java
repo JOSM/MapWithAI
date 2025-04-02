@@ -68,7 +68,7 @@ public class DataConflationSender implements RunnableFuture<DataSet> {
     @Override
     public void run() {
         String url = MapWithAIConflationCategory.conflationUrlFor(category);
-        if (!Utils.isBlank(url) && !NetworkManager.isOffline(url)) {
+        if (!Utils.isStripEmpty(url) && !NetworkManager.isOffline(url)) {
             this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
             try {
                 final var form = new TreeMap<String, String>();
