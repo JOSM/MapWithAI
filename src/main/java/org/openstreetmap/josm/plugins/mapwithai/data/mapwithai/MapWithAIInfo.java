@@ -485,7 +485,7 @@ public class MapWithAIInfo extends
      * @return {@code true} if this source will have a valid url
      */
     public boolean hasValidUrl() {
-        return this.url != null || (this.isConflated() && this.conflationUrl != null);
+        return !Utils.isStripEmpty(this.url) || (this.isConflated() && !Utils.isStripEmpty(this.conflationUrl));
     }
 
     public String getUrlExpanded() {

@@ -3,6 +3,7 @@ package org.openstreetmap.josm.plugins.mapwithai.data.mapwithai;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -197,5 +198,23 @@ class MapWithAIInfoTest {
         assertEquals(1, MapWithAILayerInfo.getInstance().getLayers().size());
         assertSame(info, MapWithAILayerInfo.getInstance().getLayers().get(0));
         assertEquals("22", info.getId());
+    }
+
+    /**
+     * Non-regression test for #24875: a source with an empty url (like the
+     * "Loading" placeholder in the preferences) must not be usable as a source.
+     */
+    @Test
+    void testTicket24875EmptyUrl() {
+        final var placeholder = new MapWithAIInfo("Loading", "");
+        assertFalse(placeholder.hasValidUrl());
+        assertFalse(new MapWithAIInfo("Blank", "  ").hasValidUrl());
+        assertFalse(new MapWithAIInfo("Null").hasValidUrl());
+        assertTrue(new MapWithAIInfo("Real", "https://test.example").hasValidUrl());
+
+        final var layerInfo = MapWithAILayerInfo.getInstance();
+        layerInfo.clear();
+        layerInfo.add(placeholder);
+        assertTrue(layerInfo.getLayers().isEmpty());
     }
 }

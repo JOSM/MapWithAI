@@ -172,6 +172,10 @@ public final class MapWithAIDataUtils {
     public static ForkJoinTask<DataSet> download(ProgressMonitor monitor, Bounds bound, MapWithAIInfo mapWithAIInfo,
             int maximumDimensions) {
         return ForkJoinTask.adapt(() -> {
+            if (Utils.isStripEmpty(mapWithAIInfo.getUrlExpanded())) {
+                Logging.warn("MapWithAI: Skipping source without a URL: {0}", mapWithAIInfo.getName());
+                return new DataSet();
+            }
             final var downloader = new BoundingBoxMapWithAIDownloader(bound, mapWithAIInfo,
                     DetectTaskingManagerUtils.hasTaskingManagerLayer());
             try {

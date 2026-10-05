@@ -514,6 +514,10 @@ public class MapWithAIProvidersPanel extends JPanel {
                 }
             } else if (tr("Enabled").equals(tableName)) {
                 final var info = MapWithAIDefaultLayerTableModel.getRow(realRow);
+                if (!info.hasValidUrl()) {
+                    // The "Loading" placeholder
+                    return;
+                }
                 final var instance = MapWithAILayerInfo.getInstance();
                 if (instance.getLayers().contains(info)) {
                     instance.remove(info);
@@ -823,7 +827,8 @@ public class MapWithAIProvidersPanel extends JPanel {
                 return;
             }
             final var selected = Arrays.stream(defaultTable.getSelectedRows()).map(defaultTable::convertRowIndexToModel)
-                    .mapToObj(MapWithAIDefaultLayerTableModel::getRow).collect(Collectors.toCollection(ArrayList::new));
+                    .mapToObj(MapWithAIDefaultLayerTableModel::getRow).filter(MapWithAIInfo::hasValidUrl)
+                    .collect(Collectors.toCollection(ArrayList::new));
             if (selected.stream().anyMatch(MapWithAILayerTableModel::doesNotContain)) {
                 final var toAdd = selected.stream().filter(MapWithAILayerTableModel::doesNotContain).toList();
                 activeTable.getSelectionModel().clearSelection();

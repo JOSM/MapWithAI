@@ -369,14 +369,20 @@ public class MapWithAILayerInfo {
         /**
          * Update the overture layers
          * @param layers The layers to iterate through and modify
-         * @throws IOException If something happens while parsing overture layers
          */
-        private void updateOvertureLayers(@Nonnull final Collection<MapWithAIInfo> layers) throws IOException {
+        private void updateOvertureLayers(@Nonnull final Collection<MapWithAIInfo> layers) {
             final var overtureLayers = new ArrayList<MapWithAIInfo>(4);
             for (var layer : layers) {
                 if (MapWithAIType.OVERTURE == layer.getSourceType()) {
                     try (var reader = new OvertureSourceReader(layer)) {
+                        reader.setFastFail(this.fastFail);
                         reader.parse().ifPresent(overtureLayers::addAll);
+                    } catch (IOException e) {
+                        // See #24875: an unavailable catalog should only drop its own layers, not
+                        // every default source.
+                        Logging.warn("MapWithAI: Could not load overture catalog {0}: {1}", layer.getUrl(),
+                                e.getMessage());
+                        Logging.trace(e);
                     }
                 }
             }
@@ -576,6 +582,12 @@ public class MapWithAILayerInfo {
      * @param info imagery entry to add
      */
     public void add(MapWithAIInfo info) {
+        if (info == null || !info.hasValidUrl()) {
+            // See #24875: the "Loading" placeholder (or a broken preference entry) must
+            // never become a source
+            Logging.warn("MapWithAI: Ignoring source without a URL: {0}", info == null ? null : info.getName());
+            return;
+        }
         layers.add(info);
         this.listeners.fireEvent(l -> l.changeEvent(info));
     }
