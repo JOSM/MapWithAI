@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -31,6 +32,17 @@ import jakarta.json.stream.JsonParser;
  * Read data from overture sources
  */
 public class OvertureSourceReader extends CommonSourceReader<List<MapWithAIInfo>> implements Closeable {
+    /**
+     * The location of the tiles for an overture release. The STAC catalog only lists
+     * the geoparquet files, so this comes from
+     * <a href="https://docs.overturemaps.org/examples/overture-tiles/">the overture
+     * tiles documentation</a>.
+     */
+    static final String TILES_URL = "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/{release}/{theme}.pmtiles";
+    /** The themes with tiles. Transportation is not listed since it currently causes crashes. */
+    private static final List<String> TILE_THEMES = List.of("addresses", "base", "buildings", "divisions", "places");
+    /** The expected format for release ids (they are used to build URLs) */
+    private static final Pattern RELEASE_PATTERN = Pattern.compile("[0-9A-Za-z][0-9A-Za-z._-]*");
     private final MapWithAIInfo source;
 
     public OvertureSourceReader(MapWithAIInfo source) {
@@ -44,7 +56,37 @@ public class OvertureSourceReader extends CommonSourceReader<List<MapWithAIInfo>
         if (jsonObject.containsKey("releases")) {
             return parseRoot(jsonObject);
         }
+        // The STAC catalog (https://stac.overturemaps.org/catalog.json), see #24875
+        if (jsonObject.get("latest")instanceof JsonString latest) {
+            return parseStacRoot(latest.getString());
+        }
         return Collections.emptyList();
+    }
+
+    /**
+     * Create the sources for the latest release from the STAC catalog. Overture
+     * only keeps tiles for the most recent releases, so the sources keep the same
+     * id between releases. This means that user entries are updated to the new
+     * release instead of being dropped.
+     *
+     * @param releaseId The latest release
+     * @return The sources for that release
+     */
+    private List<MapWithAIInfo> parseStacRoot(String releaseId) {
+        if (!RELEASE_PATTERN.matcher(releaseId).matches()) {
+            Logging.warn("MapWithAI: Unexpected overture release id: {0}", releaseId);
+            return Collections.emptyList();
+        }
+        final var info = new ArrayList<MapWithAIInfo>(TILE_THEMES.size());
+        for (var theme : TILE_THEMES) {
+            final var uri = URI.create(TILES_URL.replace("{release}", releaseId).replace("{theme}", theme));
+            final var themeInfo = buildSource(uri, releaseId, theme);
+            if (themeInfo != null) {
+                themeInfo.setId(this.source.getName() + ": " + theme);
+                info.add(themeInfo);
+            }
+        }
+        return info;
     }
 
     private List<MapWithAIInfo> parseRoot(JsonObject jsonObject) {
@@ -123,24 +165,34 @@ public class OvertureSourceReader extends CommonSourceReader<List<MapWithAIInfo>
         info.setId(info.getName());
         if (uri.getPath().endsWith(".pmtiles")) {
             info.setSourceType(MapWithAIType.PMTILES);
-            // Set additional information
-            try {
-                final var header = PMTiles.readHeader(uri);
-                final var metadata = PMTiles.readMetadata(header);
-                final var bounds = new Bounds(header.minLatitude(), header.minLongitude(), header.maxLatitude(),
-                        header.maxLongitude());
-                info.setBounds(new ImageryInfo.ImageryBounds(bounds.encodeAsString(","), ","));
-                if (metadata.containsKey("name") && metadata.get("name")instanceof JsonString name) {
-                    info.setName(name.getString() + " - " + releaseId);
-                }
-                if (metadata.containsKey("description")
-                        && metadata.get("description")instanceof JsonString description) {
-                    info.setDescription(description.getString());
-                }
-            } catch (IOException ioException) {
-                Logging.error(ioException);
-            }
+            readTileInformation(info, uri, releaseId);
         }
         return info;
+    }
+
+    /**
+     * Read additional information (bounds, name, description) from the tiles
+     *
+     * @param info      The info to update
+     * @param uri       The location of the tiles
+     * @param releaseId The release id
+     */
+    void readTileInformation(MapWithAIInfo info, URI uri, String releaseId) {
+        try {
+            final var header = PMTiles.readHeader(uri);
+            final var metadata = PMTiles.readMetadata(header);
+            final var bounds = new Bounds(header.minLatitude(), header.minLongitude(), header.maxLatitude(),
+                    header.maxLongitude());
+            info.setBounds(new ImageryInfo.ImageryBounds(bounds.encodeAsString(","), ","));
+            if (metadata.containsKey("name") && metadata.get("name")instanceof JsonString name) {
+                info.setName(name.getString() + " - " + releaseId);
+            }
+            if (metadata.containsKey("description")
+                    && metadata.get("description")instanceof JsonString description) {
+                info.setDescription(description.getString());
+            }
+        } catch (IOException ioException) {
+            Logging.error(ioException);
+        }
     }
 }
