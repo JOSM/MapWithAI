@@ -44,7 +44,7 @@
     },
     "Overture": {
         "type": "overture",
-        "url": "https://overturemaps-tiles-us-west-2-beta.s3.us-west-2.amazonaws.com/pmtiles_catalog.json",
+        "url": "https://stac.overturemaps.org/catalog.json",
         "license": "https://docs.overturemaps.org/attribution/#places",
         "category": "preview",
         "provider": "Overture"
