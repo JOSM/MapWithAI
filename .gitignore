@@ -8,3 +8,4 @@
 /findbugs-josm-rapid.xml
 /lib/
 .DS_Store
+target/
