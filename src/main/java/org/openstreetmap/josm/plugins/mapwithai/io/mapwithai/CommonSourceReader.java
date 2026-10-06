@@ -10,6 +10,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
 
 import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParsingException;
 
@@ -52,6 +53,31 @@ public abstract class CommonSourceReader<T> implements AutoCloseable {
             Logging.error(jsonParsingException);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Read a JSON object from another URL, using the same cache settings as the
+     * main source.
+     *
+     * @param url The url to read
+     * @return The object, or {@code null} if the document is not a JSON object
+     * @throws IOException if any I/O error occurs
+     */
+    protected JsonObject readObject(String url) throws IOException {
+        final var file = new CachedFile(url).setMaxAge(CachedFile.DAYS)
+                .setCachingStrategy(CachedFile.CachingStrategy.IfModifiedSince);
+        if (this.clearCache) {
+            file.clear();
+        }
+        file.setFastFail(this.fastFail);
+        try (file; JsonParser reader = Json.createParser(file.getContentReader())) {
+            if (reader.hasNext() && reader.next() == JsonParser.Event.START_OBJECT) {
+                return reader.getObject();
+            }
+        } catch (JsonParsingException jsonParsingException) {
+            Logging.error(jsonParsingException);
+        }
+        return null;
     }
 
     /**

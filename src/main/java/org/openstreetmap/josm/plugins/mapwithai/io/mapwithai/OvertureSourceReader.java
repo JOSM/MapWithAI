@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.openstreetmap.josm.data.Bounds;
@@ -32,17 +31,6 @@ import jakarta.json.stream.JsonParser;
  * Read data from overture sources
  */
 public class OvertureSourceReader extends CommonSourceReader<List<MapWithAIInfo>> implements Closeable {
-    /**
-     * The location of the tiles for an overture release. The STAC catalog only lists
-     * the geoparquet files, so this comes from
-     * <a href="https://docs.overturemaps.org/examples/overture-tiles/">the overture
-     * tiles documentation</a>.
-     */
-    static final String TILES_URL = "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/{release}/{theme}.pmtiles";
-    /** The themes with tiles. Transportation is not listed since it currently causes crashes. */
-    private static final List<String> TILE_THEMES = List.of("addresses", "base", "buildings", "divisions", "places");
-    /** The expected format for release ids (they are used to build URLs) */
-    private static final Pattern RELEASE_PATTERN = Pattern.compile("[0-9A-Za-z][0-9A-Za-z._-]*");
     private final MapWithAIInfo source;
 
     public OvertureSourceReader(MapWithAIInfo source) {
@@ -57,36 +45,85 @@ public class OvertureSourceReader extends CommonSourceReader<List<MapWithAIInfo>
             return parseRoot(jsonObject);
         }
         // The STAC catalog (https://stac.overturemaps.org/catalog.json), see #24875
-        if (jsonObject.get("latest")instanceof JsonString latest) {
-            return parseStacRoot(latest.getString());
+        if ("Catalog".equals(jsonObject.getString("type", null)) && jsonObject.containsKey("links")) {
+            return parseStacRoot(jsonObject);
         }
         return Collections.emptyList();
     }
 
     /**
-     * Create the sources for the latest release from the STAC catalog. Overture
-     * only keeps tiles for the most recent releases, so the sources keep the same
-     * id between releases. This means that user entries are updated to the new
+     * Create the sources for the latest release from the STAC catalog. The root
+     * catalog links to the releases, a release links to its themes, and a theme
+     * links to its tiles ({@code "rel": "pmtiles"}).
+     * <p>
+     * Overture only keeps the last two releases, so the sources keep the same id
+     * between releases. This means that user entries are updated to the new
      * release instead of being dropped.
      *
-     * @param releaseId The latest release
-     * @return The sources for that release
+     * @param root The root catalog
+     * @return The sources for the latest release
      */
-    private List<MapWithAIInfo> parseStacRoot(String releaseId) {
-        if (!RELEASE_PATTERN.matcher(releaseId).matches()) {
-            Logging.warn("MapWithAI: Unexpected overture release id: {0}", releaseId);
+    private List<MapWithAIInfo> parseStacRoot(JsonObject root) {
+        final var latest = root.getString("latest", null);
+        final var releases = getLinks(root, "child").toList();
+        var release = latest == null ? null
+                : releases.stream().filter(link -> link.getString("href").contains('/' + latest + '/')).findFirst()
+                        .orElse(null);
+        if (release == null) {
+            release = releases.stream().filter(link -> link.getBoolean("latest", false)).findFirst().orElse(null);
+        }
+        if (release == null) {
+            Logging.warn("MapWithAI: No overture release found in {0}", this.source.getUrl());
             return Collections.emptyList();
         }
-        final var info = new ArrayList<MapWithAIInfo>(TILE_THEMES.size());
-        for (var theme : TILE_THEMES) {
-            final var uri = URI.create(TILES_URL.replace("{release}", releaseId).replace("{theme}", theme));
-            final var themeInfo = buildSource(uri, releaseId, theme);
-            if (themeInfo != null) {
-                themeInfo.setId(this.source.getName() + ": " + theme);
-                info.add(themeInfo);
+        // The title is "<release> Overture Release"
+        final var releaseId = latest != null ? latest : release.getString("title", "").split(" ", 2)[0];
+        final var info = new ArrayList<MapWithAIInfo>(6);
+        try {
+            final var releaseCatalog = readObject(release.getString("href"));
+            if (releaseCatalog == null) {
+                return info;
             }
+            for (var theme : getLinks(releaseCatalog, "child").toList()) {
+                final var themeCatalog = readObject(theme.getString("href"));
+                if (themeCatalog == null) {
+                    continue;
+                }
+                final var themeId = themeCatalog.getString("id", theme.getString("title", ""));
+                final var tiles = getLinks(themeCatalog, "pmtiles").findFirst();
+                if (tiles.isEmpty()) {
+                    Logging.warn("MapWithAI: Overture theme {0} has no tiles in release {1}", themeId, releaseId);
+                    continue;
+                }
+                final var themeInfo = buildSource(URI.create(tiles.get().getString("href")), releaseId, themeId);
+                if (themeInfo != null) {
+                    themeInfo.setId(this.source.getName() + ": " + themeId);
+                    info.add(themeInfo);
+                }
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            Logging.warn("MapWithAI: Could not read the overture catalog for release {0}: {1}", releaseId,
+                    e.getMessage());
+            Logging.trace(e);
         }
         return info;
+    }
+
+    /**
+     * Get the links of a STAC object with a specific relation
+     *
+     * @param stac The STAC object (catalog or collection)
+     * @param rel  The relation to look for
+     * @return The links with an {@code href}
+     */
+    private static Stream<JsonObject> getLinks(JsonObject stac, String rel) {
+        final var links = stac.get("links");
+        if (links instanceof JsonArray array) {
+            return array.stream().filter(JsonObject.class::isInstance).map(JsonObject.class::cast)
+                    .filter(link -> rel.equals(link.getString("rel", null)) && link.containsKey("href")
+                            && link.get("href").getValueType() == JsonValue.ValueType.STRING);
+        }
+        return Stream.empty();
     }
 
     private List<MapWithAIInfo> parseRoot(JsonObject jsonObject) {
