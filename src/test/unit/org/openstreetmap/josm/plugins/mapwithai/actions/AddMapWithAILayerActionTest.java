@@ -94,7 +94,7 @@ class AddMapWithAILayerActionTest {
                                 .withBody(Json.createObjectBuilder().add("type", "FeatureCollection")
                                         .add("features", Json.createArrayBuilder().build()).build().toString()))
                         .atPriority(Integer.MIN_VALUE));
-        info = MapWithAILayerInfo.getInstance().getLayers().stream()
+        info = MapWithAILayerInfo.getInstance().getDefaultLayers().stream()
                 .filter(i -> i.getName().equalsIgnoreCase("MapWithAI")).findAny().orElse(null);
         assertNotNull(info);
         info = new MapWithAIInfo(info);

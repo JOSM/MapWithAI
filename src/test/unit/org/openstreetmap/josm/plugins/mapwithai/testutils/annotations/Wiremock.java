@@ -51,7 +51,7 @@ import org.openstreetmap.josm.tools.ReflectionUtils;
 @Target({ ElementType.PARAMETER, ElementType.TYPE, ElementType.METHOD })
 @BasicPreferences
 @HTTP
-@BasicWiremock(value = "src/test/resources/wiremock")
+@BasicWiremock(value = "src/test/resources")
 @ExtendWith(Wiremock.TestMapWithAIUrls.class)
 public @interface Wiremock {
     /**
