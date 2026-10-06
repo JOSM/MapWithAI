@@ -19,6 +19,7 @@ import org.openstreetmap.josm.plugins.mapwithai.testutils.ImageProviderMocker;
 import org.openstreetmap.josm.plugins.mapwithai.testutils.annotations.MapWithAISources;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
 import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.ThreadSync;
 
 /**
  * Test class for {@link MapWithAIPreferences}
@@ -28,6 +29,7 @@ import org.openstreetmap.josm.testutils.annotations.Main;
 @BasicPreferences
 @Main
 @MapWithAISources
+@ThreadSync
 class MapWithAIPreferencesTest {
     private MapWithAIPreferences preferences;
 
