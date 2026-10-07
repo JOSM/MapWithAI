@@ -135,7 +135,7 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
           .append(" (").append(url).append(')')
           .append(br);
 
-        if (Boolean.TRUE.equals(switchLayer)) {
+        if (Boolean.TRUE.equals(switchLayer) || switchLayer == null) {
             sb.append(tr("{0} will automatically switch layers.", MapWithAIPlugin.NAME));
         } else if (Boolean.FALSE.equals(switchLayer)) {
             sb.append(tr("{0} will not automatically switch layers.", MapWithAIPlugin.NAME));

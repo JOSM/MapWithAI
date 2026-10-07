@@ -155,33 +155,33 @@ class MapWithAIRemoteControlTest {
     void testGetPermissionMessage() throws Exception {
         MapWithAIRemoteControl handler = newHandler(null);
         assertEquals(tr(
-                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of null objects at one time"),
+                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of null objects at one time."),
                 handler.getPermissionMessage());
         handler = newHandler("http://127.0.0.1:8111/mapwithai?switch_layer=false");
         handler.handle();
         assertEquals(tr(
-                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will not automatically switch layers.<br />There is a maximum addition of null objects at one time"),
+                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will not automatically switch layers.<br />There is a maximum addition of null objects at one time."),
                 handler.getPermissionMessage());
         handler = newHandler("http://127.0.0.1:8111/mapwithai?switch_layer=true");
         handler.handle();
         assertEquals(tr(
-                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of null objects at one time"),
+                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of null objects at one time."),
                 handler.getPermissionMessage());
         handler = newHandler("http://127.0.0.1:8111/mapwithai?max_obj=1");
         handler.handle();
         assertEquals(tr(
-                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of 1 objects at one time"),
+                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of 1 objects at one time."),
                 handler.getPermissionMessage());
         handler = newHandler("http://127.0.0.1:8111/mapwithai?max_obj=5");
         handler.handle();
         assertEquals(tr(
-                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of 5 objects at one time"),
+                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />There is a maximum addition of 5 objects at one time."),
                 handler.getPermissionMessage());
         BBox crop = new BBox(0, 0, 0.001, 0.001);
         handler = newHandler("http://127.0.0.1:8111/mapwithai?crop_bbox=".concat(crop.toStringCSV(",")));
         handler.handle();
         assertEquals(tr(
-                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />We will crop the data to 0.0,0.0,0.001,0.001<br />There is a maximum addition of null objects at one time"),
+                "Remote Control has been asked to load data from the API. (null)<br />MapWithAI will automatically switch layers.<br />Data will be cropped to 0.0,0.0,0.001,0.001<br />There is a maximum addition of null objects at one time."),
                 handler.getPermissionMessage());
     }
 
