@@ -130,21 +130,31 @@ public class MapWithAIRemoteControl extends RequestHandler.RawURLParseRequestHan
     public String getPermissionMessage() {
         final String br = "<br />";
         final StringBuilder sb = new StringBuilder();
-        sb.append(tr("Remote Control has been asked to load data from the API.")).append(" (").append(url).append(')')
-                .append(br).append(tr("{0} will ", MapWithAIPlugin.NAME));
-        if (Boolean.FALSE.equals(switchLayer)) {
-            sb.append(tr("not "));
-        }
-        sb.append(tr("automatically switch layers.")).append(br);
-        if (download != null) {
-            sb.append(tr("We will download data in ")).append(download.toBBox().toStringCSV(",")).append(br);
-        }
-        if (crop != null) {
-            sb.append(tr("We will crop the data to ")).append(crop.toBBox().toStringCSV(",")).append(br);
-        }
-        sb.append(tr("There is a maximum addition of {0} objects at one time", maxObj));
-        return sb.toString();
 
+        sb.append(tr("Remote Control has been asked to load data from the API."))
+          .append(" (").append(url).append(')')
+          .append(br);
+
+        if (Boolean.TRUE.equals(switchLayer)) {
+            sb.append(tr("{0} will automatically switch layers.", MapWithAIPlugin.NAME));
+        } else if (Boolean.FALSE.equals(switchLayer)) {
+            sb.append(tr("{0} will not automatically switch layers.", MapWithAIPlugin.NAME));
+        }
+        sb.append(br);
+
+        if (download != null) {
+            sb.append(tr("Data will be downloaded in {0}", download.toBBox().toStringCSV(",")))
+              .append(br);
+        }
+
+        if (crop != null) {
+            sb.append(tr("Data will be cropped to {0}", crop.toBBox().toStringCSV(",")))
+              .append(br);
+        }
+
+        sb.append(tr("There is a maximum addition of {0} objects at one time.", maxObj));
+
+        return sb.toString();
     }
 
     @Override
