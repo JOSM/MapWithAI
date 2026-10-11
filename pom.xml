@@ -207,16 +207,17 @@
         <configuration>
           <archive>
             <manifestEntries>
+              <Plugin-Mainversion>${plugin.main.version}</Plugin-Mainversion>
+              <Plugin-Version>${revision}</Plugin-Version>
+              <Plugin-Class>${plugin.class}</Plugin-Class>
+              <Plugin-Description>${plugin.description}</Plugin-Description>
+              <Plugin-Date>${maven.build.timestamp}</Plugin-Date>
+              <Author>${plugin.author}</Author>
+              <Plugin-Requires>${plugin.requires}</Plugin-Requires>
+              <Plugin-Minimum-Java-Version>${plugin.minimum.java.version}</Plugin-Minimum-Java-Version>
               <Plugin-Link>${plugin.link}</Plugin-Link>
               <Plugin-Icon>${plugin.icon}</Plugin-Icon>
               <Plugin-Canloadatruntime>${plugin.canloadatruntime}</Plugin-Canloadatruntime>
-              <Plugin-Mainversion>${plugin.main.version}</Plugin-Mainversion>
-              <Plugin-Version>${plugin.version}</Plugin-Version>
-              <Plugin-Class>${plugin.class}</Plugin-Class>
-              <Plugin-Description>${plugin.description}</Plugin-Description>
-              <!-- These are optional, but are either added almost all the time or can be auto generated -->
-              <Plugin-Date>${maven.build.timestamp}</Plugin-Date>
-              <Author>${plugin.author}</Author>
             </manifestEntries>
           </archive>
         </configuration>
