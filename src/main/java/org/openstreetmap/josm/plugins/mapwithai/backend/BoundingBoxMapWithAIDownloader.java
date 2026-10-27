@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -89,6 +90,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
     private final String url;
     private final boolean crop;
     private final int start;
+    private final boolean retry;
 
     private static long lastErrorTime;
 
@@ -106,7 +108,7 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
      * @param crop         Whether or not to crop the download area
      */
     public BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop) {
-        this(downloadArea, info, crop, 0);
+        this(downloadArea, info, crop, 0, true);
     }
 
     /**
@@ -116,14 +118,17 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
      * @param info         The info to use to get the url to download
      * @param crop         Whether or not to crop the download area
      * @param start        The number of objects to skip (Esri only please)
+     * @param retry        Whether to retry the download in the background if it fails
      */
-    private BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop, int start) {
+    private BoundingBoxMapWithAIDownloader(Bounds downloadArea, MapWithAIInfo info, boolean crop, int start,
+            boolean retry) {
         super(downloadArea);
         this.info = info;
         this.url = info.getUrlExpanded();
         this.crop = crop;
         this.downloadArea = downloadArea;
         this.start = start;
+        this.retry = retry;
     }
 
     @Override
@@ -215,23 +220,44 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 throw e;
             }
         }
-        // Just in case something happens, try again...
-        final var ds = new DataSet();
-        final var runnable = new GetDataRunnable(downloadArea, ds, NullProgressMonitor.INSTANCE);
-        runnable.setMapWithAIInfo(info);
-        MainApplication.worker.execute(() -> {
-            try {
-                // It seems that the server has issues if I make a request soon
-                // after the failing request due to a timeout.
-                TimeUnit.SECONDS.sleep(10);
-            } catch (InterruptedException e1) {
-                Thread.currentThread().interrupt();
-            }
-            runnable.compute();
-        });
+        // Just in case something happens, try again (once) in the background.
+        // Don't use MainApplication.worker for this: it is single threaded, so validation, upload, etc. would
+        // wait for the retry. It seems that the server has issues if I make a request soon after the failing
+        // request due to a timeout, so wait a bit first.
+        if (this.retry) {
+            final var retryDownloader = new BoundingBoxMapWithAIDownloader(this.downloadArea, this.info, this.crop,
+                    this.start, false);
+            CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS, MapWithAIDataUtils.getForkJoinPool())
+                    .execute(() -> {
+                        try {
+                            mergeIntoLayer(retryDownloader.parseOsm(NullProgressMonitor.INSTANCE));
+                        } catch (OsmTransferException e) {
+                            Logging.error(e);
+                        }
+                    });
+        }
+        return new DataSet();
+    }
 
-        MapPaintUtils.addSourcesToPaintStyle(ds);
-        return ds;
+    /**
+     * Merge data downloaded in the background into the MapWithAI layer
+     *
+     * @param data The data to merge
+     */
+    private static void mergeIntoLayer(DataSet data) {
+        final var layer = MapWithAIDataUtils.getLayer(false);
+        if (layer == null || data.allPrimitives().isEmpty()) {
+            return;
+        }
+        final var lock = layer.getLock();
+        lock.lock();
+        try {
+            final var layerData = layer.getDataSet();
+            layerData.update(() -> layerData.mergeFrom(data));
+            GetDataRunnable.cleanup(layerData, null, null);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -463,10 +489,16 @@ public class BoundingBoxMapWithAIDownloader extends BoundingBoxDownloader {
                 progressMonitor.beginTask(tr("Downloading additional data"), objects);
                 // We have already downloaded some of the objects. Set the ticks.
                 progressMonitor.worked(size);
-                while (progressMonitor.getTicks() < progressMonitor.getTicksCount() - 1) {
+                // Advance the offset by a page each time, and stop if a page is empty (failed or
+                // fewer objects than reported) -- otherwise this would loop forever.
+                for (int offset = this.start + size; size > 0 && offset < objects; offset += size) {
                     final var next = new BoundingBoxMapWithAIDownloader(this.downloadArea, this.info, this.crop,
-                            this.start + size).parseOsm(progressMonitor.createSubTaskMonitor(0, false));
-                    progressMonitor.worked((int) next.allPrimitives().stream().filter(IPrimitive::isTagged).count());
+                            offset, false).parseOsm(progressMonitor.createSubTaskMonitor(0, false));
+                    final var tagged = (int) next.allPrimitives().stream().filter(IPrimitive::isTagged).count();
+                    if (tagged == 0) {
+                        break;
+                    }
+                    progressMonitor.worked(tagged);
                     returnDs.mergeFrom(next);
                 }
             } catch (OsmTransferException e) {
